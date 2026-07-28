@@ -42,6 +42,7 @@
     "src/preload/browser-toolbar.ts",
     "src/renderer/App.tsx",
     "src/renderer/main.tsx",
+    "src/renderer/vite-env.d.ts",
     "src/renderer/browser-toolbar.tsx",
     "src/renderer/browser-empty-state.tsx",
     "src/shared/types.ts",

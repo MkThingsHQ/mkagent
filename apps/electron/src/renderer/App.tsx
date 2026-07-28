@@ -1,16 +1,51 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  Archive,
+  Box,
+  CheckCircle2,
+  ChevronDown,
+  CircleHelp,
+  Flag,
+  FolderKanban,
+  MessageSquareText,
+  MoreHorizontal,
+  Palette,
+  PanelLeft,
+  Plus,
+  Search,
+  Settings,
+  ShieldCheck,
+  Sparkles,
+  Upload,
+  UserRound,
+  Wifi,
+  Zap,
+} from 'lucide-react'
 import type { AnnotationV1, StoredSession, Workspace } from '@mkagent/core/types'
 import type { LlmConnectionWithStatus, NetworkProxySettings } from '@mkagent/shared/config'
 import { i18n } from '@mkagent/shared/i18n'
 import type { LoadedSkill } from '@mkagent/shared/skills'
 import type { DeepLinkNavigation, FileAttachment, PermissionRequest, Session, SessionEvent, SkillFile, WorkspaceSettings } from '@mkagent/shared/protocol'
 import { Markdown, SessionViewer } from '@mkagent/ui'
+import { Button } from './components/ui/button'
+import { SettingsCard as CraftSettingsCard, SettingsCardContent } from './components/settings/SettingsCard'
+import mkagentIcon from './assets/mkagent_app_icon.png'
 
 type Section = 'sessions' | 'skills' | 'settings'
 type SettingsPage = 'connections' | 'permissions' | 'proxy' | 'workspaces' | 'appearance' | 'language' | 'updates'
 type SessionFilter = 'all' | 'unread' | 'flagged' | 'running' | 'archived'
 
 const SETTINGS_PAGES: SettingsPage[] = ['connections', 'permissions', 'proxy', 'workspaces', 'appearance', 'language', 'updates']
+
+const SETTINGS_META: Record<SettingsPage, { title: string; description: string; icon: typeof Settings }> = {
+  connections: { title: 'AI & Connections', description: 'Models, providers, and API keys', icon: Sparkles },
+  permissions: { title: 'Permissions', description: 'Tool access and approval behavior', icon: ShieldCheck },
+  proxy: { title: 'App', description: 'Network proxy and application behavior', icon: Wifi },
+  workspaces: { title: 'Workspace', description: 'Local workspaces and data isolation', icon: FolderKanban },
+  appearance: { title: 'Appearance', description: 'Theme, color, and interface', icon: Palette },
+  language: { title: 'Preferences', description: 'Language and personal preferences', icon: UserRound },
+  updates: { title: 'Updates', description: 'Version and update channel', icon: Zap },
+}
 
 function cx(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(' ')
@@ -21,7 +56,8 @@ function formatTime(value: number) {
 }
 
 function AppButton(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  return <button {...props} className={cx('mk-button', props.className)} />
+  const primary = props.className?.split(' ').includes('primary')
+  return <Button {...props} variant={primary ? 'default' : 'outline'} size="sm" className={cx('mk-button', props.className)} />
 }
 
 function ChatPanel({ session, workspaceId, onChanged, onDeleted, onBranched }: {
@@ -288,11 +324,16 @@ function SettingsPanel({ page, workspaces, workspaceId, onWorkspacesChanged }: {
 }
 
 function SettingsCard({ title, detail, children }: { title: string; detail: string; children?: React.ReactNode }) {
-  return <div className="mk-settings-card"><h2>{title}</h2><p>{detail}</p><div className="mk-stack">{children}</div></div>
+  return <div className="mk-settings-page">
+    <div className="mk-settings-title"><h1>{title}</h1><p>{detail}</p></div>
+    <CraftSettingsCard divided={false}>
+      <SettingsCardContent className="mk-stack">{children}</SettingsCardContent>
+    </CraftSettingsCard>
+  </div>
 }
 
 function EmptyState({ title, detail }: { title: string; detail: string }) {
-  return <div className="mk-empty"><img src="/favicon.svg" alt="" /><strong>{title}</strong><span>{detail}</span></div>
+  return <div className="mk-empty"><img src={mkagentIcon} alt="" /><strong>{title}</strong><span>{detail}</span></div>
 }
 
 export default function App() {
@@ -473,27 +514,73 @@ export default function App() {
     return matchesFilter && haystack.includes(query.toLowerCase())
   }), [query, sessionFilter, sessions])
 
-  return <div className="mk-shell">
-    <aside className="mk-nav" style={{ width: panelWidths.navigation }}>
-      <button className="mk-new" onClick={newSession}>＋ <span>New session</span></button>
-      <nav>{(['sessions', 'skills', 'settings'] as Section[]).map(item => <button key={item} className={section === item ? 'active' : ''} onClick={() => setSection(item)}>{item === 'sessions' ? '◫' : item === 'skills' ? '✦' : '⚙'} <span>{item}</span></button>)}</nav>
-      <select value={workspaceId} onChange={async event => { setWorkspaceId(event.target.value); await window.electronAPI.switchWorkspace(event.target.value) }}>{workspaces.map(workspace => <option key={workspace.id} value={workspace.id}>{workspace.name}</option>)}</select>
-    </aside>
-    <div className="mk-resizer" onPointerDown={() => { resizeRef.current = 'navigation' }} />
-    <section className="mk-list-pane" style={{ width: panelWidths.list }}>
-      <div className="mk-list-header"><div className="mk-row"><strong>{section[0].toUpperCase() + section.slice(1)}</strong>{section === 'skills' && <AppButton onClick={() => startSkillMiniChat()}>New with agent</AppButton>}{section === 'sessions' && <label className="mk-button mk-file-button">Import<input type="file" accept="application/json,.json" onChange={event => { void importSessionFile(event.target.files?.[0]); event.target.value = '' }} /></label>}</div>{section === 'sessions' && <><input placeholder="Search sessions" value={query} onChange={event => setQuery(event.target.value)} /><div className="mk-row mk-filters">{(['all', 'unread', 'flagged', 'running', 'archived'] as SessionFilter[]).map(filter => <AppButton key={filter} className={sessionFilter === filter ? 'active' : ''} onClick={() => setSessionFilter(filter)}>{filter}</AppButton>)}</div></>}</div>
-      <div className="mk-list">
-        {section === 'sessions' && filteredSessions.map(session => <button key={session.id} className={activeSessionId === session.id ? 'active' : ''} onClick={() => selectSession(session.id)}><strong>{session.isFlagged ? '★ ' : ''}{session.name || 'New session'}</strong><span>{session.preview || 'No messages yet'}</span><small>{session.isArchived ? 'Archived · ' : ''}{session.hasUnread ? 'Unread · ' : ''}{formatTime(session.lastMessageAt)}</small></button>)}
-        {section === 'skills' && skills.map(skill => <button key={skill.slug} className={activeSkill?.slug === skill.slug ? 'active' : ''} onClick={() => selectSkill(skill)}><strong>{skill.metadata.name || skill.slug}</strong><span>{skill.metadata.description}</span><small>{skill.source}</small></button>)}
-        {section === 'settings' && SETTINGS_PAGES.map(page => <button key={page} className={settingsPage === page ? 'active' : ''} onClick={() => setSettingsPage(page)}><strong>{page[0].toUpperCase() + page.slice(1)}</strong></button>)}
+  const navItems: Array<{ id: Section; label: string; icon: typeof Settings }> = [
+    { id: 'sessions', label: 'All Sessions', icon: MessageSquareText },
+    { id: 'skills', label: 'Skills', icon: Sparkles },
+    { id: 'settings', label: 'Settings', icon: Settings },
+  ]
+  const sectionTitle = section === 'sessions' ? 'All Sessions' : section === 'skills' ? 'Skills' : 'Settings'
+
+  return <div className="mk-app-frame">
+    <header className="mk-topbar">
+      <div className="mk-topbar-brand">
+        <img src={mkagentIcon} alt="MkAgent" />
+        <button className="mk-topbar-workspace">
+          <span>{workspaces.find(item => item.id === workspaceId)?.name ?? 'default'}</span>
+          <ChevronDown />
+        </button>
       </div>
-    </section>
-    <div className="mk-resizer" onPointerDown={() => { resizeRef.current = 'list' }} />
-    <main className="mk-main">
-      {section === 'sessions' && (activeSession ? <ChatPanel session={activeSession} workspaceId={workspaceId} onChanged={refreshSessions} onDeleted={() => { setActiveSessionId(''); setActiveSession(null); void refreshSessions() }} onBranched={branchSession} /> : <EmptyState title="Start a session" detail="Choose a session or create a new one." />)}
-      {section === 'skills' && <SkillsPanel skill={activeSkill} files={skillFiles} workspaceId={workspaceId} onChanged={() => window.electronAPI.getSkills(workspaceId).then(setSkills)} onAgentEdit={skill => void startSkillMiniChat(skill)} />}
-      {section === 'settings' && <SettingsPanel page={settingsPage} workspaces={workspaces} workspaceId={workspaceId} onWorkspacesChanged={() => void refreshWorkspaces()} />}
-    </main>
-    {miniSession && <div className="mk-modal-backdrop"><div className="mk-mini-chat"><div className="mk-modal-header"><strong>{miniSession.name}</strong><AppButton onClick={() => setMiniSession(null)}>Close</AppButton></div><ChatPanel session={miniSession} workspaceId={workspaceId} onChanged={() => window.electronAPI.getSessionMessages(miniSession.id).then(setMiniSession)} onDeleted={() => setMiniSession(null)} onBranched={() => {}} /></div></div>}
+      <div className="mk-topbar-actions">
+        <button title="Toggle sidebar"><PanelLeft /></button>
+        <button title="Help"><CircleHelp /></button>
+      </div>
+    </header>
+    <div className="mk-shell">
+      <aside className="mk-panel mk-nav" style={{ width: panelWidths.navigation }}>
+        <div className="mk-nav-content">
+          <button className="mk-new" onClick={newSession}><Plus /><span>New Session</span></button>
+          <nav>{navItems.map(item => {
+            const Icon = item.icon
+            return <button key={item.id} className={section === item.id ? 'active' : ''} onClick={() => setSection(item.id)}><Icon /><span>{item.label}</span>{item.id === 'sessions' && sessions.filter(value => value.hasUnread).length > 0 && <small>{sessions.filter(value => value.hasUnread).length}</small>}</button>
+          })}</nav>
+        </div>
+        <div className="mk-nav-footer">
+          <label>Workspace</label>
+          <select value={workspaceId} onChange={async event => { setWorkspaceId(event.target.value); await window.electronAPI.switchWorkspace(event.target.value) }}>{workspaces.map(workspace => <option key={workspace.id} value={workspace.id}>{workspace.name}</option>)}</select>
+        </div>
+      </aside>
+      <div className="mk-resizer" onPointerDown={() => { resizeRef.current = 'navigation' }} />
+      <section className="mk-panel mk-list-pane" style={{ width: panelWidths.list }}>
+        <div className="mk-panel-header">
+          <strong>{sectionTitle}</strong>
+          <div className="mk-row">
+            {section === 'skills' && <button className="mk-icon-button" title="Create Skill with agent" onClick={() => startSkillMiniChat()}><Plus /></button>}
+            {section === 'sessions' && <label className="mk-icon-button mk-file-button" title="Import session"><Upload /><input type="file" accept="application/json,.json" onChange={event => { void importSessionFile(event.target.files?.[0]); event.target.value = '' }} /></label>}
+            <button className="mk-icon-button" title="More"><MoreHorizontal /></button>
+          </div>
+        </div>
+        {section === 'sessions' && <div className="mk-list-tools">
+          <label className="mk-search"><Search /><input placeholder="Search sessions" value={query} onChange={event => setQuery(event.target.value)} /></label>
+          <div className="mk-filters">{(['all', 'unread', 'flagged', 'running', 'archived'] as SessionFilter[]).map(filter => <button key={filter} className={sessionFilter === filter ? 'active' : ''} title={filter} onClick={() => setSessionFilter(filter)}>{filter === 'all' ? <Box /> : filter === 'unread' ? <MessageSquareText /> : filter === 'flagged' ? <Flag /> : filter === 'running' ? <CheckCircle2 /> : <Archive />}</button>)}</div>
+        </div>}
+        <div className="mk-list">
+          {section === 'sessions' && <div className="mk-list-group-title">{sessionFilter === 'archived' ? 'Archived' : 'Recent'}</div>}
+          {section === 'sessions' && filteredSessions.map(session => <button key={session.id} className={activeSessionId === session.id ? 'active' : ''} onClick={() => selectSession(session.id)}><div className="mk-list-row-title"><strong>{session.name || 'New session'}</strong>{session.isFlagged && <Flag />}{session.hasUnread && <i />}</div><span>{session.preview || 'No messages yet'}</span><small>{session.isProcessing ? 'Running · ' : session.isArchived ? 'Archived · ' : ''}{formatTime(session.lastMessageAt)}</small></button>)}
+          {section === 'skills' && skills.map(skill => <button key={skill.slug} className={activeSkill?.slug === skill.slug ? 'active' : ''} onClick={() => selectSkill(skill)}><div className="mk-skill-icon"><Sparkles /></div><div><strong>{skill.metadata.name || skill.slug}</strong><span>{skill.metadata.description}</span><small>{skill.source}</small></div></button>)}
+          {section === 'settings' && SETTINGS_PAGES.map(page => {
+            const meta = SETTINGS_META[page]
+            const Icon = meta.icon
+            return <button key={page} className={settingsPage === page ? 'active' : ''} onClick={() => setSettingsPage(page)}><div className="mk-settings-row-icon"><Icon /></div><div><strong>{meta.title}</strong><span>{meta.description}</span></div></button>
+          })}
+        </div>
+      </section>
+      <div className="mk-resizer" onPointerDown={() => { resizeRef.current = 'list' }} />
+      <main className="mk-panel mk-main">
+        {section === 'sessions' && (activeSession ? <ChatPanel session={activeSession} workspaceId={workspaceId} onChanged={refreshSessions} onDeleted={() => { setActiveSessionId(''); setActiveSession(null); void refreshSessions() }} onBranched={branchSession} /> : <EmptyState title="Start a session" detail="Choose a session or create a new one." />)}
+        {section === 'skills' && <SkillsPanel skill={activeSkill} files={skillFiles} workspaceId={workspaceId} onChanged={() => window.electronAPI.getSkills(workspaceId).then(setSkills)} onAgentEdit={skill => void startSkillMiniChat(skill)} />}
+        {section === 'settings' && <SettingsPanel page={settingsPage} workspaces={workspaces} workspaceId={workspaceId} onWorkspacesChanged={() => void refreshWorkspaces()} />}
+      </main>
+      {miniSession && <div className="mk-modal-backdrop"><div className="mk-mini-chat"><div className="mk-modal-header"><strong>{miniSession.name}</strong><AppButton onClick={() => setMiniSession(null)}>Close</AppButton></div><ChatPanel session={miniSession} workspaceId={workspaceId} onChanged={() => window.electronAPI.getSessionMessages(miniSession.id).then(setMiniSession)} onDeleted={() => setMiniSession(null)} onBranched={() => {}} /></div></div>}
+    </div>
   </div>
 }
