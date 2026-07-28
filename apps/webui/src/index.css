@@ -1,0 +1,44 @@
+@import "tailwindcss" source(none);
+@plugin "@tailwindcss/typography";
+
+/* Scan the Electron renderer components (shared via @ alias) */
+@source "../../electron/src/renderer/App.tsx";
+@source "../../../packages/ui/src/components/**/*.{ts,tsx,jsx}";
+@source "../../../packages/ui/src/lib/**/*.{ts,tsx,jsx}";
+@source "./adapter/**/*.{ts,tsx}";
+@source "./App.tsx";
+@source "./main.tsx";
+
+/*
+ * Import the Electron renderer's full CSS (theme variables, base styles, animations).
+ * This ensures visual parity with the desktop app.
+ *
+ * The import brings in @property declarations, :root themes, and utility styles.
+ * The explicit sources above are required because Tailwind v4 source(none) scoping doesn't
+ * inherit across @import boundaries.
+ */
+@import "../../electron/src/renderer/index.css";
+
+/*
+ * Web UI responsive layout is handled by container queries and isAutoCompact
+ * in the shared renderer components. No webui-specific CSS overrides needed.
+ *
+ * The only webui-specific styles are safe-area insets for mobile browsers.
+ */
+
+/* Safe area insets for mobile browsers (notch, home indicator) */
+html, body, #root {
+  overflow: hidden;
+  max-width: 100%;
+}
+
+body {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* 120% zoom on mobile viewports for better readability */
+@media (max-width: 768px) {
+  html {
+    zoom: 1.2;
+  }
+}
