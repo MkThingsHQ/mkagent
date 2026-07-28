@@ -83,8 +83,25 @@ jobs:
             apps/electron/release/*
             dist/MkAgent-server-*
 
+  cli:
+    needs: credentials
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - run: bun install --frozen-lockfile
+      - run: bun run cli:build
+      - name: Package CLI
+        run: tar -czf MkAgent-cli-bun.tar.gz -C apps/cli/dist mkagent
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-cli
+          path: MkAgent-cli-bun.tar.gz
+
   publish:
-    needs: build
+    needs: [build, cli]
     runs-on: ubuntu-latest
     environment: release
     steps:
@@ -93,11 +110,13 @@ jobs:
           path: artifacts
           merge-multiple: true
       - name: Generate checksums
-        run: find artifacts -type f -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS
+        run: |
+          find artifacts -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
+          mv SHA256SUMS artifacts/SHA256SUMS
       - name: Publish public release
         env:
           GH_TOKEN: ${{ secrets.MKAGENT_PUBLIC_RELEASE_TOKEN }}
           TAG: ${{ github.ref_name }}
         run: |
-          gh release create "$TAG" --repo open-fox/mkagent-public --title "MkAgent $TAG" --notes "Signed MkAgent desktop, headless server, update manifests, blockmaps, and checksums."
+          gh release view "$TAG" --repo open-fox/mkagent-public >/dev/null 2>&1 || gh release create "$TAG" --repo open-fox/mkagent-public --title "MkAgent $TAG" --notes "Signed MkAgent desktop, headless server, update manifests, blockmaps, CLI, and checksums."
           find artifacts -type f -print0 | xargs -0 gh release upload "$TAG" --repo open-fox/mkagent-public --clobber

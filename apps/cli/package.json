@@ -4,11 +4,15 @@
   "license": "Apache-2.0",
   "description": "Terminal client for MkAgent server",
   "type": "module",
-  "main": "src/index.ts",
+  "main": "dist/mkagent",
+  "files": [
+    "dist/mkagent"
+  ],
   "bin": {
-    "mkagent": "src/index.ts"
+    "mkagent": "dist/mkagent"
   },
   "scripts": {
+    "build": "mkdir -p dist && bun build src/index.ts --target=bun --outfile=dist/mkagent",
     "start": "bun run src/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "bun test src/"

@@ -76,6 +76,7 @@
     "webui:clean": "rm -rf apps/webui/dist",
     "webui:build": "vite build --config apps/webui/vite.config.ts",
     "webui:typecheck": "cd apps/webui && bun run typecheck",
+    "cli:build": "cd apps/cli && bun run build",
     "server:build:subprocess": "cd packages/pi-agent-server && bun run build",
     "server:prod": "bun run server:build:subprocess && bun run webui:build && MKAGENT_WEBUI_DIR=apps/webui/dist MKAGENT_BUNDLED_ASSETS_ROOT=$PWD/apps/electron bun run packages/server/src/index.ts",
     "server:dev:webui": "bun run server:build:subprocess && bun run webui:build && MKAGENT_WEBUI_DIR=apps/webui/dist MKAGENT_WEBUI_PORT=3100 bun run server:dev"

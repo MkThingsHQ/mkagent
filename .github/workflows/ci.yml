@@ -25,6 +25,7 @@ jobs:
       - run: bun run lint
       - run: bun run validate:ci
       - run: bun test
+      - run: bun run cli:build
 
   build-smoke:
     strategy:
@@ -49,9 +50,9 @@ jobs:
       - if: matrix.target == 'mac'
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
-        run: cd apps/electron && bunx electron-builder --config electron-builder.yml --mac dir --arm64
+        run: cd apps/electron && bunx electron-builder --config electron-builder.yml --mac --dir --arm64
       - if: matrix.target == 'win'
-        run: cd apps/electron && bunx electron-builder --config electron-builder.yml --win dir --x64
+        run: cd apps/electron && bunx electron-builder --config electron-builder.yml --win --dir --x64
       - if: matrix.target == 'linux'
-        run: cd apps/electron && bunx electron-builder --config electron-builder.yml --linux dir --x64
+        run: cd apps/electron && bunx electron-builder --config electron-builder.yml --linux --dir --x64
       - run: bun run scripts/build-server.ts --output=dist/headless-smoke
