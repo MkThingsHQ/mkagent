@@ -32,6 +32,7 @@
     "server:build:linux-arm64": "bun run scripts/build-server.ts --platform=linux --arch=arm64 --compress",
     "server:build:darwin-arm64": "bun run scripts/build-server.ts --platform=darwin --arch=arm64 --compress",
     "server:build:darwin-x64": "bun run scripts/build-server.ts --platform=darwin --arch=x64 --compress",
+    "server:build:win-x64": "bun run scripts/build-server.ts --platform=win32 --arch=x64 --compress",
     "typecheck:electron": "cd apps/electron && bun run typecheck",
     "test:shared:llm-connections": "cd packages/shared && bun test tests/llm-connections.test.ts",
     "test:shared:models-pi": "cd packages/shared && bun test tests/models-pi.test.ts",
