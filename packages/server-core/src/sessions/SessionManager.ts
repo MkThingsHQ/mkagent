@@ -394,6 +394,40 @@ export class SessionManager implements ISessionManager {
     const workspace = getWorkspaces().find(item => item.id === workspaceId || item.slug === workspaceId)
     if (!workspace) throw new Error(`Workspace not found: ${workspaceId}`)
     const workspaceConfig = loadWorkspaceConfig(workspace.rootPath)
+
+    let branchSource: StoredSession | undefined
+    let branchIndex = -1
+    let branchFromSdkTurnId: string | undefined
+    if (options.branchFromSessionId || options.branchFromMessageId) {
+      if (!options.branchFromSessionId || !options.branchFromMessageId) {
+        throw new Error('Invalid branch request: both branchFromSessionId and branchFromMessageId are required')
+      }
+
+      const sourceManaged = this.sessions.get(options.branchFromSessionId)
+      if (sourceManaged && sourceManaged.workspace.rootPath !== workspace.rootPath) {
+        throw new Error('Invalid branch request: source session belongs to a different workspace')
+      }
+      if (sourceManaged) {
+        this.ensureMessagesLoaded(sourceManaged)
+        await this.flushSession(sourceManaged.id)
+      }
+
+      branchSource = loadStoredSession(workspace.rootPath, options.branchFromSessionId) ?? undefined
+      if (!branchSource) {
+        throw new Error(`Invalid branch request: source session ${options.branchFromSessionId} not found`)
+      }
+      branchIndex = branchSource.messages.findIndex(message => message.id === options.branchFromMessageId)
+      if (branchIndex < 0) {
+        throw new Error(`Invalid branch request: message ${options.branchFromMessageId} not found in source session`)
+      }
+      if (!branchSource.sdkSessionId) {
+        throw new Error('Cannot create branch yet: parent session SDK context is not initialized. Send one message in the parent session and try again.')
+      }
+
+      const sourcePath = getSessionStoragePath(workspace.rootPath, options.branchFromSessionId)
+      branchFromSdkTurnId = (await loadPiTurnAnchors(sourcePath)).anchors[options.branchFromMessageId]
+    }
+
     const stored = await createStoredSession(workspace.rootPath, {
       name: options.name,
       permissionMode: options.permissionMode ?? workspaceConfig?.defaults?.permissionMode,
@@ -408,6 +442,32 @@ export class SessionManager implements ISessionManager {
       isFlagged: options.isFlagged,
       parentSessionId: options.parentSessionId,
     })
+
+    if (branchSource && options.branchFromSessionId && options.branchFromMessageId) {
+      const branchPath = getSessionStoragePath(workspace.rootPath, stored.id)
+      const sourcePath = getSessionStoragePath(workspace.rootPath, options.branchFromSessionId)
+      const branched = loadStoredSession(workspace.rootPath, stored.id)
+      if (!branched) throw new Error(`Failed to load newly created session ${stored.id} for branch copy`)
+
+      const sourceMessages = branchSource.messages.slice(0, branchIndex + 1)
+      branched.messages = sourcePath === branchPath
+        ? sourceMessages
+        : sourceMessages.map(message => {
+            const serialized = JSON.stringify(message)
+            return serialized.includes(sourcePath)
+              ? JSON.parse(serialized.replaceAll(sourcePath, branchPath)) as StoredSession['messages'][number]
+              : message
+          })
+      branched.branchFromMessageId = options.branchFromMessageId
+      branched.branchFromSdkSessionId = branchSource.sdkSessionId
+      branched.branchFromSessionPath = sourcePath
+      branched.branchFromSdkCwd = branchSource.sdkCwd
+      branched.branchFromSdkTurnId = branchFromSdkTurnId
+      await saveStoredSession(branched)
+      await copyPiTurnAnchorsForBranch(sourcePath, branchPath, branched.messages.map(message => message.id))
+      Object.assign(stored, branched)
+    }
+
     const managed = createManagedSession(stored, workspace, { messagesLoaded: true })
     managed.thinkingLevel = normalizeThinkingLevel(options.thinkingLevel ?? workspaceConfig?.defaults?.thinkingLevel)
     this.sessions.set(managed.id, managed)
@@ -641,6 +701,12 @@ export class SessionManager implements ISessionManager {
         this.emit(managed.workspace.id, { type: 'permission_request', sessionId, request: { sessionId, requestId: event.requestId, toolName: event.toolName, command: event.command, description: event.description, type: event.permissionType, appName: event.appName, reason: event.reason, impact: event.impact, requiresSystemPrompt: event.requiresSystemPrompt, rememberForMinutes: event.rememberForMinutes, commandHash: event.commandHash, approvalTtlSeconds: event.approvalTtlSeconds } })
         break
       case 'pi_turn_anchor':
+        void savePiTurnAnchor(
+          getSessionStoragePath(managed.workspace.rootPath, sessionId),
+          event.sdkMessageId,
+          event.sdkTurnAnchor,
+        ).catch(error => log.warn('Failed to persist Pi turn anchor', sessionId, error))
+        break
       case 'workflow_agent_completed':
       case 'steer_undelivered':
         break

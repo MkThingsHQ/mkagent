@@ -502,7 +502,10 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
   // Export a session as a portable bundle
   server.handle(RPC_CHANNELS.sessions.EXPORT, async (ctx, sessionId: string) => {
     await sessionManager.waitForInit()
-    const workspaceId = ctx.workspaceId ?? deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId!)
+    const session = await sessionManager.getSession(sessionId)
+    const workspaceId = ctx.workspaceId
+      ?? deps.windowManager?.getWorkspaceForWindow(ctx.webContentsId!)
+      ?? session?.workspaceId
     if (!workspaceId) throw new Error('No workspace context')
 
     const bundle = await sessionManager.exportSession(sessionId, workspaceId)
