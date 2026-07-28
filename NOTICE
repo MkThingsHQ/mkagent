@@ -1,0 +1,11 @@
+MkAgent
+Copyright 2026 MkAgent contributors
+
+This product includes software derived from craft-agents-oss:
+https://github.com/craft-ai-agents/craft-agents-oss
+
+The upstream baseline used to start this project is v0.11.2,
+commit a60ebc1a5a7c, licensed under the Apache License 2.0.
+
+MkAgent contains modifications and is not affiliated with or endorsed by
+the upstream project or its trademark owners.
