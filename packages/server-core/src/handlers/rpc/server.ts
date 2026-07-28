@@ -75,8 +75,6 @@ export function registerServerHandlers(
         name: ws.name,
         slug: ws.slug,
         activeSessions: sessionManager.getActiveSessionCount(ws.id),
-        automationCount: 0,
-        schedulerRunning: false,
       }
     })
 

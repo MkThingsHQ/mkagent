@@ -80,7 +80,7 @@ export {
 /**
  * State for a single session's permission mode
  */
-export type PermissionModeChangedBy = 'user' | 'system' | 'restore' | 'automation' | 'unknown';
+export type PermissionModeChangedBy = 'user' | 'system' | 'restore' | 'unknown';
 
 export interface ModeState {
   /** Session ID */

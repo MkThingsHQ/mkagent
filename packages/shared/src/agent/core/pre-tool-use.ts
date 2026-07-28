@@ -707,7 +707,7 @@ export function runPreToolUseChecks(ctx: PreToolUseInput): PreToolUseCheckResult
     wasModified = true;
   }
 
-  // 5b. Config-domain Bash guard (block direct labels/automations path operations unless using mkagent)
+  // 5b. Config-domain Bash guard
   if (FEATURE_FLAGS.mkagentCli && toolName === 'Bash') {
     const configDomainBashRedirect = getConfigDomainBashRedirect(currentInput, workspaceRootPath, workingDirectory);
     if (configDomainBashRedirect) {
@@ -721,7 +721,7 @@ export function runPreToolUseChecks(ctx: PreToolUseInput): PreToolUseCheckResult
     return { type: 'block', reason: configResult.error! };
   }
 
-  // 5d. Config file CLI redirect (labels + automations)
+  // 5d. Config file CLI redirect
   if (FEATURE_FLAGS.mkagentCli) {
     const cliRedirect = getConfigCliRedirect(toolName, currentInput, workspaceRootPath, workingDirectory);
     if (cliRedirect) {

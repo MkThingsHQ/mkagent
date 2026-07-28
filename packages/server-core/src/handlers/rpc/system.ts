@@ -42,8 +42,6 @@ interface ParsedInternalDeepLink {
   workspaceId?: string
   /** Use client shell.openExternal fallback (e.g. window=focused links). */
   requiresExternalOpen?: boolean
-  /** True when URL is intentionally consumed without navigation (auth callbacks). */
-  handledNoop?: boolean
 }
 
 const COMPOUND_ROUTE_PREFIXES = new Set([
