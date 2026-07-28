@@ -3261,7 +3261,6 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     ])
 
     if (typeof ses.setPermissionCheckHandler === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ses.setPermissionCheckHandler((_webContents, permission: string, requestingOrigin: string, _details: any) => {
         const allowed = allow.has(permission)
         if (!allowed) {
@@ -3272,7 +3271,6 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     }
 
     if (typeof ses.setPermissionRequestHandler === 'function') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ses.setPermissionRequestHandler((_webContents, permission: string, callback: (allow: boolean) => void, details: any) => {
         const allowed = allow.has(permission)
         if (!allowed) {
