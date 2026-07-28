@@ -249,7 +249,7 @@ let currentUserMessage = '';
 const pendingPreToolUse = new Map<string, { resolve: (response: { action: string; input?: Record<string, unknown>; reason?: string }) => void }>();
 const pendingToolExecutions = new Map<string, { resolve: (result: { content: string; isError: boolean }) => void }>();
 
-// Pending session MCP tool calls for completion detection
+// Pending proxied session tool calls for completion detection
 const pendingSessionToolCalls = new Map<string, { toolName: string; arguments: Record<string, unknown> }>();
 
 // Proxy tool definitions from main process
@@ -304,7 +304,7 @@ function findMostRecentSessionFile(sessionDir: string): string | null {
 }
 
 // ============================================================
-// Callback Server (for call_llm from session MCP server)
+// Loopback server used by the call_llm session tool
 // ============================================================
 
 async function startCallbackServer(): Promise<void> {
@@ -480,8 +480,7 @@ function createAuthenticatedRegistry(): {
   const authStorage = moduleAuthStorage;
   if (initConfig?.piAuth) {
     const { provider, credential } = initConfig.piAuth;
-    // Pi SDK 0.70.0's AuthCredential union (ApiKeyCredential | OAuthCredential) doesn't
-    // include 'iam' as a first-class member, but the auth storage accepts it at runtime
+    // Pi's public credential type does not include 'iam', but auth storage accepts it at runtime
     // — the Bedrock provider module reads AWS env directly; this `set` keeps Pi SDK's
     // internal provider-tracking consistent regardless of credential shape.
     authStorage.set(provider, credential as unknown as AuthCredential);
@@ -683,7 +682,7 @@ async function ensureSession(): Promise<AgentSession> {
 /**
  * Send pre_tool_use_request to main process and wait for response.
  * Returns the (potentially modified) input if approved, throws if blocked.
- * All permission checking, transforms, and source activation happen in the main process.
+ * All permission checking and input transforms happen in the main process.
  */
 async function requestPreToolUseApproval(
   sdkToolName: string,

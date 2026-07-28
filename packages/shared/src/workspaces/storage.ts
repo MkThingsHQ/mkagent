@@ -72,10 +72,6 @@ export function getWorkspacePath(workspaceId: string): string {
 }
 
 /**
- * Get path to workspace sources directory
- * @param rootPath - Absolute path to workspace root folder
- */
-/**
  * Get path to workspace sessions directory
  * @param rootPath - Absolute path to workspace root folder
  */

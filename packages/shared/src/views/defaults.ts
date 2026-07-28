@@ -41,5 +41,12 @@ export function getDefaultViews(): ViewConfig[] {
       color: 'success',
       expression: 'isProcessing == true',
     },
+    {
+      id: 'view-archived',
+      name: 'Archived',
+      description: 'Archived sessions',
+      color: 'foreground/50',
+      expression: 'isArchived == true',
+    },
   ];
 }

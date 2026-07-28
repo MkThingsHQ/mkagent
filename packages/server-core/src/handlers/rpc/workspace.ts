@@ -68,7 +68,7 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
   // Get workspace ID for the calling window
   server.handle(RPC_CHANNELS.window.GET_WORKSPACE, (ctx) => {
     const workspaceId = ctx.workspaceId ?? windowManager?.getWorkspaceForWindow(ctx.webContentsId!)
-    // Set up ConfigWatcher for live updates (labels, statuses, sources, themes)
+    // Set up ConfigWatcher for live workspace updates.
     if (workspaceId) {
       const workspace = getWorkspaceByNameOrId(workspaceId)
       if (workspace) {
@@ -133,7 +133,7 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
   // Workspace Image Read/Write
   // ============================================================
 
-  // Generic workspace image loading (for source icons, status icons, etc.)
+  // Generic workspace image loading.
   server.handle(RPC_CHANNELS.workspace.READ_IMAGE, async (_ctx, workspaceId: string, relativePath: string) => {
     const workspace = getWorkspaceByNameOrId(workspaceId)
     if (!workspace) throw new Error('Workspace not found')

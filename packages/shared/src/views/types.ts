@@ -61,10 +61,6 @@ export interface ViewEvaluationContext {
   name: string;
   /** Preview text (first 150 chars of first user message) */
   preview: string;
-  /** Status ID (e.g. 'todo', 'in-progress', 'done') */
-  sessionStatus: string;
-  /** @deprecated Use `sessionStatus` instead. Kept for backward compatibility with existing view expressions. */
-  todoState: string;
   /** Permission mode (canonical: 'explore'|'ask'|'execute'; internal: 'safe'|'ask'|'allow-all') */
   permissionMode: string;
   /** Model override string */
@@ -79,12 +75,12 @@ export interface ViewEvaluationContext {
   createdAt: number;
   /** Total number of messages in the session */
   messageCount: number;
-  /** Number of labels on the session */
-  labelCount: number;
 
   // === Booleans ===
   /** Whether session is starred */
   isFlagged: boolean;
+  /** Whether session is archived */
+  isArchived: boolean;
   /** Whether session has unread messages */
   hasUnread: boolean;
   /** Whether agent is currently running */
@@ -101,8 +97,4 @@ export interface ViewEvaluationContext {
     costUsd: number;
     contextTokens: number;
   };
-
-  // === Arrays ===
-  /** Labels array (bare IDs for contains() checks) */
-  labels: string[];
 }

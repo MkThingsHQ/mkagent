@@ -1,13 +1,13 @@
 /**
- * Tests for resolveSkillMentions and resolveSourceMentions — semantic markers
- * that replace bracket mentions with readable context instead of stripping them.
+ * Tests for resolveSkillMentions semantic markers that replace bracket mentions
+ * with readable context instead of stripping them.
  *
- * Fix for: skill/source mentions used as nouns in sentences getting stripped,
+ * Fix for: skill mentions used as nouns in sentences getting stripped,
  * producing truncated messages (e.g. "find the root cause in" instead of
  * "find the root cause in [Mentioned skill: Datadog API (slug: datadog-api)]").
  */
 import { describe, it, expect } from 'bun:test'
-import { resolveSkillMentions, resolveSourceMentions, stripAllMentions } from '../index.ts'
+import { resolveSkillMentions, stripAllMentions } from '../index.ts'
 
 // ============================================================================
 // resolveSkillMentions
@@ -90,41 +90,10 @@ describe('resolveSkillMentions', () => {
         .toBe('no mentions here')
     })
 
-    it('leaves source and file mentions untouched', () => {
-      expect(resolveSkillMentions('[source:github] [file:index.ts]', skillNames))
-        .toBe('[source:github] [file:index.ts]')
+    it('leaves file mentions untouched', () => {
+      expect(resolveSkillMentions('[file:index.ts]', skillNames))
+        .toBe('[file:index.ts]')
     })
-  })
-})
-
-// ============================================================================
-// resolveSourceMentions
-// ============================================================================
-
-describe('resolveSourceMentions', () => {
-  it('resolves source mention to semantic marker', () => {
-    expect(resolveSourceMentions('[source:github] check this'))
-      .toBe('[Mentioned source: github] check this')
-  })
-
-  it('preserves sentence when source is used as a noun', () => {
-    expect(resolveSourceMentions('check my emails in [source:gmail]'))
-      .toBe('check my emails in [Mentioned source: gmail]')
-  })
-
-  it('resolves multiple source mentions', () => {
-    expect(resolveSourceMentions('[source:github] and [source:linear]'))
-      .toBe('[Mentioned source: github] and [Mentioned source: linear]')
-  })
-
-  it('leaves text without mentions unchanged', () => {
-    expect(resolveSourceMentions('no mentions here'))
-      .toBe('no mentions here')
-  })
-
-  it('leaves skill and file mentions untouched', () => {
-    expect(resolveSourceMentions('[skill:commit] [file:index.ts]'))
-      .toBe('[skill:commit] [file:index.ts]')
   })
 })
 
@@ -141,16 +110,6 @@ describe('stripAllMentions - slug replacement', () => {
   it('replaces skill with workspace ID with slug', () => {
     expect(stripAllMentions('[skill:My Workspace:commit] do this'))
       .toBe('commit do this')
-  })
-
-  it('replaces source mention with slug', () => {
-    expect(stripAllMentions('[source:github] check this'))
-      .toBe('github check this')
-  })
-
-  it('replaces multiple mentions with slugs', () => {
-    expect(stripAllMentions('[skill:commit] and [source:github]'))
-      .toBe('commit and github')
   })
 
   it('preserves sentence structure', () => {

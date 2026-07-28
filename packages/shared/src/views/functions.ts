@@ -46,7 +46,7 @@ function contains(collection: unknown, value: unknown): boolean {
 /**
  * Get length of an array or string.
  * Returns 0 for non-array/non-string values.
- * @example length(labels) > 3
+ * @example length(name) > 3
  * @example length(name) > 20
  */
 function length(value: unknown): number {

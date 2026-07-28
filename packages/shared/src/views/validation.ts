@@ -16,8 +16,6 @@ export const AVAILABLE_FIELDS: Array<{ name: string; type: string; description: 
   // Strings
   { name: 'name', type: 'string', description: 'Session name' },
   { name: 'preview', type: 'string', description: 'Preview text of first user message' },
-  { name: 'sessionStatus', type: 'string', description: 'Status ID (e.g. "todo", "in-progress", "done")' },
-  { name: 'todoState', type: 'string', description: '(Deprecated — use sessionStatus) Status ID alias for backward compatibility' },
   { name: 'permissionMode', type: 'string', description: 'Permission mode (canonical: "explore"|"ask"|"execute"; internal: "safe"|"ask"|"allow-all")' },
   { name: 'model', type: 'string', description: 'Model override string' },
   { name: 'lastMessageRole', type: 'string', description: 'Last message role ("user", "assistant", "plan", "tool", "error")' },
@@ -26,7 +24,6 @@ export const AVAILABLE_FIELDS: Array<{ name: string; type: string; description: 
   { name: 'lastUsedAt', type: 'number', description: 'Timestamp (ms) of last activity' },
   { name: 'createdAt', type: 'number', description: 'Timestamp (ms) of session creation' },
   { name: 'messageCount', type: 'number', description: 'Total number of messages in the session' },
-  { name: 'labelCount', type: 'number', description: 'Number of labels on the session' },
   { name: 'tokenUsage.inputTokens', type: 'number', description: 'Input tokens consumed' },
   { name: 'tokenUsage.outputTokens', type: 'number', description: 'Output tokens consumed' },
   { name: 'tokenUsage.totalTokens', type: 'number', description: 'Total tokens' },
@@ -35,12 +32,10 @@ export const AVAILABLE_FIELDS: Array<{ name: string; type: string; description: 
 
   // Booleans
   { name: 'isFlagged', type: 'boolean', description: 'Whether session is starred' },
+  { name: 'isArchived', type: 'boolean', description: 'Whether session is archived' },
   { name: 'hasUnread', type: 'boolean', description: 'Whether session has unread messages' },
   { name: 'isProcessing', type: 'boolean', description: 'Whether agent is currently running' },
   { name: 'hasPendingPlan', type: 'boolean', description: 'Whether there\'s a pending plan to accept' },
-
-  // Arrays
-  { name: 'labels', type: 'array', description: 'Labels array (for contains() checks)' },
 ];
 
 /**
@@ -49,8 +44,8 @@ export const AVAILABLE_FIELDS: Array<{ name: string; type: string; description: 
 export const AVAILABLE_FUNCTIONS: Array<{ name: string; signature: string; description: string; example: string }> = [
   { name: 'daysSince', signature: 'daysSince(timestamp)', description: 'Days elapsed since timestamp', example: 'daysSince(lastUsedAt) > 7' },
   { name: 'hoursSince', signature: 'hoursSince(timestamp)', description: 'Hours elapsed since timestamp', example: 'hoursSince(lastUsedAt) > 24' },
-  { name: 'contains', signature: 'contains(arr, value)', description: 'Array/string contains value', example: 'contains(labels, "bug")' },
-  { name: 'length', signature: 'length(arr)', description: 'Array or string length', example: 'length(labels) > 3' },
+  { name: 'contains', signature: 'contains(value, part)', description: 'String/array contains value', example: 'contains(name, "release")' },
+  { name: 'length', signature: 'length(value)', description: 'Array or string length', example: 'length(name) > 10' },
   { name: 'startsWith', signature: 'startsWith(str, prefix)', description: 'String starts with prefix', example: 'startsWith(name, "feat")' },
   { name: 'lower', signature: 'lower(str)', description: 'Lowercase string', example: 'lower(model) == "opus"' },
 ];

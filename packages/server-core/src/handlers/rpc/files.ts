@@ -39,7 +39,7 @@ export function registerFilesHandlers(server: RpcServer, deps: HandlerDeps): voi
       return content
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error'
-      // ENOENT is expected for optional config files (e.g. automations.json)
+      // ENOENT is expected for optional config files.
       if (error instanceof Error && 'code' in error && (error as NodeJS.ErrnoException).code === 'ENOENT') {
         deps.platform.logger.debug('readFile: file not found:', path)
       } else {

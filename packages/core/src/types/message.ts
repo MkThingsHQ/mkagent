@@ -247,7 +247,7 @@ export interface Message {
   isBackground?: boolean;   // Flag for UI differentiation
   // Stored attachments for user messages (persistent, no base64)
   attachments?: StoredAttachment[];
-  // Content badges for inline display (sources, skills)
+  // Content badges for inline display (Skills, files, and commands)
   badges?: ContentBadge[];
   /** Annotation payloads for this message */
   annotations?: AnnotationV1[];
@@ -319,7 +319,7 @@ export interface StoredMessage {
   isError?: boolean;
   /** Stored attachments for user messages (persisted to disk) */
   attachments?: StoredAttachment[];
-  /** Content badges for inline display (sources, skills) */
+  /** Content badges for inline display (Skills, files, and commands) */
   badges?: ContentBadge[];
   /** Annotations persisted at message level */
   annotations?: AnnotationV1[];

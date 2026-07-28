@@ -77,9 +77,9 @@ describe('resolveFileMentions', () => {
         .toBe('/Users/me/project/foo.ts is broken')
     })
 
-    it('leaves [skill:...] and [source:...] untouched', () => {
-      expect(resolveFileMentions('[skill:commit] [source:github] do work', WORK_DIR))
-        .toBe('[skill:commit] [source:github] do work')
+    it('leaves [skill:...] untouched', () => {
+      expect(resolveFileMentions('[skill:commit] do work', WORK_DIR))
+        .toBe('[skill:commit] do work')
     })
   })
 })

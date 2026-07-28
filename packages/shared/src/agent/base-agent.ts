@@ -240,7 +240,7 @@ export abstract class BaseAgent implements AgentBackend {
     missingSkills: string[];
   } {
     const skills = loadAllSkills(this.config.workspace.rootPath, this.config.session?.workingDirectory);
-    const parsed = parseMentions(message, skills.map(skill => skill.slug), []);
+    const parsed = parseMentions(message, skills.map(skill => skill.slug));
     const skillPaths = new Map<string, string>();
     for (const slug of parsed.skills) {
       const skill = skills.find(candidate => candidate.slug === slug);

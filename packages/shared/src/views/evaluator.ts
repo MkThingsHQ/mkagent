@@ -100,7 +100,6 @@ export function evaluateViews(
 export function buildViewContext(meta: {
   name?: string;
   preview?: string;
-  sessionStatus?: string;
   permissionMode?: string;
   model?: string;
   lastMessageRole?: string;
@@ -108,9 +107,9 @@ export function buildViewContext(meta: {
   createdAt?: number;
   messageCount?: number;
   isFlagged?: boolean;
+  isArchived?: boolean;
   hasUnread?: boolean;
   isProcessing?: boolean;
-  labels?: string[];
   tokenUsage?: {
     inputTokens?: number;
     outputTokens?: number;
@@ -123,8 +122,6 @@ export function buildViewContext(meta: {
     // Strings (default to empty string for safe expression evaluation)
     name: meta.name ?? '',
     preview: meta.preview ?? '',
-    sessionStatus: meta.sessionStatus ?? '',
-    todoState: meta.sessionStatus ?? '',  // Deprecated alias — existing expressions using todoState still work
     permissionMode: meta.permissionMode ?? '',
     model: meta.model ?? '',
     lastMessageRole: meta.lastMessageRole ?? '',
@@ -133,10 +130,10 @@ export function buildViewContext(meta: {
     lastUsedAt: meta.lastMessageAt ?? 0,
     createdAt: meta.createdAt ?? 0,
     messageCount: meta.messageCount ?? 0,
-    labelCount: meta.labels?.length ?? 0,
 
     // Booleans
     isFlagged: meta.isFlagged ?? false,
+    isArchived: meta.isArchived ?? false,
     hasUnread: meta.hasUnread ?? false,
     isProcessing: meta.isProcessing ?? false,
     // Derived: hasPendingPlan is true when last message is a plan
@@ -150,8 +147,5 @@ export function buildViewContext(meta: {
       costUsd: meta.tokenUsage?.costUsd ?? 0,
       contextTokens: meta.tokenUsage?.contextTokens ?? 0,
     },
-
-    // Arrays
-    labels: meta.labels ?? [],
   };
 }
