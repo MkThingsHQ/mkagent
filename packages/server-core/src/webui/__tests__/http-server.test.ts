@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { startWebuiHttpServer } from '../http-server'
@@ -187,5 +187,37 @@ describe('startWebuiHttpServer', () => {
     expect(await configRes.json()).toEqual({
       wsUrl: 'wss://mkagent.example.com/ws',
     })
+  })
+
+  it('accepts authenticated browser attachments and sanitizes filenames', async () => {
+    const { baseUrl } = await createServer({ wsProtocol: 'ws' })
+    const authRes = await fetch(`${baseUrl}/api/auth`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password: PASSWORD }),
+    })
+    const form = new FormData()
+    form.append('files', new File(['hello'], '../unsafe?.txt', { type: 'text/plain' }))
+
+    const uploadRes = await fetch(`${baseUrl}/api/attachments`, {
+      method: 'POST',
+      headers: { cookie: extractSessionCookie(authRes) },
+      body: form,
+    })
+
+    expect(uploadRes.status).toBe(200)
+    const { paths } = await uploadRes.json() as { paths: string[] }
+    expect(paths).toHaveLength(1)
+    expect(paths[0]).not.toContain('..')
+    expect(readFileSync(paths[0]!, 'utf-8')).toBe('hello')
+    TEMP_DIRS.push(join(paths[0]!, '..'))
+  })
+
+  it('rejects browser attachments without a session cookie', async () => {
+    const { baseUrl } = await createServer()
+    const form = new FormData()
+    form.append('files', new File(['hello'], 'note.txt'))
+    const response = await fetch(`${baseUrl}/api/attachments`, { method: 'POST', body: form })
+    expect(response.status).toBe(401)
   })
 })

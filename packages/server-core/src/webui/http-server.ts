@@ -10,7 +10,9 @@
  *    for separate-port deployments or development.
  */
 
-import { join, extname } from 'node:path'
+import { mkdtemp, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { basename, join, extname } from 'node:path'
 import {
   RateLimiter,
   initPasswordHash,
@@ -305,6 +307,35 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
         return Response.redirect('/login', 302)
       }
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Browser file pickers cannot expose local paths. Upload selected files to
+    // a private temporary directory, then feed those paths through the same
+    // attachment validation and persistence pipeline used by Desktop.
+    if (path === '/api/attachments' && req.method === 'POST') {
+      let form
+      try {
+        form = await req.formData()
+      } catch {
+        return Response.json({ error: 'Invalid multipart form data' }, { status: 400 })
+      }
+      const files = form.getAll('files').filter((value): value is Exclude<typeof value, string> => typeof value !== 'string')
+      if (files.length === 0 || files.length > 20) {
+        return Response.json({ error: 'Select between 1 and 20 files' }, { status: 400 })
+      }
+      if (files.some(file => file.size > 50 * 1024 * 1024)) {
+        return Response.json({ error: 'Each attachment must be 50 MB or smaller' }, { status: 413 })
+      }
+
+      const uploadDir = await mkdtemp(join(tmpdir(), 'mkagent-webui-upload-'))
+      const paths: string[] = []
+      for (const [index, file] of files.entries()) {
+        const safeName = basename(file.name).replace(/[^a-zA-Z0-9._ -]/g, '_') || `attachment-${index + 1}`
+        const filePath = join(uploadDir, `${index + 1}-${safeName}`)
+        await writeFile(filePath, Buffer.from(await file.arrayBuffer()))
+        paths.push(filePath)
+      }
+      return Response.json({ paths })
     }
 
     // ── Serve SPA static files ──
