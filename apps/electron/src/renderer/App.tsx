@@ -3,11 +3,12 @@ import type { StoredSession, Workspace } from '@mkagent/core/types'
 import type { LlmConnectionWithStatus, NetworkProxySettings } from '@mkagent/shared/config'
 import { i18n } from '@mkagent/shared/i18n'
 import type { LoadedSkill } from '@mkagent/shared/skills'
-import type { FileAttachment, PermissionRequest, Session, SessionEvent, SkillFile } from '@mkagent/shared/protocol'
+import type { DeepLinkNavigation, FileAttachment, PermissionRequest, Session, SessionEvent, SkillFile } from '@mkagent/shared/protocol'
 import { Markdown, SessionViewer } from '@mkagent/ui'
 
 type Section = 'sessions' | 'skills' | 'settings'
 type SettingsPage = 'connections' | 'permissions' | 'proxy' | 'workspaces' | 'appearance' | 'language' | 'updates'
+type SessionFilter = 'all' | 'unread' | 'flagged' | 'running' | 'archived'
 
 const SETTINGS_PAGES: SettingsPage[] = ['connections', 'permissions', 'proxy', 'workspaces', 'appearance', 'language', 'updates']
 
@@ -179,7 +180,7 @@ function SettingsPanel({ page, workspaces }: { page: SettingsPage; workspaces: W
   </SettingsCard>
 
   if (page === 'workspaces') return <SettingsCard title="Workspaces" detail="Local workspaces isolate sessions, Skills, permissions, and Views.">{workspaces.map(workspace => <div className="mk-setting-row" key={workspace.id}><div><strong>{workspace.name}</strong><span>{workspace.slug}</span></div><code>{workspace.rootPath}</code></div>)}</SettingsCard>
-  if (page === 'appearance') return <SettingsCard title="Appearance" detail="Light, dark, and system appearance use the shared design tokens."><div className="mk-row">{['light', 'dark', 'system'].map(theme => <AppButton key={theme} onClick={() => { document.documentElement.classList.toggle('dark', theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)); localStorage.setItem('mkagent-theme', theme) }}>{theme}</AppButton>)}</div></SettingsCard>
+  if (page === 'appearance') return <SettingsCard title="Appearance" detail="Light, dark, and system appearance use the shared design tokens."><div className="mk-row">{['light', 'dark', 'system'].map(theme => <AppButton key={theme} onClick={() => { document.documentElement.classList.toggle('dark', theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)); void window.electronAPI.setColorTheme(theme) }}>{theme}</AppButton>)}</div></SettingsCard>
   if (page === 'language') return <SettingsCard title="Language" detail="MkAgent MVP maintains English and Simplified Chinese."><div className="mk-row"><AppButton onClick={() => i18n.changeLanguage('en')}>English</AppButton><AppButton onClick={() => i18n.changeLanguage('zh-Hans')}>简体中文</AppButton></div></SettingsCard>
   if (page === 'updates') return <SettingsCard title="Updates" detail="Desktop releases are downloaded from open-fox/mkagent-public."><AppButton onClick={async () => { const info = await window.electronAPI.checkForUpdates(); setMessage(info.available ? `Version ${info.latestVersion} is available.` : `MkAgent ${info.currentVersion} is up to date.`) }}>Check for updates</AppButton><span>{message}</span></SettingsCard>
   return <SettingsCard title="Permissions" detail="Workspace permission modes are enforced by Pi and can be changed in each session header."><p>Safe, ask, and allow-all modes remain aligned with the shared permission engine.</p></SettingsCard>
@@ -205,6 +206,7 @@ export default function App() {
   const [activeSkill, setActiveSkill] = useState<LoadedSkill | null>(null)
   const [skillFiles, setSkillFiles] = useState<SkillFile[]>([])
   const [query, setQuery] = useState('')
+  const [sessionFilter, setSessionFilter] = useState<SessionFilter>('all')
   const refreshRef = useRef(0)
 
   const refreshSessions = useCallback(async () => {
@@ -233,24 +235,46 @@ export default function App() {
   useEffect(() => window.electronAPI.onSessionEvent(() => void refreshSessions()), [refreshSessions])
 
   useEffect(() => {
-    const saved = localStorage.getItem('mkagent-theme') ?? 'system'
-    const dark = saved === 'dark' || (saved === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
-    document.documentElement.classList.toggle('dark', dark)
+    void window.electronAPI.getColorTheme().then(saved => {
+      const dark = saved === 'dark' || (saved === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)
+      document.documentElement.classList.toggle('dark', dark)
+    })
   }, [])
 
-  const selectSession = async (id: string) => {
+  const selectSession = useCallback(async (id: string) => {
     setActiveSessionId(id)
     setActiveSession(await window.electronAPI.getSessionMessages(id))
     await window.electronAPI.sessionCommand(id, { type: 'setActiveViewing', workspaceId })
-  }
+  }, [workspaceId])
 
-  const newSession = async () => {
+  const newSession = useCallback(async () => {
     if (!workspaceId) return
     const created = await window.electronAPI.createSession(workspaceId)
     setSection('sessions')
     await refreshSessions()
     await selectSession(created.id)
-  }
+  }, [refreshSessions, selectSession, workspaceId])
+
+  useEffect(() => window.electronAPI.onDeepLinkNavigate((navigation: DeepLinkNavigation) => {
+    const route = navigation.view?.split('/') ?? []
+    if (route[0] === 'settings') {
+      setSection('settings')
+      if (SETTINGS_PAGES.includes(route[1] as SettingsPage)) setSettingsPage(route[1] as SettingsPage)
+    } else if (route[0] === 'skills') {
+      setSection('skills')
+    } else if (route[0]) {
+      setSection('sessions')
+      setSessionFilter(route[0] === 'flagged' ? 'flagged' : route[0] === 'archived' ? 'archived' : 'all')
+      const sessionIndex = route.indexOf('session')
+      if (sessionIndex >= 0 && route[sessionIndex + 1]) void selectSession(route[sessionIndex + 1])
+    }
+
+    const id = navigation.actionParams?.id
+    if (navigation.action === 'new-chat') void newSession()
+    else if (id && navigation.action === 'delete-session') void window.electronAPI.deleteSession(id).then(refreshSessions)
+    else if (id && navigation.action === 'flag-session') void window.electronAPI.sessionCommand(id, { type: 'flag' }).then(refreshSessions)
+    else if (id && navigation.action === 'unflag-session') void window.electronAPI.sessionCommand(id, { type: 'unflag' }).then(refreshSessions)
+  }), [newSession, refreshSessions, selectSession])
 
   const selectSkill = async (skill: LoadedSkill) => {
     setActiveSkill(skill)
@@ -259,8 +283,13 @@ export default function App() {
 
   const filteredSessions = useMemo(() => sessions.filter(session => {
     const haystack = `${session.name ?? ''} ${session.preview ?? ''}`.toLowerCase()
-    return haystack.includes(query.toLowerCase())
-  }), [query, sessions])
+    const matchesFilter = sessionFilter === 'all' ? !session.isArchived
+      : sessionFilter === 'unread' ? Boolean(session.hasUnread) && !session.isArchived
+        : sessionFilter === 'flagged' ? Boolean(session.isFlagged) && !session.isArchived
+          : sessionFilter === 'running' ? Boolean(session.isProcessing) && !session.isArchived
+            : Boolean(session.isArchived)
+    return matchesFilter && haystack.includes(query.toLowerCase())
+  }), [query, sessionFilter, sessions])
 
   return <div className="mk-shell">
     <aside className="mk-nav">
@@ -269,7 +298,7 @@ export default function App() {
       <select value={workspaceId} onChange={async event => { setWorkspaceId(event.target.value); await window.electronAPI.switchWorkspace(event.target.value) }}>{workspaces.map(workspace => <option key={workspace.id} value={workspace.id}>{workspace.name}</option>)}</select>
     </aside>
     <section className="mk-list-pane">
-      <div className="mk-list-header"><strong>{section[0].toUpperCase() + section.slice(1)}</strong>{section === 'sessions' && <input placeholder="Search sessions" value={query} onChange={event => setQuery(event.target.value)} />}</div>
+      <div className="mk-list-header"><strong>{section[0].toUpperCase() + section.slice(1)}</strong>{section === 'sessions' && <><input placeholder="Search sessions" value={query} onChange={event => setQuery(event.target.value)} /><div className="mk-row mk-filters">{(['all', 'unread', 'flagged', 'running', 'archived'] as SessionFilter[]).map(filter => <AppButton key={filter} className={sessionFilter === filter ? 'active' : ''} onClick={() => setSessionFilter(filter)}>{filter}</AppButton>)}</div></>}</div>
       <div className="mk-list">
         {section === 'sessions' && filteredSessions.map(session => <button key={session.id} className={activeSessionId === session.id ? 'active' : ''} onClick={() => selectSession(session.id)}><strong>{session.isFlagged ? '★ ' : ''}{session.name || 'New session'}</strong><span>{session.preview || 'No messages yet'}</span><small>{session.isArchived ? 'Archived · ' : ''}{session.hasUnread ? 'Unread · ' : ''}{formatTime(session.lastMessageAt)}</small></button>)}
         {section === 'skills' && skills.map(skill => <button key={skill.slug} className={activeSkill?.slug === skill.slug ? 'active' : ''} onClick={() => selectSkill(skill)}><strong>{skill.metadata.name || skill.slug}</strong><span>{skill.metadata.description}</span><small>{skill.source}</small></button>)}

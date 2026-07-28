@@ -32,6 +32,7 @@ export const CHANNEL_MAP = {
   openSkillInEditor: invoke(RPC_CHANNELS.skills.OPEN_EDITOR),
   openSkillInFinder: invoke(RPC_CHANNELS.skills.OPEN_FINDER),
   onSkillsChanged: listener(RPC_CHANNELS.skills.CHANGED),
+  onDeepLinkNavigate: listener(RPC_CHANNELS.deeplink.NAVIGATE),
 
   listLlmConnections: invoke(RPC_CHANNELS.llmConnections.LIST),
   listLlmConnectionsWithStatus: invoke(RPC_CHANNELS.llmConnections.LIST_WITH_STATUS),
@@ -51,6 +52,8 @@ export const CHANNEL_MAP = {
   setNetworkProxySettings: invoke(RPC_CHANNELS.settings.SET_NETWORK_PROXY),
   getColorTheme: invoke(RPC_CHANNELS.theme.GET_COLOR_THEME),
   setColorTheme: invoke(RPC_CHANNELS.theme.SET_COLOR_THEME),
+  getSystemTheme: invoke(RPC_CHANNELS.theme.GET_SYSTEM_PREFERENCE),
+  onSystemThemeChange: listener(RPC_CHANNELS.theme.SYSTEM_CHANGED),
 
   openFileDialog: invoke(RPC_CHANNELS.file.OPEN_DIALOG),
   readFileAttachment: invoke(RPC_CHANNELS.file.READ_ATTACHMENT),

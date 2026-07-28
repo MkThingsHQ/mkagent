@@ -13,6 +13,7 @@ import type {
   SessionCommand,
   SessionEvent,
   SkillFile,
+  DeepLinkNavigation,
   TestLlmConnectionParams,
   TestLlmConnectionResult,
   UpdateInfo,
@@ -20,7 +21,24 @@ import type {
 } from '@mkagent/shared/protocol'
 
 export type TransportMode = 'local' | 'remote'
-export type TransportConnectionStatus = 'connected' | 'connecting' | 'reconnecting' | 'disconnected'
+export type TransportConnectionStatus = 'idle' | 'connected' | 'connecting' | 'reconnecting' | 'disconnected' | 'failed'
+
+export interface BrowserPaneCreateOptions {
+  id?: string
+  show?: boolean
+  bindToSessionId?: string
+}
+
+export interface BrowserEmptyStateLaunchPayload {
+  route: string
+  token?: string
+}
+
+export interface BrowserEmptyStateLaunchResult {
+  ok: boolean
+  handled: boolean
+  reason?: string
+}
 
 export interface TransportConnectionState {
   mode: TransportMode
@@ -56,6 +74,7 @@ export interface ElectronAPI {
   openSkillInEditor(workspaceId: string, skillSlug: string): Promise<void>
   openSkillInFinder(workspaceId: string, skillSlug: string): Promise<void>
   onSkillsChanged(callback: (workspaceId: string, skills: LoadedSkill[]) => void): () => void
+  onDeepLinkNavigate(callback: (navigation: DeepLinkNavigation) => void): () => void
 
   listLlmConnections(): Promise<LlmConnection[]>
   listLlmConnectionsWithStatus(): Promise<LlmConnectionWithStatus[]>
@@ -98,6 +117,7 @@ export interface ElectronAPI {
     list(): Promise<BrowserInstanceInfo[]>
     navigate(id: string, url: string): Promise<void>
     focus(id: string): Promise<void>
+    emptyStateLaunch(payload: BrowserEmptyStateLaunchPayload): Promise<BrowserEmptyStateLaunchResult>
     onStateChanged(callback: (state: BrowserInstanceInfo) => void): () => void
     onRemoved(callback: (id: string) => void): () => void
   }

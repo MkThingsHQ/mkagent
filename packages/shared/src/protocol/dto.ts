@@ -224,6 +224,13 @@ export interface BrowserInstanceInfo {
   themeColor: string | null;
   workspaceId?: string | null;
 }
-export interface DeepLinkNavigation { view?: string; workspaceId?: string; sessionId?: string; settingsSection?: string }
+export interface DeepLinkNavigation {
+  view?: string
+  workspaceId?: string
+  sessionId?: string
+  settingsSection?: string
+  action?: string
+  actionParams?: Record<string, string>
+}
 
 export type StoredSessionAttachment = StoredAttachment;
