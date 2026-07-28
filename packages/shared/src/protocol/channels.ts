@@ -1,0 +1,320 @@
+/**
+ * RPC channel names — organized by domain namespace.
+ * Wire-format strings (values) are the stable API contract.
+ * Key paths are internal and may be reorganized freely.
+ */
+export const RPC_CHANNELS = {
+  server: {
+    GET_WORKSPACES: 'server:getWorkspaces',
+    CREATE_WORKSPACE: 'server:createWorkspace',
+    GET_STATUS: 'server:getStatus',
+    GET_HEALTH: 'server:getHealth',
+    GET_ACTIVE_SESSIONS: 'server:getActiveSessions',
+    SHUTTING_DOWN: 'server:shuttingDown',
+    STATUS_CHANGED: 'server:statusChanged',
+    HOME_DIR: 'server:homeDir',
+  },
+  sessions: {
+    GET: 'sessions:get',
+    GET_UNREAD_SUMMARY: 'sessions:getUnreadSummary',
+    MARK_ALL_READ: 'sessions:markAllRead',
+    UNREAD_SUMMARY_CHANGED: 'sessions:unreadSummaryChanged',
+    CREATE: 'sessions:create',
+    DELETE: 'sessions:delete',
+    GET_MESSAGES: 'sessions:getMessages',
+    SEND_MESSAGE: 'sessions:sendMessage',
+    CANCEL: 'sessions:cancel',
+    KILL_SHELL: 'sessions:killShell',
+    RESPOND_TO_PERMISSION: 'sessions:respondToPermission',
+    RESPOND_TO_CREDENTIAL: 'sessions:respondToCredential',
+    COMMAND: 'sessions:command',
+    GET_PENDING_PLAN_EXECUTION: 'sessions:getPendingPlanExecution',
+    GET_PERMISSION_MODE_STATE: 'sessions:getPermissionModeState',
+    EVENT: 'session:event',
+    GET_MODEL: 'session:getModel',
+    SET_MODEL: 'session:setModel',
+    GET_FILES: 'sessions:getFiles',
+    GET_NOTES: 'sessions:getNotes',
+    SET_NOTES: 'sessions:setNotes',
+    WATCH_FILES: 'sessions:watchFiles',
+    UNWATCH_FILES: 'sessions:unwatchFiles',
+    FILES_CHANGED: 'sessions:filesChanged',
+    SEARCH_CONTENT: 'sessions:searchContent',
+    EXPORT: 'sessions:export',
+    IMPORT: 'sessions:import',
+  },
+  workspaces: {
+    GET: 'workspaces:get',
+    CREATE: 'workspaces:create',
+    CHECK_SLUG: 'workspaces:checkSlug',
+  },
+  window: {
+    GET_WORKSPACE: 'window:getWorkspace',
+    GET_MODE: 'window:getMode',
+    OPEN_WORKSPACE: 'window:openWorkspace',
+    OPEN_SESSION_IN_NEW_WINDOW: 'window:openSessionInNewWindow',
+    SWITCH_WORKSPACE: 'window:switchWorkspace',
+    CLOSE: 'window:close',
+    CLOSE_REQUESTED: 'window:closeRequested',
+    CONFIRM_CLOSE: 'window:confirmClose',
+    CANCEL_CLOSE: 'window:cancelClose',
+    SET_TRAFFIC_LIGHTS: 'window:setTrafficLights',
+    FOCUS_STATE: 'window:focusState',
+    GET_FOCUS_STATE: 'window:getFocusState',
+  },
+  file: {
+    READ: 'file:read',
+    READ_DATA_URL: 'file:readDataUrl',
+    READ_PREVIEW_DATA_URL: 'file:readPreviewDataUrl',
+    READ_BINARY: 'file:readBinary',
+    OPEN_DIALOG: 'file:openDialog',
+    READ_ATTACHMENT: 'file:readAttachment',
+    READ_USER_ATTACHMENT: 'file:readUserAttachment',
+    STORE_ATTACHMENT: 'file:storeAttachment',
+    GENERATE_THUMBNAIL: 'file:generateThumbnail',
+  },
+  fs: {
+    SEARCH: 'fs:search',
+    LIST_DIRECTORY: 'fs:listDirectory',
+  },
+  debug: {
+    LOG: 'debug:log',
+  },
+  theme: {
+    GET_SYSTEM_PREFERENCE: 'theme:getSystemPreference',
+    SYSTEM_CHANGED: 'theme:systemChanged',
+    APP_CHANGED: 'theme:appChanged',
+    GET_APP: 'theme:getApp',
+    GET_PRESETS: 'theme:getPresets',
+    LOAD_PRESET: 'theme:loadPreset',
+    GET_COLOR_THEME: 'theme:getColorTheme',
+    SET_COLOR_THEME: 'theme:setColorTheme',
+    BROADCAST_PREFERENCES: 'theme:broadcastPreferences',
+    PREFERENCES_CHANGED: 'theme:preferencesChanged',
+    GET_WORKSPACE_COLOR_THEME: 'theme:getWorkspaceColorTheme',
+    SET_WORKSPACE_COLOR_THEME: 'theme:setWorkspaceColorTheme',
+    GET_ALL_WORKSPACE_THEMES: 'theme:getAllWorkspaceThemes',
+    BROADCAST_WORKSPACE_THEME: 'theme:broadcastWorkspaceTheme',
+    WORKSPACE_THEME_CHANGED: 'theme:workspaceThemeChanged',
+  },
+  system: {
+    VERSIONS: 'system:versions',
+    HOME_DIR: 'system:homeDir',
+    IS_DEBUG_MODE: 'system:isDebugMode',
+  },
+  update: {
+    CHECK: 'update:check',
+    GET_INFO: 'update:getInfo',
+    INSTALL: 'update:install',
+    DISMISS: 'update:dismiss',
+    GET_DISMISSED: 'update:getDismissed',
+    AVAILABLE: 'update:available',
+    DOWNLOAD_PROGRESS: 'update:downloadProgress',
+  },
+  shell: {
+    OPEN_URL: 'shell:openUrl',
+    OPEN_FILE: 'shell:openFile',
+    SHOW_IN_FOLDER: 'shell:showInFolder',
+  },
+  menu: {
+    NEW_CHAT: 'menu:newChat',
+    NEW_WINDOW: 'menu:newWindow',
+    OPEN_SETTINGS: 'menu:openSettings',
+    KEYBOARD_SHORTCUTS: 'menu:keyboardShortcuts',
+    TOGGLE_FOCUS_MODE: 'menu:toggleFocusMode',
+    TOGGLE_SIDEBAR: 'menu:toggleSidebar',
+    QUIT: 'menu:quit',
+    MINIMIZE: 'menu:minimize',
+    MAXIMIZE: 'menu:maximize',
+    ZOOM_IN: 'menu:zoomIn',
+    ZOOM_OUT: 'menu:zoomOut',
+    ZOOM_RESET: 'menu:zoomReset',
+    TOGGLE_DEV_TOOLS: 'menu:toggleDevTools',
+    UNDO: 'menu:undo',
+    REDO: 'menu:redo',
+    CUT: 'menu:cut',
+    COPY: 'menu:copy',
+    PASTE: 'menu:paste',
+    SELECT_ALL: 'menu:selectAll',
+  },
+  deeplink: {
+    NAVIGATE: 'deeplink:navigate',
+  },
+  auth: {
+    LOGOUT: 'auth:logout',
+    SHOW_LOGOUT_CONFIRMATION: 'auth:showLogoutConfirmation',
+    SHOW_DELETE_SESSION_CONFIRMATION: 'auth:showDeleteSessionConfirmation',
+  },
+  credentials: {
+    HEALTH_CHECK: 'credentials:healthCheck',
+  },
+  onboarding: {
+    GET_AUTH_STATE: 'onboarding:getAuthState',
+    DEFER_SETUP: 'onboarding:deferSetup',
+  },
+  llmConnections: {
+    LIST: 'LLM_Connection:list',
+    LIST_WITH_STATUS: 'LLM_Connection:listWithStatus',
+    GET: 'LLM_Connection:get',
+    GET_API_KEY: 'LLM_Connection:getApiKey',
+    SAVE: 'LLM_Connection:save',
+    DELETE: 'LLM_Connection:delete',
+    TEST: 'LLM_Connection:test',
+    SET_DEFAULT: 'LLM_Connection:setDefault',
+    SET_WORKSPACE_DEFAULT: 'LLM_Connection:setWorkspaceDefault',
+    REFRESH_MODELS: 'LLM_Connection:refreshModels',
+    CHANGED: 'LLM_Connection:changed',
+  },
+  settings: {
+    SETUP_LLM_CONNECTION: 'settings:setupLlmConnection',
+    TEST_LLM_CONNECTION_SETUP: 'settings:testLlmConnectionSetup',
+    GET_DEFAULT_THINKING_LEVEL: 'settings:getDefaultThinkingLevel',
+    SET_DEFAULT_THINKING_LEVEL: 'settings:setDefaultThinkingLevel',
+    GET_NETWORK_PROXY: 'settings:getNetworkProxy',
+    SET_NETWORK_PROXY: 'settings:setNetworkProxy',
+    GET_SERVER_CONFIG: 'settings:getServerConfig',
+    SET_SERVER_CONFIG: 'settings:setServerConfig',
+    GET_SERVER_STATUS: 'settings:getServerStatus',
+  },
+  pi: {
+    GET_API_KEY_PROVIDERS: 'pi:getApiKeyProviders',
+    GET_PROVIDER_BASE_URL: 'pi:getProviderBaseUrl',
+    GET_PROVIDER_MODELS: 'pi:getProviderModels',
+  },
+  dialog: {
+    OPEN_FOLDER: 'dialog:openFolder',
+  },
+  preferences: {
+    READ: 'preferences:read',
+    WRITE: 'preferences:write',
+  },
+  drafts: {
+    GET: 'drafts:get',
+    SET: 'drafts:set',
+    DELETE: 'drafts:delete',
+    GET_ALL: 'drafts:getAll',
+  },
+  workspace: {
+    GET_PERMISSIONS: 'workspace:getPermissions',
+    READ_IMAGE: 'workspace:readImage',
+    WRITE_IMAGE: 'workspace:writeImage',
+    SETTINGS_GET: 'workspaceSettings:get',
+    SETTINGS_UPDATE: 'workspaceSettings:update',
+  },
+  permissions: {
+    GET_DEFAULTS: 'permissions:getDefaults',
+    DEFAULTS_CHANGED: 'permissions:defaultsChanged',
+  },
+  skills: {
+    GET: 'skills:get',
+    GET_FILES: 'skills:getFiles',
+    DELETE: 'skills:delete',
+    OPEN_EDITOR: 'skills:openEditor',
+    OPEN_FINDER: 'skills:openFinder',
+    CHANGED: 'skills:changed',
+  },
+  views: {
+    LIST: 'views:list',
+    SAVE: 'views:save',
+  },
+  toolIcons: {
+    GET_MAPPINGS: 'toolIcons:getMappings',
+  },
+  logo: {
+    GET_URL: 'logo:getUrl',
+  },
+  notification: {
+    SHOW: 'notification:show',
+    NAVIGATE: 'notification:navigate',
+    GET_ENABLED: 'notification:getEnabled',
+    SET_ENABLED: 'notification:setEnabled',
+  },
+  input: {
+    GET_AUTO_CAPITALISATION: 'input:getAutoCapitalisation',
+    SET_AUTO_CAPITALISATION: 'input:setAutoCapitalisation',
+    GET_SEND_MESSAGE_KEY: 'input:getSendMessageKey',
+    SET_SEND_MESSAGE_KEY: 'input:setSendMessageKey',
+    GET_SPELL_CHECK: 'input:getSpellCheck',
+    SET_SPELL_CHECK: 'input:setSpellCheck',
+  },
+  power: {
+    GET_KEEP_AWAKE: 'power:getKeepAwake',
+    SET_KEEP_AWAKE: 'power:setKeepAwake',
+  },
+  appearance: {
+    GET_RICH_TOOL_DESCRIPTIONS: 'appearance:getRichToolDescriptions',
+    SET_RICH_TOOL_DESCRIPTIONS: 'appearance:setRichToolDescriptions',
+  },
+  tools: {
+    GET_BROWSER_TOOL_ENABLED: 'tools:getBrowserToolEnabled',
+    SET_BROWSER_TOOL_ENABLED: 'tools:setBrowserToolEnabled',
+  },
+  caching: {
+    GET_EXTENDED_PROMPT_CACHE: 'caching:getExtendedPromptCache',
+    SET_EXTENDED_PROMPT_CACHE: 'caching:setExtendedPromptCache',
+    GET_ENABLE_1M_CONTEXT: 'caching:getEnable1MContext',
+    SET_ENABLE_1M_CONTEXT: 'caching:setEnable1MContext',
+  },
+  rtk: {
+    GET_ENABLED: 'rtk:getEnabled',
+    SET_ENABLED: 'rtk:setEnabled',
+    GET_STATUS: 'rtk:getStatus',
+    GET_GAIN: 'rtk:getGain',
+  },
+  badge: {
+    REFRESH: 'badge:refresh',
+    SET_ICON: 'badge:setIcon',
+    DRAW: 'badge:draw',
+    DRAW_WINDOWS: 'badge:draw-windows',
+  },
+  releaseNotes: {
+    GET: 'releaseNotes:get',
+    GET_LATEST_VERSION: 'releaseNotes:getLatestVersion',
+  },
+  git: {
+    GET_BRANCH: 'git:getBranch',
+  },
+  gitbash: {
+    CHECK: 'gitbash:check',
+    BROWSE: 'gitbash:browse',
+    SET_PATH: 'gitbash:setPath',
+  },
+  browserPane: {
+    CREATE: 'browser-pane:create',
+    DESTROY: 'browser-pane:destroy',
+    LIST: 'browser-pane:list',
+    NAVIGATE: 'browser-pane:navigate',
+    GO_BACK: 'browser-pane:go-back',
+    GO_FORWARD: 'browser-pane:go-forward',
+    RELOAD: 'browser-pane:reload',
+    STOP: 'browser-pane:stop',
+    FOCUS: 'browser-pane:focus',
+    SNAPSHOT: 'browser-pane:snapshot',
+    CLICK: 'browser-pane:click',
+    FILL: 'browser-pane:fill',
+    SELECT: 'browser-pane:select',
+    SCREENSHOT: 'browser-pane:screenshot',
+    EVALUATE: 'browser-pane:evaluate',
+    SCROLL: 'browser-pane:scroll',
+    LAUNCH: 'browser-empty-state:launch',
+    STATE_CHANGED: 'browser-pane:state-changed',
+    REMOVED: 'browser-pane:removed',
+    INTERACTED: 'browser-pane:interacted',
+  },
+} as const
+
+// IPC_CHANNELS compat alias removed — all consumers now use RPC_CHANNELS
+
+/**
+ * Flatten all channel string values from the nested RPC_CHANNELS object.
+ * Used by the exhaustive routing test to ensure every channel is classified.
+ */
+export function getAllChannelValues(): string[] {
+  const values: string[] = []
+  for (const namespace of Object.values(RPC_CHANNELS)) {
+    for (const channel of Object.values(namespace)) {
+      values.push(channel)
+    }
+  }
+  return values
+}

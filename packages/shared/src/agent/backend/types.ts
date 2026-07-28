@@ -1,0 +1,496 @@
+/**
+ * Backend Abstraction Types
+ *
+ * Defines the core interface that all AI backends must implement.
+ * The agent facade delegates to these backends, enabling provider switching while
+ * maintaining a consistent API surface.
+ *
+ * Key design decisions:
+ * - Provider-agnostic events: All backends emit the same AgentEvent types
+ * - Capabilities-driven UI: Model/thinking selectors read from capabilities()
+ * - Callback pattern: Facade sets callbacks after creating backend
+ * - AsyncGenerator for streaming: consistent across Desktop, WebUI, and CLI
+ */
+
+import type { AgentEvent } from '@mkagent/core/types';
+import type { FileAttachment } from '../../utils/files.ts';
+import type { ThinkingLevel } from '../thinking-levels.ts';
+import type { PermissionMode } from '../mode-manager.ts';
+import type { Workspace } from '../../config/storage.ts';
+import type { SessionConfig as Session } from '../../sessions/storage.ts';
+
+// Import AbortReason and RecoveryMessage from core module (single source of truth)
+import { AbortReason, type RecoveryMessage } from '../core/index.ts';
+export { AbortReason, type RecoveryMessage };
+
+// Import LLM connection types for auth
+import type { LlmAuthType, LlmProviderType } from '../../config/llm-connections.ts';
+export type { LlmAuthType, LlmProviderType } from '../../config/llm-connections.ts';
+
+export interface BackendRuntimeUpdate {
+  model: string;
+  providerType?: LlmProviderType;
+  authType?: LlmAuthType;
+  runtime?: {
+    baseUrl?: string;
+    piAuthProvider?: string;
+    customEndpoint?: { api: string; supportsImages?: boolean };
+    customModels?: Array<string | { id: string; contextWindow?: number; supportsImages?: boolean }>;
+    [key: string]: unknown;
+  };
+}
+/**
+ * Provider identifier for AI backends.
+ */
+export type AgentProvider = 'pi';
+
+
+// ============================================================
+// Callback Types
+// ============================================================
+
+/**
+ * Permission prompt types for different tool categories.
+ */
+export type PermissionRequestType = 'bash' | 'file_write' | 'browser' | 'network' | 'admin_approval';
+
+/**
+ * Permission request callback signature.
+ * Called when a tool requires user permission before execution.
+ */
+export type PermissionCallback = (request: {
+  requestId: string;
+  toolName: string;
+  command?: string;
+  description: string;
+  type?: PermissionRequestType;
+  appName?: string;
+  reason?: string;
+  impact?: string;
+  requiresSystemPrompt?: boolean;
+  rememberForMinutes?: number;
+  commandHash?: string;
+  approvalTtlSeconds?: number;
+}) => void;
+
+/**
+ * Plan submission callback signature.
+ * Called when agent submits a plan for user review.
+ */
+export type PlanCallback = (planPath: string) => void;
+
+// ============================================================
+// Lifecycle Types
+// ============================================================
+
+/**
+ * Result of backend post-initialization (auth injection, config setup).
+ * Returned by postInit() so the session layer can surface warnings.
+ */
+export interface PostInitResult {
+  /** Whether auth credentials were successfully injected */
+  authInjected: boolean;
+  /** Optional warning message to surface in UI */
+  authWarning?: string;
+  /** Severity level for the warning */
+  authWarningLevel?: 'error' | 'warning' | 'info';
+}
+
+/**
+ * Host runtime context passed from the application shell (Electron/CLI/etc.).
+ * This is intentionally provider-agnostic metadata; backend drivers resolve
+ * provider-specific paths from this context internally.
+ */
+export interface BackendHostRuntimeContext {
+  /** App root path (packaged app path or repository root in development) */
+  appRootPath: string;
+  /** Optional resources path (needed for packaged Windows runtime resolution) */
+  resourcesPath?: string;
+  /** Whether the host app is running as a packaged build */
+  isPackaged: boolean;
+  /** Optional runtime override for Node/Bun executable */
+  nodeRuntimePath?: string;
+  /** Optional interceptor bundle override (CJS bundle loaded via --require) */
+  interceptorBundlePath?: string;
+}
+
+/**
+ * Provider-agnostic backend configuration used by the session layer.
+ * Provider-specific runtime details are resolved by backend drivers internally.
+ */
+export interface CoreBackendConfig {
+  /** Workspace configuration */
+  workspace: Workspace;
+
+  /** Session configuration (for resume) */
+  session?: Session;
+
+  /** Initial model ID */
+  model?: string;
+
+  /** Mini/utility model for summarization/title generation/mini-completions */
+  miniModel?: string;
+
+  /** Initial thinking level */
+  thinkingLevel?: ThinkingLevel;
+
+  /** Headless mode flag (disables interactive tools) */
+  isHeadless?: boolean;
+
+  /** Skip agent-level config file watching (server already owns a workspace-level watcher) */
+  skipConfigWatcher?: boolean;
+
+  /** Debug mode configuration */
+  debugMode?: {
+    enabled: boolean;
+    logFilePath?: string;
+  };
+
+  /** System prompt preset ('default' | 'mini' | custom string) */
+  systemPromptPreset?: 'default' | 'mini' | string;
+
+  /**
+   * Per-session environment variable overrides for the SDK subprocess.
+   * Spread after process.env in backend-specific option builders.
+   */
+  envOverrides?: Record<string, string>;
+
+  /** Callback when SDK session ID is captured/updated */
+  onSdkSessionIdUpdate?: (sdkSessionId: string) => void;
+
+  /** Callback when SDK session ID is cleared (e.g., after failed resume) */
+  onSdkSessionIdCleared?: () => void;
+
+  /**
+   * Called when the agent decides the persisted branch-fork metadata
+   * (branchFromSdkSessionId / branchFromSdkCwd / branchFromSdkTurnId) is
+   * unrecoverable on this machine — typically because the parent's sdk cwd
+   * doesn't exist locally (cross-machine session import) or the SDK fork
+   * spawn failed before establishing a child session.
+   *
+   * Implementations MUST clear all four fields (including sdkSessionId)
+   * atomically and persist. `onSdkSessionIdCleared` is insufficient because
+   * it only clears sdkSessionId — branch fields would reload from disk
+   * on next launch and re-trigger the failure.
+   */
+  onBranchForkInvalidated?: () => void;
+
+  /** Callback to get recent messages for recovery context */
+  getRecoveryMessages?: () => RecoveryMessage[];
+
+  /**
+   * Get ALL parent messages for branch fork fallback (not limited to 6).
+   * Called when SDK-level branch fork fails and we need to summarize
+   * the parent conversation for context injection via mini completion.
+   * Returns empty array for non-branched sessions.
+   */
+  getBranchFallbackMessages?: () => RecoveryMessage[];
+
+  /**
+   * Callback to get branch seed messages (up to branch cutoff) for first turn in seeded branch mode.
+   * When provided and non-empty, BaseAgent injects a hidden context block before the first user turn.
+   */
+  getBranchSeedMessages?: () => RecoveryMessage[];
+
+  /** Callback invoked after branch seed context has been injected. */
+  markBranchSeedApplied?: () => void;
+
+  /**
+   * Optional callback to resize an oversized image for API compatibility.
+   * Called from PreToolUse when Read targets an image exceeding the base64 size limit.
+   * Returns path to the resized temp file, or null if resize not possible.
+   * Provided by the host app (Electron uses nativeImage, server could use sharp, etc.).
+   */
+  onImageResize?: (filePath: string, maxSizeBytes: number) => Promise<string | null>;
+
+  /** Enable 1M context window for current Opus models. Default: true. Set false to use 200K and conserve usage limits. */
+  enable1MContext?: boolean;
+
+}
+
+// ============================================================
+// Backend Interface
+// ============================================================
+
+/**
+ * Options for the chat method.
+ */
+export interface ChatOptions {
+  /** Retry flag (internal use for session recovery) */
+  isRetry?: boolean;
+  /** Override thinking level for this message only */
+  thinkingOverride?: ThinkingLevel;
+}
+
+/**
+ * Core backend interface - all AI providers must implement this.
+ *
+ * The interface is designed to:
+   * 1. Abstract provider differences
+   * 2. Enable the facade pattern in the session layer
+ * 3. Support streaming via AsyncGenerator
+ * 4. Allow capability-based UI adaptation
+ */
+export interface AgentBackend {
+  // ============================================================
+  // Chat & Lifecycle
+  // ============================================================
+
+  /**
+   * Send a message and stream back events.
+   * This is the core agentic loop - handles tool execution, permission checks, etc.
+   *
+   * @param message - User message text
+   * @param attachments - Optional file attachments
+   * @param options - Optional chat configuration
+   * @yields AgentEvent stream
+   */
+  chat(
+    message: string,
+    attachments?: FileAttachment[],
+    options?: ChatOptions
+  ): AsyncGenerator<AgentEvent>;
+
+  /**
+   * Abort current query (user stop or internal abort).
+   *
+   * @param reason - Optional reason for abort (for logging/debugging)
+   */
+  abort(reason?: string): Promise<void>;
+
+  /**
+   * Force abort with specific reason.
+   * Used for true hard-stop semantics (user stop, redirect fallback, teardown).
+   *
+   * @param reason - AbortReason enum value
+   */
+  forceAbort(reason: AbortReason): void;
+
+  /**
+   * WS2: register a sink for background task events that arrive BETWEEN turns
+   * (when no chat() generator is being consumed) under keep-alive mode. Backends
+   * without a persistent cross-turn query may leave this unimplemented.
+   */
+  setBackgroundEventSink?(sink: ((event: AgentEvent) => void) | null): void;
+
+  /**
+   * Interrupt the current turn because control is being handed to the UI.
+   *
+   * Used for pause points like plan submission and auth requests, where the
+   * session should stop cleanly without necessarily using the backend's
+   * hardest abort primitive.
+   *
+   * @param reason - AbortReason enum value for the handoff boundary
+   */
+  interruptForHandoff(reason: AbortReason): void;
+
+  /**
+   * Redirect the agent mid-stream with a new user message.
+   * Called when the user sends a message while the agent is still processing.
+   *
+   * Each backend decides its own strategy:
+   * - Backends with native steering (e.g., Pi) inject the message into the
+   *   current stream and return true — events continue through the existing
+   *   generator, no abort needed.
+   * - Backends without steering call forceAbort(Redirect) internally and
+   *   return false — the session layer queues the message for re-send.
+   *
+   * @param message - The new user message
+   * @returns true if steered (events flow through existing stream),
+   *          false if aborted (session layer must queue + re-send)
+   */
+  redirect(message: string): boolean;
+
+  /**
+   * Run a simple text completion using the backend's auth infrastructure.
+   * Used for connection testing, title generation, and summarization.
+   */
+  runMiniCompletion(prompt: string): Promise<string | null>;
+
+  /**
+   * Clean up resources (MCP connections, watchers, etc.)
+   */
+  destroy(): void;
+
+  /**
+   * Alias for destroy() for consistency.
+   */
+  dispose(): void;
+
+  /**
+   * Post-construction initialization.
+   * Handles auth injection, initial config generation, etc.
+   * Called after construction and callback wiring, before first chat().
+   */
+  postInit(): Promise<PostInitResult>;
+
+  /**
+   * Ensure branch sessions are backend-ready before first user message.
+   * Called at branch creation time to avoid creating "fake branches" that have
+   * copied transcript history but no actual backend branch context.
+   *
+   * Default behavior can be a no-op for providers that don't need preflight.
+   */
+  ensureBranchReady(): Promise<void>;
+
+  /**
+   * Check if currently processing a query.
+   */
+  isProcessing(): boolean;
+
+  // ============================================================
+  // Model & Thinking Configuration
+  // ============================================================
+
+  /** Get current model ID */
+  getModel(): string;
+
+  /** Set model (should validate against capabilities) */
+  setModel(model: string): void;
+
+  /**
+   * Update runtime-affecting provider config without recreating the backend.
+   * Backends return false when the update cannot be applied in-place and the
+   * session manager should fall back to an idle restart.
+   */
+  updateRuntimeConfig?(update: BackendRuntimeUpdate): Promise<boolean>;
+
+  /**
+   * Dispose resources before an idle backend restart. Backends with subprocesses
+   * can wait for child process exit here to avoid transient process leaks.
+   */
+  disposeForRestart?(): Promise<void>;
+
+  /** Get current thinking level */
+  getThinkingLevel(): ThinkingLevel;
+
+  /** Set thinking level */
+  setThinkingLevel(level: ThinkingLevel): void;
+
+  // ============================================================
+  // Permission Mode
+  // ============================================================
+
+  /** Get current permission mode */
+  getPermissionMode(): PermissionMode;
+
+  /** Set permission mode */
+  setPermissionMode(mode: PermissionMode): void;
+
+  /** Cycle to next permission mode */
+  cyclePermissionMode(): PermissionMode;
+
+  // ============================================================
+  // State
+  // ============================================================
+
+  /** Get SDK session ID (for resume, null if no session) */
+  getSessionId(): string | null;
+
+  /** Whether this backend supports session branching */
+  readonly supportsBranching: boolean;
+
+  /**
+   * Get a bound summarize callback for passing to API tool builders.
+   */
+  getSummarizeCallback(): (prompt: string) => Promise<string | null>;
+
+  // ============================================================
+  // Session & Workspace State
+  // ============================================================
+
+  /** Update the working directory */
+  updateWorkingDirectory(path: string): void;
+
+  /** Update the SDK cwd (transcript storage location) */
+  updateSdkCwd(path: string): void;
+
+  /** Set workspace configuration */
+  setWorkspace(workspace: Workspace): void;
+
+  /** Set session ID */
+  setSessionId(sessionId: string | null): void;
+
+  /** Generate a session title from user message */
+  generateTitle(message: string, options?: { language?: string }): Promise<string | null>;
+
+  /** Regenerate a session title from recent conversation */
+  regenerateTitle(recentUserMessages: string[], lastAssistantResponse: string, options?: { language?: string }): Promise<string | null>;
+
+  // ============================================================
+  // Permission Resolution
+  // ============================================================
+
+  /**
+   * Respond to a pending permission request.
+   *
+   * @param requestId - Permission request ID
+   * @param allowed - Whether permission was granted
+   * @param alwaysAllow - Whether to remember this permission for session
+   */
+  respondToPermission(requestId: string, allowed: boolean, alwaysAllow?: boolean): void;
+
+  // ============================================================
+  // Callbacks (set by facade after construction)
+  // ============================================================
+
+  /** Called when a tool requires permission */
+  onPermissionRequest: PermissionCallback | null;
+
+  /** Called when agent submits a plan */
+  onPlanSubmitted: PlanCallback | null;
+
+  /** Called when permission mode changes */
+  onPermissionModeChange: ((mode: PermissionMode) => void) | null;
+
+  /** Called with debug messages */
+  onDebug: ((message: string) => void) | null;
+
+  /**
+   * Called when backend-specific authentication is required.
+   * Replaces per-backend callbacks (onChatGptAuthRequired, onGithubAuthRequired).
+   * The session layer wires this to surface auth warnings in the UI.
+   */
+  onBackendAuthRequired: ((reason: string) => void) | null;
+
+  /** Called when agent requests spawning a new session */
+  onSpawnSession: ((request: import('../base-agent.ts').SpawnSessionRequest) => Promise<import('../base-agent.ts').SpawnSessionResult>) | null;
+}
+
+/**
+ * Configuration for creating a backend.
+ */
+export interface BackendConfig extends CoreBackendConfig {
+  /**
+   * Provider/SDK to use for this backend.
+   * Determines which agent class is instantiated:
+   * - 'pi' → PiAgent (Pi via @earendil-works/pi-coding-agent)
+   */
+  provider: AgentProvider;
+
+  /**
+   * Full provider type from LLM connection.
+   * Includes compat variants and cloud providers.
+   * Used for routing validation, credential lookup, etc.
+   */
+  providerType?: LlmProviderType;
+
+  /**
+   * Authentication mechanism from LLM connection.
+   * Determines how credentials are retrieved and passed to the backend.
+   */
+  authType?: LlmAuthType;
+
+  /**
+   * Connection slug for credential routing.
+   * Set by factory when creating from a connection.
+   * Used to read/write credentials under the correct key.
+   */
+  connectionSlug?: string;
+
+  /**
+   * Opaque runtime payload resolved by backend drivers.
+   * This keeps provider-specific runtime details out of the public config surface.
+   */
+  runtime?: Record<string, unknown>;
+}

@@ -1,0 +1,287 @@
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { homedir } from 'node:os';
+import { join } from 'node:path';
+import { CONFIG_DIR } from '../config/paths.ts';
+import { isValidPermissionsFile } from '../config/validators.ts';
+import { debug } from '../utils/debug.ts';
+import { readJsonFileSync, safeJsonParse } from '../utils/files.ts';
+import { getBundledAssetsDir } from '../utils/paths.ts';
+import {
+  PermissionsConfigSchema,
+  SAFE_MODE_CONFIG,
+  type ApiEndpointRule,
+  type BlockedCommandHintRule,
+  type CompiledApiEndpointRule,
+  type CompiledBashPattern,
+  type CompiledBlockedCommandHint,
+  type PermissionPaths,
+  type PermissionsConfigFile,
+} from './mode-types.ts';
+
+export {
+  PermissionsConfigSchema,
+  type ApiEndpointRule,
+  type CompiledApiEndpointRule,
+  type CompiledBashPattern,
+  type PermissionPaths,
+  type PermissionsConfigFile,
+};
+
+export interface PatternWithComment {
+  pattern: string;
+  comment?: string;
+}
+
+export interface PermissionsCustomConfig {
+  allowedBashPatterns: PatternWithComment[];
+  allowedApiEndpoints: ApiEndpointRule[];
+  allowedWritePaths: string[];
+  blockedCommandHints: BlockedCommandHintRule[];
+}
+
+export interface MergedPermissionsConfig {
+  blockedTools: Set<string>;
+  readOnlyBashPatterns: CompiledBashPattern[];
+  blockedCommandHints: CompiledBlockedCommandHint[];
+  readOnlyMcpPatterns: RegExp[];
+  allowedApiEndpoints: CompiledApiEndpointRule[];
+  allowedWritePaths: string[];
+  displayName: string;
+  shortcutHint: string;
+  permissionPaths?: PermissionPaths;
+}
+
+export interface PermissionsContext {
+  workspaceRootPath: string;
+}
+
+let permissionsInitialized = false;
+
+export function getAppPermissionsDir(): string {
+  return join(process.env.MKAGENT_CONFIG_DIR || join(homedir(), '.mkagent'), 'permissions');
+}
+
+export function ensureDefaultPermissions(): void {
+  if (permissionsInitialized) return;
+  permissionsInitialized = true;
+  const bundledDir = getBundledAssetsDir('permissions');
+  if (!bundledDir) return;
+  const source = join(bundledDir, 'default.json');
+  const targetDir = getAppPermissionsDir();
+  const target = join(targetDir, 'default.json');
+  if (!existsSync(source)) return;
+  mkdirSync(targetDir, { recursive: true });
+  if (!existsSync(target) || !isValidPermissionsFile(target)) {
+    writeFileSync(target, readFileSync(source, 'utf-8'), 'utf-8');
+    return;
+  }
+
+  const bundled = PermissionsConfigSchema.safeParse(readJsonFileSync(source));
+  const installed = PermissionsConfigSchema.safeParse(readJsonFileSync(target));
+  if (!bundled.success || !installed.success) return;
+  if (!bundled.data.version || bundled.data.version <= (installed.data.version ?? '')) return;
+
+  const mergeByKey = <T>(current: T[] = [], defaults: T[] = [], key: (value: T) => string): T[] => {
+    const seen = new Set(current.map(key));
+    return [...current, ...defaults.filter(value => !seen.has(key(value)))];
+  };
+  const patternKey = (value: string | { pattern: string }): string =>
+    typeof value === 'string' ? value : value.pattern;
+  const apiKey = (value: ApiEndpointRule): string => `${value.method.toUpperCase()}:${value.path}`;
+  const hintKey = (value: BlockedCommandHintRule): string =>
+    `${value.command}:${value.whenNotMatching ?? ''}:${value.reason}`;
+
+  writeFileSync(
+    target,
+    `${JSON.stringify({
+      ...installed.data,
+      version: bundled.data.version,
+      allowedBashPatterns: mergeByKey(
+        installed.data.allowedBashPatterns,
+        bundled.data.allowedBashPatterns,
+        patternKey
+      ),
+      allowedApiEndpoints: mergeByKey(
+        installed.data.allowedApiEndpoints,
+        bundled.data.allowedApiEndpoints,
+        apiKey
+      ),
+      allowedWritePaths: mergeByKey(
+        installed.data.allowedWritePaths,
+        bundled.data.allowedWritePaths,
+        patternKey
+      ),
+      blockedCommandHints: mergeByKey(
+        installed.data.blockedCommandHints,
+        bundled.data.blockedCommandHints,
+        hintKey
+      ),
+    }, null, 2)}\n`,
+    'utf-8'
+  );
+}
+
+function emptyConfig(): PermissionsCustomConfig {
+  return {
+    allowedBashPatterns: [],
+    allowedApiEndpoints: [],
+    allowedWritePaths: [],
+    blockedCommandHints: [],
+  };
+}
+
+export function parsePermissionsJson(content: string): PermissionsCustomConfig {
+  try {
+    const result = PermissionsConfigSchema.safeParse(safeJsonParse(content));
+    if (!result.success) return emptyConfig();
+    const normalize = (value: string | { pattern: string; comment?: string }): PatternWithComment =>
+      typeof value === 'string' ? { pattern: value } : value;
+    const normalizePath = (value: string | { pattern: string }): string =>
+      typeof value === 'string' ? value : value.pattern;
+    return {
+      allowedBashPatterns: (result.data.allowedBashPatterns ?? []).map(normalize),
+      allowedApiEndpoints: result.data.allowedApiEndpoints ?? [],
+      allowedWritePaths: (result.data.allowedWritePaths ?? []).map(normalizePath),
+      blockedCommandHints: result.data.blockedCommandHints ?? [],
+    };
+  } catch {
+    return emptyConfig();
+  }
+}
+
+export function validatePermissionsConfig(content: string): {
+  valid: boolean;
+  errors: string[];
+} {
+  try {
+    const result = PermissionsConfigSchema.safeParse(safeJsonParse(content));
+    return result.success
+      ? { valid: true, errors: [] }
+      : { valid: false, errors: result.error.issues.map(issue => issue.message) };
+  } catch (error) {
+    return { valid: false, errors: [error instanceof Error ? error.message : String(error)] };
+  }
+}
+
+export function getWorkspacePermissionsPath(workspaceRootPath: string): string {
+  return join(workspaceRootPath, 'permissions.json');
+}
+
+export function loadDefaultPermissions(): PermissionsCustomConfig | null {
+  const path = join(getAppPermissionsDir(), 'default.json');
+  return existsSync(path) ? parsePermissionsJson(readFileSync(path, 'utf-8')) : null;
+}
+
+export function loadWorkspacePermissionsConfig(
+  workspaceRootPath: string
+): PermissionsCustomConfig | null {
+  const path = getWorkspacePermissionsPath(workspaceRootPath);
+  return existsSync(path) ? parsePermissionsJson(readFileSync(path, 'utf-8')) : null;
+}
+
+export function loadRawWorkspacePermissions(
+  workspaceRootPath: string
+): PermissionsConfigFile | null {
+  const path = getWorkspacePermissionsPath(workspaceRootPath);
+  if (!existsSync(path)) return null;
+  const result = PermissionsConfigSchema.safeParse(readJsonFileSync(path));
+  return result.success ? result.data : null;
+}
+
+export function saveWorkspacePermissions(
+  workspaceRootPath: string,
+  config: PermissionsConfigFile
+): void {
+  mkdirSync(workspaceRootPath, { recursive: true });
+  writeFileSync(
+    getWorkspacePermissionsPath(workspaceRootPath),
+    `${JSON.stringify(config, null, 2)}\n`,
+    'utf-8'
+  );
+  permissionsConfigCache.invalidateWorkspace(workspaceRootPath);
+}
+
+function compileRegex(pattern: string): RegExp | null {
+  try {
+    return new RegExp(pattern, 'i');
+  } catch {
+    return null;
+  }
+}
+
+function compileHint(rule: BlockedCommandHintRule): CompiledBlockedCommandHint | null {
+  const regex = rule.whenNotMatching ? compileRegex(rule.whenNotMatching) : undefined;
+  if (rule.whenNotMatching && !regex) return null;
+  return { ...rule, whenNotMatchingRegex: regex ?? undefined };
+}
+
+function applyConfig(target: MergedPermissionsConfig, config: PermissionsCustomConfig): void {
+  for (const entry of config.allowedBashPatterns) {
+    const regex = compileRegex(entry.pattern);
+    if (regex) target.readOnlyBashPatterns.push({ regex, source: entry.pattern, comment: entry.comment });
+  }
+  for (const rule of config.allowedApiEndpoints) {
+    const pathPattern = compileRegex(rule.path);
+    if (pathPattern) target.allowedApiEndpoints.push({ method: rule.method, pathPattern });
+  }
+  target.allowedWritePaths.push(...config.allowedWritePaths);
+  for (const hint of config.blockedCommandHints) {
+    const compiled = compileHint(hint);
+    if (compiled) target.blockedCommandHints.push(compiled);
+  }
+}
+
+export function isApiEndpointAllowed(
+  method: string,
+  path: string | undefined,
+  config: MergedPermissionsConfig
+): boolean {
+  if (!path) return false;
+  return config.allowedApiEndpoints.some(
+    rule => rule.method.toUpperCase() === method.toUpperCase() && rule.pathPattern.test(path)
+  );
+}
+
+class PermissionsConfigCache {
+  private merged = new Map<string, MergedPermissionsConfig>();
+
+  getMergedConfig(context: PermissionsContext): MergedPermissionsConfig {
+    const cached = this.merged.get(context.workspaceRootPath);
+    if (cached) return cached;
+    const result: MergedPermissionsConfig = {
+      blockedTools: new Set(SAFE_MODE_CONFIG.blockedTools),
+      readOnlyBashPatterns: [...SAFE_MODE_CONFIG.readOnlyBashPatterns],
+      blockedCommandHints: [...(SAFE_MODE_CONFIG.blockedCommandHints ?? [])],
+      readOnlyMcpPatterns: [],
+      allowedApiEndpoints: [],
+      allowedWritePaths: [],
+      displayName: SAFE_MODE_CONFIG.displayName,
+      shortcutHint: SAFE_MODE_CONFIG.shortcutHint,
+      permissionPaths: {
+        workspacePath: getWorkspacePermissionsPath(context.workspaceRootPath),
+        appDefaultPath: join(getAppPermissionsDir(), 'default.json'),
+        docsPath: join(CONFIG_DIR, 'docs', 'permissions.md'),
+      },
+    };
+    const defaults = loadDefaultPermissions();
+    const workspace = loadWorkspacePermissionsConfig(context.workspaceRootPath);
+    if (defaults) applyConfig(result, defaults);
+    if (workspace) applyConfig(result, workspace);
+    this.merged.set(context.workspaceRootPath, result);
+    return result;
+  }
+
+  invalidateDefaults(): void {
+    this.merged.clear();
+  }
+
+  invalidateWorkspace(workspaceRootPath: string): void {
+    this.merged.delete(workspaceRootPath);
+  }
+
+  clear(): void {
+    this.merged.clear();
+  }
+}
+
+export const permissionsConfigCache = new PermissionsConfigCache();
