@@ -31,6 +31,9 @@ import { bootstrapServer, startHealthHttpServer, generateServerToken } from '@mk
 import { validateSession, createWebuiHandler, nodeHttpAdapter } from '@mkagent/server-core/webui'
 import type { WebuiHandler } from '@mkagent/server-core/webui'
 import { getCredentialManager } from '@mkagent/shared/credentials'
+import { initializeBackendHostRuntime } from '@mkagent/shared/agent/backend'
+import { getAllPiModels, getPiModelsForAuthProvider, registerPiModelResolver } from '@mkagent/shared/config'
+import { ensureDefaultWorkspace } from '@mkagent/shared/workspaces'
 
 // --generate-token: print a crypto-random token and exit
 if (process.argv.includes('--generate-token')) {
@@ -89,6 +92,16 @@ function parseOptionalWebSocketUrl(name: string, value: string | undefined): str
 // In packaged mode, use MKAGENT_BUNDLED_ASSETS_ROOT env or cwd.
 const bundledAssetsRoot = process.env.MKAGENT_BUNDLED_ASSETS_ROOT
   ?? join(import.meta.dir, '..', '..', '..', '..')
+
+ensureDefaultWorkspace()
+registerPiModelResolver(provider => provider ? getPiModelsForAuthProvider(provider) : getAllPiModels())
+initializeBackendHostRuntime({
+  hostRuntime: {
+    appRootPath: process.env.MKAGENT_APP_ROOT ?? bundledAssetsRoot,
+    resourcesPath: process.env.MKAGENT_RESOURCES_PATH ?? bundledAssetsRoot,
+    isPackaged: process.env.MKAGENT_IS_PACKAGED === 'true',
+  },
+})
 
 // TLS configuration — when cert + key paths are provided, server listens on wss://
 let tls: WsRpcTlsOptions | undefined
