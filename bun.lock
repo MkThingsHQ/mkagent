@@ -113,7 +113,7 @@
       "name": "@mkagent/cli",
       "version": "0.1.0",
       "bin": {
-        "mkagent": "src/index.ts",
+        "mkagent": "dist/mkagent",
       },
       "dependencies": {
         "@mkagent/server-core": "workspace:*",
