@@ -9,6 +9,8 @@
  */
 
 import { describe, it, expect, afterEach } from 'bun:test'
+import { rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Subprocess } from 'bun'
 import WebSocket from 'ws'
@@ -27,6 +29,7 @@ interface SpawnedServer {
 
 async function spawnTestServer(extraEnv?: Record<string, string>): Promise<SpawnedServer> {
   const token = crypto.randomUUID() + crypto.randomUUID() // 72 chars, well above 16 minimum
+  const configDir = join(tmpdir(), `mkagent-server-test-${crypto.randomUUID()}`)
   const { CLAUDECODE: _, ...parentEnv } = process.env
 
   const proc = Bun.spawn(['bun', 'run', SERVER_ENTRY], {
@@ -34,6 +37,7 @@ async function spawnTestServer(extraEnv?: Record<string, string>): Promise<Spawn
       ...parentEnv,
       ...extraEnv,
       MKAGENT_SERVER_TOKEN: token,
+      MKAGENT_CONFIG_DIR: configDir,
       MKAGENT_RPC_PORT: '0',
       MKAGENT_RPC_HOST: '127.0.0.1',
       MKAGENT_HEALTH_PORT: '0', // random port
@@ -68,6 +72,7 @@ async function spawnTestServer(extraEnv?: Record<string, string>): Promise<Spawn
             stop: async () => {
               proc.kill('SIGTERM')
               await proc.exited
+              rmSync(configDir, { recursive: true, force: true })
             },
           })
           return
@@ -90,6 +95,7 @@ async function spawnTestServer(extraEnv?: Record<string, string>): Promise<Spawn
       }
       clearTimeout(timer)
       if (!url) {
+        rmSync(configDir, { recursive: true, force: true })
         reject(new Error('Server exited before printing MKAGENT_SERVER_URL'))
       }
     })()
@@ -150,11 +156,13 @@ describe('headless server smoke test', () => {
 
   it('rejects short token at startup', async () => {
     const token = 'short'
+    const configDir = join(tmpdir(), `mkagent-server-test-${crypto.randomUUID()}`)
     const { CLAUDECODE: _, ...parentEnv } = process.env
     const proc = Bun.spawn(['bun', 'run', SERVER_ENTRY], {
       env: {
         ...parentEnv,
         MKAGENT_SERVER_TOKEN: token,
+        MKAGENT_CONFIG_DIR: configDir,
         MKAGENT_RPC_PORT: '0',
         MKAGENT_RPC_HOST: '127.0.0.1',
       },
@@ -163,6 +171,7 @@ describe('headless server smoke test', () => {
     })
 
     const exitCode = await proc.exited
+    rmSync(configDir, { recursive: true, force: true })
     expect(exitCode).not.toBe(0)
   }, TEST_TIMEOUT)
 
