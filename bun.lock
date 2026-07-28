@@ -273,6 +273,7 @@
         "@mkagent/session-tools-core": "workspace:*",
         "bash-parser": "^0.5.0",
         "date-fns": "^4.1.0",
+        "filtrex": "^3.1.0",
         "glob": "^13.0.0",
         "i18next": "^26.0.3",
         "incr-regex-package": "^1.0.4",
@@ -1835,6 +1836,8 @@
     "filter-iterator": ["filter-iterator@0.0.1", "https://repo.huaweicloud.com/repository/npm/filter-iterator/-/filter-iterator-0.0.1.tgz", {}, "sha512-v4lhL7Qa8XpbW3LN46CEnmhGk3eHZwxfNl5at20aEkreesht4YKb/Ba3BUIbnPhAC/r3dmu7ABaGk6MAvh2alA=="],
 
     "filter-obj": ["filter-obj@1.1.0", "https://repo.huaweicloud.com/repository/npm/filter-obj/-/filter-obj-1.1.0.tgz", {}, "sha512-8rXg1ZnX7xzy2NGDVkBVaAy+lSlPNwad13BtgSlLuxfIslyt5Vg64U7tFcCt4WS1R0hvtnQybT/IyCkGZ3DpXQ=="],
+
+    "filtrex": ["filtrex@3.1.0", "https://repo.huaweicloud.com/repository/npm/filtrex/-/filtrex-3.1.0.tgz", {}, "sha512-mHzZ2wUISETF1OaEcNRiGz1ljuIV8c/C9td9qyAZ+wTwigkAk5RO9YrCxQKk5H9v7joDRFIBik9U5RTK9eXZ/A=="],
 
     "finalhandler": ["finalhandler@2.1.1", "https://repo.huaweicloud.com/repository/npm/finalhandler/-/finalhandler-2.1.1.tgz", { "dependencies": { "debug": "^4.4.0", "encodeurl": "^2.0.0", "escape-html": "^1.0.3", "on-finished": "^2.4.1", "parseurl": "^1.3.3", "statuses": "^2.0.1" } }, "sha512-S8KoZgRZN+a5rNwqTxlZZePjT/4cnm0ROV70LedRHZ0p8u9fRID0hJUZQpkKLzro8LfmC8sx23bY6tVNxv8pQA=="],
 
