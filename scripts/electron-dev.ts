@@ -189,7 +189,7 @@ function getElectronEnv(): Record<string, string> {
   };
 }
 
-const MAIN_BUNDLE_EXTERNALS = ["electron"];
+const MAIN_BUNDLE_EXTERNALS = ["electron", "@aws-sdk/client-s3"];
 
 // Run a one-shot esbuild using the JavaScript API
 async function runEsbuild(
