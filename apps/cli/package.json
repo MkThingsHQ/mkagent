@@ -1,0 +1,25 @@
+{
+  "name": "@mkagent/cli",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "description": "Terminal client for MkAgent server",
+  "type": "module",
+  "main": "src/index.ts",
+  "bin": {
+    "mkagent": "src/index.ts"
+  },
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "bun test src/"
+  },
+  "dependencies": {
+    "@mkagent/shared": "workspace:*",
+    "@mkagent/server-core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2",
+    "@types/node": "^22.0.0",
+    "@types/bun": "latest"
+  }
+}
