@@ -1,0 +1,94 @@
+appId: app.mkagent.desktop
+productName: MkAgent
+copyright: Copyright © 2026 MkAgent contributors
+electronVersion: "39.2.7"
+afterPack: scripts/afterPack.cjs
+
+directories:
+  output: release
+  buildResources: resources
+
+files:
+  - dist/**/*
+  - "!dist/renderer/src/**"
+  - "!**/*.map"
+  - package.json
+  - vendor/bun/**/*
+
+extraMetadata:
+  main: dist/main.cjs
+
+extraResources:
+  - from: ../../node_modules/@vscode/ripgrep/bin
+    to: app/node_modules/@vscode/ripgrep/bin
+
+publish:
+  provider: github
+  owner: open-fox
+  repo: mkagent-public
+
+asar: false
+
+mac:
+  category: public.app-category.productivity
+  icon: resources/icon.icns
+  extendInfo:
+    CFBundleIconName: AppIcon
+    CFBundleURLTypes:
+      - CFBundleURLName: app.mkagent.desktop
+        CFBundleURLSchemes:
+          - mkagent
+    NSLocalNetworkUsageDescription: MkAgent uses the local network to reach local models, servers, and devices requested by the user.
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+    - target: zip
+      arch: [arm64, x64]
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+  artifactName: MkAgent-${version}-${arch}.${ext}
+
+dmg:
+  artifactName: MkAgent-${version}-${arch}.dmg
+  icon: resources/icon.icns
+  iconSize: 80
+  title: MkAgent
+  contents:
+    - x: 130
+      y: 200
+    - x: 410
+      y: 200
+      type: link
+      path: /Applications
+  window:
+    width: 540
+    height: 380
+
+win:
+  icon: resources/icon.ico
+  target:
+    - target: nsis
+      arch: [x64]
+  artifactName: MkAgent-${version}-${arch}.${ext}
+  protocols:
+    - name: MkAgent
+      schemes: [mkagent]
+
+nsis:
+  oneClick: true
+  perMachine: false
+  deleteAppDataOnUninstall: true
+
+linux:
+  icon: resources/icon.png
+  category: Utility
+  maintainer: MkAgent contributors <support@mkagent.app>
+  target:
+    - target: AppImage
+      arch: [x64]
+  artifactName: MkAgent-${version}-${arch}.${ext}
+  protocols:
+    - name: MkAgent
+      schemes: [mkagent]

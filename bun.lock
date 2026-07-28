@@ -111,9 +111,9 @@
     },
     "apps/cli": {
       "name": "@mkagent/cli",
-      "version": "0.11.2",
+      "version": "0.1.0",
       "bin": {
-        "craft-cli": "src/index.ts",
+        "mkagent": "src/index.ts",
       },
       "dependencies": {
         "@mkagent/server-core": "workspace:*",
@@ -127,8 +127,8 @@
     },
     "apps/electron": {
       "name": "@mkagent/electron",
-      "version": "0.11.2",
-      "dependencies": {
+      "version": "0.1.0",
+      "devDependencies": {
         "@dnd-kit/core": "^6.3.1",
         "@dnd-kit/sortable": "^10.0.0",
         "@dnd-kit/utilities": "^3.2.2",
@@ -145,6 +145,7 @@
         "@radix-ui/react-popover": "^1.1.15",
         "@radix-ui/react-switch": "^1.2.6",
         "@tanstack/react-table": "^8.21.3",
+        "@types/ws": "^8.18.1",
         "chrono-node": "^2.9.0",
         "cmdk": "^1.1.1",
         "electron-log": "^5.4.3",
@@ -170,13 +171,10 @@
         "vaul": "^1.1.2",
         "ws": "^8.19.0",
       },
-      "devDependencies": {
-        "@types/ws": "^8.18.1",
-      },
     },
     "apps/webui": {
       "name": "@mkagent/webui",
-      "version": "0.11.2",
+      "version": "0.1.0",
       "dependencies": {
         "@mkagent/shared": "workspace:*",
         "@mkagent/ui": "workspace:*",
@@ -191,18 +189,14 @@
     },
     "packages/core": {
       "name": "@mkagent/core",
-      "version": "0.11.2",
+      "version": "0.1.0",
       "devDependencies": {
         "@types/uuid": "^11.0.0",
-      },
-      "peerDependencies": {
-        "@anthropic-ai/claude-agent-sdk": "0.3.197",
-        "@modelcontextprotocol/sdk": ">=1.29.0",
       },
     },
     "packages/pi-agent-server": {
       "name": "@mkagent/pi-agent-server",
-      "version": "0.11.2",
+      "version": "0.1.0",
       "bin": {
         "pi-agent-server": "./dist/index.js",
       },
@@ -222,9 +216,9 @@
     },
     "packages/server": {
       "name": "@mkagent/server",
-      "version": "0.11.2",
+      "version": "0.1.0",
       "bin": {
-        "craft-server": "src/index.ts",
+        "mkagent-server": "src/index.ts",
       },
       "dependencies": {
         "@mkagent/core": "workspace:*",
@@ -239,7 +233,7 @@
     },
     "packages/server-core": {
       "name": "@mkagent/server-core",
-      "version": "0.11.2",
+      "version": "0.1.0",
       "dependencies": {
         "@earendil-works/pi-ai": "0.80.6",
         "@mkagent/core": "workspace:*",
@@ -255,7 +249,7 @@
     },
     "packages/session-tools-core": {
       "name": "@mkagent/session-tools-core",
-      "version": "0.11.2",
+      "version": "0.1.0",
       "dependencies": {
         "beautiful-mermaid": "*",
         "gray-matter": "^4.0.3",
@@ -268,7 +262,7 @@
     },
     "packages/shared": {
       "name": "@mkagent/shared",
-      "version": "0.11.2",
+      "version": "0.1.0",
       "dependencies": {
         "@earendil-works/pi-agent-core": "0.80.6",
         "@earendil-works/pi-ai": "0.80.6",
@@ -278,9 +272,7 @@
         "@mkagent/core": "workspace:*",
         "@mkagent/session-tools-core": "workspace:*",
         "bash-parser": "^0.5.0",
-        "croner": "^10.0.1",
         "date-fns": "^4.1.0",
-        "filtrex": "^3.1.0",
         "glob": "^13.0.0",
         "i18next": "^26.0.3",
         "incr-regex-package": "^1.0.4",
@@ -292,14 +284,12 @@
         "@types/uuid": "^11.0.0",
       },
       "peerDependencies": {
-        "@anthropic-ai/claude-agent-sdk": "0.3.197",
-        "@modelcontextprotocol/sdk": ">=1.29.0",
         "zod": ">=4.0.0",
       },
     },
     "packages/ui": {
       "name": "@mkagent/ui",
-      "version": "0.11.2",
+      "version": "0.1.0",
       "dependencies": {
         "@mkagent/core": "workspace:*",
         "@mkagent/shared": "workspace:*",
@@ -359,24 +349,6 @@
   ],
   "packages": {
     "7zip-bin": ["7zip-bin@5.2.0", "https://repo.huaweicloud.com/repository/npm/7zip-bin/-/7zip-bin-5.2.0.tgz", {}, "sha512-ukTPVhqG4jNzMro2qA9HSCSSVJN3aN7tlb+hfqYCt3ER0yWroeA2VR38MNrOHLQ/cVj+DaIMad0kFCtWWowh/A=="],
-
-    "@anthropic-ai/claude-agent-sdk": ["@anthropic-ai/claude-agent-sdk@0.3.197", "https://repo.huaweicloud.com/repository/npm/@anthropic-ai/claude-agent-sdk/-/claude-agent-sdk-0.3.197.tgz", { "optionalDependencies": { "@anthropic-ai/claude-agent-sdk-darwin-arm64": "0.3.197", "@anthropic-ai/claude-agent-sdk-darwin-x64": "0.3.197", "@anthropic-ai/claude-agent-sdk-linux-arm64": "0.3.197", "@anthropic-ai/claude-agent-sdk-linux-arm64-musl": "0.3.197", "@anthropic-ai/claude-agent-sdk-linux-x64": "0.3.197", "@anthropic-ai/claude-agent-sdk-linux-x64-musl": "0.3.197", "@anthropic-ai/claude-agent-sdk-win32-arm64": "0.3.197", "@anthropic-ai/claude-agent-sdk-win32-x64": "0.3.197" }, "peerDependencies": { "@anthropic-ai/sdk": ">=0.93.0", "@modelcontextprotocol/sdk": "^1.29.0", "zod": "^4.0.0" } }, "sha512-XNIi8W1tb+QfMkcK+5kepOC6BsxG8wtupd72H+pIPzIJypVQhHy7FoX+KBMtTRYwtl+5dsjKyABhjWXebeUilw=="],
-
-    "@anthropic-ai/claude-agent-sdk-darwin-arm64": ["@anthropic-ai/claude-agent-sdk-darwin-arm64@0.3.197", "https://repo.huaweicloud.com/repository/npm/@anthropic-ai/claude-agent-sdk-darwin-arm64/-/claude-agent-sdk-darwin-arm64-0.3.197.tgz", { "os": "darwin", "cpu": "arm64" }, "sha512-jC6WvH5Hr6APTfbMjo4nC6LlyMMqbpCMwiHXIw7/AsQXIHQhZ+cRRMesQlV6UFI1l3O53gLZHzsG9cXwfrPHKw=="],
-
-    "@anthropic-ai/claude-agent-sdk-darwin-x64": ["@anthropic-ai/claude-agent-sdk-darwin-x64@0.3.197", "https://repo.huaweicloud.com/repository/npm/@anthropic-ai/claude-agent-sdk-darwin-x64/-/claude-agent-sdk-darwin-x64-0.3.197.tgz", { "os": "darwin", "cpu": "x64" }, "sha512-ZQNvGkMrTyatBlHTIQ4w2i2aLBuvq355UP/FDLnVXIH8l23RsL1x/0w9P+dqB7EmY9OZi/cPxSrpskpo+dZWLA=="],
-
-    "@anthropic-ai/claude-agent-sdk-linux-arm64": ["@anthropic-ai/claude-agent-sdk-linux-arm64@0.3.197", "https://repo.huaweicloud.com/repository/npm/@anthropic-ai/claude-agent-sdk-linux-arm64/-/claude-agent-sdk-linux-arm64-0.3.197.tgz", { "os": "linux", "cpu": "arm64" }, "sha512-pWhQgCtAft4EGM4Zn24HRad1a/k2u6oA+2uM/KCdjehfKtooDiHfMNd1yzXY/n9AEBWP0RHB2Vz3mJ30X2pVAg=="],
-
-    "@anthropic-ai/claude-agent-sdk-linux-arm64-musl": ["@anthropic-ai/claude-agent-sdk-linux-arm64-musl@0.3.197", "https://repo.huaweicloud.com/repository/npm/@anthropic-ai/claude-agent-sdk-linux-arm64-musl/-/claude-agent-sdk-linux-arm64-musl-0.3.197.tgz", { "os": "linux", "cpu": "arm64" }, "sha512-VuIGXsLGK/aqSQ0tTBqqPVNzjefWS5SWnK8mlYyQitT4s5UDzHXJm0UZBTGxRtlcS0e2+QAHKwbGBCq1ZKSXjg=="],
-
-    "@anthropic-ai/claude-agent-sdk-linux-x64": ["@anthropic-ai/claude-agent-sdk-linux-x64@0.3.197", "https://repo.huaweicloud.com/repository/npm/@anthropic-ai/claude-agent-sdk-linux-x64/-/claude-agent-sdk-linux-x64-0.3.197.tgz", { "os": "linux", "cpu": "x64" }, "sha512-AUccrbdcv4Hy/GteP/gYLjG/zDP+fe2BFtDMctEfRFVz40DazYDcOyW1+nIgSTQtxf5jSTAVVf3cNuXB2CZwlw=="],
-
-    "@anthropic-ai/claude-agent-sdk-linux-x64-musl": ["@anthropic-ai/claude-agent-sdk-linux-x64-musl@0.3.197", "https://repo.huaweicloud.com/repository/npm/@anthropic-ai/claude-agent-sdk-linux-x64-musl/-/claude-agent-sdk-linux-x64-musl-0.3.197.tgz", { "os": "linux", "cpu": "x64" }, "sha512-3Tuy7XhD4UIKE4A4RPmKJcbL7Q/3dcB1hEWQt2lKP7c/DlixeEv+tRzvpnFZKhFX2hy0tkBk3QjkozSAacMC/w=="],
-
-    "@anthropic-ai/claude-agent-sdk-win32-arm64": ["@anthropic-ai/claude-agent-sdk-win32-arm64@0.3.197", "https://repo.huaweicloud.com/repository/npm/@anthropic-ai/claude-agent-sdk-win32-arm64/-/claude-agent-sdk-win32-arm64-0.3.197.tgz", { "os": "win32", "cpu": "arm64" }, "sha512-Wx8uiAKBenDuL8lWQmrqnX5ppljaH5unQ9cKiCz2/9Kgf09dgnrwbX8n/FhndCZR8PmYw539eWwYVrSVc/bl6w=="],
-
-    "@anthropic-ai/claude-agent-sdk-win32-x64": ["@anthropic-ai/claude-agent-sdk-win32-x64@0.3.197", "https://repo.huaweicloud.com/repository/npm/@anthropic-ai/claude-agent-sdk-win32-x64/-/claude-agent-sdk-win32-x64-0.3.197.tgz", { "os": "win32", "cpu": "x64" }, "sha512-ZXJO/VvR3SI4G0gwthWeFXWdHB5RXPu3rtfGRcKZ/YgtDeW17rQ+LZIJTk2ywzbLb8EvlghR5JPgn293hC179Q=="],
 
     "@anthropic-ai/sdk": ["@anthropic-ai/sdk@0.91.1", "https://repo.huaweicloud.com/repository/npm/@anthropic-ai/sdk/-/sdk-0.91.1.tgz", { "dependencies": { "json-schema-to-ts": "^3.1.1" }, "peerDependencies": { "zod": "^3.25.0 || ^4.0.0" }, "optionalPeers": ["zod"], "bin": { "anthropic-ai-sdk": "bin/cli" } }, "sha512-LAmu761tSN9r66ixvmciswUj/ZC+1Q4iAfpedTfSVLeswRwnY3n2Nb6Tsk+cLPP28aLOPWeMgIuTuCcMC6W/iw=="],
 
@@ -1136,8 +1108,6 @@
 
     "@smithy/util-utf8": ["@smithy/util-utf8@2.3.0", "https://repo.huaweicloud.com/repository/npm/@smithy/util-utf8/-/util-utf8-2.3.0.tgz", { "dependencies": { "@smithy/util-buffer-from": "^2.2.0", "tslib": "^2.6.2" } }, "sha512-R8Rdn8Hy72KKcebgLiv8jQcQkXoLMOGGv5uI1/k0l+snqkOzQ1R0ChUBCxWMlBsFMekWjq0wRudIweFs7sKT5A=="],
 
-    "@stablelib/base64": ["@stablelib/base64@1.0.1", "https://repo.huaweicloud.com/repository/npm/@stablelib/base64/-/base64-1.0.1.tgz", {}, "sha512-1bnPQqSxSuc3Ii6MhBysoWCg58j97aUjuCSZrGSmDxNqtytIi0k8utUenAwTZN4V5mXXYGsVUI9zeBqy+jBOSQ=="],
-
     "@szmarczak/http-timer": ["@szmarczak/http-timer@4.0.6", "https://repo.huaweicloud.com/repository/npm/@szmarczak/http-timer/-/http-timer-4.0.6.tgz", { "dependencies": { "defer-to-connect": "^2.0.0" } }, "sha512-4BAffykYOgO+5nzBWYwE3W90sBgLJoUPRWWcL8wlyiM8IB8ipJz3UMJ9KXQd1RKQXpKp8Tutn80HZtWsu2u76w=="],
 
     "@tailwindcss/node": ["@tailwindcss/node@4.1.18", "https://repo.huaweicloud.com/repository/npm/@tailwindcss/node/-/node-4.1.18.tgz", { "dependencies": { "@jridgewell/remapping": "^2.3.4", "enhanced-resolve": "^5.18.3", "jiti": "^2.6.1", "lightningcss": "1.30.2", "magic-string": "^0.30.21", "source-map-js": "^1.2.1", "tailwindcss": "4.1.18" } }, "sha512-DoR7U1P7iYhw16qJ49fgXUlry1t4CpXeErJHnQ44JgTSKMaZUdf17cfn5mHchfJ4KRBZRFA/Coo+MUF5+gOaCQ=="],
@@ -1606,8 +1576,6 @@
 
     "crelt": ["crelt@1.0.6", "https://repo.huaweicloud.com/repository/npm/crelt/-/crelt-1.0.6.tgz", {}, "sha512-VQ2MBenTq1fWZUH9DJNGti7kKv6EeAuYr3cLwxUWhIu1baTaXh4Ib5W2CqHVqib4/MqbYGJqiL3Zb8GJZr3l4g=="],
 
-    "croner": ["croner@10.0.1", "https://repo.huaweicloud.com/repository/npm/croner/-/croner-10.0.1.tgz", {}, "sha512-ixNtAJndqh173VQ4KodSdJEI6nuioBWI0V1ITNKhZZsO0pEMoDxz539T4FTTbSZ/xIOSuDnzxLVRqBVSvPNE2g=="],
-
     "cross-dirname": ["cross-dirname@0.1.0", "https://repo.huaweicloud.com/repository/npm/cross-dirname/-/cross-dirname-0.1.0.tgz", {}, "sha512-+R08/oI0nl3vfPcqftZRpytksBXDzOUveBq/NBVx0sUp1axwzPQrKinNx5yd5sxPu8j1wIy8AfnVQ+5eFdha6Q=="],
 
     "cross-spawn": ["cross-spawn@7.0.6", "https://repo.huaweicloud.com/repository/npm/cross-spawn/-/cross-spawn-7.0.6.tgz", { "dependencies": { "path-key": "^3.1.0", "shebang-command": "^2.0.0", "which": "^2.0.1" } }, "sha512-uV2QOWP2nWzsy2aMp8aRibhi9dlzF5Hgh5SHaB9OiTGEyDTiJJyx0uy51QXdyWbtAHNua4XJzUKca3OzKUd3vA=="],
@@ -1840,8 +1808,6 @@
 
     "fast-levenshtein": ["fast-levenshtein@2.0.6", "https://repo.huaweicloud.com/repository/npm/fast-levenshtein/-/fast-levenshtein-2.0.6.tgz", {}, "sha512-DCXu6Ifhqcks7TZKY3Hxp3y6qphY5SJZmrWMDrKcERSOXWQdMhU9Ig/PYrzyw/ul9jOIyh0N4M0tbC5hodg8dw=="],
 
-    "fast-sha256": ["fast-sha256@1.3.0", "https://repo.huaweicloud.com/repository/npm/fast-sha256/-/fast-sha256-1.3.0.tgz", {}, "sha512-n11RGP/lrWEFI/bWdygLxhI+pVeo1ZYIVwvvPkW7azl/rOy+F3HYRZ2K5zeE9mmkhQppyv9sQFx0JM9UabnpPQ=="],
-
     "fast-uri": ["fast-uri@3.1.0", "https://repo.huaweicloud.com/repository/npm/fast-uri/-/fast-uri-3.1.0.tgz", {}, "sha512-iPeeDKJSWf4IEOasVVrknXpaBV0IApz/gp7S2bb7Z4Lljbl2MGJRqInZiUrQwV16cpzw/D3S5j5Julj/gT52AA=="],
 
     "fast-xml-builder": ["fast-xml-builder@1.2.0", "https://repo.huaweicloud.com/repository/npm/fast-xml-builder/-/fast-xml-builder-1.2.0.tgz", { "dependencies": { "path-expression-matcher": "^1.5.0", "xml-naming": "^0.1.0" } }, "sha512-00aAWieqff+ZJhsXA4g1g7M8k+7AYoMUUHF+/zFb5U6Uv/P0Vl4QZo84/IcufzYalLuEj9928bXN9PbbFzMF0Q=="],
@@ -1869,8 +1835,6 @@
     "filter-iterator": ["filter-iterator@0.0.1", "https://repo.huaweicloud.com/repository/npm/filter-iterator/-/filter-iterator-0.0.1.tgz", {}, "sha512-v4lhL7Qa8XpbW3LN46CEnmhGk3eHZwxfNl5at20aEkreesht4YKb/Ba3BUIbnPhAC/r3dmu7ABaGk6MAvh2alA=="],
 
     "filter-obj": ["filter-obj@1.1.0", "https://repo.huaweicloud.com/repository/npm/filter-obj/-/filter-obj-1.1.0.tgz", {}, "sha512-8rXg1ZnX7xzy2NGDVkBVaAy+lSlPNwad13BtgSlLuxfIslyt5Vg64U7tFcCt4WS1R0hvtnQybT/IyCkGZ3DpXQ=="],
-
-    "filtrex": ["filtrex@3.1.0", "https://repo.huaweicloud.com/repository/npm/filtrex/-/filtrex-3.1.0.tgz", {}, "sha512-mHzZ2wUISETF1OaEcNRiGz1ljuIV8c/C9td9qyAZ+wTwigkAk5RO9YrCxQKk5H9v7joDRFIBik9U5RTK9eXZ/A=="],
 
     "finalhandler": ["finalhandler@2.1.1", "https://repo.huaweicloud.com/repository/npm/finalhandler/-/finalhandler-2.1.1.tgz", { "dependencies": { "debug": "^4.4.0", "encodeurl": "^2.0.0", "escape-html": "^1.0.3", "on-finished": "^2.4.1", "parseurl": "^1.3.3", "statuses": "^2.0.1" } }, "sha512-S8KoZgRZN+a5rNwqTxlZZePjT/4cnm0ROV70LedRHZ0p8u9fRID0hJUZQpkKLzro8LfmC8sx23bY6tVNxv8pQA=="],
 
@@ -2940,8 +2904,6 @@
 
     "ssri": ["ssri@12.0.0", "https://repo.huaweicloud.com/repository/npm/ssri/-/ssri-12.0.0.tgz", { "dependencies": { "minipass": "^7.0.3" } }, "sha512-S7iGNosepx9RadX82oimUkvr0Ct7IjJbEbs4mJcTxst8um95J3sDYU1RBEOvdu6oL1Wek2ODI5i4MAw+dZ6cAQ=="],
 
-    "standardwebhooks": ["standardwebhooks@1.0.0", "https://repo.huaweicloud.com/repository/npm/standardwebhooks/-/standardwebhooks-1.0.0.tgz", { "dependencies": { "@stablelib/base64": "^1.0.0", "fast-sha256": "^1.3.0" } }, "sha512-BbHGOQK9olHPMvQNHWul6MYlrRTAOKn03rOe4A8O3CLWhNf4YHBqq2HJKKC+sfqpxiBY52pNeesD6jIiLDz8jg=="],
-
     "stat-mode": ["stat-mode@1.0.0", "https://repo.huaweicloud.com/repository/npm/stat-mode/-/stat-mode-1.0.0.tgz", {}, "sha512-jH9EhtKIjuXZ2cWxmXS8ZP80XyC3iasQxMDV8jzhNJpfDb7VbQLVW4Wvsxz9QZvzV+G4YoSfBUVKDOyxLzi/sg=="],
 
     "statuses": ["statuses@2.0.2", "https://repo.huaweicloud.com/repository/npm/statuses/-/statuses-2.0.2.tgz", {}, "sha512-DvEy55V3DB7uknRo+4iOGT5fP1slR8wQohVdknigZPMpMstaKJQWhwiYBACJE3Ul2pTnATihhBYnRhZQHGBiRw=="],
@@ -3229,8 +3191,6 @@
     "zod-validation-error": ["zod-validation-error@4.0.2", "https://repo.huaweicloud.com/repository/npm/zod-validation-error/-/zod-validation-error-4.0.2.tgz", { "peerDependencies": { "zod": "^3.25.0 || ^4.0.0" } }, "sha512-Q6/nZLe6jxuU80qb/4uJ4t5v2VEZ44lzQjPDhYJNztRQ4wyWc6VF3D3Kb/fAuPetZQnhS3hnajCf9CsWesghLQ=="],
 
     "zwitch": ["zwitch@2.0.4", "https://repo.huaweicloud.com/repository/npm/zwitch/-/zwitch-2.0.4.tgz", {}, "sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A=="],
-
-    "@anthropic-ai/claude-agent-sdk/@anthropic-ai/sdk": ["@anthropic-ai/sdk@0.100.0", "https://repo.huaweicloud.com/repository/npm/@anthropic-ai/sdk/-/sdk-0.100.0.tgz", { "dependencies": { "json-schema-to-ts": "^3.1.1", "standardwebhooks": "^1.0.0" }, "peerDependencies": { "zod": "^3.25.0 || ^4.0.0" }, "optionalPeers": ["zod"], "bin": { "anthropic-ai-sdk": "bin/cli" } }, "sha512-cAm3aXm6qAiHIvHxyIIGd6tVmsD2gDqlc2h0R20ijNUzGgVnIN822bit4mKbF6CkuV7qIrLQIPoAepHEpanrQQ=="],
 
     "@aws-crypto/crc32/@aws-sdk/types": ["@aws-sdk/types@3.969.0", "https://repo.huaweicloud.com/repository/npm/@aws-sdk/types/-/types-3.969.0.tgz", { "dependencies": { "@smithy/types": "^4.12.0", "tslib": "^2.6.2" } }, "sha512-7IIzM5TdiXn+VtgPdVLjmE6uUBUtnga0f4RiSEI1WW10RPuNvZ9U+pL3SwDiRDAdoGrOF9tSLJOFZmfuwYuVYQ=="],
 

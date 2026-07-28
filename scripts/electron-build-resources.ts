@@ -1,19 +1,9 @@
-/**
- * Cross-platform resources copy script
- */
+import { join } from 'node:path'
 
-import { existsSync, cpSync } from "fs";
-import { join } from "path";
+const root = join(import.meta.dir, '..')
+const result = Bun.spawnSync(
+  [process.execPath, 'run', 'scripts/copy-assets.ts'],
+  { cwd: join(root, 'apps', 'electron'), stdout: 'inherit', stderr: 'inherit' },
+)
 
-const ROOT_DIR = join(import.meta.dir, "..");
-const ELECTRON_DIR = join(ROOT_DIR, "apps/electron");
-
-const srcDir = join(ELECTRON_DIR, "resources");
-const destDir = join(ELECTRON_DIR, "dist/resources");
-
-if (existsSync(srcDir)) {
-  cpSync(srcDir, destDir, { recursive: true, force: true });
-  console.log("📦 Copied resources to dist");
-} else {
-  console.log("⚠️ No resources directory found");
-}
+if (result.exitCode !== 0) process.exit(result.exitCode)

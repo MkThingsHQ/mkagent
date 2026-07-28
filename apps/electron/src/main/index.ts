@@ -83,10 +83,13 @@ async function routeDeepLink(url: string) {
 
 function configureBundledTools() {
   const root = app.isPackaged ? join(process.resourcesPath, 'app') : process.cwd()
+  const resources = app.isPackaged
+    ? join(root, 'dist', 'resources')
+    : join(root, 'apps', 'electron', 'resources')
   const platformKey = `${process.platform}-${process.arch}`
-  const uvDir = join(root, 'apps', 'electron', 'resources', 'bin', platformKey)
-  const binDir = join(root, 'apps', 'electron', 'resources', 'bin')
-  const scriptsDir = join(root, 'apps', 'electron', 'resources', 'scripts')
+  const uvDir = join(resources, 'bin', platformKey)
+  const binDir = join(resources, 'bin')
+  const scriptsDir = join(resources, 'scripts')
   const uv = join(uvDir, process.platform === 'win32' ? 'uv.exe' : 'uv')
   const bun = join(root, 'vendor', 'bun', process.platform === 'win32' ? 'bun.exe' : 'bun')
   process.env.MKAGENT_IS_PACKAGED = app.isPackaged ? '1' : '0'
@@ -96,7 +99,7 @@ function configureBundledTools() {
   if (existsSync(bun)) process.env.MKAGENT_BUN = bun
   process.env.MKAGENT_SCRIPTS = scriptsDir
   process.env.PATH = `${binDir}${delimiter}${uvDir}${delimiter}${process.env.PATH ?? ''}`
-  setBundledAssetsRoot(root)
+  setBundledAssetsRoot(app.isPackaged ? join(root, 'dist') : join(root, 'apps', 'electron'))
   initializeBackendHostRuntime({ hostRuntime: { appRootPath: process.env.MKAGENT_APP_ROOT, resourcesPath: root, isPackaged: app.isPackaged } })
 }
 

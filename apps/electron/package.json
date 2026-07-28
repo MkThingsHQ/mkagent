@@ -35,7 +35,7 @@
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix"
   },
-  "dependencies": {
+  "devDependencies": {
     "@mkagent/core": "workspace:*",
     "@mkagent/server-core": "workspace:*",
     "@mkagent/shared": "workspace:*",
@@ -75,9 +75,7 @@
     "undici": "^7.22.0",
     "unist-util-visit": "^5.0.0",
     "vaul": "^1.1.2",
-    "ws": "^8.19.0"
-  },
-  "devDependencies": {
+    "ws": "^8.19.0",
     "@types/ws": "^8.18.1"
   }
 }
