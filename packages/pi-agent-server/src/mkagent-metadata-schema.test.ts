@@ -1,0 +1,112 @@
+import { describe, expect, it } from 'bun:test';
+import { createEditToolDefinition } from '@earendil-works/pi-coding-agent';
+import { allowMkAgentMetadataProperties, stripMkAgentMetadata } from './mkagent-metadata-schema.ts';
+
+describe('MkAgent metadata schema compatibility for Pi tools', () => {
+  it('widens a strict Edit-like schema with optional MkAgent metadata properties', () => {
+    const schema = {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        path: { type: 'string' },
+        edits: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              oldText: { type: 'string' },
+              newText: { type: 'string' },
+            },
+            required: ['oldText', 'newText'],
+          },
+        },
+      },
+      required: ['path', 'edits'],
+    };
+
+    const widened = allowMkAgentMetadataProperties(schema);
+
+    expect(widened).not.toBe(schema);
+    expect(widened.additionalProperties).toBe(false);
+    expect(widened.required).toEqual(schema.required);
+    expect(widened.required).not.toContain('_displayName');
+    expect(widened.required).not.toContain('_intent');
+    expect(widened.properties._displayName).toBeDefined();
+    expect(widened.properties._intent).toBeDefined();
+    expect(widened.properties.path).toBe(schema.properties.path);
+    expect(widened.properties.edits).toBe(schema.properties.edits);
+  });
+
+  it('widens the actual Pi Edit tool schema without making metadata required', () => {
+    const editTool = createEditToolDefinition('/tmp');
+    const widened = allowMkAgentMetadataProperties(editTool.parameters);
+    const widenedSchema = widened as {
+      additionalProperties?: unknown;
+      properties: Record<string, unknown>;
+      required?: string[];
+    };
+
+    // Preserve upstream additionalProperties as-is (pi 0.80.6 stopped setting
+    // `false`; the synthetic-schema test above covers preservation when set).
+    const upstream = editTool.parameters as { additionalProperties?: unknown };
+    expect(widenedSchema.additionalProperties).toBe(upstream.additionalProperties);
+    expect(widenedSchema.properties._displayName).toBeDefined();
+    expect(widenedSchema.properties._intent).toBeDefined();
+    expect(widenedSchema.required ?? []).not.toContain('_displayName');
+    expect(widenedSchema.required ?? []).not.toContain('_intent');
+  });
+
+  it('preserves upstream metadata properties if Pi defines them later', () => {
+    const upstreamDisplayName = { type: 'string', description: 'upstream display name' };
+    const upstreamIntent = { type: 'string', description: 'upstream intent' };
+    const schema = {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        _displayName: upstreamDisplayName,
+        _intent: upstreamIntent,
+        path: { type: 'string' },
+      },
+      required: ['path'],
+    };
+
+    const widened = allowMkAgentMetadataProperties(schema);
+
+    expect(widened.properties._displayName).toBe(upstreamDisplayName);
+    expect(widened.properties._intent).toBe(upstreamIntent);
+  });
+
+  it('returns unknown schema shapes unchanged', () => {
+    expect(allowMkAgentMetadataProperties(undefined)).toBeUndefined();
+    expect(allowMkAgentMetadataProperties('schema')).toBe('schema');
+
+    const noProperties = { type: 'string' };
+    expect(allowMkAgentMetadataProperties(noProperties)).toBe(noProperties);
+  });
+
+  it('strips MkAgent metadata before upstream Pi tool execution', () => {
+    const input = {
+      _displayName: 'Edit Lines',
+      _intent: 'Add punctuation',
+      path: 'random',
+      edits: [{ oldText: 'a', newText: 'b' }],
+    };
+
+    const clean = stripMkAgentMetadata(input);
+
+    expect(clean).toEqual({
+      path: 'random',
+      edits: [{ oldText: 'a', newText: 'b' }],
+    });
+    expect(clean).not.toHaveProperty('_displayName');
+    expect(clean).not.toHaveProperty('_intent');
+    expect(input).toHaveProperty('_displayName', 'Edit Lines');
+    expect(input).toHaveProperty('_intent', 'Add punctuation');
+  });
+
+  it('returns the same input object when no metadata is present', () => {
+    const input = { path: 'random' };
+    expect(stripMkAgentMetadata(input)).toBe(input);
+  });
+});
