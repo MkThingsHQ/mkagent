@@ -63,7 +63,7 @@
 }
 
 /* =============================================================================
-   CRAFT AGENT THEME - 6 Color System
+   MKAGENT THEME - 6 Color System
 
    Base colors:
    - background: Light/dark surface
@@ -1489,8 +1489,7 @@ html.dark[data-scenic] .fullscreen-overlay-background {
 }
 /* MkAgent application shell ------------------------------------------------ */
 .mk-shell {
-  display: grid;
-  grid-template-columns: minmax(168px, 0.72fr) minmax(240px, 1fr) minmax(480px, 3.1fr);
+  display: flex;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
@@ -1500,10 +1499,22 @@ html.dark[data-scenic] .fullscreen-overlay-background {
 
 .mk-nav,
 .mk-list-pane {
+  flex: 0 0 auto;
   min-width: 0;
   border-right: 1px solid hsl(var(--border));
   background: color-mix(in srgb, hsl(var(--muted)) 58%, hsl(var(--background)));
 }
+
+.mk-resizer {
+  position: relative;
+  z-index: var(--z-local);
+  width: 4px;
+  margin-left: -2px;
+  margin-right: -2px;
+  cursor: col-resize;
+  background: transparent;
+}
+.mk-resizer:hover { background: color-mix(in srgb, hsl(var(--accent)) 55%, transparent); }
 
 .mk-nav {
   display: flex;
@@ -1564,7 +1575,7 @@ html.dark[data-scenic] .fullscreen-overlay-background {
 .mk-list button span { overflow: hidden; color: hsl(var(--muted-foreground)); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .mk-list button small { color: hsl(var(--muted-foreground)); font-size: 10px; }
 
-.mk-main { min-width: 0; min-height: 0; overflow: hidden; background: hsl(var(--background)); }
+.mk-main { min-width: 360px; min-height: 0; flex: 1 1 auto; overflow: hidden; background: hsl(var(--background)); }
 .mk-chat-header,
 .mk-document-header,
 .mk-setting-row {
@@ -1608,6 +1619,8 @@ html.dark[data-scenic] .fullscreen-overlay-background {
 }
 .mk-button:hover { background: hsl(var(--accent)); }
 .mk-button.primary { color: hsl(var(--primary-foreground)); background: hsl(var(--primary)); }
+.mk-file-button { cursor: pointer; }
+.mk-file-button input { display: none; }
 
 .mk-document { height: 100%; overflow: auto; gap: 24px; padding: 42px clamp(24px, 6vw, 80px); }
 .mk-document-header { padding-bottom: 16px; border-bottom: 1px solid hsl(var(--border)); }
@@ -1641,9 +1654,31 @@ html.dark[data-scenic] .fullscreen-overlay-background {
 .mk-empty img { width: 56px; height: 56px; border-radius: 13px; }
 .mk-empty strong { color: hsl(var(--foreground)); font-size: 16px; }
 
+.mk-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background: rgb(0 0 0 / 45%);
+}
+.mk-mini-chat {
+  width: min(880px, 100%);
+  height: min(720px, 92vh);
+  overflow: hidden;
+  border: 1px solid hsl(var(--border));
+  border-radius: 16px;
+  background: hsl(var(--background));
+  box-shadow: var(--shadow-modal-small);
+}
+.mk-modal-header { display: flex; min-height: 48px; align-items: center; justify-content: space-between; padding: 8px 12px; border-bottom: 1px solid hsl(var(--border)); }
+.mk-mini-chat > div:last-child { height: calc(100% - 48px); }
+
 @media (max-width: 820px) {
-  .mk-shell { grid-template-columns: 58px minmax(190px, 0.8fr) minmax(360px, 2fr); }
-  .mk-nav { padding-inline: 8px; }
+  .mk-nav { width: 58px !important; padding-inline: 8px; }
+  .mk-list-pane { width: 220px !important; }
+  .mk-resizer { display: none; }
   .mk-nav button { justify-content: center; }
   .mk-nav button span,
   .mk-nav > select { display: none; }

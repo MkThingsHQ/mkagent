@@ -9,7 +9,7 @@
 
 import type { ReactNode } from 'react'
 import { useMemo, useState, useCallback } from 'react'
-import type { StoredSession } from '@mkagent/core'
+import type { AnnotationV1, StoredSession } from '@mkagent/core'
 import { cn } from '../../lib/utils'
 import { CHAT_LAYOUT, CHAT_CLASSES } from '../../lib/layout'
 import { PlatformProvider, type PlatformActions } from '../../context'
@@ -46,12 +46,19 @@ export interface SessionViewerProps {
   footer?: ReactNode
   /** Optional session folder path for stripping from file paths in tool display */
   sessionFolderPath?: string
+  onAcceptPlan?: () => void
+  onAcceptPlanWithCompact?: () => void
+  onBranch?: (messageId: string, options?: { newPanel?: boolean }) => void
+  onAddAnnotation?: (messageId: string, annotation: AnnotationV1) => void
+  onRemoveAnnotation?: (messageId: string, annotationId: string) => void
+  onUpdateAnnotation?: (messageId: string, annotationId: string, patch: Partial<AnnotationV1>) => void
+  onSaveAndSendFollowUp?: (target: { messageId: string; annotationId: string; note: string; selectedText: string }) => void
 }
 
 /**
- * CraftAgentLogo - The MkAgent "C" logo for branding
+ * MkAgent mark used at the end of a transcript.
  */
-function CraftAgentLogo({ className }: { className?: string }) {
+function MkAgentLogo({ className }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -83,6 +90,13 @@ export function SessionViewer({
   header,
   footer,
   sessionFolderPath,
+  onAcceptPlan,
+  onAcceptPlanWithCompact,
+  onBranch,
+  onAddAnnotation,
+  onRemoveAnnotation,
+  onUpdateAnnotation,
+  onSaveAndSendFollowUp,
 }: SessionViewerProps) {
   // Convert StoredMessage[] to Message[] and group into turns.
   // Viewer is always a snapshot of a finished session, so we mark it as not processing
@@ -217,6 +231,15 @@ export function SessionViewer({
                       : undefined
                     }
                     sessionFolderPath={sessionFolderPath}
+                    sessionId={session.id}
+                    isLastResponse={index === turns.length - 1}
+                    onAcceptPlan={onAcceptPlan}
+                    onAcceptPlanWithCompact={onAcceptPlanWithCompact}
+                    onBranch={onBranch}
+                    onAddAnnotation={onAddAnnotation}
+                    onRemoveAnnotation={onRemoveAnnotation}
+                    onUpdateAnnotation={onUpdateAnnotation}
+                    onSaveAndSendFollowUp={onSaveAndSendFollowUp}
                     annotationInteractionMode={mode === 'readonly' ? 'tooltip-only' : 'interactive'}
                   />
                 )
@@ -227,7 +250,7 @@ export function SessionViewer({
 
             {/* Bottom branding */}
             <div className={CHAT_CLASSES.brandingContainer}>
-              <CraftAgentLogo className="w-8 h-8 text-[#9570BE]/40" />
+              <MkAgentLogo className="w-8 h-8 text-[#9570BE]/40" />
             </div>
             </div>
           </div>

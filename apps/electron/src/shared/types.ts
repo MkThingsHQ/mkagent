@@ -58,6 +58,8 @@ export interface ElectronAPI {
   sendMessage(sessionId: string, message: string, attachments?: FileAttachment[], storedAttachments?: StoredAttachment[]): Promise<void>
   cancelProcessing(sessionId: string, silent?: boolean): Promise<void>
   sessionCommand(sessionId: string, command: SessionCommand): Promise<unknown>
+  exportSession(sessionId: string): Promise<unknown>
+  importSession(workspaceId: string, bundle: unknown, mode: 'move' | 'fork'): Promise<Session>
   respondToPermission(sessionId: string, requestId: string, allowed: boolean, alwaysAllow: boolean, options?: PermissionResponseOptions): Promise<boolean>
   onSessionEvent(callback: (event: SessionEvent) => void): () => void
 
@@ -97,6 +99,8 @@ export interface ElectronAPI {
   onSystemThemeChange(callback: (isDark: boolean) => void): () => void
   getColorTheme(): Promise<string>
   setColorTheme(themeId: string): Promise<void>
+  readPreferences(): Promise<{ content: string; exists: boolean; path: string }>
+  writePreferences(content: string): Promise<{ success: boolean; error?: string }>
   changeLanguage?(language: string): Promise<void>
 
   openFileDialog(): Promise<string[]>

@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import type { StoredSession, Workspace } from '@mkagent/core/types'
+import type { AnnotationV1, StoredSession, Workspace } from '@mkagent/core/types'
 import type { LlmConnectionWithStatus, NetworkProxySettings } from '@mkagent/shared/config'
 import { i18n } from '@mkagent/shared/i18n'
 import type { LoadedSkill } from '@mkagent/shared/skills'
-import type { DeepLinkNavigation, FileAttachment, PermissionRequest, Session, SessionEvent, SkillFile } from '@mkagent/shared/protocol'
+import type { DeepLinkNavigation, FileAttachment, PermissionRequest, Session, SessionEvent, SkillFile, WorkspaceSettings } from '@mkagent/shared/protocol'
 import { Markdown, SessionViewer } from '@mkagent/ui'
 
 type Section = 'sessions' | 'skills' | 'settings'
@@ -24,17 +24,31 @@ function AppButton(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return <button {...props} className={cx('mk-button', props.className)} />
 }
 
-function ChatPanel({ session, workspaceId, onChanged }: { session: Session; workspaceId: string; onChanged: () => void }) {
+function ChatPanel({ session, workspaceId, onChanged, onDeleted, onBranched }: {
+  session: Session
+  workspaceId: string
+  onChanged: () => void
+  onDeleted: () => void
+  onBranched: (messageId: string, newPanel?: boolean) => void
+}) {
   const [draft, setDraft] = useState('')
   const [attachments, setAttachments] = useState<FileAttachment[]>([])
   const [permission, setPermission] = useState<PermissionRequest | null>(null)
   const [connections, setConnections] = useState<LlmConnectionWithStatus[]>([])
+  const pendingPlanRef = useRef<string | null>(null)
 
   useEffect(() => {
     void window.electronAPI.listLlmConnectionsWithStatus().then(setConnections)
     return window.electronAPI.onSessionEvent((event: SessionEvent) => {
       if (event.sessionId !== session.id) return
       if (event.type === 'permission_request') setPermission(event.request)
+      if (event.type === 'info' && event.statusType === 'compaction_complete' && pendingPlanRef.current !== null) {
+        pendingPlanRef.current = null
+        void window.electronAPI.sendMessage(session.id, i18n.t('plan.approved')).then(async () => {
+          await window.electronAPI.sessionCommand(session.id, { type: 'clearPendingPlanExecution' })
+          onChanged()
+        })
+      }
       onChanged()
     })
   }, [onChanged, session.id])
@@ -60,6 +74,39 @@ function ChatPanel({ session, workspaceId, onChanged }: { session: Session; work
     await window.electronAPI.respondToPermission(session.id, permission.requestId, allowed, alwaysAllow)
     setPermission(null)
   }
+
+  const planPath = session.messages.findLast(message => message.role === 'plan')?.planPath ?? ''
+  const approvePlan = async (compact: boolean) => {
+    await window.electronAPI.sessionCommand(session.id, { type: 'setPermissionMode', mode: 'allow-all' })
+    if (!compact) {
+      await window.electronAPI.sendMessage(session.id, i18n.t('plan.approved'))
+      onChanged()
+      return
+    }
+    pendingPlanRef.current = planPath
+    await window.electronAPI.sessionCommand(session.id, { type: 'setPendingPlanExecution', planPath })
+    await window.electronAPI.sendMessage(session.id, '/compact')
+    onChanged()
+  }
+
+  const updateAnnotation = async (command: Parameters<typeof window.electronAPI.sessionCommand>[1]) => {
+    await window.electronAPI.sessionCommand(session.id, command)
+    onChanged()
+  }
+
+  const exportCurrentSession = async () => {
+    const bundle = await window.electronAPI.exportSession(session.id)
+    const url = URL.createObjectURL(new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' }))
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${session.name || session.id}.mkagent-session.json`
+    link.click()
+    URL.revokeObjectURL(url)
+  }
+
+  const selectedConnection = connections.find(connection => connection.slug === session.llmConnection)
+    ?? connections.find(connection => connection.isDefault)
+  const modelOptions = (selectedConnection?.models ?? []).map(model => typeof model === 'string' ? { id: model, name: model } : model)
 
   const footer = (
     <div className="mk-composer-wrap">
@@ -95,13 +142,32 @@ function ChatPanel({ session, workspaceId, onChanged }: { session: Session; work
   const header = (
     <div className="mk-chat-header">
       <div><strong>{session.name || 'New session'}</strong><span>{session.currentStatus?.message ?? (session.isProcessing ? 'Processing' : 'Idle')}</span></div>
-      <select
-        value={session.llmConnection ?? ''}
-        onChange={event => window.electronAPI.sessionCommand(session.id, { type: 'setConnection', connectionSlug: event.target.value }).then(onChanged)}
-      >
-        <option value="">Default connection</option>
-        {connections.map(connection => <option key={connection.slug} value={connection.slug}>{connection.name}</option>)}
-      </select>
+      <div className="mk-row mk-chat-actions">
+        <select
+          value={session.llmConnection ?? ''}
+          onChange={event => window.electronAPI.sessionCommand(session.id, { type: 'setConnection', connectionSlug: event.target.value }).then(onChanged)}
+        >
+          <option value="">Default connection</option>
+          {connections.map(connection => <option key={connection.slug} value={connection.slug}>{connection.name}</option>)}
+        </select>
+        <select value={session.model ?? ''} onChange={event => window.electronAPI.setSessionModel(session.id, workspaceId, event.target.value || null, selectedConnection?.slug).then(onChanged)}>
+          <option value="">Default model</option>
+          {modelOptions.map(model => <option key={model.id} value={model.id}>{model.name || model.id}</option>)}
+        </select>
+        <select value={session.permissionMode ?? 'safe'} onChange={event => window.electronAPI.sessionCommand(session.id, { type: 'setPermissionMode', mode: event.target.value as 'safe' | 'ask' | 'allow-all' }).then(onChanged)}>
+          <option value="safe">Safe</option><option value="ask">Ask</option><option value="allow-all">Allow all</option>
+        </select>
+        <select value={session.thinkingLevel ?? 'medium'} onChange={event => window.electronAPI.sessionCommand(session.id, { type: 'setThinkingLevel', level: event.target.value as 'off' | 'low' | 'medium' | 'high' | 'xhigh' | 'max' }).then(onChanged)}>
+          <option value="off">Thinking off</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="xhigh">Extra high</option><option value="max">Maximum</option>
+        </select>
+        <AppButton title="Open Browser" onClick={() => window.electronAPI.browserPane.create(session.id)}>Browser</AppButton>
+        <AppButton title="Flag" onClick={() => window.electronAPI.sessionCommand(session.id, { type: session.isFlagged ? 'unflag' : 'flag' }).then(onChanged)}>{session.isFlagged ? 'Unflag' : 'Flag'}</AppButton>
+        <AppButton title="Archive" onClick={() => window.electronAPI.sessionCommand(session.id, { type: session.isArchived ? 'unarchive' : 'archive' }).then(onChanged)}>{session.isArchived ? 'Restore' : 'Archive'}</AppButton>
+        <AppButton title="Open in new window" onClick={() => window.electronAPI.openSessionInNewWindow(workspaceId, session.id)}>Window</AppButton>
+        <AppButton title="Export" onClick={exportCurrentSession}>Export</AppButton>
+        <AppButton title="Rename" onClick={() => { const name = window.prompt('Session name', session.name ?? ''); if (name?.trim()) void window.electronAPI.sessionCommand(session.id, { type: 'rename', name: name.trim() }).then(onChanged) }}>Rename</AppButton>
+        <AppButton title="Delete" onClick={() => { if (window.confirm('Delete this session?')) void window.electronAPI.deleteSession(session.id).then(onDeleted) }}>Delete</AppButton>
+      </div>
     </div>
   )
 
@@ -116,32 +182,51 @@ function ChatPanel({ session, workspaceId, onChanged }: { session: Session; work
         onOpenUrl: url => window.electronAPI.openUrl(url),
         onOpenFile: path => window.electronAPI.openFile(path),
       }}
+      onAcceptPlan={() => approvePlan(false)}
+      onAcceptPlanWithCompact={() => approvePlan(true)}
+      onBranch={(messageId, options) => onBranched(messageId, options?.newPanel)}
+      onAddAnnotation={(messageId, annotation) => updateAnnotation({ type: 'addAnnotation', messageId, annotation })}
+      onRemoveAnnotation={(messageId, annotationId) => updateAnnotation({ type: 'removeAnnotation', messageId, annotationId })}
+      onUpdateAnnotation={(messageId, annotationId, patch: Partial<AnnotationV1>) => updateAnnotation({ type: 'updateAnnotation', messageId, annotationId, patch })}
+      onSaveAndSendFollowUp={async ({ note, selectedText }) => {
+        await window.electronAPI.sendMessage(session.id, `${note}\n\n> ${selectedText}`)
+        onChanged()
+      }}
     />
   )
 }
 
-function SkillsPanel({ skill, files }: { skill: LoadedSkill | null; files: SkillFile[] }) {
+function SkillsPanel({ skill, files, workspaceId, onChanged, onAgentEdit }: {
+  skill: LoadedSkill | null
+  files: SkillFile[]
+  workspaceId: string
+  onChanged: () => void
+  onAgentEdit: (skill: LoadedSkill) => void
+}) {
   if (!skill) return <EmptyState title="Select a Skill" detail="Skills are discovered globally, per workspace, and from the current working directory." />
   return (
     <div className="mk-document">
-      <div className="mk-document-header"><div><strong>{skill.metadata.name || skill.slug}</strong><span>{skill.source}</span></div></div>
+      <div className="mk-document-header"><div><strong>{skill.metadata.name || skill.slug}</strong><span>{skill.source}</span></div><div className="mk-row"><AppButton onClick={() => onAgentEdit(skill)}>Edit with agent</AppButton><AppButton onClick={() => window.electronAPI.openSkillInEditor(workspaceId, skill.slug)}>Editor</AppButton><AppButton onClick={() => window.electronAPI.openSkillInFinder(workspaceId, skill.slug)}>Folder</AppButton><AppButton onClick={() => { if (window.confirm(`Delete ${skill.slug}?`)) void window.electronAPI.deleteSkill(workspaceId, skill.slug).then(onChanged) }}>Delete</AppButton></div></div>
       <Markdown>{skill.content}</Markdown>
       {files.length > 0 && <div className="mk-files"><strong>Files</strong>{files.map(file => <span key={file.name}>{file.name}</span>)}</div>}
     </div>
   )
 }
 
-function SettingsPanel({ page, workspaces }: { page: SettingsPage; workspaces: Workspace[] }) {
+function SettingsPanel({ page, workspaces, workspaceId, onWorkspacesChanged }: { page: SettingsPage; workspaces: Workspace[]; workspaceId: string; onWorkspacesChanged: () => void }) {
   const [connections, setConnections] = useState<LlmConnectionWithStatus[]>([])
   const [proxy, setProxy] = useState<NetworkProxySettings>({ enabled: false })
   const [form, setForm] = useState({ name: '', provider: 'openai', apiKey: '', baseUrl: '', model: '', protocol: 'openai-completions' as 'openai-completions' | 'anthropic-messages' })
   const [message, setMessage] = useState('')
+  const [workspaceName, setWorkspaceName] = useState('')
+  const [workspaceSettings, setWorkspaceSettings] = useState<WorkspaceSettings>({})
   const reloadConnections = useCallback(() => window.electronAPI.listLlmConnectionsWithStatus().then(setConnections), [])
 
   useEffect(() => {
     if (page === 'connections') void reloadConnections()
     if (page === 'proxy') void window.electronAPI.getNetworkProxySettings().then(setProxy)
-  }, [page, reloadConnections])
+    if (page === 'permissions' && workspaceId) void window.electronAPI.getWorkspaceSettings(workspaceId).then(settings => setWorkspaceSettings(settings ?? {}))
+  }, [page, reloadConnections, workspaceId])
 
   if (page === 'connections') {
     const save = async () => {
@@ -179,11 +264,27 @@ function SettingsPanel({ page, workspaces }: { page: SettingsPage; workspaces: W
     <AppButton className="primary" onClick={() => window.electronAPI.setNetworkProxySettings(proxy).then(() => setMessage('Saved.'))}>Save</AppButton><span>{message}</span>
   </SettingsCard>
 
-  if (page === 'workspaces') return <SettingsCard title="Workspaces" detail="Local workspaces isolate sessions, Skills, permissions, and Views.">{workspaces.map(workspace => <div className="mk-setting-row" key={workspace.id}><div><strong>{workspace.name}</strong><span>{workspace.slug}</span></div><code>{workspace.rootPath}</code></div>)}</SettingsCard>
+  if (page === 'workspaces') return <SettingsCard title="Workspaces" detail="Local workspaces isolate sessions, Skills, permissions, and Views.">
+    {workspaces.map(workspace => <div className="mk-setting-row" key={workspace.id}><div><strong>{workspace.name}</strong><span>{workspace.slug}</span></div><code>{workspace.rootPath}</code></div>)}
+    <div className="mk-row"><input placeholder="Workspace name" value={workspaceName} onChange={event => setWorkspaceName(event.target.value)} /><AppButton className="primary" onClick={async () => {
+      const folder = await window.electronAPI.openFolderDialog()
+      if (!folder || !workspaceName.trim()) return
+      await window.electronAPI.createWorkspace(folder, workspaceName.trim())
+      setWorkspaceName('')
+      onWorkspacesChanged()
+    }}>Create from folder</AppButton></div>
+  </SettingsCard>
   if (page === 'appearance') return <SettingsCard title="Appearance" detail="Light, dark, and system appearance use the shared design tokens."><div className="mk-row">{['light', 'dark', 'system'].map(theme => <AppButton key={theme} onClick={() => { document.documentElement.classList.toggle('dark', theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)); void window.electronAPI.setColorTheme(theme) }}>{theme}</AppButton>)}</div></SettingsCard>
   if (page === 'language') return <SettingsCard title="Language" detail="MkAgent MVP maintains English and Simplified Chinese."><div className="mk-row"><AppButton onClick={() => i18n.changeLanguage('en')}>English</AppButton><AppButton onClick={() => i18n.changeLanguage('zh-Hans')}>简体中文</AppButton></div></SettingsCard>
   if (page === 'updates') return <SettingsCard title="Updates" detail="Desktop releases are downloaded from open-fox/mkagent-public."><AppButton onClick={async () => { const info = await window.electronAPI.checkForUpdates(); setMessage(info.available ? `Version ${info.latestVersion} is available.` : `MkAgent ${info.currentVersion} is up to date.`) }}>Check for updates</AppButton><span>{message}</span></SettingsCard>
-  return <SettingsCard title="Permissions" detail="Workspace permission modes are enforced by Pi and can be changed in each session header."><p>Safe, ask, and allow-all modes remain aligned with the shared permission engine.</p></SettingsCard>
+  return <SettingsCard title="Permissions" detail="Workspace permission modes are enforced by Pi and can be changed in each session header.">
+    <label className="mk-stack"><span>Default permission mode</span><select value={workspaceSettings.permissionMode ?? 'safe'} onChange={async event => {
+      const permissionMode = event.target.value as NonNullable<WorkspaceSettings['permissionMode']>
+      setWorkspaceSettings(current => ({ ...current, permissionMode }))
+      await window.electronAPI.updateWorkspaceSetting(workspaceId, 'permissionMode', permissionMode)
+    }}><option value="safe">Safe</option><option value="ask">Ask</option><option value="allow-all">Allow all</option></select></label>
+    <p>Safe, ask, and allow-all modes use the shared command, path, Browser, and network policy.</p>
+  </SettingsCard>
 }
 
 function SettingsCard({ title, detail, children }: { title: string; detail: string; children?: React.ReactNode }) {
@@ -207,7 +308,10 @@ export default function App() {
   const [skillFiles, setSkillFiles] = useState<SkillFile[]>([])
   const [query, setQuery] = useState('')
   const [sessionFilter, setSessionFilter] = useState<SessionFilter>('all')
+  const [panelWidths, setPanelWidths] = useState({ navigation: 188, list: 300 })
+  const [miniSession, setMiniSession] = useState<Session | null>(null)
   const refreshRef = useRef(0)
+  const resizeRef = useRef<'navigation' | 'list' | null>(null)
 
   const refreshSessions = useCallback(async () => {
     const current = ++refreshRef.current
@@ -217,6 +321,12 @@ export default function App() {
     if (activeSessionId) setActiveSession(await window.electronAPI.getSessionMessages(activeSessionId))
   }, [activeSessionId, workspaceId])
 
+  const refreshWorkspaces = useCallback(async () => {
+    const available = await window.electronAPI.getWorkspaces()
+    setWorkspaces(available)
+    if (!workspaceId && available[0]) setWorkspaceId(available[0].id)
+  }, [workspaceId])
+
   useEffect(() => {
     void (async () => {
       const available = await window.electronAPI.getWorkspaces()
@@ -225,6 +335,44 @@ export default function App() {
       setWorkspaceId(selected ?? available[0]?.id ?? '')
     })()
   }, [])
+
+  useEffect(() => {
+    void window.electronAPI.readPreferences().then(result => {
+      try {
+        const layout = JSON.parse(result.content).uiLayout
+        if (typeof layout?.navigation === 'number' && typeof layout?.list === 'number') {
+          setPanelWidths({ navigation: layout.navigation, list: layout.list })
+        }
+      } catch {
+        // Keep the defaults when the optional UI layout is missing or malformed.
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    const move = (event: PointerEvent) => {
+      if (resizeRef.current === 'navigation') {
+        setPanelWidths(current => ({ ...current, navigation: Math.min(280, Math.max(148, event.clientX)) }))
+      } else if (resizeRef.current === 'list') {
+        setPanelWidths(current => ({ ...current, list: Math.min(520, Math.max(220, event.clientX - current.navigation)) }))
+      }
+    }
+    const stop = () => {
+      if (!resizeRef.current) return
+      resizeRef.current = null
+      void window.electronAPI.readPreferences().then(result => {
+        let preferences: Record<string, unknown> = {}
+        try { preferences = JSON.parse(result.content) } catch { /* Start a valid preferences object. */ }
+        return window.electronAPI.writePreferences(JSON.stringify({ ...preferences, uiLayout: panelWidths }, null, 2))
+      })
+    }
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', stop)
+    return () => {
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', stop)
+    }
+  }, [panelWidths])
 
   useEffect(() => {
     if (!workspaceId) return
@@ -255,6 +403,18 @@ export default function App() {
     await selectSession(created.id)
   }, [refreshSessions, selectSession, workspaceId])
 
+  const branchSession = useCallback(async (messageId: string, newPanel = false) => {
+    if (!workspaceId || !activeSessionId) return
+    const branch = await window.electronAPI.createSession(workspaceId, {
+      branchFromSessionId: activeSessionId,
+      branchFromMessageId: messageId,
+      parentSessionId: activeSessionId,
+    })
+    await refreshSessions()
+    if (newPanel) await window.electronAPI.openSessionInNewWindow(workspaceId, branch.id)
+    else await selectSession(branch.id)
+  }, [activeSessionId, refreshSessions, selectSession, workspaceId])
+
   useEffect(() => window.electronAPI.onDeepLinkNavigate((navigation: DeepLinkNavigation) => {
     const route = navigation.view?.split('/') ?? []
     if (route[0] === 'settings') {
@@ -281,6 +441,28 @@ export default function App() {
     setSkillFiles(await window.electronAPI.getSkillFiles(workspaceId, skill.slug))
   }
 
+  const startSkillMiniChat = async (skill?: LoadedSkill) => {
+    if (!workspaceId) return
+    const created = await window.electronAPI.createSession(workspaceId, {
+      name: skill ? `Edit ${skill.metadata.name || skill.slug}` : 'Create Skill',
+      systemPromptPreset: 'mini',
+      hidden: true,
+    })
+    setMiniSession(await window.electronAPI.getSessionMessages(created.id))
+    if (skill) {
+      await window.electronAPI.sendMessage(created.id, `Help me edit the Skill \`${skill.slug}\`. Review its existing SKILL.md, ask for the intended changes, then update it with the Skill tools.`)
+      setMiniSession(await window.electronAPI.getSessionMessages(created.id))
+    }
+  }
+
+  const importSessionFile = async (file: File | undefined) => {
+    if (!file || !workspaceId) return
+    const bundle = JSON.parse(await file.text())
+    const imported = await window.electronAPI.importSession(workspaceId, bundle, 'fork')
+    await refreshSessions()
+    await selectSession(imported.id)
+  }
+
   const filteredSessions = useMemo(() => sessions.filter(session => {
     const haystack = `${session.name ?? ''} ${session.preview ?? ''}`.toLowerCase()
     const matchesFilter = sessionFilter === 'all' ? !session.isArchived
@@ -292,23 +474,26 @@ export default function App() {
   }), [query, sessionFilter, sessions])
 
   return <div className="mk-shell">
-    <aside className="mk-nav">
+    <aside className="mk-nav" style={{ width: panelWidths.navigation }}>
       <button className="mk-new" onClick={newSession}>＋ <span>New session</span></button>
       <nav>{(['sessions', 'skills', 'settings'] as Section[]).map(item => <button key={item} className={section === item ? 'active' : ''} onClick={() => setSection(item)}>{item === 'sessions' ? '◫' : item === 'skills' ? '✦' : '⚙'} <span>{item}</span></button>)}</nav>
       <select value={workspaceId} onChange={async event => { setWorkspaceId(event.target.value); await window.electronAPI.switchWorkspace(event.target.value) }}>{workspaces.map(workspace => <option key={workspace.id} value={workspace.id}>{workspace.name}</option>)}</select>
     </aside>
-    <section className="mk-list-pane">
-      <div className="mk-list-header"><strong>{section[0].toUpperCase() + section.slice(1)}</strong>{section === 'sessions' && <><input placeholder="Search sessions" value={query} onChange={event => setQuery(event.target.value)} /><div className="mk-row mk-filters">{(['all', 'unread', 'flagged', 'running', 'archived'] as SessionFilter[]).map(filter => <AppButton key={filter} className={sessionFilter === filter ? 'active' : ''} onClick={() => setSessionFilter(filter)}>{filter}</AppButton>)}</div></>}</div>
+    <div className="mk-resizer" onPointerDown={() => { resizeRef.current = 'navigation' }} />
+    <section className="mk-list-pane" style={{ width: panelWidths.list }}>
+      <div className="mk-list-header"><div className="mk-row"><strong>{section[0].toUpperCase() + section.slice(1)}</strong>{section === 'skills' && <AppButton onClick={() => startSkillMiniChat()}>New with agent</AppButton>}{section === 'sessions' && <label className="mk-button mk-file-button">Import<input type="file" accept="application/json,.json" onChange={event => { void importSessionFile(event.target.files?.[0]); event.target.value = '' }} /></label>}</div>{section === 'sessions' && <><input placeholder="Search sessions" value={query} onChange={event => setQuery(event.target.value)} /><div className="mk-row mk-filters">{(['all', 'unread', 'flagged', 'running', 'archived'] as SessionFilter[]).map(filter => <AppButton key={filter} className={sessionFilter === filter ? 'active' : ''} onClick={() => setSessionFilter(filter)}>{filter}</AppButton>)}</div></>}</div>
       <div className="mk-list">
         {section === 'sessions' && filteredSessions.map(session => <button key={session.id} className={activeSessionId === session.id ? 'active' : ''} onClick={() => selectSession(session.id)}><strong>{session.isFlagged ? '★ ' : ''}{session.name || 'New session'}</strong><span>{session.preview || 'No messages yet'}</span><small>{session.isArchived ? 'Archived · ' : ''}{session.hasUnread ? 'Unread · ' : ''}{formatTime(session.lastMessageAt)}</small></button>)}
         {section === 'skills' && skills.map(skill => <button key={skill.slug} className={activeSkill?.slug === skill.slug ? 'active' : ''} onClick={() => selectSkill(skill)}><strong>{skill.metadata.name || skill.slug}</strong><span>{skill.metadata.description}</span><small>{skill.source}</small></button>)}
         {section === 'settings' && SETTINGS_PAGES.map(page => <button key={page} className={settingsPage === page ? 'active' : ''} onClick={() => setSettingsPage(page)}><strong>{page[0].toUpperCase() + page.slice(1)}</strong></button>)}
       </div>
     </section>
+    <div className="mk-resizer" onPointerDown={() => { resizeRef.current = 'list' }} />
     <main className="mk-main">
-      {section === 'sessions' && (activeSession ? <ChatPanel session={activeSession} workspaceId={workspaceId} onChanged={refreshSessions} /> : <EmptyState title="Start a session" detail="Choose a session or create a new one." />)}
-      {section === 'skills' && <SkillsPanel skill={activeSkill} files={skillFiles} />}
-      {section === 'settings' && <SettingsPanel page={settingsPage} workspaces={workspaces} />}
+      {section === 'sessions' && (activeSession ? <ChatPanel session={activeSession} workspaceId={workspaceId} onChanged={refreshSessions} onDeleted={() => { setActiveSessionId(''); setActiveSession(null); void refreshSessions() }} onBranched={branchSession} /> : <EmptyState title="Start a session" detail="Choose a session or create a new one." />)}
+      {section === 'skills' && <SkillsPanel skill={activeSkill} files={skillFiles} workspaceId={workspaceId} onChanged={() => window.electronAPI.getSkills(workspaceId).then(setSkills)} onAgentEdit={skill => void startSkillMiniChat(skill)} />}
+      {section === 'settings' && <SettingsPanel page={settingsPage} workspaces={workspaces} workspaceId={workspaceId} onWorkspacesChanged={() => void refreshWorkspaces()} />}
     </main>
+    {miniSession && <div className="mk-modal-backdrop"><div className="mk-mini-chat"><div className="mk-modal-header"><strong>{miniSession.name}</strong><AppButton onClick={() => setMiniSession(null)}>Close</AppButton></div><ChatPanel session={miniSession} workspaceId={workspaceId} onChanged={() => window.electronAPI.getSessionMessages(miniSession.id).then(setMiniSession)} onDeleted={() => setMiniSession(null)} onBranched={() => {}} /></div></div>}
   </div>
 }

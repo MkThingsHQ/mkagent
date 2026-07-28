@@ -95,15 +95,7 @@ export function detectProvider(_authType: string): AgentProvider {
  *
  * @example
  * ```typescript
- * // Create Anthropic (Claude) backend
  * const backend = createBackend({
- *   provider: 'anthropic',
- *   workspace: myWorkspace,
- *   model: 'claude-sonnet-4-6',
- * });
- *
- * // Create the Pi backend.
- * const piBackend = createBackend({
  *   provider: 'pi',
  *   workspace: myWorkspace,
  * });
@@ -166,7 +158,7 @@ export function createBackendFromResolvedContext(args: {
 
 /**
  * Initialize backend host runtime wiring once at app startup.
- * Keeps runtime/bootstrap details (Claude SDK executable, Pi interceptor bundle)
+ * Keeps runtime/bootstrap details such as the Pi interceptor bundle
  * behind backend internals.
  */
 export function initializeBackendHostRuntime(args: {
@@ -217,9 +209,8 @@ export function isProviderAvailable(provider: AgentProvider): boolean {
 /**
  * Map LlmProviderType to AgentProvider (SDK selection).
  *
- * AgentProvider determines which backend class to instantiate:
- * - 'anthropic' → ClaudeAgent
- * - 'pi' → PiAgent
+ * AgentProvider determines which backend class to instantiate. The MVP maps
+ * every retained connection type to PiAgent.
  *
  * @param providerType - The full provider type from LLM connection
  * @returns The agent provider for SDK selection
@@ -526,7 +517,7 @@ export function createBackendFromConnection(
  * Used by the session layer to make decisions without checking provider strings.
  */
 export const BACKEND_CAPABILITIES: Record<AgentProvider, {
-  /** Whether the backend needs an HTTP pool server (external subprocess can't access McpClientPool directly) */
+  /** Whether the backend needs an HTTP pool server. */
   needsHttpPoolServer: boolean;
 }> = {
   pi: { needsHttpPoolServer: false },
@@ -539,7 +530,6 @@ export const BACKEND_CAPABILITIES: Record<AgentProvider, {
 /**
  * Get the default auth type for a provider when none is explicitly specified.
  *
- * - anthropic: undefined (Claude uses env vars, not explicit authType)
  * - pi: 'api_key'
  */
 export function getDefaultAuthType(provider: AgentProvider): LlmAuthType | undefined {
@@ -556,9 +546,7 @@ export function getDefaultAuthType(provider: AgentProvider): LlmAuthType | undef
 /**
  * Resolve the model ID for a given provider, validating against the connection's model list.
  *
- * Each provider has different defaults and validation:
- * - Anthropic: falls back to DEFAULT_MODEL (Opus)
- * - Pi: falls back to empty string (Pi selects model internally)
+ * Pi falls back to an empty string so its runtime can select a model.
  *
  * @param provider - The agent provider
  * @param managedModel - The model stored on the session (user's choice)
@@ -571,7 +559,7 @@ export function resolveModelForProvider(
   connection: LlmConnection | null
 ): string {
   // Cross-provider guard: if the model belongs to a different provider, fall back
-  // to the connection's default. This prevents e.g. sending a Claude model to Pi.
+  // to the connection's default so a model from another preset is not sent to Pi.
   if (managedModel) {
     managedModel = normalizeDeprecatedModelId(managedModel);
     const modelProvider = getModelProvider(managedModel);
