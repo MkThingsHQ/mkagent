@@ -200,7 +200,7 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
     const persistedPath = getGitBashPath()
     if (persistedPath) {
       if (await isUsableGitBashPath(persistedPath)) {
-        process.env.CLAUDE_CODE_GIT_BASH_PATH = persistedPath.trim()
+        process.env.MKAGENT_GIT_BASH_PATH = persistedPath.trim()
         return { found: true, path: persistedPath, platform }
       }
       clearGitBashPath()
@@ -208,7 +208,7 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
 
     for (const bashPath of commonPaths) {
       if (await isUsableGitBashPath(bashPath)) {
-        process.env.CLAUDE_CODE_GIT_BASH_PATH = bashPath
+        process.env.MKAGENT_GIT_BASH_PATH = bashPath
         setGitBashPath(bashPath)
         return { found: true, path: bashPath, platform }
       }
@@ -222,7 +222,7 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
       }).trim()
       const firstPath = result.split('\n')[0]?.trim()
       if (firstPath && firstPath.toLowerCase().includes('git') && await isUsableGitBashPath(firstPath)) {
-        process.env.CLAUDE_CODE_GIT_BASH_PATH = firstPath
+        process.env.MKAGENT_GIT_BASH_PATH = firstPath
         setGitBashPath(firstPath)
         return { found: true, path: firstPath, platform }
       }
@@ -230,7 +230,7 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
       // where command failed
     }
 
-    delete process.env.CLAUDE_CODE_GIT_BASH_PATH
+    delete process.env.MKAGENT_GIT_BASH_PATH
     return { found: false, path: null, platform }
   })
 
@@ -256,7 +256,7 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
     }
 
     setGitBashPath(validation.path)
-    process.env.CLAUDE_CODE_GIT_BASH_PATH = validation.path
+    process.env.MKAGENT_GIT_BASH_PATH = validation.path
     return { success: true }
   })
 

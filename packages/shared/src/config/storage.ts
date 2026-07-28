@@ -555,7 +555,7 @@ export function setRtkEnabled(enabled: boolean): void {
 
 /**
  * Get persisted Git Bash path (Windows only).
- * Used to set CLAUDE_CODE_GIT_BASH_PATH for the SDK subprocess.
+ * Used to set MKAGENT_GIT_BASH_PATH for subprocess tools.
  */
 export function getGitBashPath(): string | undefined {
   const config = loadStoredConfig();
