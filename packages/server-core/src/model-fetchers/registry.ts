@@ -1,0 +1,22 @@
+/**
+ * Model Fetcher Registry
+ *
+ * Type-safe map from FetchableProvider → ModelFetcher.
+ * TypeScript enforces that every FetchableProvider key is present.
+ * Adding a new LlmProviderType without registering a fetcher → compile error.
+ */
+
+import type { ModelFetcherMap } from '@mkagent/shared/config'
+import { PiModelFetcher } from './pi'
+
+// Shared instances — fetchers are stateless
+const piFetcher = new PiModelFetcher()
+
+/**
+ * Every FetchableProvider MUST have a fetcher entry.
+ * If you add a new LlmProviderType (e.g., 'gemini') and don't exclude it
+ * from FetchableProvider, this object will fail to compile until you add it here.
+ */
+export const MODEL_FETCHERS: ModelFetcherMap = {
+  pi: piFetcher,
+}

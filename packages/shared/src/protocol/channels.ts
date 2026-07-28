@@ -26,7 +26,6 @@ export const RPC_CHANNELS = {
     CANCEL: 'sessions:cancel',
     KILL_SHELL: 'sessions:killShell',
     RESPOND_TO_PERMISSION: 'sessions:respondToPermission',
-    RESPOND_TO_CREDENTIAL: 'sessions:respondToCredential',
     COMMAND: 'sessions:command',
     GET_PENDING_PLAN_EXECUTION: 'sessions:getPendingPlanExecution',
     GET_PERMISSION_MODE_STATE: 'sessions:getPermissionModeState',
@@ -141,8 +140,6 @@ export const RPC_CHANNELS = {
     NAVIGATE: 'deeplink:navigate',
   },
   auth: {
-    LOGOUT: 'auth:logout',
-    SHOW_LOGOUT_CONFIRMATION: 'auth:showLogoutConfirmation',
     SHOW_DELETE_SESSION_CONFIRMATION: 'auth:showDeleteSessionConfirmation',
   },
   credentials: {
