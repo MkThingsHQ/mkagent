@@ -1,0 +1,37 @@
+{
+  "name": "@mkagent/server",
+  "version": "0.1.0",
+  "description": "Standalone headless MkAgent server (Bun runtime)",
+  "type": "module",
+  "main": "src/index.ts",
+  "bin": {
+    "mkagent-server": "src/index.ts"
+  },
+  "files": [
+    "src/"
+  ],
+  "engines": {
+    "bun": ">=1.0.0"
+  },
+  "author": {
+    "name": "MkAgent contributors",
+    "email": "support@mkagent.app"
+  },
+  "license": "Apache-2.0",
+  "homepage": "https://mkagent.app",
+  "scripts": {
+    "start": "bun run src/index.ts",
+    "generate-token": "bun run src/index.ts --generate-token",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@mkagent/core": "workspace:*",
+    "@mkagent/server-core": "workspace:*",
+    "@mkagent/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.2",
+    "@types/node": "^22.0.0",
+    "ws": "^8.16.0"
+  }
+}
