@@ -27,6 +27,7 @@ import { i18n } from '@mkagent/shared/i18n'
 import type { LoadedSkill } from '@mkagent/shared/skills'
 import type { DeepLinkNavigation, FileAttachment, PermissionRequest, Session, SessionEvent, SkillFile, WorkspaceSettings } from '@mkagent/shared/protocol'
 import { Markdown, SessionViewer } from '@mkagent/ui'
+import { useTranslation } from 'react-i18next'
 import { Button } from './components/ui/button'
 import { SettingsCard as CraftSettingsCard, SettingsCardContent } from './components/settings/SettingsCard'
 import mkagentIcon from './assets/mkagent_app_icon.png'
@@ -37,14 +38,14 @@ type SessionFilter = 'all' | 'unread' | 'flagged' | 'running' | 'archived'
 
 const SETTINGS_PAGES: SettingsPage[] = ['connections', 'permissions', 'proxy', 'workspaces', 'appearance', 'language', 'updates']
 
-const SETTINGS_META: Record<SettingsPage, { title: string; description: string; icon: typeof Settings }> = {
-  connections: { title: 'AI & Connections', description: 'Models, providers, and API keys', icon: Sparkles },
-  permissions: { title: 'Permissions', description: 'Tool access and approval behavior', icon: ShieldCheck },
-  proxy: { title: 'App', description: 'Network proxy and application behavior', icon: Wifi },
-  workspaces: { title: 'Workspace', description: 'Local workspaces and data isolation', icon: FolderKanban },
-  appearance: { title: 'Appearance', description: 'Theme, color, and interface', icon: Palette },
-  language: { title: 'Preferences', description: 'Language and personal preferences', icon: UserRound },
-  updates: { title: 'Updates', description: 'Version and update channel', icon: Zap },
+const SETTINGS_META: Record<SettingsPage, { titleKey: string; descriptionKey: string; icon: typeof Settings }> = {
+  connections: { titleKey: 'settings.ai.title', descriptionKey: 'settings.ai.description', icon: Sparkles },
+  permissions: { titleKey: 'settings.permissions.title', descriptionKey: 'settings.permissions.description', icon: ShieldCheck },
+  proxy: { titleKey: 'settings.app.title', descriptionKey: 'settings.app.description', icon: Wifi },
+  workspaces: { titleKey: 'settings.workspace.title', descriptionKey: 'settings.workspace.description', icon: FolderKanban },
+  appearance: { titleKey: 'settings.appearance.title', descriptionKey: 'settings.appearance.description', icon: Palette },
+  language: { titleKey: 'settings.preferences.title', descriptionKey: 'settings.preferences.description', icon: UserRound },
+  updates: { titleKey: 'settings.about.title', descriptionKey: 'settings.about.checkForUpdates', icon: Zap },
 }
 
 function cx(...values: Array<string | false | null | undefined>) {
@@ -250,6 +251,7 @@ function SkillsPanel({ skill, files, workspaceId, onChanged, onAgentEdit }: {
 }
 
 function SettingsPanel({ page, workspaces, workspaceId, onWorkspacesChanged }: { page: SettingsPage; workspaces: Workspace[]; workspaceId: string; onWorkspacesChanged: () => void }) {
+  const { t } = useTranslation()
   const [connections, setConnections] = useState<LlmConnectionWithStatus[]>([])
   const [proxy, setProxy] = useState<NetworkProxySettings>({ enabled: false })
   const [form, setForm] = useState({ name: '', provider: 'openai', apiKey: '', baseUrl: '', model: '', protocol: 'openai-completions' as 'openai-completions' | 'anthropic-messages' })
@@ -280,7 +282,7 @@ function SettingsPanel({ page, workspaces, workspaceId, onWorkspacesChanged }: {
       setMessage(result.success ? 'Connection saved.' : result.error ?? 'Unable to save connection.')
       if (result.success) void reloadConnections()
     }
-    return <SettingsCard title="Connections / Models" detail="API-key providers, compatible endpoints, and local Ollama models.">
+    return <SettingsCard title={t('settings.ai.title')} detail={t('settings.ai.connectionsDesc')}>
       <div className="mk-stack">{connections.map(connection => <div className="mk-setting-row" key={connection.slug}><div><strong>{connection.name}</strong><span>{connection.defaultModel ?? connection.piAuthProvider ?? connection.baseUrl}</span></div><div className="mk-row"><span className={connection.isAuthenticated || connection.authType === 'none' ? 'mk-ok' : 'mk-warn'}>{connection.isDefault ? 'Default' : connection.isAuthenticated ? 'Ready' : 'Needs key'}</span><AppButton onClick={() => window.electronAPI.setDefaultLlmConnection(connection.slug).then(reloadConnections)}>Use</AppButton><AppButton onClick={() => window.electronAPI.deleteLlmConnection(connection.slug).then(reloadConnections)}>Delete</AppButton></div></div>)}</div>
       <div className="mk-form-grid">
         <input placeholder="Connection name" value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} />
@@ -294,13 +296,13 @@ function SettingsPanel({ page, workspaces, workspaceId, onWorkspacesChanged }: {
     </SettingsCard>
   }
 
-  if (page === 'proxy') return <SettingsCard title="Network Proxy" detail="Use the system network configuration or configure HTTP(S) proxies for model and web requests.">
+  if (page === 'proxy') return <SettingsCard title={t('settings.network.title')} detail={t('settings.app.description')}>
     <label className="mk-row"><input type="checkbox" checked={proxy.enabled} onChange={event => setProxy({ ...proxy, enabled: event.target.checked })} /> Custom proxy</label>
     {proxy.enabled && <><input placeholder="HTTP proxy" value={proxy.httpProxy ?? ''} onChange={event => setProxy({ ...proxy, httpProxy: event.target.value })} /><input placeholder="HTTPS proxy" value={proxy.httpsProxy ?? ''} onChange={event => setProxy({ ...proxy, httpsProxy: event.target.value })} /><input placeholder="No proxy (comma separated)" value={proxy.noProxy ?? ''} onChange={event => setProxy({ ...proxy, noProxy: event.target.value })} /></>}
     <AppButton className="primary" onClick={() => window.electronAPI.setNetworkProxySettings(proxy).then(() => setMessage('Saved.'))}>Save</AppButton><span>{message}</span>
   </SettingsCard>
 
-  if (page === 'workspaces') return <SettingsCard title="Workspaces" detail="Local workspaces isolate sessions, Skills, permissions, and Views.">
+  if (page === 'workspaces') return <SettingsCard title={t('settings.workspace.title')} detail={t('settings.workspace.description')}>
     {workspaces.map(workspace => <div className="mk-setting-row" key={workspace.id}><div><strong>{workspace.name}</strong><span>{workspace.slug}</span></div><code>{workspace.rootPath}</code></div>)}
     <div className="mk-row"><input placeholder="Workspace name" value={workspaceName} onChange={event => setWorkspaceName(event.target.value)} /><AppButton className="primary" onClick={async () => {
       const folder = await window.electronAPI.openFolderDialog()
@@ -310,10 +312,10 @@ function SettingsPanel({ page, workspaces, workspaceId, onWorkspacesChanged }: {
       onWorkspacesChanged()
     }}>Create from folder</AppButton></div>
   </SettingsCard>
-  if (page === 'appearance') return <SettingsCard title="Appearance" detail="Light, dark, and system appearance use the shared design tokens."><div className="mk-row">{['light', 'dark', 'system'].map(theme => <AppButton key={theme} onClick={() => { document.documentElement.classList.toggle('dark', theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)); void window.electronAPI.setColorTheme(theme) }}>{theme}</AppButton>)}</div></SettingsCard>
-  if (page === 'language') return <SettingsCard title="Language" detail="MkAgent MVP maintains English and Simplified Chinese."><div className="mk-row"><AppButton onClick={() => i18n.changeLanguage('en')}>English</AppButton><AppButton onClick={() => i18n.changeLanguage('zh-Hans')}>简体中文</AppButton></div></SettingsCard>
-  if (page === 'updates') return <SettingsCard title="Updates" detail="Desktop releases are downloaded from open-fox/mkagent-public."><AppButton onClick={async () => { const info = await window.electronAPI.checkForUpdates(); setMessage(info.available ? `Version ${info.latestVersion} is available.` : `MkAgent ${info.currentVersion} is up to date.`) }}>Check for updates</AppButton><span>{message}</span></SettingsCard>
-  return <SettingsCard title="Permissions" detail="Workspace permission modes are enforced by Pi and can be changed in each session header.">
+  if (page === 'appearance') return <SettingsCard title={t('settings.appearance.title')} detail={t('settings.appearance.description')}><div className="mk-row">{['light', 'dark', 'system'].map(theme => <AppButton key={theme} onClick={() => { document.documentElement.classList.toggle('dark', theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)); void window.electronAPI.setColorTheme(theme) }}>{t(`settings.appearance.${theme}`)}</AppButton>)}</div></SettingsCard>
+  if (page === 'language') return <SettingsCard title={t('settings.appearance.language')} detail={t('settings.preferences.description')}><div className="mk-row"><AppButton onClick={() => i18n.changeLanguage('en')}>English</AppButton><AppButton onClick={() => i18n.changeLanguage('zh-Hans')}>简体中文</AppButton></div></SettingsCard>
+  if (page === 'updates') return <SettingsCard title={t('settings.about.title')} detail="open-fox/mkagent-public"><AppButton onClick={async () => { const info = await window.electronAPI.checkForUpdates(); setMessage(info.available ? `Version ${info.latestVersion} is available.` : `MkAgent ${info.currentVersion} is up to date.`) }}>{t('settings.about.checkForUpdates')}</AppButton><span>{message}</span></SettingsCard>
+  return <SettingsCard title={t('settings.permissions.title')} detail={t('settings.permissions.description')}>
     <label className="mk-stack"><span>Default permission mode</span><select value={workspaceSettings.permissionMode ?? 'safe'} onChange={async event => {
       const permissionMode = event.target.value as NonNullable<WorkspaceSettings['permissionMode']>
       setWorkspaceSettings(current => ({ ...current, permissionMode }))
@@ -337,6 +339,7 @@ function EmptyState({ title, detail }: { title: string; detail: string }) {
 }
 
 export default function App() {
+  const { t } = useTranslation()
   const [section, setSection] = useState<Section>('sessions')
   const [settingsPage, setSettingsPage] = useState<SettingsPage>('connections')
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
@@ -515,11 +518,11 @@ export default function App() {
   }), [query, sessionFilter, sessions])
 
   const navItems: Array<{ id: Section; label: string; icon: typeof Settings }> = [
-    { id: 'sessions', label: 'All Sessions', icon: MessageSquareText },
-    { id: 'skills', label: 'Skills', icon: Sparkles },
-    { id: 'settings', label: 'Settings', icon: Settings },
+    { id: 'sessions', label: t('sidebar.allSessions'), icon: MessageSquareText },
+    { id: 'skills', label: t('sidebar.skills'), icon: Sparkles },
+    { id: 'settings', label: t('sidebar.settings'), icon: Settings },
   ]
-  const sectionTitle = section === 'sessions' ? 'All Sessions' : section === 'skills' ? 'Skills' : 'Settings'
+  const sectionTitle = section === 'sessions' ? t('sidebar.allSessions') : section === 'skills' ? t('sidebar.skills') : t('sidebar.settings')
 
   return <div className="mk-app-frame">
     <header className="mk-topbar">
@@ -538,14 +541,14 @@ export default function App() {
     <div className="mk-shell">
       <aside className="mk-panel mk-nav" style={{ width: panelWidths.navigation }}>
         <div className="mk-nav-content">
-          <button className="mk-new" onClick={newSession}><Plus /><span>New Session</span></button>
+          <button className="mk-new" onClick={newSession}><Plus /><span>{t('sidebar.newSession')}</span></button>
           <nav>{navItems.map(item => {
             const Icon = item.icon
             return <button key={item.id} className={section === item.id ? 'active' : ''} onClick={() => setSection(item.id)}><Icon /><span>{item.label}</span>{item.id === 'sessions' && sessions.filter(value => value.hasUnread).length > 0 && <small>{sessions.filter(value => value.hasUnread).length}</small>}</button>
           })}</nav>
         </div>
         <div className="mk-nav-footer">
-          <label>Workspace</label>
+          <label>{t('settings.workspace.title')}</label>
           <select value={workspaceId} onChange={async event => { setWorkspaceId(event.target.value); await window.electronAPI.switchWorkspace(event.target.value) }}>{workspaces.map(workspace => <option key={workspace.id} value={workspace.id}>{workspace.name}</option>)}</select>
         </div>
       </aside>
@@ -560,7 +563,7 @@ export default function App() {
           </div>
         </div>
         {section === 'sessions' && <div className="mk-list-tools">
-          <label className="mk-search"><Search /><input placeholder="Search sessions" value={query} onChange={event => setQuery(event.target.value)} /></label>
+          <label className="mk-search"><Search /><input placeholder={t('sidebar.search')} value={query} onChange={event => setQuery(event.target.value)} /></label>
           <div className="mk-filters">{(['all', 'unread', 'flagged', 'running', 'archived'] as SessionFilter[]).map(filter => <button key={filter} className={sessionFilter === filter ? 'active' : ''} title={filter} onClick={() => setSessionFilter(filter)}>{filter === 'all' ? <Box /> : filter === 'unread' ? <MessageSquareText /> : filter === 'flagged' ? <Flag /> : filter === 'running' ? <CheckCircle2 /> : <Archive />}</button>)}</div>
         </div>}
         <div className="mk-list">
@@ -570,7 +573,7 @@ export default function App() {
           {section === 'settings' && SETTINGS_PAGES.map(page => {
             const meta = SETTINGS_META[page]
             const Icon = meta.icon
-            return <button key={page} className={settingsPage === page ? 'active' : ''} onClick={() => setSettingsPage(page)}><div className="mk-settings-row-icon"><Icon /></div><div><strong>{meta.title}</strong><span>{meta.description}</span></div></button>
+            return <button key={page} className={settingsPage === page ? 'active' : ''} onClick={() => setSettingsPage(page)}><div className="mk-settings-row-icon"><Icon /></div><div><strong>{t(meta.titleKey)}</strong><span>{t(meta.descriptionKey)}</span></div></button>
           })}
         </div>
       </section>
