@@ -1,4 +1,4 @@
-export type CliDomainNamespace = 'label' | 'source' | 'skill' | 'automation' | 'permission' | 'theme'
+export type CliDomainNamespace = 'workspace' | 'session' | 'connections' | 'config'
 
 export interface CliDomainPolicy {
   namespace: CliDomainNamespace
@@ -11,82 +11,33 @@ export interface CliDomainPolicy {
 }
 
 const POLICIES: Record<CliDomainNamespace, CliDomainPolicy> = {
-  label: {
-    namespace: 'label',
-    helpCommand: 'mkagent label --help',
-    workspacePathScopes: ['labels/**'],
-    readActions: ['list', 'get', 'auto-rule-list', 'auto-rule-validate'],
-    quickExamples: [
-      'mkagent label list',
-      'mkagent label create --name "Bug" --color "accent"',
-      'mkagent label update bug --json \'{"name":"Bug Report"}\'',
-    ],
-    bashGuardPaths: ['labels/**'],
+  workspace: {
+    namespace: 'workspace',
+    helpCommand: 'mkagent --help',
+    workspacePathScopes: [],
+    readActions: ['list'],
+    quickExamples: ['mkagent workspace list'],
   },
-  source: {
-    namespace: 'source',
-    helpCommand: 'mkagent source --help',
-    workspacePathScopes: ['sources/**'],
-    readActions: ['list', 'get', 'validate', 'test', 'auth-help'],
-    quickExamples: [
-      'mkagent source list',
-      'mkagent source get <slug>',
-      'mkagent source update <slug> --json "{...}"',
-      'mkagent source validate <slug>',
-    ],
+  session: {
+    namespace: 'session',
+    helpCommand: 'mkagent --help',
+    workspacePathScopes: [],
+    readActions: ['list', 'messages'],
+    quickExamples: ['mkagent session list', 'mkagent session messages <id>'],
   },
-  skill: {
-    namespace: 'skill',
-    helpCommand: 'mkagent skill --help',
-    workspacePathScopes: ['skills/**'],
-    readActions: ['list', 'get', 'validate', 'where'],
-    quickExamples: [
-      'mkagent skill list',
-      'mkagent skill get <slug>',
-      'mkagent skill update <slug> --json "{...}"',
-      'mkagent skill validate <slug>',
-    ],
+  connections: {
+    namespace: 'connections',
+    helpCommand: 'mkagent --help',
+    workspacePathScopes: [],
+    readActions: ['list'],
+    quickExamples: ['mkagent connections list'],
   },
-  automation: {
-    namespace: 'automation',
-    helpCommand: 'mkagent automation --help',
-    workspacePathScopes: ['automations.json', 'automations-history.jsonl'],
-    readActions: ['list', 'get', 'validate', 'history', 'last-executed', 'test', 'lint'],
-    quickExamples: [
-      'mkagent automation list',
-      'mkagent automation create --event UserPromptSubmit --prompt "Summarize this prompt"',
-      'mkagent automation update <id> --json "{\"enabled\":false}"',
-      'mkagent automation history <id> --limit 20',
-      'mkagent automation validate',
-    ],
-    bashGuardPaths: ['automations.json', 'automations-history.jsonl'],
-  },
-  permission: {
-    namespace: 'permission',
-    helpCommand: 'mkagent permission --help',
-    workspacePathScopes: ['permissions.json', 'sources/*/permissions.json'],
-    readActions: ['list', 'get', 'validate'],
-    quickExamples: [
-      'mkagent permission list',
-      'mkagent permission get --source linear',
-      'mkagent permission add-mcp-pattern "list" --comment "All list ops" --source linear',
-      'mkagent permission validate',
-    ],
-    bashGuardPaths: ['permissions.json', 'sources/*/permissions.json'],
-  },
-  theme: {
-    namespace: 'theme',
-    helpCommand: 'mkagent theme --help',
-    workspacePathScopes: ['config.json', 'theme.json', 'themes/*.json'],
-    readActions: ['get', 'validate', 'list-presets', 'get-preset'],
-    quickExamples: [
-      'mkagent theme get',
-      'mkagent theme list-presets',
-      'mkagent theme set-color-theme nord',
-      'mkagent theme set-workspace-color-theme default',
-      'mkagent theme set-override --json "{\"accent\":\"#3b82f6\"}"',
-    ],
-    bashGuardPaths: ['config.json', 'theme.json', 'themes/*.json'],
+  config: {
+    namespace: 'config',
+    helpCommand: 'mkagent --help',
+    workspacePathScopes: [],
+    readActions: ['validate'],
+    quickExamples: ['mkagent config validate'],
   },
 }
 
@@ -137,7 +88,7 @@ export interface BashPatternRule {
  * Derive the canonical Explore-mode read-only mkagent bash patterns from
  * CLI domain policies. Keeps permissions regexes aligned with command metadata.
  */
-export function getCraftAgentReadOnlyBashPatterns(): BashPatternRule[] {
+export function getMkAgentReadOnlyBashPatterns(): BashPatternRule[] {
   const namespaces = Object.keys(POLICIES) as CliDomainNamespace[]
   const namespaceAlternation = namespaces.join('|')
 

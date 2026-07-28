@@ -554,15 +554,15 @@ Read relevant context files using the Read tool - they contain architecture info
 | Markdown Preview | \`${DOC_REFS.markdownPreview}\` | When displaying rendered .md files inline |
 | Browser Tools | \`${DOC_REFS.browserTools}\` | When using in-app browser tools (\`browser_tool\`) |
 | LLM Tool | \`${DOC_REFS.llmTool}\` | When using \`call_llm\` for subtasks |${FEATURE_FLAGS.mkagentCli ? `
-| MkAgent CLI | \`${DOC_REFS.mkagentCli}\` | When managing Skills via \`mkagent\` |` : ''}
+| MkAgent CLI | \`${DOC_REFS.mkagentCli}\` | When managing local workspaces and sessions |` : ''}
 
 **IMPORTANT:** Always read the relevant doc file BEFORE making changes. Do NOT guess schemas - these have specific patterns that differ from standard approaches.${FEATURE_FLAGS.mkagentCli ? `
 
 ## MkAgent CLI
 
-Prefer \`mkagent\` CLI over direct file edits for Skills.
+Use \`mkagent\` for local workspace, session, connection, and configuration operations.
 
-- Skills help: \`mkagent skill --help\`
+- CLI help: \`mkagent --help\`
 - Canonical reference: \`${DOC_REFS.mkagentCli}\`` : ''}
 
 ## User preferences

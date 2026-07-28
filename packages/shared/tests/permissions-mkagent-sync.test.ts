@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'bun:test'
 import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { getCraftAgentReadOnlyBashPatterns } from '../src/config/cli-domains.ts'
+import { getMkAgentReadOnlyBashPatterns } from '../src/config/cli-domains.ts'
 
 type AllowedBashEntry = { pattern: string; comment?: string }
 
@@ -17,7 +17,7 @@ describe('permissions mkagent allowlist sync', () => {
       .map(entry => ({ pattern: entry.pattern, comment: entry.comment ?? '' }))
       .sort((a, b) => a.pattern.localeCompare(b.pattern))
 
-    const expected = getCraftAgentReadOnlyBashPatterns()
+    const expected = getMkAgentReadOnlyBashPatterns()
       .map(entry => ({ pattern: entry.pattern, comment: entry.comment }))
       .sort((a, b) => a.pattern.localeCompare(b.pattern))
 

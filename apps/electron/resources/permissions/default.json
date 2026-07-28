@@ -102,39 +102,31 @@
       "comment": "CLI tools: bare invocation (prints help)"
     },
     {
-      "pattern": "^mkagent\\s+label\\s+(list|get|auto-rule-list|auto-rule-validate)\\b",
-      "comment": "mkagent label read-only operations"
+      "pattern": "^mkagent\\s+workspace\\s+(list)\\b",
+      "comment": "mkagent workspace read-only operations"
     },
     {
-      "pattern": "^mkagent\\s+source\\s+(list|get|validate|test|auth-help)\\b",
-      "comment": "mkagent source read-only operations"
+      "pattern": "^mkagent\\s+session\\s+(list|messages)\\b",
+      "comment": "mkagent session read-only operations"
     },
     {
-      "pattern": "^mkagent\\s+skill\\s+(list|get|validate|where)\\b",
-      "comment": "mkagent skill read-only operations"
+      "pattern": "^mkagent\\s+connections\\s+(list)\\b",
+      "comment": "mkagent connections read-only operations"
     },
     {
-      "pattern": "^mkagent\\s+automation\\s+(list|get|validate|history|last-executed|test|lint)\\b",
-      "comment": "mkagent automation read-only operations"
-    },
-    {
-      "pattern": "^mkagent\\s+permission\\s+(list|get|validate)\\b",
-      "comment": "mkagent permission read-only operations"
-    },
-    {
-      "pattern": "^mkagent\\s+theme\\s+(get|validate|list-presets|get-preset)\\b",
-      "comment": "mkagent theme read-only operations"
+      "pattern": "^mkagent\\s+config\\s+(validate)\\b",
+      "comment": "mkagent config read-only operations"
     },
     {
       "pattern": "^mkagent\\s*$",
       "comment": "mkagent bare invocation (prints help)"
     },
     {
-      "pattern": "^mkagent\\s+(label|source|skill|automation|permission|theme)\\s*$",
+      "pattern": "^mkagent\\s+(workspace|session|connections|config)\\s*$",
       "comment": "mkagent entity help"
     },
     {
-      "pattern": "^mkagent\\s+(label|source|skill|automation|permission|theme)\\s+--help\\b",
+      "pattern": "^mkagent\\s+(workspace|session|connections|config)\\s+--help\\b",
       "comment": "mkagent entity help flags"
     },
     {

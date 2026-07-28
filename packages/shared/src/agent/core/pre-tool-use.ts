@@ -418,15 +418,13 @@ export function validateConfigWrite(
 
 function buildCliDomainBlockMessage(namespace: CliDomainNamespace, context: string): string {
   const policy = CLI_DOMAIN_POLICIES[namespace]
-  const noun = namespace === 'automation' ? 'automation' : namespace
-  const quickExamplesHeading = namespace === 'label' ? 'Quick examples:' : 'Examples:'
 
   return [
     `${context}`,
     `Use \`mkagent ${namespace} ...\` instead.`,
-    `Run \`${policy.helpCommand}\` for the full ${noun} command reference.`,
+    `Run \`${policy.helpCommand}\` for the full ${namespace} command reference.`,
     '',
-    quickExamplesHeading,
+    'Examples:',
     ...policy.quickExamples.map(example => `  ${example}`),
   ].join('\n')
 }
@@ -463,11 +461,7 @@ function matchesPathScope(relativePath: string, scope: string): boolean {
 }
 
 /**
- * For selected config domains, enforce CLI usage instead of direct file operations.
- * - labels/**: strict block on Read/Write/Edit
- * - sources/{slug}/config.json: redirect on Write/Edit
- * - skills/{slug}/SKILL.md: redirect on Write/Edit
- * - automations.json: redirect on Write/Edit
+ * Reserved for retained config domains that require CLI-only writes.
  */
 export function getConfigCliRedirect(
   toolName: string,
@@ -490,7 +484,7 @@ export function getConfigDomainBashRedirect(
   const command = typeof input.command === 'string' ? input.command.trim() : '';
   if (!command) return null;
 
-  if (/^mkagent\s+(label|automation|source|skill)\b/.test(command)) {
+  if (/^mkagent\s+(workspace|session|connections|config)\b/.test(command)) {
     return null;
   }
 
@@ -516,9 +510,7 @@ export function getConfigDomainBashRedirect(
     for (const entry of bashGuardEntries) {
       if (!matchesPathScope(relativePath, entry.scope)) continue
 
-      const context = entry.namespace === 'label'
-        ? 'Direct Bash operations targeting the workspace labels/ folder are blocked.'
-        : `Direct Bash operations targeting \`${relativePath}\` are blocked.`
+      const context = `Direct Bash operations targeting \`${relativePath}\` are blocked.`
 
       return {
         message: buildCliDomainBlockMessage(entry.namespace, context),

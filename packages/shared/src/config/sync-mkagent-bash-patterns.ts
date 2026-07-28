@@ -2,7 +2,7 @@
 
 import { readFileSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { getCraftAgentReadOnlyBashPatterns } from './cli-domains.ts'
+import { getMkAgentReadOnlyBashPatterns } from './cli-domains.ts'
 
 interface AllowedBashEntry {
   pattern: string
@@ -24,7 +24,7 @@ function syncCraftAgentPatterns(config: PermissionsConfig): PermissionsConfig {
   const firstCraftIndex = patterns.findIndex(isCraftAgentPattern)
 
   const withoutCraft = patterns.filter(entry => !isCraftAgentPattern(entry))
-  const generated = getCraftAgentReadOnlyBashPatterns()
+  const generated = getMkAgentReadOnlyBashPatterns()
 
   const insertAt = firstCraftIndex >= 0 ? firstCraftIndex : withoutCraft.length
   const nextAllowedBashPatterns = [

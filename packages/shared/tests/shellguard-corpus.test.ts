@@ -14,6 +14,7 @@ import {
   isReadOnlyBashCommandWithConfig,
   getBashRejectionReason,
 } from '../src/agent/mode-manager.ts';
+import { getMkAgentReadOnlyBashPatterns } from '../src/config/cli-domains.ts';
 
 // ============================================================
 // Test Configuration (mirrors mode-manager.test.ts TEST_MODE_CONFIG)
@@ -100,13 +101,11 @@ const TEST_MODE_CONFIG = {
     },
 
     // mkagent CLI read-only
-    { regex: /^mkagent\s+label\s+(list|get)\b/, source: '^mkagent\\s+label\\s+(list|get)\\b', comment: 'mkagent label read-only operations' },
-    { regex: /^mkagent\s+source\s+(list|get|validate|test)\b/, source: '^mkagent\\s+source\\s+(list|get|validate|test)\\b', comment: 'mkagent source read-only operations' },
-    { regex: /^mkagent\s+skill\s+(list|get|validate|where)\b/, source: '^mkagent\\s+skill\\s+(list|get|validate|where)\\b', comment: 'mkagent skill read-only operations' },
-    { regex: /^mkagent\s+automation\s+(list|get|validate|history|last-executed|test|lint)\b/, source: '^mkagent\\s+automation\\s+(list|get|validate|history|last-executed|test|lint)\\b', comment: 'mkagent automation read-only operations' },
-    { regex: /^mkagent\s*$/, source: '^mkagent\\s*$', comment: 'mkagent bare invocation' },
-    { regex: /^mkagent\s+(label|source|skill|automation)\s+--help\b/, source: '^mkagent\\s+(label|source|skill|automation)\\s+--help\\b', comment: 'mkagent entity help flags' },
-    { regex: /^mkagent\s+--(help|version|discover)\b/, source: '^mkagent\\s+--(help|version|discover)\\b', comment: 'mkagent global flags' },
+    ...getMkAgentReadOnlyBashPatterns().map(rule => ({
+      regex: new RegExp(rule.pattern),
+      source: rule.pattern,
+      comment: rule.comment,
+    })),
 
     // Version checks
     { regex: /^node\s+(--version|-v)\b/, source: 'node version', comment: 'Node.js version' },
@@ -844,26 +843,12 @@ describe('ShellGuard corpus: mkagent CLI allowlist', () => {
     'mkagent --help',
     'mkagent --version',
     'mkagent --discover',
-    'mkagent label --help',
-    'mkagent label list',
-    'mkagent label get bug',
-    'mkagent source --help',
-    'mkagent source list',
-    'mkagent source get linear',
-    'mkagent source validate linear',
-    'mkagent source test linear',
-    'mkagent skill --help',
-    'mkagent skill list',
-    'mkagent skill get commit-helper',
-    'mkagent skill where commit-helper',
-    'mkagent skill validate commit-helper',
-    'mkagent automation list',
-    'mkagent automation get abc123',
-    'mkagent automation validate',
-    'mkagent automation history abc123 --limit 5',
-    'mkagent automation last-executed abc123',
-    'mkagent automation test abc123 --match "x"',
-    'mkagent automation lint',
+    'mkagent workspace --help',
+    'mkagent workspace list',
+    'mkagent session list',
+    'mkagent session messages abc123',
+    'mkagent connections list',
+    'mkagent config validate',
   ];
 
   const shouldBlock = [
@@ -884,6 +869,10 @@ describe('ShellGuard corpus: mkagent CLI allowlist', () => {
     'mkagent automation enable abc123',
     'mkagent automation disable abc123',
     'mkagent automation duplicate abc123',
+    'mkagent skill list',
+    'mkagent session delete abc123',
+    'mkagent connections test openai',
+    'mkagent workspace create Example',
   ];
 
   for (const cmd of shouldAllow) {
