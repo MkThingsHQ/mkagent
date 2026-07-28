@@ -1,28 +1,12 @@
 /**
  * Tests for the retained Browser and Skill prerequisite reading system.
  */
-import { beforeEach, describe, expect, it, mock } from 'bun:test';
-import { existsSync, readFileSync } from 'node:fs';
+import { beforeEach, describe, expect, it } from 'bun:test';
 import { homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { PrerequisiteManager } from '../prerequisite-manager.ts';
 
-const originalReadFileSync = readFileSync;
 let mockExistsPaths = new Set<string>();
-const CONFIG_DEFAULTS_PATH = join(homedir(), '.mkagent', 'config-defaults.json');
-const CONFIG_DEFAULTS = JSON.stringify({
-  version: '1.0',
-  defaults: { browserToolEnabled: true },
-  workspaceDefaults: { permissionMode: 'ask', cyclablePermissionModes: ['ask'] },
-});
-
-mock.module('node:fs', () => ({
-  existsSync: (path: string) => path === CONFIG_DEFAULTS_PATH || mockExistsPaths.has(path),
-  readFileSync: (path: string, options?: unknown) => path === CONFIG_DEFAULTS_PATH
-    ? CONFIG_DEFAULTS
-    : originalReadFileSync(path, options as never),
-}));
-
 const WORKSPACE_ROOT = '/test/workspace';
 const BROWSER_DOC_PATH = resolve(join(homedir(), '.mkagent', 'docs', 'browser-tools.md'));
 
@@ -36,6 +20,9 @@ describe('PrerequisiteManager', () => {
     manager = new PrerequisiteManager({
       workspaceRootPath: WORKSPACE_ROOT,
       onDebug: message => debugMessages.push(message),
+      pathExists: path => mockExistsPaths.has(path),
+      browserToolEnabled: () => true,
+      browserToolsDocPath: BROWSER_DOC_PATH,
     });
   });
 

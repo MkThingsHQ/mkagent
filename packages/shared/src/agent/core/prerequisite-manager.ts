@@ -38,6 +38,9 @@ export interface PrerequisiteCheckResult {
 export interface PrerequisiteManagerConfig {
   workspaceRootPath: string;
   onDebug?: (message: string) => void;
+  pathExists?: (path: string) => boolean;
+  browserToolEnabled?: () => boolean;
+  browserToolsDocPath?: string;
 }
 
 // ============================================================
@@ -63,11 +66,8 @@ const RULES: PrerequisiteRule[] = [
   // and skipped entirely when the built-in browser tool is disabled.
   {
     toolMatcher: (toolName: string) =>
-      getBrowserToolEnabled() &&
       (toolName === 'browser_tool' || toolName === 'mcp__session__browser_tool'),
-    resolveRequiredPath: () => {
-      return existsSync(BROWSER_TOOLS_DOC_PATH) ? BROWSER_TOOLS_DOC_PATH : null;
-    },
+    resolveRequiredPath: () => BROWSER_TOOLS_DOC_PATH,
     blockMessage:
       'You must read the browser tools guide before using browser automation. Please read the file at {filePath} first, then retry.',
     strict: true,
@@ -87,10 +87,16 @@ export class PrerequisiteManager {
   private pendingSkillPaths: Set<string> = new Set();
   private workspaceRootPath: string;
   private onDebug?: (message: string) => void;
+  private pathExists: (path: string) => boolean;
+  private browserToolEnabled: () => boolean;
+  private browserToolsDocPath: string;
 
   constructor(config: PrerequisiteManagerConfig) {
     this.workspaceRootPath = config.workspaceRootPath;
     this.onDebug = config.onDebug;
+    this.pathExists = config.pathExists ?? existsSync;
+    this.browserToolEnabled = config.browserToolEnabled ?? getBrowserToolEnabled;
+    this.browserToolsDocPath = config.browserToolsDocPath ?? BROWSER_TOOLS_DOC_PATH;
   }
 
   /**
@@ -118,9 +124,11 @@ export class PrerequisiteManager {
 
     for (const rule of RULES) {
       if (!rule.toolMatcher(toolName)) continue;
+      if (!this.browserToolEnabled()) continue;
 
-      const requiredPath = rule.resolveRequiredPath(toolName, this.workspaceRootPath);
-      if (!requiredPath) continue; // No guide.md exists, skip
+      const resolvedPath = rule.resolveRequiredPath(toolName, this.workspaceRootPath);
+      const requiredPath = resolvedPath === BROWSER_TOOLS_DOC_PATH ? this.browserToolsDocPath : resolvedPath;
+      if (!requiredPath || !this.pathExists(requiredPath)) continue;
 
       if (!this.readFiles.has(requiredPath)) {
         const count = (this.rejectionCounts.get(requiredPath) ?? 0) + 1;
