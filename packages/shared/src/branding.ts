@@ -13,6 +13,3 @@ export const MKAGENT_LOGO = [
 
 /** Logo as a single string for HTML templates */
 export const MKAGENT_LOGO_HTML = MKAGENT_LOGO.map((line) => line.trimEnd()).join('\n');
-
-/** Session viewer base URL */
-export const VIEWER_URL = 'https://mkagent.app';

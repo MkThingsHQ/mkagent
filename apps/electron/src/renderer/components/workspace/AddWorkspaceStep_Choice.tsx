@@ -1,12 +1,11 @@
 import { useTranslation } from "react-i18next"
-import { FolderPlus, FolderOpen, Cloud } from "lucide-react"
+import { FolderPlus, FolderOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AddWorkspaceContainer, AddWorkspaceStepHeader } from "./primitives"
 
 interface AddWorkspaceStep_ChoiceProps {
   onCreateNew: () => void
   onOpenFolder: () => void
-  onConnectRemote: () => void
 }
 
 interface ChoiceCardProps {
@@ -57,7 +56,6 @@ function ChoiceCard({ icon, title, description, onClick, variant = 'secondary' }
 export function AddWorkspaceStep_Choice({
   onCreateNew,
   onOpenFolder,
-  onConnectRemote,
 }: AddWorkspaceStep_ChoiceProps) {
   const { t } = useTranslation()
   return (
@@ -84,12 +82,6 @@ export function AddWorkspaceStep_Choice({
           onClick={onOpenFolder}
         />
 
-        <ChoiceCard
-          icon={<Cloud className="h-5 w-5" />}
-          title={t("workspace.connectRemote")}
-          description={t("workspace.connectRemoteDesc")}
-          onClick={onConnectRemote}
-        />
       </div>
     </AddWorkspaceContainer>
   )

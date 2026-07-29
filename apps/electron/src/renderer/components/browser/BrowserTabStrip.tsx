@@ -46,17 +46,12 @@ export function BrowserTabStrip({
   instancesOverride,
   maxVisibleBadges = DEFAULT_MAX_VISIBLE_BADGES,
 }: BrowserTabStripProps) {
-  // Filter the badge strip to the workspace currently in focus. Remote-connected
-  // workspaces have a different `remoteWorkspaceId` (what the remote agent
-  // stamps onto its tabs) than the local `activeWorkspaceId` (what locally-
-  // opened manual tabs use), so we accept either.
-  const { activeWorkspaceId, workspaces } = useAppShellContext()
-  const activeWorkspace = workspaces.find((w) => w.id === activeWorkspaceId)
-  const remoteWorkspaceId = activeWorkspace?.remoteServer?.remoteWorkspaceId ?? null
+  // Filter the badge strip to the local workspace currently in focus.
+  const { activeWorkspaceId } = useAppShellContext()
   const allInstances = useAtomValue(browserInstancesAtom)
   const instances = useMemo(
-    () => filterInstancesForWorkspace(allInstances, activeWorkspaceId, remoteWorkspaceId),
-    [allInstances, activeWorkspaceId, remoteWorkspaceId],
+    () => filterInstancesForWorkspace(allInstances, activeWorkspaceId),
+    [allInstances, activeWorkspaceId],
   )
   const setInstances = useSetAtom(setBrowserInstancesAtom)
   const updateInstance = useSetAtom(updateBrowserInstanceAtom)

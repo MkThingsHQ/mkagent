@@ -1,75 +1,129 @@
 <!doctype html>
 <html lang="zh-CN" data-theme="light">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>MkAgent - 源码迁移与质量审计</title>
-  <style>
-    :root{--bg:#fff;--surface:#f7f8fa;--card:#fff;--text:#182033;--muted:#667085;--line:#e4e7ec;--nav:#172033;--nav-text:#cbd5e1;--accent:#635bff;--ok:#087443;--ok-bg:#ecfdf3;--warn:#b54708;--warn-bg:#fffaeb;--risk:#b42318;--risk-bg:#fef3f2;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",sans-serif;color-scheme:light}
-    [data-theme=dark]{--bg:#101828;--surface:#1d2939;--card:#1d2939;--text:#f2f4f7;--muted:#98a2b3;--line:#344054;--nav:#0c111d;--nav-text:#98a2b3;--accent:#9b8afb;--ok:#32d583;--ok-bg:#053321;--warn:#fdb022;--warn-bg:#3b2810;--risk:#f97066;--risk-bg:#3b1110;color-scheme:dark}
-    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);line-height:1.65}.sidebar{position:fixed;inset:0 auto 0 0;width:260px;padding:24px 14px;background:var(--nav);color:var(--nav-text);display:flex;flex-direction:column}.sidebar h1{margin:0 8px 3px;color:#fff;font-size:18px}.sidebar small{margin:0 8px 20px}.sidebar a{padding:9px 10px;border-radius:7px;color:inherit;text-decoration:none;font-size:14px}.sidebar a:hover{background:#29354b;color:#fff}.sidebar footer{margin-top:auto}.sidebar button{width:100%;padding:9px;border:1px solid #344054;border-radius:7px;background:#253149;color:#fff;cursor:pointer}.content{max-width:1120px;margin-left:260px;padding:42px 50px}.hero{padding-bottom:26px;border-bottom:2px solid var(--line)}h2{margin-top:50px;padding-bottom:9px;border-bottom:2px solid var(--accent)}h3{margin-top:28px}.meta{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:13px}.card,.diagram,.risk{margin:14px 0;padding:18px 20px;border:1px solid var(--line);border-radius:10px;background:var(--card)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{text-align:center;padding:18px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}.stat b{display:block;color:var(--accent);font-size:28px}.stat span{color:var(--muted);font-size:12px}table{width:100%;border-collapse:collapse;margin:14px 0;border:1px solid var(--line);font-size:14px}th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:var(--surface);color:var(--muted);font-size:12px}code,.diagram{font-family:"SFMono-Regular",Consolas,monospace}.diagram{white-space:pre;overflow:auto;background:var(--surface)}.ok{color:var(--ok);background:var(--ok-bg)}.medium{color:var(--warn);background:var(--warn-bg)}.low{color:var(--risk);background:var(--risk-bg)}.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}.risk{border-left:4px solid var(--warn)}.risk.low-risk{border-left-color:var(--ok)}.muted{color:var(--muted)}ul{padding-left:22px}@media(max-width:800px){.sidebar{position:static;width:auto}.content{margin:0;padding:24px 18px}.stats{grid-template-columns:repeat(2,1fr)}}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MkAgent Craft Lite 源码复用与裁剪审计</title>
+<style>
+:root{--bg:#fff;--surface:#f8fafc;--card:#fff;--text:#172033;--muted:#667085;--line:#e4e7ec;--nav:#172033;--navText:#cbd5e1;--accent:#635bff;--accentBg:#f0efff;--ok:#087443;--okBg:#ecfdf3;--warn:#b54708;--warnBg:#fffaeb;--danger:#b42318;--dangerBg:#fef3f2;--shadow:0 1px 3px rgba(16,24,40,.08);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",sans-serif;color-scheme:light}
+[data-theme=dark]{--bg:#101828;--surface:#1d2939;--card:#1d2939;--text:#f2f4f7;--muted:#98a2b3;--line:#344054;--nav:#0c111d;--navText:#98a2b3;--accent:#9b8afb;--accentBg:#28234b;--ok:#32d583;--okBg:#053321;--warn:#fdb022;--warnBg:#3b2810;--danger:#f97066;--dangerBg:#3b1110;color-scheme:dark}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);line-height:1.65}.sidebar{position:fixed;inset:0 auto 0 0;width:265px;padding:24px 14px;background:var(--nav);color:var(--navText);display:flex;flex-direction:column;z-index:10}.sidebar h1{margin:0 8px 3px;color:#fff;font-size:18px}.sidebar small{margin:0 8px 20px}.sidebar a{padding:8px 10px;border-radius:7px;color:inherit;text-decoration:none;font-size:13.5px}.sidebar a:hover{background:#29354b;color:#fff}.sidebar footer{margin-top:auto;font-size:12px}.sidebar button{width:100%;margin-top:10px;padding:9px;border:1px solid #344054;border-radius:7px;background:#253149;color:#fff;cursor:pointer}.content{max-width:1180px;margin-left:265px;padding:42px 50px}.hero{padding-bottom:28px;border-bottom:2px solid var(--line)}h1{line-height:1.25}h2{margin-top:48px;padding-bottom:9px;border-bottom:2px solid var(--accent)}h3{margin-top:27px}.meta{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:13px}.card,.risk,.decision,.diagram{margin:14px 0;padding:18px 20px;border:1px solid var(--line);border-radius:10px;background:var(--card);box-shadow:var(--shadow)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.stat{text-align:center;padding:18px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}.stat b{display:block;color:var(--accent);font-size:27px}.stat span{color:var(--muted);font-size:12px}.table{overflow:auto;border:1px solid var(--line);border-radius:10px;margin:14px 0}table{width:100%;border-collapse:collapse;font-size:13.5px}th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:var(--surface);color:var(--muted);font-size:12px;text-transform:uppercase}tr:last-child td{border-bottom:0}code,.diagram{font-family:"SFMono-Regular",Consolas,monospace}.diagram{white-space:pre;overflow:auto;background:var(--surface);text-align:center}.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}.ok{color:var(--ok);background:var(--okBg)}.warn{color:var(--warn);background:var(--warnBg)}.danger{color:var(--danger);background:var(--dangerBg)}.risk{border-left:4px solid var(--warn)}.risk.low{border-left-color:var(--ok)}.decision{border-left:4px solid var(--accent)}.muted{color:var(--muted)}ul{padding-left:22px}.bar{height:10px;border-radius:8px;background:var(--line);overflow:hidden}.bar span{display:block;height:100%;background:var(--accent)}.mobile{display:none;position:fixed;top:12px;left:12px;z-index:20;border:0;border-radius:8px;background:var(--nav);color:#fff;padding:9px 12px}@media(max-width:820px){.mobile{display:block}.sidebar{transform:translateX(-100%);transition:.2s}.sidebar.open{transform:none}.content{margin:0;padding:62px 18px 24px}.stats{grid-template-columns:repeat(2,1fr)}}@media print{.sidebar,.mobile{display:none}.content{margin:0;padding:20px}.card,.risk,.decision,.table{break-inside:avoid}}
+</style>
 </head>
 <body>
-  <nav class="sidebar">
-    <h1>MkAgent</h1><small>源码迁移与质量审计</small>
-    <a href="#thesis">项目定位</a><a href="#shape">仓库结构</a><a href="#architecture">架构设计</a><a href="#migration">Craft 迁移审计</a><a href="#quality">质量信号</a><a href="#risks">风险与未知项</a>
-    <footer><button id="theme">切换暗色模式</button></footer>
-  </nav>
-  <main class="content">
-    <header class="hero" id="thesis">
-      <h1>MkAgent 源码迁移与质量审计报告</h1>
-      <p>MkAgent 是以 Craft Agents OSS 为固定上游、保留 Desktop/WebUI/CLI 与 WebSocket RPC 架构、裁掉非核心产品面的 Pi-only Lite 版本。共享架构和 UI 组件应尽量与 Craft 同路径同实现，差异只来自品牌、明确裁剪项和运行边界。</p>
-      <div class="meta"><span>2026-07-29</span><span>TypeScript / React</span><span>Apache-2.0</span><span>mkagent/</span></div>
-    </header>
+<button class="mobile" id="menu">☰</button>
+<nav class="sidebar" id="sidebar">
+  <h1>MkAgent</h1><small>Craft Lite 源码复用与裁剪审计</small>
+  <a href="#overview">结论</a><a href="#shape">仓库结构</a><a href="#architecture">架构</a><a href="#lineage">Craft 复用</a><a href="#removed">物理裁剪</a><a href="#retained">保留能力</a><a href="#quality">验证</a><a href="#risks">风险</a>
+  <footer>2026-07-29<br>Craft v0.11.2 <button id="theme">切换暗色模式</button></footer>
+</nav>
+<main class="content">
+  <header class="hero" id="overview">
+    <h1>MkAgent Craft Lite 源码复用与裁剪审计</h1>
+    <p>MkAgent 是 Craft Agents OSS 的 Pi-only Lite 版本，不是独立重写。此前 UI 对齐确实大规模复用了 Craft，但把许多排除功能留在代码中并仅隐藏；本轮已把它们从文件、状态、路由、协议、事件、设置和文案层物理删除。</p>
+    <div class="meta"><span>基线 5c8308b</span><span>Craft a60ebc1 / v0.11.2</span><span>TypeScript / React</span><span>Apache-2.0</span></div>
+  </header>
 
-    <section id="shape"><h2>仓库结构</h2><p>这是一个 Bun workspace monorepo，桌面端、WebUI、CLI、服务核心、Pi runtime 与共享组件按边界分层。</p>
-      <table><thead><tr><th>层</th><th>路径</th><th>职责</th></tr></thead><tbody>
-        <tr><td>客户端</td><td><code>apps/electron</code>, <code>apps/webui</code>, <code>apps/cli</code></td><td>原生桌面、浏览器与命令行入口</td></tr>
-        <tr><td>服务</td><td><code>packages/server-core</code>, <code>packages/server</code></td><td>会话、设置、RPC 与 WebUI server</td></tr>
-        <tr><td>运行时</td><td><code>packages/pi-agent-server</code></td><td>Pi SDK 子进程与工具执行</td></tr>
-        <tr><td>共享</td><td><code>packages/core</code>, <code>packages/shared</code>, <code>packages/ui</code></td><td>协议、配置、模型、会话类型和 UI</td></tr>
-      </tbody></table>
-      <div class="stats"><div class="stat"><b>694</b><span>源文件</span></div><div class="stat"><b>132k</b><span>代码行</span></div><div class="stat"><b>190</b><span>测试文件</span></div><div class="stat"><b>10</b><span>直接修改文件</span></div></div>
-    </section>
+  <div class="stats">
+    <div class="stat"><b>96.5%</b><span>与 Craft 同路径</span></div>
+    <div class="stat"><b>62.0%</b><span>归一化逐字一致</span></div>
+    <div class="stat"><b>203</b><span>物理删除文件</span></div>
+    <div class="stat"><b>0</b><span>验证失败项</span></div>
+  </div>
 
-    <section id="architecture"><h2>架构设计</h2><p>Electron、WebUI 与 CLI 是同一 RPC 能力面的不同客户端，业务行为集中在 server-core 与 shared。</p>
-      <div class="diagram">Electron renderer ─┐
-WebUI ──────────────┼─&gt; WebSocket RPC ─&gt; server-core ─&gt; shared/core ─&gt; Pi runtime
-CLI ────────────────┘          │
-                               └─&gt; config / sessions / skills</div>
-      <table><thead><tr><th>类别</th><th>技术</th><th>版本</th><th>作用</th></tr></thead><tbody>
-        <tr><td>Desktop</td><td>Electron</td><td>^39.2.7</td><td>原生壳与 preload 隔离</td></tr><tr><td>UI</td><td>React</td><td>^18.3.1</td><td>Electron/WebUI 组件模型</td></tr><tr><td>Build</td><td>Vite</td><td>^6.2.4</td><td>renderer 构建与 HMR</td></tr><tr><td>Language</td><td>TypeScript</td><td>^5.0.0</td><td>跨 transport 类型契约</td></tr>
-      </tbody></table>
-    </section>
+  <section id="shape"><h2>仓库结构</h2>
+    <div class="card">保持 Craft 的 Bun monorepo 分层：三种客户端共用 WebSocket RPC、server-core 与 Pi runtime，不为 Lite 重建第二套业务架构。</div>
+    <div class="table"><table><thead><tr><th>层</th><th>路径</th><th>职责</th></tr></thead><tbody>
+      <tr><td>Desktop</td><td><code>apps/electron</code></td><td>main / preload / renderer、窗口和 Browser Pane</td></tr>
+      <tr><td>WebUI / CLI</td><td><code>apps/webui</code>, <code>apps/cli</code></td><td>共享 RPC 的浏览器和命令行入口</td></tr>
+      <tr><td>Server</td><td><code>packages/server*</code></td><td>会话、设置、工作区和 RPC handlers</td></tr>
+      <tr><td>Runtime</td><td><code>packages/pi-agent-server</code></td><td>唯一 Pi Agent 子进程</td></tr>
+      <tr><td>Shared</td><td><code>packages/core</code>, <code>shared</code>, <code>ui</code></td><td>协议、配置、类型和 Craft UI 组件</td></tr>
+    </tbody></table></div>
+    <p class="muted">应用/包/脚本目录：1,052 个代码文件，约 195,744 行；TypeScript 与 TSX 占主要部分。</p>
+  </section>
 
-    <section id="migration"><h2>Craft 迁移审计</h2><p>Electron 源码闭包已经从 598 个散落未跟踪文件收敛为 104 个受控文件和 55 个待提交新增文件。</p>
-      <div class="stats"><div class="stat"><b>42</b><span>字节一致</span></div><div class="stat"><b>22</b><span>仅品牌替换</span></div><div class="stat"><b>34</b><span>Lite 适配</span></div><div class="stat"><b>6</b><span>MkAgent 品牌文件</span></div></div>
-      <div class="card"><strong>UI 结论</strong><p><code>renderer/App.tsx</code> 现在组合 Craft 的 TopBar、LeftSidebar、PanelHeader、EntityRow、SettingsNavigator 与 settings primitives；原自写 <code>mk-*</code> 外壳 CSS 已删除。设置注册表仅移除 Lite 排除页面。</p></div>
-      <div class="card"><strong>清理结论</strong><p>删除 540 个无用未跟踪文件，包括 Craft logo、DMG 背景、release notes、bridge MCP、playground、被裁剪产品面及陈旧测试。Electron 迁移范围不再残留可见 Craft 产品文案或 logo；上游归属和兼容迁移标识继续保留。</p></div>
-      <div class="card"><strong>运行修复</strong><p>补齐 Browser Pane <code>emptyStateLaunch</code> channel，增强 popup/销毁清理，修复空 proxy 导致的 renderer 崩溃，并为多实例 dev 隔离 Electron userData。</p></div>
-    </section>
+  <section id="architecture"><h2>架构</h2>
+    <div class="diagram">Electron Desktop ─┐
+WebUI ────────────┼── typed API / WebSocket RPC ── server-core ── sessions/config/files
+CLI ──────────────┘                                              │
+                                                                 ▼
+                                                          PiAgent only
+                                                                 │
+                                                                 ▼
+                                                  pi-agent-server subprocess</div>
+    <div class="decision"><strong>共享边界：</strong>renderer 不直接访问 Node；Desktop/WebUI/CLI 调用同一 handler；API key、Ollama、自定义端点全部路由到 Pi。</div>
+    <div class="decision"><strong>差异位置：</strong>Lite 改动集中在 AppShell、导航、设置、onboarding 和注册表；基础 UI、会话、附件、Browser、权限和协议尽量保持 Craft 同源。</div>
+  </section>
 
-    <section id="quality"><h2>质量信号</h2><p>静态、单元、isolated、构建和运行验证全部通过；视觉验证覆盖 Electron renderer 与 WebUI 的全部 8 个保留设置入口。</p>
-      <table><thead><tr><th>验证项</th><th>结果</th></tr></thead><tbody>
-        <tr><td><code>bun run test</code></td><td><span class="tag ok">PASS</span> 2498 pass / 11 skip / 0 fail，isolated 全通过</td></tr>
-        <tr><td><code>bun run validate:ci</code></td><td><span class="tag ok">PASS</span> typecheck、共享测试、19 个文档工具 smoke、i18n</td></tr>
-        <tr><td>Electron build/dev</td><td><span class="tag ok">PASS</span> 窗口、WS、sessions/skills IPC、renderer 0 error</td></tr>
-        <tr><td>WebUI build/runtime</td><td><span class="tag ok">PASS</span> 3621 modules；登录、主界面、8 设置页，console 0 error</td></tr>
-      </tbody></table>
-    </section>
+  <section id="lineage"><h2>Craft 源码复用</h2>
+    <div class="table"><table><thead><tr><th>指标</th><th>数量</th><th>解释</th></tr></thead><tbody>
+      <tr><td>MkAgent tracked source</td><td>1,138</td><td>不含报告和生成物</td></tr>
+      <tr><td>与 Craft 同路径</td><td>1,098</td><td><span class="tag ok">96.5%</span></td></tr>
+      <tr><td>归一化逐字一致</td><td>706</td><td><span class="tag ok">62.0%</span></td></tr>
+      <tr><td>Craft 派生且修改</td><td>392</td><td>主要是删除分支、品牌与 Pi-only 适配</td></tr>
+      <tr><td>MkAgent-only</td><td>40</td><td>CI、文档、品牌、Pi 元数据和审计脚本</td></tr>
+      <tr><td>Craft-only</td><td>624</td><td>主要是完整产品功能</td></tr>
+    </tbody></table></div>
+    <p>同路径率比“相同代码率”更能回答是否重写：96.5% 文件沿用 Craft 的模块位置。逐字一致率则给出最严格下界。当前变更 305 个文件，增加 1,121 行、删除 54,390 行，形态是明确的减法。</p>
+    <div class="card"><strong>Renderer 强约束：</strong>386 个文件中，174 个必须与 Craft 归一化完全一致，207 个登记为 Lite 裁剪缝，5 个是 MkAgent 品牌资产。排除功能路径和关键调用重新出现会让 lint 失败。</div>
+  </section>
 
-    <section id="risks"><h2>风险与未知项</h2>
-      <div class="risk"><span class="tag medium">MEDIUM</span> <strong>视觉回归尚未进入 CI</strong><p class="muted">本次截图通过 CDP/WebUI 自动检查，后续应固化基线。</p></div>
-      <div class="risk"><span class="tag medium">MEDIUM</span> <strong>renderer/App.tsx 仍是组合热点</strong><p class="muted">应继续按 Craft 页面边界拆分，避免再次形成自写大页。</p></div>
-      <div class="risk"><span class="tag medium">MEDIUM</span> <strong>主 chunk 超过 4 MB</strong><p class="muted">Vite 持续报告大 chunk 警告，影响首屏解析与 HMR 成本。</p></div>
-      <div class="risk low-risk"><span class="tag ok">LOW</span> <strong>原生像素与发布包待平台复核</strong><p class="muted">macOS vibrancy/交通灯、Windows/Linux frame、签名与公证仍需对应 runner。</p></div>
-      <h3>商业使用</h3><p>Apache-2.0 允许商业使用、闭源组合、修改与再分发；发布时需要保留许可证与 NOTICE（如有）、说明修改，并遵守专利授权与终止条款。</p>
-    </section>
-  </main>
-  <script>
-    const root=document.documentElement,button=document.getElementById('theme');
-    button.addEventListener('click',()=>{const dark=root.dataset.theme!=='dark';root.dataset.theme=dark?'dark':'light';button.textContent=dark?'切换亮色模式':'切换暗色模式'});
-  </script>
+  <section id="removed"><h2>物理裁剪</h2>
+    <div class="table"><table><thead><tr><th>功能面</th><th>处理结果</th></tr></thead><tbody>
+      <tr><td>Automations / Messaging</td><td>删除 atoms、hooks、组件、设置、图标、文案和 Playground</td></tr>
+      <tr><td>Projects / Kanban / Conductor</td><td>删除 board、editor、project 页面、状态字段和导航</td></tr>
+      <tr><td>Sources / MCP product UI</td><td>删除 selector、详情、模块导出、事件与 OAuth 卡片</td></tr>
+      <tr><td>Labels / statuses / views</td><td>删除 UI、shared modules、RPC handlers 和过滤元数据</td></tr>
+      <tr><td>Viewer / sharing</td><td>删除菜单、事件、Viewer URL 和未引用的 SessionViewer</td></tr>
+      <tr><td>Session transfer</td><td>删除对话框、target helper、API 与 transfer context</td></tr>
+      <tr><td>Remote workspace product</td><td>删除 picker/connect UI 与 remoteServer 镜像绑定</td></tr>
+      <tr><td>OAuth / subscription</td><td>删除 API、UI、Copilot 资产、重复账户与 re-auth 分支</td></tr>
+      <tr><td>Compatibility no-ops</td><td>删除 <code>craft-renderer-compat.ts</code>，retained API 必须映射真实 channel</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <section id="retained"><h2>保留的 Lite 能力</h2>
+    <ul><li>Pi API key、多上游 provider、Ollama 与自定义兼容端点。</li><li>本地多工作区、会话创建/删除/归档/标记/未读、导入/导出/分支、多面板/多窗口。</li><li>Skills 列表、详情和 mini-agent 编辑；文件、目录、Skill mentions。</li><li>Plan Review、权限模式、thinking/model、annotations。</li><li>Browser Pane、web search/fetch、附件与 PDF/Office/代码预览。</li><li>Desktop/WebUI/CLI 的共享 WebSocket RPC、代理、更新、主题和 i18n。</li></ul>
+    <div class="decision"><strong>重要区分：</strong>Pi background Agent/Shell task 是运行能力，保留；Projects/Kanban/Tasks Conductor 是产品组织层，删除。</div>
+    <div class="decision"><strong>重要区分：</strong>WebUI 的远程 WebSocket transport 是共享架构，保留；remote workspace picker/binding 是产品功能，删除。</div>
+  </section>
+
+  <section id="quality"><h2>验证结果</h2>
+    <div class="table"><table><thead><tr><th>检查</th><th>结果</th><th>范围</th></tr></thead><tbody>
+      <tr><td><code>typecheck:all</code></td><td><span class="tag ok">通过</span></td><td>core/shared/server/server-core/session-tools/Pi/Electron/UI</td></tr>
+      <tr><td><code>bun run test</code></td><td><span class="tag ok">通过</span></td><td>全仓 Bun tests 与 isolated tests</td></tr>
+      <tr><td><code>validate:ci</code></td><td><span class="tag ok">通过</span></td><td>类型、配置、19 个文档工具 smoke、i18n</td></tr>
+      <tr><td><code>bun run lint</code></td><td><span class="tag ok">0 errors</span></td><td>70 个 Craft 同源 Hook warnings</td></tr>
+      <tr><td>Electron build</td><td><span class="tag ok">通过</span></td><td>main/preload/renderer/resources/assets</td></tr>
+      <tr><td>WebUI / CLI / Pi build</td><td><span class="tag ok">通过</span></td><td>三条 production build</td></tr>
+    </tbody></table></div>
+    <div class="card">构建曾发现 Copilot SVG 已删除但映射仍静态 import 的闭包问题；清掉引用后全部构建通过。这证明生产构建对“物理删除完整性”提供了比 typecheck 更强的一层验证。</div>
+  </section>
+
+  <section id="risks"><h2>风险与待验证项</h2>
+    <div class="risk"><strong><span class="tag warn">MEDIUM</span> Lite 定制缝仍较宽</strong><p>206 个 renderer 文件登记为 override。后续可逐步把精确文件从 broad prefix 中拆出，提升严格逐字复用覆盖。</p></div>
+    <div class="risk"><strong><span class="tag warn">MEDIUM</span> 上游同步必须做语义审查</strong><p>不能再全量复制 Craft renderer。先运行边界检查，再判断 retained capability 是否需要吸收。</p></div>
+    <div class="risk low"><strong><span class="tag ok">LOW</span> React Hook warnings</strong><p>lint 无 error，但保留 70 个 Craft 同源 warning，适合后续独立治理。</p></div>
+    <div class="risk low"><strong><span class="tag ok">LOW</span> GUI 手工 smoke 尚未执行</strong><p>生产构建和自动验证已通过；发布前仍建议在全新用户目录完成 onboarding、真实 Pi 消息、Skill、导入导出和 WebUI 重连点击链路。</p></div>
+    <h3>商业使用与二次开发</h3><div class="card">仓库声明 Apache-2.0，通常允许商业使用、修改、再分发和闭源组合，但需保留许可证/声明并遵守专利条款。发布时仍应核对 Craft 上游和第三方依赖许可证；本报告不是法律意见。</div>
+    <h3>复现命令</h3><div class="diagram" style="text-align:left">bun run audit:craft-reuse
+bun run lint:craft-ui-sync
+bun run typecheck:all
+bun run test
+bun run validate:ci
+bun run lint
+bun run electron:build
+bun run webui:build
+bun run cli:build
+bun run server:build:subprocess</div>
+  </section>
+</main>
+<script>
+const root=document.documentElement,sidebar=document.getElementById('sidebar');
+document.getElementById('theme').onclick=()=>{const dark=root.dataset.theme==='dark';root.dataset.theme=dark?'light':'dark';document.getElementById('theme').textContent=dark?'切换暗色模式':'切换亮色模式'};
+document.getElementById('menu').onclick=()=>sidebar.classList.toggle('open');
+document.querySelectorAll('.sidebar a').forEach(a=>a.onclick=()=>sidebar.classList.remove('open'));
+</script>
 </body>
 </html>

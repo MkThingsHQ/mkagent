@@ -2,8 +2,7 @@ import * as React from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SkillAvatar } from '@/components/ui/skill-avatar'
-import { SourceAvatar } from '@/components/ui/source-avatar'
-import type { LoadedSkill, LoadedSource } from '../../../shared/types'
+import type { LoadedSkill } from '../../../shared/types'
 import type { MentionItemType } from './mention-menu'
 
 // ============================================================================
@@ -15,8 +14,6 @@ export interface MentionBadgeProps {
   label: string
   /** Skill data for skill mentions */
   skill?: LoadedSkill
-  /** Source data for source mentions */
-  source?: LoadedSource
   /** Workspace ID for skill avatar */
   workspaceId?: string
   /** Called when the remove button is clicked */
@@ -33,13 +30,12 @@ export interface MentionBadgeProps {
  * MentionBadge - Inline badge for displaying active @mentions
  *
  * Used in the ActiveMentionBadges row above the input field to show
- * skills and sources that have been mentioned via @.
+ * skills, files, and folders that have been mentioned via @.
  */
 export function MentionBadge({
   type,
   label,
   skill,
-  source,
   workspaceId,
   onRemove,
   className,
@@ -56,9 +52,6 @@ export function MentionBadge({
       {/* Icon based on type */}
       {type === 'skill' && skill && (
         <SkillAvatar skill={skill} size="xs" workspaceId={workspaceId} />
-      )}
-      {type === 'source' && source && (
-        <SourceAvatar source={source} size="xs" />
       )}
 
       {/* Label */}
@@ -90,7 +83,6 @@ export interface ParsedMention {
   type: MentionItemType
   label: string
   skill?: LoadedSkill
-  source?: LoadedSource
 }
 
 export interface ActiveMentionBadgesProps {
@@ -107,7 +99,7 @@ export interface ActiveMentionBadgesProps {
 /**
  * ActiveMentionBadges - Row of mention badges shown above the input
  *
- * Displays all active @mentions (skills and sources) as removable badges.
+ * Displays all active @mentions as removable badges.
  * Hidden when there are no mentions.
  */
 export function ActiveMentionBadges({
@@ -126,7 +118,6 @@ export function ActiveMentionBadges({
           type={mention.type}
           label={mention.label}
           skill={mention.skill}
-          source={mention.source}
           workspaceId={workspaceId}
           onRemove={onRemove ? () => onRemove(mention.id, mention.type) : undefined}
         />

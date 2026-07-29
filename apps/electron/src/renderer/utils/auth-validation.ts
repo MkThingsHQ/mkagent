@@ -1,6 +1,6 @@
 /**
  * Shared authentication validation utilities
- * Used by both CredentialRequest and AuthRequestCard components
+ * Used by the structured CredentialRequest component.
  */
 
 /**

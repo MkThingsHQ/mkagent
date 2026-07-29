@@ -20,7 +20,6 @@ export type {
   CompleteEvent,
   ErrorEvent,
   PermissionRequestEvent,
-  SourcesChangedEvent,
   PlanSubmittedEvent,
   TaskBackgroundedEvent,
   ShellBackgroundedEvent,

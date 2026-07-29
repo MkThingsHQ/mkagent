@@ -1,12 +1,10 @@
 /**
  * @mkagent/ui - Shared React UI components for MkAgent
  *
- * This package provides platform-agnostic UI components that work in both:
- * - Electron desktop app (full interactive mode)
- * - Web session viewer (read-only mode)
+ * This package provides platform-agnostic UI components shared by the Desktop
+ * and WebUI clients.
  *
  * Key components:
- * - SessionViewer: Read-only session transcript viewer (used by web viewer)
  * - TurnCard: Email-like display for assistant turns
  * - Markdown: Customizable markdown renderer with syntax highlighting
  *
@@ -27,7 +25,6 @@ export {
 
 // Chat components
 export {
-  SessionViewer,
   TurnCard,
   TurnCardActionsMenu,
   ResponseCard,
@@ -46,8 +43,6 @@ export {
   mapToolEventToActivity,
   SIZE_CONFIG,
   ActivityStatusIcon,
-  type SessionViewerProps,
-  type SessionViewerMode,
   type TurnCardProps,
   type TurnCardActionsMenuProps,
   type ResponseCardProps,

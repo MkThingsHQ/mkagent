@@ -19,11 +19,6 @@ import {
   handleComplete,
   handleError,
   handleTypedError,
-  handleSourcesChanged,
-  handleLabelsChanged,
-  handleProjectIdChanged,
-  handleSessionStatusChanged,
-  handleSessionMetadataChanged,
   handleSessionFlagged,
   handleSessionUnflagged,
   handleSessionArchived,
@@ -44,10 +39,6 @@ import {
   handleConnectionChanged,
   handleUserMessage,
   handleMessageAnnotationsUpdated,
-  handleSessionShared,
-  handleSessionUnshared,
-  handleAuthRequest,
-  handleAuthCompleted,
   handleUsageUpdate,
 } from './handlers/session'
 
@@ -157,21 +148,6 @@ export function processEvent(
     case 'connection_changed':
       return handleConnectionChanged(state, event)
 
-    case 'sources_changed':
-      return handleSourcesChanged(state, event)
-
-    case 'labels_changed':
-      return handleLabelsChanged(state, event)
-
-    case 'project_id_changed':
-      return handleProjectIdChanged(state, event)
-
-    case 'session_status_changed':
-      return handleSessionStatusChanged(state, event)
-
-    case 'session_metadata_changed':
-      return handleSessionMetadataChanged(state, event)
-
     case 'session_flagged':
       return handleSessionFlagged(state, event)
 
@@ -201,23 +177,6 @@ export function processEvent(
 
     case 'message_annotations_updated':
       return handleMessageAnnotationsUpdated(state, event)
-
-    case 'session_shared':
-      return handleSessionShared(state, event)
-
-    case 'session_unshared':
-      return handleSessionUnshared(state, event)
-
-    case 'auth_request':
-      return handleAuthRequest(state, event)
-
-    case 'auth_completed':
-      return handleAuthCompleted(state, event)
-
-    case 'source_activated':
-      // Server-side handles the auto-retry now (craft-agents-oss#804); the renderer
-      // just receives the event for UI feedback. See SessionManager.processEvent.
-      return { state, effects: [] }
 
     case 'usage_update':
       return handleUsageUpdate(state, event)

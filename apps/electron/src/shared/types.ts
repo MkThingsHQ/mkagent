@@ -55,17 +55,11 @@ export type { AuthState, SetupNeeds, AuthType };
 import type { CredentialHealthStatus, CredentialHealthIssue, CredentialHealthIssueType } from '@mkagent/shared/credentials/types';
 export type { CredentialHealthStatus, CredentialHealthIssue, CredentialHealthIssueType };
 
-// Source types for session source selection
-import type { LoadedSource, FolderSourceConfig, SourceConnectionStatus } from '@mkagent/shared/sources/types';
-export type { LoadedSource, FolderSourceConfig, SourceConnectionStatus };
 
 // Skill types
 import type { LoadedSkill, SkillMetadata } from '@mkagent/shared/skills/types';
 export type { LoadedSkill, SkillMetadata };
 
-// Resource bundle types (cross-workspace export/import)
-import type { ExportResourcesOptions, ExportResult, ResourceImportMode, ResourceBundle, ResourceImportResult } from '@mkagent/shared/resources';
-export type { ExportResourcesOptions, ExportResult, ResourceImportMode, ResourceBundle, ResourceImportResult };
 
 // LLM connection types
 import type { LlmConnection, LlmConnectionWithStatus, LlmAuthType, LlmProviderType, NetworkProxySettings } from '@mkagent/shared/config';
@@ -181,23 +175,12 @@ import type {
   Session,
   UnreadSummary,
   CreateSessionOptions,
-  TaskValidationResultDto,
-  TaskCreateRequest,
-  TaskCreateResult,
-  TaskGenerateRequest,
-  TaskGenerateAck,
-  TaskGenerateResult,
-  TaskRunRequest,
-  TaskRunSnapshotDto,
-  TaskGetResult,
-  TaskResultsDto,
   FileAttachment,
   SendMessageOptions,
   SessionEvent,
   PermissionResponseOptions,
   CredentialResponse,
   SessionCommand,
-  ShareResult,
   RefreshTitleResult,
   FileSearchResult,
   SessionSearchResult,
@@ -206,21 +189,14 @@ import type {
   TestLlmConnectionResult,
   SkillFile,
   SessionFile,
-  OAuthResult,
-  McpToolsResult,
   GitBashStatus,
-  ClaudeOAuthResult,
   UpdateInfo,
   WorkspaceSettings,
   PermissionModeState,
   BrowserInstanceInfo,
   DeepLinkNavigation,
-  TestAutomationPayload,
-  TestAutomationResult,
   WindowCloseRequest,
   DirectoryListingResult,
-  RemoteSessionTransferPayload,
-  ImportRemoteSessionTransferResult,
 } from '@mkagent/shared/protocol'
 
 export interface ElectronAPI {
@@ -234,50 +210,23 @@ export interface ElectronAPI {
   sendMessage(sessionId: string, message: string, attachments?: FileAttachment[], storedAttachments?: StoredAttachmentType[], options?: SendMessageOptions): Promise<void>
   cancelProcessing(sessionId: string, silent?: boolean): Promise<void>
   killShell(sessionId: string, shellId: string): Promise<{ success: boolean; error?: string }>
-  getTaskOutput(taskId: string): Promise<string | null>
-
-  // Tasks (Conductor)
-  validateTask(workspaceId: string, yaml: string): Promise<TaskValidationResultDto>
-  createTask(workspaceId: string, req: TaskCreateRequest): Promise<TaskCreateResult>
-  generateTask(workspaceId: string, req: TaskGenerateRequest): Promise<TaskGenerateAck>
-  /** Async generate result (or error), keyed by orchestratorSessionId. Subscribe before/after generateTask. */
-  onTaskGenerated(callback: (workspaceId: string, result: TaskGenerateResult) => void): () => void
-  runTask(workspaceId: string, req: TaskRunRequest): Promise<TaskRunSnapshotDto>
-  pauseTask(workspaceId: string, slug: string, runId: string): Promise<void>
-  resumeTask(workspaceId: string, slug: string, runId: string): Promise<void>
-  stopTask(workspaceId: string, slug: string, runId: string): Promise<void>
-  getTask(workspaceId: string, slug: string, runId?: string): Promise<TaskGetResult>
-  listTasks(workspaceId: string): Promise<string[]>
-  getTaskResults(workspaceId: string, slug: string, runId?: string): Promise<TaskResultsDto>
 
   respondToPermission(sessionId: string, requestId: string, allowed: boolean, alwaysAllow: boolean, options?: PermissionResponseOptions): Promise<boolean>
   respondToCredential(sessionId: string, requestId: string, response: CredentialResponse): Promise<boolean>
 
   // Consolidated session command handler
-  sessionCommand(sessionId: string, command: SessionCommand): Promise<void | ShareResult | RefreshTitleResult | { count: number }>
+  sessionCommand(sessionId: string, command: SessionCommand): Promise<void | RefreshTitleResult | { count: number }>
 
   // Server info (REMOTE_ELIGIBLE — returns data from whichever server owns the workspace)
   getServerHomeDir(): Promise<string>
 
-  // Server mode configuration
-  getServerConfig(): Promise<import('@mkagent/shared/config/server-config').ServerConfig>
-  setServerConfig(config: import('@mkagent/shared/config/server-config').ServerConfig): Promise<void>
-  getServerStatus(): Promise<import('@mkagent/shared/config/server-config').ServerStatus>
-
   // App lifecycle
   relaunchApp(): Promise<void>
   removeWorkspace(workspaceId: string): Promise<boolean>
-  invokeOnServer(url: string, token: string, channel: string, ...args: any[]): Promise<any>
 
-  // Remote session transfer (main-process orchestrated, supports chunked upload)
-  transferSessionToWorkspace(sessionId: string, targetWorkspaceId: string, sessionIndex?: number, sessionCount?: number): Promise<{ sessionId: string }>
-  onTransferProgress(callback: (progress: { sessionIndex: number; sessionCount: number; chunkSent: number; chunkTotal: number }) => void): () => void
-
-  // Session export/import (cross-workspace transfer)
+  // Session export/import
   exportSession(sessionId: string): Promise<unknown>
   importSession(targetWorkspaceId: string, bundle: unknown, mode: 'move' | 'fork'): Promise<{ sessionId: string; warnings?: string[] }>
-  exportRemoteSessionTransfer(sessionId: string): Promise<RemoteSessionTransferPayload>
-  importRemoteSessionTransfer(targetWorkspaceId: string, payload: RemoteSessionTransferPayload): Promise<ImportRemoteSessionTransferResult>
 
   // Pending plan execution (for reload recovery)
   getPendingPlanExecution(sessionId: string): Promise<{ planPath: string; draftInputSnapshot?: string; awaitingCompaction: boolean; executionDispatched: boolean } | null>
@@ -286,23 +235,8 @@ export interface ElectronAPI {
 
   // Workspace management
   getWorkspaces(): Promise<Workspace[]>
-  createWorkspace(folderPath: string, name: string, remoteServer?: { url: string; token: string; remoteWorkspaceId: string }): Promise<Workspace>
+  createWorkspace(folderPath: string, name: string): Promise<Workspace>
   checkWorkspaceSlug(slug: string): Promise<{ exists: boolean; path: string }>
-  updateWorkspaceRemoteServer(workspaceId: string, remoteServer: { url: string; token: string; remoteWorkspaceId: string }): Promise<{ success: boolean }>
-
-  // Server-level workspace operations (for thin client / remote workspace discovery)
-  getServerWorkspaces(): Promise<WorkspaceInfo[]>
-  createServerWorkspace(name: string): Promise<WorkspaceInfo>
-
-  testRemoteConnection(url: string, token: string): Promise<{
-    ok: boolean
-    error?: string
-    needsWorkspace?: boolean
-    remoteWorkspaces?: Array<{ id: string; name: string }>
-    remoteWorkspaceId?: string   // auto-set when exactly one workspace
-    remoteWorkspaceName?: string // auto-set when exactly one workspace
-    serverVersion?: string       // server app version from handshake
-  }>
 
   // Window management
   getWindowWorkspace(): Promise<string | null>
@@ -413,28 +347,7 @@ export interface ElectronAPI {
   // Onboarding
   getAuthState(): Promise<AuthState>
   getSetupNeeds(): Promise<SetupNeeds>
-  startWorkspaceMcpOAuth(mcpUrl: string): Promise<OAuthResult & { clientId?: string }>
-  // Claude OAuth (two-step flow)
-  startClaudeOAuth(): Promise<{ success: boolean; authUrl?: string; error?: string }>
-  exchangeClaudeCode(code: string, connectionSlug: string): Promise<ClaudeOAuthResult>
-  hasClaudeOAuthState(): Promise<boolean>
-  clearClaudeOAuthState(): Promise<{ success: boolean }>
-  /** Defer onboarding setup — user chose "Setup later" */
   deferSetup(): Promise<{ success: boolean }>
-
-  // ChatGPT OAuth (for Codex chatgptAuthTokens mode)
-  startChatGptOAuth(connectionSlug: string): Promise<{ success: boolean; error?: string }>
-  cancelChatGptOAuth(): Promise<{ success: boolean }>
-  getChatGptAuthStatus(connectionSlug: string): Promise<{ authenticated: boolean; expiresAt?: number; hasRefreshToken?: boolean }>
-  chatGptLogout(connectionSlug: string): Promise<{ success: boolean }>
-
-  // GitHub Copilot OAuth
-  startCopilotOAuth(connectionSlug: string): Promise<{ success: boolean; error?: string }>
-  cancelCopilotOAuth(): Promise<{ success: boolean }>
-  getCopilotAuthStatus(connectionSlug: string): Promise<{ authenticated: boolean }>
-  copilotLogout(connectionSlug: string): Promise<{ success: boolean }>
-  onCopilotDeviceCode(callback: (data: { userCode: string; verificationUri: string }) => void): () => void
-
   /** Unified LLM connection setup */
   setupLlmConnection(setup: LlmConnectionSetup): Promise<{ success: boolean; error?: string }>
   /** Unified connection test — spawns a lightweight agent subprocess to validate credentials */
@@ -473,26 +386,11 @@ export interface ElectronAPI {
   unwatchSessionFiles(): Promise<void>
   onSessionFilesChanged(callback: (sessionId: string) => void): () => void
 
-  // Sources
-  getSources(workspaceId: string): Promise<LoadedSource[]>
-  createSource(workspaceId: string, config: Partial<FolderSourceConfig>): Promise<FolderSourceConfig>
-  deleteSource(workspaceId: string, sourceSlug: string): Promise<void>
-  startSourceOAuth(workspaceId: string, sourceSlug: string): Promise<{ success: boolean; error?: string }>
-  saveSourceCredentials(workspaceId: string, sourceSlug: string, credential: string): Promise<void>
-  getSourcePermissionsConfig(workspaceId: string, sourceSlug: string): Promise<import('@mkagent/shared/agent').PermissionsConfigFile | null>
-  getWorkspacePermissionsConfig(workspaceId: string): Promise<import('@mkagent/shared/agent').PermissionsConfigFile | null>
-  getDefaultPermissionsConfig(): Promise<{ config: import('@mkagent/shared/agent').PermissionsConfigFile | null; path: string }>
-  getMcpTools(workspaceId: string, sourceSlug: string): Promise<McpToolsResult>
-
-  // OAuth (server-owned credentials, client-orchestrated flow)
-  performOAuth(args: { sourceSlug: string; sessionId?: string; authRequestId?: string }): Promise<{ success: boolean; error?: string; email?: string }>
-  oauthRevoke(sourceSlug: string): Promise<{ success: boolean }>
-
   // Session content search (full-text search via ripgrep)
   searchSessionContent(workspaceId: string, query: string, searchId?: string): Promise<SessionSearchResult[]>
 
-  // Sources change listener (live updates when sources are added/removed)
-  onSourcesChanged(callback: (workspaceId: string, sources: LoadedSource[]) => void): () => void
+  getWorkspacePermissionsConfig(workspaceId: string): Promise<import('@mkagent/shared/agent').PermissionsConfigFile | null>
+  getDefaultPermissionsConfig(): Promise<{ config: import('@mkagent/shared/agent').PermissionsConfigFile | null; path: string }>
 
   // Default permissions change listener (live updates when default.json changes)
   onDefaultPermissionsChanged(callback: () => void): () => void
@@ -507,23 +405,8 @@ export interface ElectronAPI {
   // Skills change listener (live updates when skills are added/removed/modified)
   onSkillsChanged(callback: (workspaceId: string, skills: LoadedSkill[]) => void): () => void
 
-  // Statuses (workspace-scoped)
-  listStatuses(workspaceId: string): Promise<import('@mkagent/shared/statuses').StatusConfig[]>
-  reorderStatuses(workspaceId: string, orderedIds: string[]): Promise<void>
-  onStatusesChanged(callback: (workspaceId: string) => void): () => void
-
-  // Labels (workspace-scoped)
-  listLabels(workspaceId: string): Promise<import('@mkagent/shared/labels').LabelConfig[]>
-  createLabel(workspaceId: string, input: import('@mkagent/shared/labels').CreateLabelInput): Promise<import('@mkagent/shared/labels').LabelConfig>
-  deleteLabel(workspaceId: string, labelId: string): Promise<{ stripped: number }>
-  onLabelsChanged(callback: (workspaceId: string) => void): () => void
-
   // LLM connections change listener
   onLlmConnectionsChanged(callback: () => void): () => void
-
-  // Views (workspace-scoped, stored in views.json)
-  listViews(workspaceId: string): Promise<import('@mkagent/shared/views').ViewConfig[]>
-  saveViews(workspaceId: string, views: import('@mkagent/shared/views').ViewConfig[]): Promise<void>
 
   // Generic workspace image loading/saving
   readWorkspaceImage(workspaceId: string, relativePath: string): Promise<string>
@@ -659,267 +542,55 @@ export interface ElectronAPI {
   setDefaultThinkingLevel(level: ThinkingLevel): Promise<{ success: boolean; error?: string }>
   setWorkspaceDefaultLlmConnection(workspaceId: string, slug: string | null): Promise<{ success: boolean; error?: string }>
 
-  // Projects (workspace-scoped)
-  getProjects(workspaceId: string): Promise<unknown>
-  getProject(workspaceId: string, projectIdOrSlug: string): Promise<unknown | null>
-  createProject(workspaceId: string, input: import('@mkagent/shared/projects/types').CreateProjectInput): Promise<import('@mkagent/shared/projects/types').ProjectConfig>
-  updateProject(workspaceId: string, projectSlug: string, patch: Partial<Omit<import('@mkagent/shared/projects/types').ProjectConfig, 'id' | 'slug' | 'createdAt'>>): Promise<import('@mkagent/shared/projects/types').ProjectConfig>
-  deleteProject(workspaceId: string, projectSlug: string): Promise<void>
-  listProjectAssets(workspaceId: string, projectSlug: string): Promise<unknown>
-  uploadProjectAsset(workspaceId: string, projectSlug: string, input: { filename: string; base64?: string; text?: string; sourcePath?: string }): Promise<import('@mkagent/shared/projects/types').ProjectAsset>
-  deleteProjectAsset(workspaceId: string, projectSlug: string, filename: string): Promise<void>
-  onProjectsChanged(callback: (workspaceId: string, projects: unknown) => void): () => void
-
-  // Automations
-  getAutomations(workspaceId: string): Promise<unknown>
-
-  // Automation testing (manual trigger)
-  testAutomation(payload: TestAutomationPayload): Promise<TestAutomationResult>
-
-  // Automation state management
-  setAutomationEnabled(workspaceId: string, eventName: string, matcherIndex: number, enabled: boolean): Promise<void>
-  duplicateAutomation(workspaceId: string, eventName: string, matcherIndex: number): Promise<void>
-  deleteAutomation(workspaceId: string, eventName: string, matcherIndex: number): Promise<void>
-  getAutomationHistory(workspaceId: string, automationId: string, limit?: number): Promise<Array<{ id: string; ts: number; ok: boolean; sessionId?: string; prompt?: string; error?: string; webhook?: { method: string; url: string; statusCode: number; durationMs: number; attempts?: number; error?: string; responseBody?: string } }>>
-  getAutomationLastExecuted(workspaceId: string): Promise<Record<string, number>>
-  replayAutomation(workspaceId: string, automationId: string, eventName: string): Promise<{ results: Array<{ type: string; url: string; statusCode: number; success: boolean; error?: string; duration: number }> }>
-
-  // Automations change listener
-  onAutomationsChanged(callback: (workspaceId: string) => void): () => void
-
   // Language
   changeLanguage(lang: string): Promise<void>
 
-  // Resources (cross-workspace export/import)
-  exportResources(workspaceId: string, options: ExportResourcesOptions): Promise<ExportResult>
-  importResources(workspaceId: string, bundle: ResourceBundle, mode: ResourceImportMode): Promise<ResourceImportResult>
-
-  // Messaging gateway — workspaceId is taken from the client handshake (ctx.workspaceId)
-  getMessagingConfig(): Promise<{
-    enabled: boolean
-    platforms: Record<string, { enabled: boolean; accessMode?: MessagingPlatformAccessMode; owners?: MessagingPlatformOwnerInfo[] } | undefined>
-    runtime: Record<string, MessagingPlatformRuntimeInfo | undefined>
-  } | null>
-  updateMessagingConfig(config: Record<string, unknown>): Promise<void>
-  testTelegramToken(token: string): Promise<{ success: boolean; botName?: string; botUsername?: string; error?: string }>
-  saveTelegramToken(token: string): Promise<void>
-  testLarkCredentials(creds: { appId: string; appSecret: string; domain: 'lark' | 'feishu' }): Promise<{ success: boolean; botName?: string; error?: string }>
-  saveLarkCredentials(creds: { appId: string; appSecret: string; domain: 'lark' | 'feishu' }): Promise<void>
-  disconnectMessagingPlatform(platform: string): Promise<void>
-  forgetMessagingPlatform(platform: string): Promise<void>
-  getMessagingBindings(): Promise<Array<{ id: string; workspaceId: string; sessionId: string; platform: string; channelId: string; threadId?: number; channelName?: string; enabled: boolean; createdAt: number; accessMode?: MessagingBindingAccessMode; allowedSenderIds?: string[] }>>
-  generateMessagingPairingCode(sessionId: string, platform: string): Promise<{ code: string; expiresAt: number; botUsername?: string }>
-  /** Telegram supergroup pairing — returns a code typed in the supergroup to capture its chatId. */
-  generateMessagingSupergroupCode(platform: string): Promise<{ code: string; expiresAt: number; botUsername?: string }>
-  /** Read the workspace's currently paired Telegram supergroup, if any. */
-  getMessagingSupergroup(): Promise<{ chatId: string; title: string; capturedAt: number } | null>
-  /** Forget the paired Telegram supergroup (existing topic bindings stay on disk but stop matching). */
-  unbindMessagingSupergroup(): Promise<{ success: boolean }>
-  unbindMessagingSession(sessionId: string, platform?: string): Promise<void>
-  unbindMessagingBinding(bindingId: string): Promise<{ success: boolean }>
-  onMessagingBindingChanged(callback: (workspaceId: string) => void): () => void
-  onMessagingPlatformStatus(callback: (workspaceId: string, platform: string, status: MessagingPlatformRuntimeInfo) => void): () => void
-  // WhatsApp (subprocess-based Baileys adapter)
-  startWhatsAppConnect(): Promise<{ success: boolean }>
-  submitWhatsAppPhone(phoneNumber: string): Promise<{ success: boolean }>
-  onWhatsAppEvent(callback: (payload: { workspaceId: string; event: WhatsAppUiEvent }) => void): () => void
-  // Messaging access control (Phase 3)
-  getMessagingPlatformOwners(platform: string): Promise<MessagingPlatformOwnerInfo[]>
-  setMessagingPlatformOwners(platform: string, owners: MessagingPlatformOwnerInfo[]): Promise<MessagingPlatformOwnerInfo[]>
-  getMessagingPlatformAccessMode(platform: string): Promise<MessagingPlatformAccessMode>
-  setMessagingPlatformAccessMode(platform: string, mode: MessagingPlatformAccessMode): Promise<{ success: boolean }>
-  getMessagingPendingSenders(platform?: string): Promise<MessagingPendingSenderInfo[]>
-  dismissMessagingPendingSender(platform: string, userId: string, opts?: { reason?: MessagingPendingRejectReason; bindingId?: string }): Promise<{ success: boolean }>
-  allowMessagingPendingSender(
-    platform: string,
-    userId: string,
-    entryKey?: { reason?: MessagingPendingRejectReason; bindingId?: string },
-  ): Promise<{ owners: MessagingPlatformOwnerInfo[]; bindingId?: string }>
-  setMessagingBindingAccess(bindingId: string, access: { mode: MessagingBindingAccessMode; allowedSenderIds?: string[] }): Promise<{ success: boolean }>
-  onMessagingPendingChanged(callback: (workspaceId: string) => void): () => void
 }
-
-export interface MessagingPlatformRuntimeInfo {
-  platform: string
-  configured: boolean
-  connected: boolean
-  state: 'disconnected' | 'connecting' | 'connected' | 'reconnect_required' | 'error'
-  identity?: string
-  lastError?: string
-  updatedAt: number
-}
-
-/**
- * Workspace-level access policy for a messaging platform.
- * Mirrors the canonical type in `@mkagent/messaging-gateway`.
- */
-export type MessagingPlatformAccessMode = 'open' | 'owner-only'
-
-/** Per-binding access policy. */
-export type MessagingBindingAccessMode = 'inherit' | 'allow-list' | 'open'
-
-export interface MessagingPlatformOwnerInfo {
-  userId: string
-  displayName?: string
-  username?: string
-  addedAt: number
-}
-
-export type MessagingPendingRejectReason = 'not-owner' | 'not-on-binding-allowlist'
-
-export interface MessagingPendingSenderInfo {
-  platform: string
-  userId: string
-  displayName?: string
-  username?: string
-  lastAttemptAt: number
-  attemptCount: number
-  reason?: MessagingPendingRejectReason
-  bindingId?: string
-  sessionId?: string
-  channelId?: string
-  threadId?: number
-}
-
-/** Event payloads broadcast from the WhatsApp subprocess to the UI. */
-export type WhatsAppUiEvent =
-  | { type: 'qr'; qr: string }
-  | { type: 'pairing_code'; code: string }
-  | { type: 'connected'; jid?: string; name?: string }
-  | { type: 'disconnected'; loggedOut: boolean; reason?: string }
-  | { type: 'unavailable'; reason: string; message: string }
-  | { type: 'error'; message: string }
 
 // =============================================================================
 // Navigation types (renderer-only)
 // =============================================================================
 
-/**
- * Right sidebar panel types
- */
 export type RightSidebarPanel =
   | { type: 'files'; path?: string }
   | { type: 'history' }
   | { type: 'none' }
 
-/**
- * Session filter options
- */
 export type SessionFilter =
   | { kind: 'allSessions' }
   | { kind: 'flagged' }
-  | { kind: 'state'; stateId: string }
-  | { kind: 'label'; labelId: string }
-  | { kind: 'view'; viewId: string }
   | { kind: 'archived' }
 
-/**
- * Settings subpage options - re-exported from settings-registry (single source of truth)
- */
 export type { SettingsSubpage } from './settings-registry'
 import { isValidSettingsSubpage, type SettingsSubpage } from './settings-registry'
 
-/**
- * Sessions navigation state
- */
 export interface SessionsNavigationState {
   navigator: 'sessions'
   filter: SessionFilter
   details: { type: 'session'; sessionId: string } | null
   rightSidebar?: RightSidebarPanel
-  /**
-   * Presentation mode for the sessions navigator. `'board'` renders the Kanban
-   * board (all sessions, grouped into To Do / In Progress / Done columns) in the
-   * content area instead of the list + chat. Absent/`'list'` is the default.
-   */
-  viewMode?: 'list' | 'board'
 }
 
-/**
- * Source type filter for sources navigation
- */
-export interface SourceFilter {
-  kind: 'type'
-  sourceType: 'api' | 'mcp' | 'local'
-}
-
-/**
- * Automation type filter for automations navigation
- */
-export interface AutomationFilter {
-  kind: 'type'
-  automationType: 'scheduled' | 'event' | 'agentic'
-}
-
-/**
- * Sources navigation state
- */
-export interface SourcesNavigationState {
-  navigator: 'sources'
-  filter?: SourceFilter
-  details: { type: 'source'; sourceSlug: string } | null
-  rightSidebar?: RightSidebarPanel
-}
-
-/**
- * Settings navigation state
- *
- * `subpage: null` means the bare `settings` route — navigator-only view in compact
- * mode. On desktop, the content panel falls back to the App page so it isn't empty.
- * Sources/Skills/Automations use `details: null` for the same purpose.
- */
 export interface SettingsNavigationState {
   navigator: 'settings'
   subpage: SettingsSubpage | null
   rightSidebar?: RightSidebarPanel
 }
 
-/**
- * Skills navigation state
- */
 export interface SkillsNavigationState {
   navigator: 'skills'
   details: { type: 'skill'; skillSlug: string } | null
   rightSidebar?: RightSidebarPanel
 }
 
-/**
- * Automations navigation state
- */
-export interface AutomationsNavigationState {
-  navigator: 'automations'
-  filter?: AutomationFilter
-  details: { type: 'automation'; automationId: string } | null
-  rightSidebar?: RightSidebarPanel
-}
-
-/**
- * Projects navigation state
- */
-export interface ProjectsNavigationState {
-  navigator: 'projects'
-  details: { type: 'project'; projectSlug: string } | null
-  rightSidebar?: RightSidebarPanel
-}
-
-/**
- * Unified navigation state
- */
 export type NavigationState =
   | SessionsNavigationState
-  | SourcesNavigationState
   | SettingsNavigationState
   | SkillsNavigationState
-  | AutomationsNavigationState
-  | ProjectsNavigationState
 
 export const isSessionsNavigation = (
   state: NavigationState
 ): state is SessionsNavigationState => state.navigator === 'sessions'
-
-export const isSourcesNavigation = (
-  state: NavigationState
-): state is SourcesNavigationState => state.navigator === 'sources'
 
 export const isSettingsNavigation = (
   state: NavigationState
@@ -929,14 +600,6 @@ export const isSkillsNavigation = (
   state: NavigationState
 ): state is SkillsNavigationState => state.navigator === 'skills'
 
-export const isAutomationsNavigation = (
-  state: NavigationState
-): state is AutomationsNavigationState => state.navigator === 'automations'
-
-export const isProjectsNavigation = (
-  state: NavigationState
-): state is ProjectsNavigationState => state.navigator === 'projects'
-
 export const DEFAULT_NAVIGATION_STATE: NavigationState = {
   navigator: 'sessions',
   filter: { kind: 'allSessions' },
@@ -944,133 +607,40 @@ export const DEFAULT_NAVIGATION_STATE: NavigationState = {
 }
 
 export const getNavigationStateKey = (state: NavigationState): string => {
-  if (state.navigator === 'sources') {
-    if (state.details) {
-      return `sources/source/${state.details.sourceSlug}`
-    }
-    return 'sources'
-  }
   if (state.navigator === 'skills') {
-    if (state.details?.type === 'skill') {
-      return `skills/skill/${state.details.skillSlug}`
-    }
-    return 'skills'
-  }
-  if (state.navigator === 'automations') {
-    if (state.details?.type === 'automation') {
-      return `automations/automation/${state.details.automationId}`
-    }
-    return 'automations'
-  }
-  if (state.navigator === 'projects') {
-    if (state.details?.type === 'project') {
-      return `projects/project/${state.details.projectSlug}`
-    }
-    return 'projects'
+    return state.details ? `skills/skill/${state.details.skillSlug}` : 'skills'
   }
   if (state.navigator === 'settings') {
-    if (state.subpage === null) return 'settings'
-    return `settings:${state.subpage}`
+    return state.subpage === null ? 'settings' : `settings:${state.subpage}`
   }
-  // Chats
-  const f = state.filter
-  let base: string
-  if (f.kind === 'state') base = `state:${f.stateId}`
-  else if (f.kind === 'label') base = `label:${f.labelId}`
-  else if (f.kind === 'view') base = `view:${f.viewId}`
-  else base = f.kind
-  if (state.details) {
-    return `${base}/chat/${state.details.sessionId}`
-  }
-  return base
+  const base = state.filter.kind
+  return state.details ? `${base}/session/${state.details.sessionId}` : base
 }
 
 export const parseNavigationStateKey = (key: string): NavigationState | null => {
-  // Handle sources
-  if (key === 'sources') return { navigator: 'sources', details: null }
-  if (key.startsWith('sources/source/')) {
-    const sourceSlug = key.slice(15)
-    if (sourceSlug) {
-      return { navigator: 'sources', details: { type: 'source', sourceSlug } }
-    }
-    return { navigator: 'sources', details: null }
-  }
-
-  // Handle skills
   if (key === 'skills') return { navigator: 'skills', details: null }
   if (key.startsWith('skills/skill/')) {
     const skillSlug = key.slice(13)
-    if (skillSlug) {
-      return { navigator: 'skills', details: { type: 'skill', skillSlug } }
-    }
-    return { navigator: 'skills', details: null }
+    return skillSlug ? { navigator: 'skills', details: { type: 'skill', skillSlug } } : null
   }
-
-  // Handle automations
-  if (key === 'automations') return { navigator: 'automations', details: null }
-  if (key.startsWith('automations/automation/')) {
-    const automationId = key.slice(22)
-    if (automationId) {
-      return { navigator: 'automations', details: { type: 'automation', automationId } }
-    }
-    return { navigator: 'automations', details: null }
-  }
-
-  // Handle projects
-  if (key === 'projects') return { navigator: 'projects', details: null }
-  if (key.startsWith('projects/project/')) {
-    const projectSlug = key.slice(17)
-    if (projectSlug) {
-      return { navigator: 'projects', details: { type: 'project', projectSlug } }
-    }
-    return { navigator: 'projects', details: null }
-  }
-
-  // Handle settings
   if (key === 'settings') return { navigator: 'settings', subpage: null }
   if (key.startsWith('settings:')) {
     const subpage = key.slice(9)
-    if (isValidSettingsSubpage(subpage)) {
-      return { navigator: 'settings', subpage }
-    }
+    return isValidSettingsSubpage(subpage) ? { navigator: 'settings', subpage } : null
   }
 
-  // Handle sessions
-  const parseSessionsKey = (filterKey: string, sessionId?: string): NavigationState | null => {
-    let filter: SessionFilter
-    if (filterKey === 'allSessions') filter = { kind: 'allSessions' }
-    else if (filterKey === 'flagged') filter = { kind: 'flagged' }
-    else if (filterKey === 'archived') filter = { kind: 'archived' }
-    else if (filterKey.startsWith('state:')) {
-      const stateId = filterKey.slice(6)
-      if (!stateId) return null
-      filter = { kind: 'state', stateId }
-    } else if (filterKey.startsWith('label:')) {
-      const labelId = filterKey.slice(6)
-      if (!labelId) return null
-      filter = { kind: 'label', labelId }
-    } else if (filterKey.startsWith('view:')) {
-      const viewId = filterKey.slice(5)
-      if (!viewId) return null
-      filter = { kind: 'view', viewId }
-    } else {
-      return null
-    }
-    return {
-      navigator: 'sessions',
-      filter,
-      details: sessionId ? { type: 'session', sessionId } : null,
-    }
+  const [filterKey, detailType, sessionId] = key.split('/')
+  const filter: SessionFilter | null =
+    filterKey === 'allSessions' ? { kind: 'allSessions' }
+      : filterKey === 'flagged' ? { kind: 'flagged' }
+        : filterKey === 'archived' ? { kind: 'archived' }
+          : null
+  if (!filter) return null
+  return {
+    navigator: 'sessions',
+    filter,
+    details: detailType === 'session' && sessionId ? { type: 'session', sessionId } : null,
   }
-
-  // Check for session details
-  if (key.includes('/session/')) {
-    const [filterPart, , sessionId] = key.split('/')
-    return parseSessionsKey(filterPart, sessionId)
-  }
-
-  // Simple filter key
-  return parseSessionsKey(key)
 }
 
 declare global {

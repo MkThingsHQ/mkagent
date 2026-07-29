@@ -98,26 +98,26 @@ describe('groupConnectionsByProvider', () => {
     expect(groupConnectionsByProvider([])).toEqual([])
   })
 
-  test('groups anthropic providers into "Anthropic"', () => {
-    const a = conn('a', 'anthropic')
-    const b = conn('b', 'anthropic')
+  test('groups Pi providers into "Pi Backend"', () => {
+    const a = conn('a', 'pi')
+    const b = conn('b', 'pi')
     const result = groupConnectionsByProvider([a, b])
-    expect(result).toEqual([['Anthropic', [a, b]]])
+    expect(result).toEqual([['Pi Backend', [a, b]]])
   })
 
   test('preserves intra-group order', () => {
-    const a = conn('first', 'anthropic')
-    const b = conn('second', 'anthropic')
-    const c = conn('third', 'anthropic')
+    const a = conn('first', 'pi')
+    const b = conn('second', 'pi')
+    const c = conn('third', 'pi')
     const result = groupConnectionsByProvider([a, b, c])
     expect(result[0][1].map(c => c.slug)).toEqual(['first', 'second', 'third'])
   })
 
-  test('places "Anthropic" group before pi groups (display order)', () => {
+  test('places local connections before remote Pi connections', () => {
     const piConn = conn('pi-1', 'pi')
-    const anth = conn('anthropic-1', 'anthropic')
-    const result = groupConnectionsByProvider([piConn, anth])
-    expect(result.map(([k]) => k)).toEqual(['Anthropic', 'Pi Backend'])
+    const local = conn('local-1', 'pi_compat', { baseUrl: 'http://localhost:11434' })
+    const result = groupConnectionsByProvider([piConn, local])
+    expect(result.map(([k]) => k)).toEqual(['Local', 'Pi Backend'])
   })
 
   test('"pi_compat" with localhost baseUrl goes to "Local"', () => {
@@ -133,21 +133,19 @@ describe('groupConnectionsByProvider', () => {
   })
 
   test('drops empty groups from the output', () => {
-    const a = conn('a', 'anthropic')
+    const a = conn('a', 'pi')
     const result = groupConnectionsByProvider([a])
-    // Only "Anthropic" appears; "Local" and "Pi Backend" are dropped.
+    // Only "Pi Backend" appears; "Local" is dropped.
     expect(result.length).toBe(1)
-    expect(result[0][0]).toBe('Anthropic')
+    expect(result[0][0]).toBe('Pi Backend')
   })
 
-  test('full mixed input — anthropic + local + remote pi_compat + pi', () => {
-    const anth = conn('a', 'anthropic')
+  test('full mixed input — local + remote pi_compat + pi', () => {
     const local = conn('ollama', 'pi_compat', { baseUrl: 'http://127.0.0.1:1234' })
     const remote = conn('or', 'pi_compat', { baseUrl: 'https://openrouter.ai' })
     const pi = conn('p', 'pi')
-    const result = groupConnectionsByProvider([anth, local, remote, pi])
+    const result = groupConnectionsByProvider([local, remote, pi])
     expect(result.map(([k, conns]) => [k, conns.map(c => c.slug)])).toEqual([
-      ['Anthropic', ['a']],
       ['Local', ['ollama']],
       ['Pi Backend', ['or', 'p']],
     ])

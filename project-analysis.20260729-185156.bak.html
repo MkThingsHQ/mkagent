@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>MkAgent - 源码迁移与质量审计</title>
+  <style>
+    :root{--bg:#fff;--surface:#f7f8fa;--card:#fff;--text:#182033;--muted:#667085;--line:#e4e7ec;--nav:#172033;--nav-text:#cbd5e1;--accent:#635bff;--ok:#087443;--ok-bg:#ecfdf3;--warn:#b54708;--warn-bg:#fffaeb;--risk:#b42318;--risk-bg:#fef3f2;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans SC",sans-serif;color-scheme:light}
+    [data-theme=dark]{--bg:#101828;--surface:#1d2939;--card:#1d2939;--text:#f2f4f7;--muted:#98a2b3;--line:#344054;--nav:#0c111d;--nav-text:#98a2b3;--accent:#9b8afb;--ok:#32d583;--ok-bg:#053321;--warn:#fdb022;--warn-bg:#3b2810;--risk:#f97066;--risk-bg:#3b1110;color-scheme:dark}
+    *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);line-height:1.65}.sidebar{position:fixed;inset:0 auto 0 0;width:260px;padding:24px 14px;background:var(--nav);color:var(--nav-text);display:flex;flex-direction:column}.sidebar h1{margin:0 8px 3px;color:#fff;font-size:18px}.sidebar small{margin:0 8px 20px}.sidebar a{padding:9px 10px;border-radius:7px;color:inherit;text-decoration:none;font-size:14px}.sidebar a:hover{background:#29354b;color:#fff}.sidebar footer{margin-top:auto}.sidebar button{width:100%;padding:9px;border:1px solid #344054;border-radius:7px;background:#253149;color:#fff;cursor:pointer}.content{max-width:1120px;margin-left:260px;padding:42px 50px}.hero{padding-bottom:26px;border-bottom:2px solid var(--line)}h2{margin-top:50px;padding-bottom:9px;border-bottom:2px solid var(--accent)}h3{margin-top:28px}.meta{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:13px}.card,.diagram,.risk{margin:14px 0;padding:18px 20px;border:1px solid var(--line);border-radius:10px;background:var(--card)}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}.stat{text-align:center;padding:18px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}.stat b{display:block;color:var(--accent);font-size:28px}.stat span{color:var(--muted);font-size:12px}table{width:100%;border-collapse:collapse;margin:14px 0;border:1px solid var(--line);font-size:14px}th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:var(--surface);color:var(--muted);font-size:12px}code,.diagram{font-family:"SFMono-Regular",Consolas,monospace}.diagram{white-space:pre;overflow:auto;background:var(--surface)}.ok{color:var(--ok);background:var(--ok-bg)}.medium{color:var(--warn);background:var(--warn-bg)}.low{color:var(--risk);background:var(--risk-bg)}.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:700}.risk{border-left:4px solid var(--warn)}.risk.low-risk{border-left-color:var(--ok)}.muted{color:var(--muted)}ul{padding-left:22px}@media(max-width:800px){.sidebar{position:static;width:auto}.content{margin:0;padding:24px 18px}.stats{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+  <nav class="sidebar">
+    <h1>MkAgent</h1><small>源码迁移与质量审计</small>
+    <a href="#thesis">项目定位</a><a href="#shape">仓库结构</a><a href="#architecture">架构设计</a><a href="#migration">Craft 迁移审计</a><a href="#quality">质量信号</a><a href="#risks">风险与未知项</a>
+    <footer><button id="theme">切换暗色模式</button></footer>
+  </nav>
+  <main class="content">
+    <header class="hero" id="thesis">
+      <h1>MkAgent 源码迁移与质量审计报告</h1>
+      <p>MkAgent 是以 Craft Agents OSS 为固定上游、保留 Desktop/WebUI/CLI 与 WebSocket RPC 架构、裁掉非核心产品面的 Pi-only Lite 版本。共享架构和 UI 组件应尽量与 Craft 同路径同实现，差异只来自品牌、明确裁剪项和运行边界。</p>
+      <div class="meta"><span>2026-07-29</span><span>TypeScript / React</span><span>Apache-2.0</span><span>mkagent/</span></div>
+    </header>
+
+    <section id="shape"><h2>仓库结构</h2><p>这是一个 Bun workspace monorepo，桌面端、WebUI、CLI、服务核心、Pi runtime 与共享组件按边界分层。</p>
+      <table><thead><tr><th>层</th><th>路径</th><th>职责</th></tr></thead><tbody>
+        <tr><td>客户端</td><td><code>apps/electron</code>, <code>apps/webui</code>, <code>apps/cli</code></td><td>原生桌面、浏览器与命令行入口</td></tr>
+        <tr><td>服务</td><td><code>packages/server-core</code>, <code>packages/server</code></td><td>会话、设置、RPC 与 WebUI server</td></tr>
+        <tr><td>运行时</td><td><code>packages/pi-agent-server</code></td><td>Pi SDK 子进程与工具执行</td></tr>
+        <tr><td>共享</td><td><code>packages/core</code>, <code>packages/shared</code>, <code>packages/ui</code></td><td>协议、配置、模型、会话类型和 UI</td></tr>
+      </tbody></table>
+      <div class="stats"><div class="stat"><b>694</b><span>源文件</span></div><div class="stat"><b>132k</b><span>代码行</span></div><div class="stat"><b>190</b><span>测试文件</span></div><div class="stat"><b>10</b><span>直接修改文件</span></div></div>
+    </section>
+
+    <section id="architecture"><h2>架构设计</h2><p>Electron、WebUI 与 CLI 是同一 RPC 能力面的不同客户端，业务行为集中在 server-core 与 shared。</p>
+      <div class="diagram">Electron renderer ─┐
+WebUI ──────────────┼─&gt; WebSocket RPC ─&gt; server-core ─&gt; shared/core ─&gt; Pi runtime
+CLI ────────────────┘          │
+                               └─&gt; config / sessions / skills</div>
+      <table><thead><tr><th>类别</th><th>技术</th><th>版本</th><th>作用</th></tr></thead><tbody>
+        <tr><td>Desktop</td><td>Electron</td><td>^39.2.7</td><td>原生壳与 preload 隔离</td></tr><tr><td>UI</td><td>React</td><td>^18.3.1</td><td>Electron/WebUI 组件模型</td></tr><tr><td>Build</td><td>Vite</td><td>^6.2.4</td><td>renderer 构建与 HMR</td></tr><tr><td>Language</td><td>TypeScript</td><td>^5.0.0</td><td>跨 transport 类型契约</td></tr>
+      </tbody></table>
+    </section>
+
+    <section id="migration"><h2>Craft 迁移审计</h2><p>Electron 源码闭包已经从 598 个散落未跟踪文件收敛为 104 个受控文件和 55 个待提交新增文件。</p>
+      <div class="stats"><div class="stat"><b>42</b><span>字节一致</span></div><div class="stat"><b>22</b><span>仅品牌替换</span></div><div class="stat"><b>34</b><span>Lite 适配</span></div><div class="stat"><b>6</b><span>MkAgent 品牌文件</span></div></div>
+      <div class="card"><strong>UI 结论</strong><p><code>renderer/App.tsx</code> 现在组合 Craft 的 TopBar、LeftSidebar、PanelHeader、EntityRow、SettingsNavigator 与 settings primitives；原自写 <code>mk-*</code> 外壳 CSS 已删除。设置注册表仅移除 Lite 排除页面。</p></div>
+      <div class="card"><strong>清理结论</strong><p>删除 540 个无用未跟踪文件，包括 Craft logo、DMG 背景、release notes、bridge MCP、playground、被裁剪产品面及陈旧测试。Electron 迁移范围不再残留可见 Craft 产品文案或 logo；上游归属和兼容迁移标识继续保留。</p></div>
+      <div class="card"><strong>运行修复</strong><p>补齐 Browser Pane <code>emptyStateLaunch</code> channel，增强 popup/销毁清理，修复空 proxy 导致的 renderer 崩溃，并为多实例 dev 隔离 Electron userData。</p></div>
+    </section>
+
+    <section id="quality"><h2>质量信号</h2><p>静态、单元、isolated、构建和运行验证全部通过；视觉验证覆盖 Electron renderer 与 WebUI 的全部 8 个保留设置入口。</p>
+      <table><thead><tr><th>验证项</th><th>结果</th></tr></thead><tbody>
+        <tr><td><code>bun run test</code></td><td><span class="tag ok">PASS</span> 2498 pass / 11 skip / 0 fail，isolated 全通过</td></tr>
+        <tr><td><code>bun run validate:ci</code></td><td><span class="tag ok">PASS</span> typecheck、共享测试、19 个文档工具 smoke、i18n</td></tr>
+        <tr><td>Electron build/dev</td><td><span class="tag ok">PASS</span> 窗口、WS、sessions/skills IPC、renderer 0 error</td></tr>
+        <tr><td>WebUI build/runtime</td><td><span class="tag ok">PASS</span> 3621 modules；登录、主界面、8 设置页，console 0 error</td></tr>
+      </tbody></table>
+    </section>
+
+    <section id="risks"><h2>风险与未知项</h2>
+      <div class="risk"><span class="tag medium">MEDIUM</span> <strong>视觉回归尚未进入 CI</strong><p class="muted">本次截图通过 CDP/WebUI 自动检查，后续应固化基线。</p></div>
+      <div class="risk"><span class="tag medium">MEDIUM</span> <strong>renderer/App.tsx 仍是组合热点</strong><p class="muted">应继续按 Craft 页面边界拆分，避免再次形成自写大页。</p></div>
+      <div class="risk"><span class="tag medium">MEDIUM</span> <strong>主 chunk 超过 4 MB</strong><p class="muted">Vite 持续报告大 chunk 警告，影响首屏解析与 HMR 成本。</p></div>
+      <div class="risk low-risk"><span class="tag ok">LOW</span> <strong>原生像素与发布包待平台复核</strong><p class="muted">macOS vibrancy/交通灯、Windows/Linux frame、签名与公证仍需对应 runner。</p></div>
+      <h3>商业使用</h3><p>Apache-2.0 允许商业使用、闭源组合、修改与再分发；发布时需要保留许可证与 NOTICE（如有）、说明修改，并遵守专利授权与终止条款。</p>
+    </section>
+  </main>
+  <script>
+    const root=document.documentElement,button=document.getElementById('theme');
+    button.addEventListener('click',()=>{const dark=root.dataset.theme!=='dark';root.dataset.theme=dark?'dark':'light';button.textContent=dark?'切换亮色模式':'切换暗色模式'});
+  </script>
+</body>
+</html>

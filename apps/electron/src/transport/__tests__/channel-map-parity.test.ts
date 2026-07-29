@@ -14,7 +14,6 @@ type BrowserPaneKeys = `browserPane.${FunctionKeys<ElectronAPI['browserPane']>}`
 // (no IPC round-trip to the main process). Each reads local state or orchestrates client-side.
 type ApiToChannelMapKeys = Exclude<
   FunctionKeys<ElectronAPI>,
-  | 'performOAuth'
   | 'getTransportConnectionState'
   | 'getRuntimeEnvironment'
   | 'onTransportConnectionStateChanged'
@@ -22,9 +21,6 @@ type ApiToChannelMapKeys = Exclude<
   | 'isChannelAvailable'
   | 'getSystemWarnings' // reads env var set at startup — no IPC needed
   | 'relaunchApp' // direct IPC to main process — not through WS RPC
-  | 'invokeOnServer' // direct IPC to main process — cross-server RPC
-  | 'transferSessionToWorkspace' // direct IPC to main process — orchestrated remote transfer
-  | 'onTransferProgress' // direct IPC listener — chunk upload progress
   | 'changeLanguage' // direct IPC to main process — syncs i18n language
   | 'getFilePath' // renderer-local — webUtils.getPathForFile, no IPC round-trip
 > | BrowserPaneKeys

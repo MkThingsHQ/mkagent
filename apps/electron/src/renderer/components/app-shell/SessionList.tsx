@@ -6,11 +6,8 @@ import { getDateLocale } from "@mkagent/shared/i18n"
 import { useAction } from "@/actions"
 import { Inbox, Archive } from "lucide-react"
 
-import { getSessionStatus } from "@/utils/session"
 import * as storage from "@/lib/local-storage"
 import { KEYS } from "@/lib/local-storage"
-import type { LabelConfig } from "@mkagent/shared/labels"
-import { flattenLabels } from "@mkagent/shared/labels"
 import * as MultiSelect from "@/hooks/useMultiSelect"
 import { Spinner } from "@mkagent/ui"
 import { EntityListEmptyScreen } from "@/components/ui/entity-list-empty"
@@ -20,16 +17,14 @@ import { SessionSearchHeader } from "./SessionSearchHeader"
 import { SessionItem } from "./SessionItem"
 import { SessionListProvider, type SessionListContextValue } from "@/context/SessionListContext"
 import { useSessionSelection, useSessionSelectionStore } from "@/hooks/useSession"
-import { useSessionSearch, type FilterMode } from "@/hooks/useSessionSearch"
+import { useSessionSearch } from "@/hooks/useSessionSearch"
 import { useSessionActions } from "@/hooks/useSessionActions"
 import { useEntityListInteractions } from "@/hooks/useEntityListInteractions"
 import { useFocusZone } from "@/hooks/keyboard"
 import { useEscapeInterrupt } from "@/context/EscapeInterruptContext"
 import { useNavigation, useNavigationState, routes, isSessionsNavigation } from "@/contexts/NavigationContext"
 import { useFocusContext } from "@/context/FocusContext"
-import { sendToWorkspaceAtom, type SessionMeta } from "@/atoms/sessions"
-import type { ViewConfig } from "@mkagent/shared/views"
-import type { SessionStatusId, SessionStatus } from "@/config/session-status-config"
+import type { SessionMeta } from "@/atoms/sessions"
 import { buildCollapsedGroupsScopeSuffix } from "@/utils/session-list-collapse"
 
 export interface SessionListRow {
@@ -37,7 +32,7 @@ export interface SessionListRow {
 }
 
 /** Grouping mode for chat list */
-export type ChatGroupingMode = 'date' | 'status' | 'unread' | 'project'
+export type ChatGroupingMode = 'date' | 'unread'
 
 interface SessionListProps {
   items: SessionMeta[]
@@ -47,7 +42,6 @@ interface SessionListProps {
   onArchive?: (sessionId: string) => void
   onUnarchive?: (sessionId: string) => void
   onMarkUnread: (sessionId: string) => void
-  onSessionStatusChange: (sessionId: string, state: SessionStatusId) => void
   onRename: (sessionId: string, name: string) => void
   /** Called when Enter is pressed to focus chat input for a specific session */
   onFocusChatInput?: (sessionId?: string) => void
@@ -67,26 +61,10 @@ interface SessionListProps {
   onSearchChange?: (query: string) => void
   /** Called when search is closed */
   onSearchClose?: () => void
-  /** Dynamic todo states from workspace config */
-  sessionStatuses?: SessionStatus[]
-  /** View evaluator — evaluates a session and returns matching view configs */
-  evaluateViews?: (meta: SessionMeta) => ViewConfig[]
-  /** Label configs for resolving session label IDs to display info */
-  labels?: LabelConfig[]
-  /** Callback when session labels are toggled (for labels submenu in SessionMenu) */
-  onLabelsChange?: (sessionId: string, labels: string[]) => void
-  /** Workspace projects (for the Projects submenu in SessionMenu) */
-  projects?: Array<{ id: string; slug: string; name: string; color?: string }>
-  /** Callback to bind/unbind a session to a project (null = unbind) */
-  onSetProjectId?: (sessionId: string, projectId: string | null) => void
-  /** How to group sessions: 'date' (default) or 'status' */
-  groupingMode?: ChatGroupingMode
   /** Workspace ID for content search (optional - if not provided, content search is disabled) */
   workspaceId?: string
-  /** Secondary status filter (status chips in "All Sessions" view) - for search result grouping */
-  statusFilter?: Map<string, FilterMode>
-  /** Secondary label filter (label chips) - for search result grouping */
-  labelFilterMap?: Map<string, FilterMode>
+  /** How the session list is grouped. */
+  groupingMode: ChatGroupingMode
   /** Override which session is highlighted (for multi-panel focused panel tracking) */
   focusedSessionId?: string | null
   /** Override navigation target (for multi-panel: focuses existing panel or navigates focused panel) */
@@ -96,9 +74,6 @@ interface SessionListProps {
   /** DOM-verified match info for the active session (from ChatDisplay) */
   activeChatMatchInfo?: { sessionId: string | null; count: number; isHighlighting?: boolean }
 }
-
-// Re-export SessionStatusId for use by parent components
-export type { SessionStatusId }
 
 // Note: uses date-fns format for non-today/yesterday dates; Today/Yesterday translated at render time
 function formatDateGroupLabel(date: Date, t: (key: string) => string, lang: string): string {
@@ -124,7 +99,6 @@ export function SessionList({
   onArchive,
   onUnarchive,
   onMarkUnread,
-  onSessionStatusChange,
   onRename,
   onFocusChatInput,
   onOpenInNewWindow,
@@ -133,24 +107,14 @@ export function SessionList({
   searchQuery = '',
   onSearchChange,
   onSearchClose,
-  sessionStatuses = [],
-  evaluateViews,
-  labels = [],
-  onLabelsChange,
-  projects,
-  onSetProjectId,
-  groupingMode = 'date',
   workspaceId,
-  statusFilter,
-  labelFilterMap,
+  groupingMode,
   focusedSessionId,
   onNavigateToSession,
   hasPendingPrompt,
   activeChatMatchInfo,
 }: SessionListProps) {
   const { t, i18n } = useTranslation()
-  const setSendToWorkspace = useSetAtom(sendToWorkspaceAtom)
-
   // --- Selection (atom-backed, shared with ChatDisplay + BatchActionPanel) ---
   const {
     select: selectSession,
@@ -164,9 +128,6 @@ export function SessionList({
   const navigateToSession = onNavigateToSession ?? navigateToSessionPrimary
   const navState = useNavigationState()
   const { showEscapeOverlay } = useEscapeInterrupt()
-
-  // Pre-flatten label tree once for efficient ID lookups in each SessionItem
-  const flatLabels = useMemo(() => flattenLabels(labels), [labels])
 
   // Get current filter from navigation state (for preserving context in tab routes)
   const currentFilter = isSessionsNavigation(navState) ? navState.filter : undefined
@@ -188,9 +149,6 @@ export function SessionList({
     workspaceId,
     groupingMode,
     currentFilter?.kind,
-    currentFilter && 'stateId' in currentFilter ? currentFilter.stateId : undefined,
-    currentFilter && 'labelId' in currentFilter ? currentFilter.labelId : undefined,
-    currentFilter && 'viewId' in currentFilter ? currentFilter.viewId : undefined,
   ])
 
   const readCollapsedGroupsForScope = useCallback((scopeSuffix: string): Set<string> => {
@@ -256,10 +214,6 @@ export function SessionList({
     searchQuery,
     workspaceId,
     currentFilter,
-    evaluateViews,
-    statusFilter,
-    labelFilterMap,
-    labelConfigs: labels,
     collapsedGroups,
     groupingMode,
     scrollViewportRef,
@@ -336,119 +290,6 @@ export function SessionList({
       }
     }
 
-    if (groupingMode === 'status') {
-      const statusOrder = new Map<string, number>()
-      sessionStatuses.forEach((state, index) => statusOrder.set(state.id, index))
-
-      // Build groups from visible items
-      const groupsByKey = new Map<string, { rows: SessionListRow[], statusId: string }>()
-      for (const row of rows) {
-        const statusId = getSessionStatus(row.item)
-        const key = `status-${statusId}`
-        if (!groupsByKey.has(key)) groupsByKey.set(key, { rows: [], statusId })
-        groupsByKey.get(key)!.rows.push(row)
-      }
-
-      // Insert collapsed placeholder groups
-      for (const meta of collapsedGroupsMeta) {
-        if (!groupsByKey.has(meta.key)) {
-          const statusId = meta.key.replace('status-', '')
-          groupsByKey.set(meta.key, { rows: [], statusId })
-        }
-      }
-
-      const orderedGroups: EntityListGroup<SessionListRow>[] = []
-      for (const [key, { rows: groupRows, statusId }] of groupsByKey) {
-        const state = sessionStatuses.find(s => s.id === statusId)
-        if (!state) continue
-        groupRows.sort((a, b) => (b.item.lastMessageAt || 0) - (a.item.lastMessageAt || 0))
-        const collapsedMeta = collapsedGroupsMeta.find(m => m.key === key)
-        orderedGroups.push({
-          key,
-          label: t(`status.${state.id}`, state.label),
-          items: groupRows,
-          collapsible: true,
-          ...(collapsedMeta ? { collapsedCount: collapsedMeta.count } : {}),
-        })
-      }
-      orderedGroups.sort((a, b) => {
-        const aOrder = statusOrder.get(a.key.replace('status-', '')) ?? 999
-        const bOrder = statusOrder.get(b.key.replace('status-', '')) ?? 999
-        return aOrder - bOrder
-      })
-
-      // If only one group exists, disable collapsing — there's nothing to collapse into
-      if (orderedGroups.length === 1) {
-        orderedGroups[0].collapsible = false
-      }
-
-      return {
-        rows: orderedGroups.flatMap(g => g.items),
-        groups: orderedGroups,
-      }
-    }
-
-    if (groupingMode === 'project') {
-      // Build groups from visible items, bucketed by projectId.
-      // Sessions without a projectId (or with an unknown projectId) go to the
-      // "no-project" bucket so they're never silently dropped from the list.
-      const projectOrder = new Map<string, number>()
-      ;(projects ?? []).forEach((p, index) => projectOrder.set(p.id, index))
-      const projectNameById = new Map<string, string>()
-      ;(projects ?? []).forEach(p => projectNameById.set(p.id, p.name))
-
-      const groupsByKey = new Map<string, { rows: SessionListRow[], projectId: string | null }>()
-      for (const row of rows) {
-        const rawProjectId = (row.item as { projectId?: string }).projectId
-        const resolvedProjectId = rawProjectId && projectNameById.has(rawProjectId) ? rawProjectId : null
-        const key = resolvedProjectId ? `project-${resolvedProjectId}` : 'project-__none__'
-        if (!groupsByKey.has(key)) groupsByKey.set(key, { rows: [], projectId: resolvedProjectId })
-        groupsByKey.get(key)!.rows.push(row)
-      }
-
-      // Insert collapsed placeholder groups (header-only, items: [])
-      for (const meta of collapsedGroupsMeta) {
-        if (!groupsByKey.has(meta.key)) {
-          const idPart = meta.key.replace('project-', '')
-          const projectId = idPart === '__none__' ? null : idPart
-          groupsByKey.set(meta.key, { rows: [], projectId })
-        }
-      }
-
-      const orderedGroups: EntityListGroup<SessionListRow>[] = []
-      for (const [key, { rows: groupRows, projectId }] of groupsByKey) {
-        groupRows.sort((a, b) => (b.item.lastMessageAt || 0) - (a.item.lastMessageAt || 0))
-        const collapsedMeta = collapsedGroupsMeta.find(m => m.key === key)
-        const label = projectId
-          ? (projectNameById.get(projectId) ?? t('sidebar.unknownProject', { defaultValue: 'Unknown project' }))
-          : t('sidebar.noProject', { defaultValue: 'No project' })
-        orderedGroups.push({
-          key,
-          label,
-          items: groupRows,
-          collapsible: true,
-          ...(collapsedMeta ? { collapsedCount: collapsedMeta.count } : {}),
-        })
-      }
-      orderedGroups.sort((a, b) => {
-        // No-project bucket sinks to the bottom, configured projects in registration order
-        if (a.key === 'project-__none__') return 1
-        if (b.key === 'project-__none__') return -1
-        const aOrder = projectOrder.get(a.key.replace('project-', '')) ?? 999
-        const bOrder = projectOrder.get(b.key.replace('project-', '')) ?? 999
-        return aOrder - bOrder
-      })
-
-      if (orderedGroups.length === 1) {
-        orderedGroups[0].collapsible = false
-      }
-
-      return {
-        rows: orderedGroups.flatMap(g => g.items),
-        groups: orderedGroups,
-      }
-    }
-
     // Default: group by date
     const groupsByKey = new Map<string, EntityListGroup<SessionListRow>>()
     const groupDates = new Map<string, Date>()
@@ -500,23 +341,13 @@ export function SessionList({
       rows,
       groups: orderedGroups,
     }
-  }, [isSearchMode, matchingFilterItems, otherResultItems, flatItems, groupingMode, sessionStatuses, projects, collapsedGroupsMeta, t])
+  }, [isSearchMode, matchingFilterItems, otherResultItems, flatItems, groupingMode, collapsedGroupsMeta, t, i18n.resolvedLanguage])
 
   const flatRows = rowData.rows
 
   const collapseAllGroups = useCallback(() => {
-    if (groupingMode === 'status') {
-      const allKeys = new Set(items.map(item => `status-${getSessionStatus(item)}`))
-      setCollapsedGroups(allKeys)
-    } else if (groupingMode === 'unread') {
+    if (groupingMode === 'unread') {
       const allKeys = new Set(items.map(item => item.hasUnread ? 'unread-yes' : 'unread-no'))
-      setCollapsedGroups(allKeys)
-    } else if (groupingMode === 'project') {
-      const knownProjectIds = new Set((projects ?? []).map(p => p.id))
-      const allKeys = new Set(items.map(item => {
-        const pid = (item as { projectId?: string }).projectId
-        return pid && knownProjectIds.has(pid) ? `project-${pid}` : 'project-__none__'
-      }))
       setCollapsedGroups(allKeys)
     } else {
       const allKeys = new Set(items.map(item =>
@@ -524,7 +355,7 @@ export function SessionList({
       ))
       setCollapsedGroups(allKeys)
     }
-  }, [items, groupingMode, projects])
+  }, [items, groupingMode])
   const expandAllGroups = useCallback(() => {
     setCollapsedGroups(new Set())
   }, [])
@@ -690,24 +521,16 @@ export function SessionList({
 
   const listContext = useMemo((): SessionListContextValue => ({
     onRenameClick: handleRenameClick,
-    onSessionStatusChange,
     onFlag: onFlag ? handleFlagWithToast : undefined,
     onUnflag: onUnflag ? handleUnflagWithToast : undefined,
     onArchive: onArchive ? handleArchiveWithToast : undefined,
     onUnarchive: onUnarchive ? handleUnarchiveWithToast : undefined,
     onMarkUnread,
     onDelete: handleDeleteWithToast,
-    onLabelsChange,
-    projects,
-    onSetProjectId,
     onSelectSessionById: handleSelectSessionById,
     onOpenInNewWindow: handleOpenInNewWindow,
-    onSendToWorkspace: (ids: string[]) => setSendToWorkspace(ids),
     onFocusZone: handleFocusZone,
     onKeyDown: handleKeyDown,
-    sessionStatuses,
-    flatLabels,
-    labels,
     searchQuery: resolvedSearchQuery,
     selectedSessionId: focusedSessionId !== undefined ? focusedSessionId : selectionStore.state.selected,
     isMultiSelectActive,
@@ -716,18 +539,17 @@ export function SessionList({
     activeChatMatchInfo,
     hasPendingPrompt,
   }), [
-    handleRenameClick, onSessionStatusChange,
+    handleRenameClick,
     onFlag, handleFlagWithToast, onUnflag, handleUnflagWithToast,
     onArchive, handleArchiveWithToast, onUnarchive, handleUnarchiveWithToast,
-    onMarkUnread, handleDeleteWithToast, onLabelsChange,
-    projects, onSetProjectId,
-    handleSelectSessionById, handleOpenInNewWindow, setSendToWorkspace, handleFocusZone, handleKeyDown,
-    sessionStatuses, flatLabels, labels, resolvedSearchQuery,
-    focusedSessionId, selectionStore.state.selected, isMultiSelectActive,
-    sessionOptions, contentSearchResults, activeChatMatchInfo, hasPendingPrompt,
+    onMarkUnread, handleDeleteWithToast,
+    handleSelectSessionById, handleOpenInNewWindow, handleFocusZone, handleKeyDown,
+    resolvedSearchQuery, focusedSessionId, selectionStore.state.selected,
+    isMultiSelectActive, sessionOptions, contentSearchResults,
+    activeChatMatchInfo, hasPendingPrompt,
   ])
 
-  // --- Empty state (non-search) — render before EntityList ---
+  // --- Empty state  // --- Empty state (non-search) — render before EntityList ---
   // Don't show empty state when there are collapsed groups with content
   if (flatRows.length === 0 && rowData.groups.length === 0 && !searchActive) {
     if (currentFilter?.kind === 'archived') {
@@ -749,12 +571,7 @@ export function SessionList({
         className="h-full"
       >
         <button
-          onClick={() => {
-            const params: { status?: string; label?: string } = {}
-            if (currentFilter?.kind === 'state') params.status = currentFilter.stateId
-            else if (currentFilter?.kind === 'label') params.label = currentFilter.labelId
-            navigate(routes.action.newSession(Object.keys(params).length > 0 ? params : undefined))
-          }}
+          onClick={() => navigate(routes.action.newSession())}
           className="inline-flex items-center h-7 px-3 text-xs font-medium rounded-[8px] bg-background shadow-minimal hover:bg-foreground/[0.03] transition-colors"
         >
           {t("session.newSession")}

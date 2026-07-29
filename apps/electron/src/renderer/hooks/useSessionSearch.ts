@@ -2,12 +2,9 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react"
 import { isToday, isYesterday, format, startOfDay } from "date-fns"
 
 import { searchLog } from "@/lib/logger"
-import { parseLabelEntry, matchesLabelFilter } from "@mkagent/shared/labels"
-import type { LabelConfig } from "@mkagent/shared/labels"
 import { fuzzyScore } from "@mkagent/shared/search"
-import { getSessionTitle, getSessionStatus } from "@/utils/session"
+import { getSessionTitle } from "@/utils/session"
 import type { SessionMeta } from "@/atoms/sessions"
-import type { ViewConfig } from "@mkagent/shared/views"
 import type { SessionFilter } from "@/contexts/NavigationContext"
 
 // ---------------------------------------------------------------------------
@@ -21,9 +18,6 @@ const MAX_SEARCH_RESULTS = 100
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-/** Filter mode for tri-state filtering: include shows only matching, exclude hides matching */
-export type FilterMode = 'include' | 'exclude'
 
 export interface DateGroup {
   date: Date
@@ -48,15 +42,10 @@ export interface UseSessionSearchOptions {
   searchQuery: string
   workspaceId?: string
   currentFilter?: SessionFilter
-  evaluateViews?: (meta: SessionMeta) => ViewConfig[]
-  statusFilter?: Map<string, FilterMode>
-  labelFilterMap?: Map<string, FilterMode>
-  /** Workspace label tree — label filters match descendants through it (shared matchesLabelFilter). */
-  labelConfigs?: LabelConfig[]
   /** Collapsed group keys — collapsed items are excluded from pagination and flatItems */
   collapsedGroups?: Set<string>
   /** Grouping mode — needed to compute group keys for collapse-aware pagination */
-  groupingMode?: 'date' | 'status' | 'unread' | 'project'
+  groupingMode?: 'date' | 'unread'
   /** Ref to the ScrollArea viewport element — used for scroll-based pagination */
   scrollViewportRef?: React.RefObject<HTMLDivElement>
 }
@@ -122,10 +111,8 @@ function groupSessionsByDate(sessions: SessionMeta[]): DateGroup[] {
     }))
 }
 
-function getCollapseGroupKey(item: SessionMeta, groupingMode?: 'date' | 'status' | 'unread' | 'project'): string {
-  if (groupingMode === 'status') return `status-${getSessionStatus(item)}`
+function getCollapseGroupKey(item: SessionMeta, groupingMode?: 'date' | 'unread'): string {
   if (groupingMode === 'unread') return item.hasUnread ? 'unread-yes' : 'unread-no'
-  if (groupingMode === 'project') return `project-${(item as { projectId?: string }).projectId ?? '__none__'}`
   return startOfDay(new Date(item.lastMessageAt || 0)).toISOString()
 }
 
@@ -139,7 +126,7 @@ export function computeCollapsedPagination(
   items: SessionMeta[],
   displayLimit: number,
   collapsedGroups?: Set<string>,
-  groupingMode?: 'date' | 'status' | 'unread' | 'project',
+  groupingMode?: 'date' | 'unread',
 ): CollapsedPaginationResult {
   // Fast path: no collapse state → original slice
   if (!collapsedGroups || collapsedGroups.size === 0) {
@@ -198,54 +185,10 @@ export function computeCollapsedPagination(
   }
 }
 
-interface FilterMatchOptions {
-  evaluateViews?: (meta: SessionMeta) => ViewConfig[]
-  statusFilter?: Map<string, 'include' | 'exclude'>
-  labelFilterMap?: Map<string, 'include' | 'exclude'>
-  labelConfigs?: LabelConfig[]
-}
-
 export function sessionMatchesCurrentFilter(
   session: SessionMeta,
   currentFilter: SessionFilter | undefined,
-  options: FilterMatchOptions = {}
 ): boolean {
-  const { evaluateViews, statusFilter, labelFilterMap, labelConfigs } = options
-
-  const passesStatusFilter = (): boolean => {
-    if (!statusFilter || statusFilter.size === 0) return true
-    const sessionState = (session.sessionStatus || 'todo') as string
-
-    let hasIncludes = false
-    let matchesInclude = false
-    for (const [stateId, mode] of statusFilter) {
-      if (mode === 'exclude' && sessionState === stateId) return false
-      if (mode === 'include') {
-        hasIncludes = true
-        if (sessionState === stateId) matchesInclude = true
-      }
-    }
-    return !hasIncludes || matchesInclude
-  }
-
-  const passesLabelFilter = (): boolean => {
-    if (!labelFilterMap || labelFilterMap.size === 0) return true
-    const sessionLabelIds = session.labels?.map(l => parseLabelEntry(l).id) || []
-
-    let hasIncludes = false
-    let matchesInclude = false
-    for (const [labelId, mode] of labelFilterMap) {
-      if (mode === 'exclude' && sessionLabelIds.includes(labelId)) return false
-      if (mode === 'include') {
-        hasIncludes = true
-        if (sessionLabelIds.includes(labelId)) matchesInclude = true
-      }
-    }
-    return !hasIncludes || matchesInclude
-  }
-
-  if (!passesStatusFilter() || !passesLabelFilter()) return false
-
   if (!currentFilter) return true
 
   switch (currentFilter.kind) {
@@ -257,23 +200,6 @@ export function sessionMatchesCurrentFilter(
 
     case 'archived':
       return session.isArchived === true
-
-    case 'state':
-      return (session.sessionStatus || 'todo') === currentFilter.stateId && session.isArchived !== true
-
-    case 'label': {
-      if (session.isArchived === true) return false
-      // Shared predicate (descendant-aware + optional project scope) — keep in
-      // sync with AppShell's filtered set by construction, not by copy.
-      return matchesLabelFilter(session, currentFilter, labelConfigs ?? [])
-    }
-
-    case 'view':
-      if (session.isArchived === true) return false
-      if (!evaluateViews) return true
-      const matched = evaluateViews(session)
-      if (currentFilter.viewId === '__all__') return matched.length > 0
-      return matched.some(v => v.id === currentFilter.viewId)
 
     default:
       const _exhaustive: never = currentFilter
@@ -291,10 +217,6 @@ export function useSessionSearch({
   searchQuery,
   workspaceId,
   currentFilter,
-  evaluateViews,
-  statusFilter,
-  labelFilterMap,
-  labelConfigs,
   collapsedGroups,
   groupingMode,
   scrollViewportRef,
@@ -400,7 +322,7 @@ export function useSessionSearch({
   const searchFilteredItems = useMemo(() => {
     if (!isSearchMode) {
       return sortedItems.filter(item =>
-        sessionMatchesCurrentFilter(item, currentFilter, { evaluateViews, statusFilter, labelFilterMap, labelConfigs })
+        sessionMatchesCurrentFilter(item, currentFilter)
       )
     }
 
@@ -418,23 +340,17 @@ export function useSessionSearch({
         const countB = contentSearchResults.get(b.id)?.matchCount || 0
         return countB - countA
       })
-  }, [sortedItems, isSearchMode, searchQuery, contentSearchResults, currentFilter, evaluateViews, statusFilter, labelFilterMap, labelConfigs])
+  }, [sortedItems, isSearchMode, searchQuery, contentSearchResults, currentFilter])
 
   // Split search results: matching current filter vs others
   const { matchingFilterItems, otherResultItems, exceededSearchLimit } = useMemo(() => {
-    const hasActiveFilters =
-      (currentFilter && currentFilter.kind !== 'allSessions') ||
-      (statusFilter && statusFilter.size > 0) ||
-      (labelFilterMap && labelFilterMap.size > 0)
+    const hasActiveFilters = !!currentFilter && currentFilter.kind !== 'allSessions'
 
     if (searchQuery.trim() && searchFilteredItems.length > 0) {
       searchLog.info('search:grouping', {
         searchQuery,
         currentFilterKind: currentFilter?.kind,
-        currentFilterStateId: currentFilter?.kind === 'state' ? currentFilter.stateId : undefined,
         hasActiveFilters,
-        statusFilterSize: statusFilter?.size ?? 0,
-        labelFilterSize: labelFilterMap?.size ?? 0,
         itemCount: searchFilteredItems.length,
       })
     }
@@ -453,7 +369,7 @@ export function useSessionSearch({
     for (const item of searchFilteredItems) {
       if (matching.length + others.length >= MAX_SEARCH_RESULTS) break
 
-      const matches = sessionMatchesCurrentFilter(item, currentFilter, { evaluateViews, statusFilter, labelFilterMap, labelConfigs })
+      const matches = sessionMatchesCurrentFilter(item, currentFilter)
       if (matches) {
         matching.push(item)
       } else {
@@ -470,7 +386,7 @@ export function useSessionSearch({
     }
 
     return { matchingFilterItems: matching, otherResultItems: others, exceededSearchLimit: exceeded }
-  }, [searchFilteredItems, currentFilter, evaluateViews, isSearchMode, statusFilter, labelFilterMap, labelConfigs, searchQuery])
+  }, [searchFilteredItems, currentFilter, isSearchMode, searchQuery])
 
   // --- Pagination ---
 

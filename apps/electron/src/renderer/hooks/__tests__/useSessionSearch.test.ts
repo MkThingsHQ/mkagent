@@ -6,7 +6,6 @@ function makeSession(id: string, opts: Partial<SessionMeta> = {}): SessionMeta {
   return {
     id,
     workspaceId: 'ws-1',
-    sessionStatus: 'in-progress',
     lastMessageAt: Date.parse('2026-03-05T10:00:00.000Z'),
     ...opts,
   }
@@ -52,15 +51,15 @@ describe('computeCollapsedPagination', () => {
 
   it('ignores collapsed keys that are not present in current view', () => {
     const sessions = [
-      makeSession('a', { sessionStatus: 'in-progress' }),
-      makeSession('b', { sessionStatus: 'done' }),
+      makeSession('a', { hasUnread: true }),
+      makeSession('b', { hasUnread: false }),
     ]
 
     const result = computeCollapsedPagination(
       sessions,
       50,
-      new Set(['status-todo']),
-      'status'
+      new Set(['unread-missing']),
+      'unread'
     )
 
     expect(result.paginatedItems.map(s => s.id)).toEqual(['a', 'b'])

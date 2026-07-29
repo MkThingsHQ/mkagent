@@ -15,7 +15,6 @@ import { toast } from 'sonner'
 import { SkillMenu } from '@/components/app-shell/SkillMenu'
 import { SkillAvatar } from '@/components/ui/skill-avatar'
 import { routes, navigate } from '@/lib/navigate'
-import { useActiveWorkspace } from '@/context/AppShellContext'
 import { getFileManagerName } from '@/lib/platform'
 import {
   Info_Page,
@@ -36,8 +35,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
   const [skill, setSkill] = useState<LoadedSkill | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const activeWorkspace = useActiveWorkspace()
-  const canRevealLocally = !activeWorkspace?.remoteServer
+  const canRevealLocally = true
 
   // Load skill data
   useEffect(() => {
@@ -195,7 +193,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
               <Info_Table.Row label={t('common.description')}>
                 {skill.metadata.description}
               </Info_Table.Row>
-              <Info_Table.Row label={t('common.source')}>
+              <Info_Table.Row label={t('skillInfo.origin')}>
                 {skill.source === 'project' ? t('skillInfo.sourceProject') :
                  skill.source === 'global' ? t('skillInfo.sourceGlobal') :
                  t('skillInfo.sourceWorkspace')}
@@ -208,11 +206,6 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
                   {formatPath(skill.path)}
                 </button>
               </Info_Table.Row>
-              {skill.metadata.requiredSources && skill.metadata.requiredSources.length > 0 && (
-                <Info_Table.Row label={t('skillInfo.requiredSources')}>
-                  {skill.metadata.requiredSources.join(', ')}
-                </Info_Table.Row>
-              )}
             </Info_Table>
           </Info_Section>
 

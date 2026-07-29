@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/useTheme'
 import type { ThemeOverrides } from '@config/theme'
 import { useSetAtom, useStore, useAtomValue, useAtom } from 'jotai'
-import type { Session, Workspace, SessionEvent, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, SetupNeeds, SessionStatus, NewChatActionParams, ContentBadge, LlmConnectionWithStatus, PermissionModeState } from '../shared/types'
+import type { Session, Workspace, SessionEvent, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, SetupNeeds, NewChatActionParams, ContentBadge, LlmConnectionWithStatus, PermissionModeState } from '../shared/types'
 import type { SessionDraft, DraftAttachmentRef } from '@mkagent/shared/config'
 import type { SessionOptions, SessionOptionUpdates } from './hooks/useSessionOptions'
 import { defaultSessionOptions, mergeSessionOptions } from './hooks/useSessionOptions'
@@ -13,7 +13,6 @@ import type { AgentEvent, Effect } from './event-processor'
 import { AppShell } from '@/components/app-shell/AppShell'
 import type { AppShellContextType } from '@/context/AppShellContext'
 import { OnboardingWizard, ReauthScreen } from '@/components/onboarding'
-import { WorkspacePicker } from '@/components/workspace'
 import { ResetConfirmationDialog } from '@/components/ResetConfirmationDialog'
 import { SplashScreen } from '@/components/SplashScreen'
 import { TooltipProvider } from '@mkagent/ui'
@@ -53,7 +52,6 @@ import {
   type SessionMeta,
   type BackgroundTask,
 } from '@/atoms/sessions'
-import { sourcesAtom } from '@/atoms/sources'
 import { skillsAtom } from '@/atoms/skills'
 import {
   showBackgroundFinishedChipAtom,
@@ -85,7 +83,7 @@ import { rendererLog } from '@/lib/logger'
 import { ActionRegistryProvider } from '@/actions'
 import { toast } from 'sonner'
 
-type AppState = 'loading' | 'onboarding' | 'reauth' | 'workspace-picker' | 'ready'
+type AppState = 'loading' | 'onboarding' | 'reauth' | 'ready'
 
 /** Type for the Jotai store returned by useStore() */
 type JotaiStore = ReturnType<typeof getDefaultStore>
@@ -336,13 +334,6 @@ export default function App() {
     }
   }, [])
 
-  // Derive remote workspace ID for session matching in NavigationContext
-  const windowRemoteWorkspaceId = useMemo(() => {
-    if (!windowWorkspaceId) return null
-    const workspace = workspaces.find(w => w.id === windowWorkspaceId)
-    return workspace?.remoteServer?.remoteWorkspaceId ?? null
-  }, [windowWorkspaceId, workspaces])
-
   // LLM connections with authentication status (for provider selection)
   const [llmConnections, setLlmConnections] = useState<LlmConnectionWithStatus[]>([])
   // Workspace default LLM connection (for new sessions)
@@ -386,7 +377,6 @@ export default function App() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
 
   // Sources and skills for badge extraction
-  const sources = useAtomValue(sourcesAtom)
   const skills = useAtomValue(skillsAtom)
 
   // Compute if app is fully ready (all data loaded)
@@ -588,7 +578,6 @@ export default function App() {
         reason,
         removeMissing,
         windowWorkspaceId,
-        windowRemoteWorkspaceId,
         selectedSessionId,
         beforeCount: beforeIds.size,
         returnedCount: sessions.length,
@@ -625,7 +614,6 @@ export default function App() {
         reason,
         removeMissing,
         windowWorkspaceId,
-        windowRemoteWorkspaceId,
         selectedSessionId,
         beforeCount: beforeIds.size,
         beforeIds: summarizeIds(beforeIds),
@@ -635,7 +623,7 @@ export default function App() {
       })
       return null
     }
-  }, [store, syncSessionOptionsFromSession, reconcilePermissionModeState, windowWorkspaceId, windowRemoteWorkspaceId])
+  }, [store, syncSessionOptionsFromSession, reconcilePermissionModeState, windowWorkspaceId])
 
   // Stale session watchdog — catches stuck sessions that the reconnect protocol misses
   const { trackSessionActivity } = useStaleSessionRecovery({
@@ -718,10 +706,20 @@ export default function App() {
         setSetupNeeds(needs)
 
         if (needs.isFullyConfigured) {
-          // If no workspace is selected (thin client without CRAFT_WORKSPACE_ID),
-          // show workspace picker before entering the main app
+          // MkAgent is local-first. If a window has no explicit workspace,
+          // select the first configured local workspace instead of exposing
+          // Craft's remote-server workspace picker.
           if (!wsId) {
-            setAppState('workspace-picker')
+            const localWorkspaces = await window.electronAPI.getWorkspaces()
+            const firstWorkspace = localWorkspaces[0]
+            if (firstWorkspace) {
+              await window.electronAPI.switchWorkspace(firstWorkspace.id)
+              setWindowWorkspaceId(firstWorkspace.id)
+              setWorkspaces(localWorkspaces)
+              setAppState('ready')
+            } else {
+              setAppState('onboarding')
+            }
           } else {
             setAppState('ready')
           }
@@ -834,7 +832,7 @@ export default function App() {
     // Handoff events signal end of streaming - need to sync back to React state
     // Also includes todo_state_changed so status updates immediately reflect in sidebar
     // async_operation included so shimmer effect on session titles updates in real-time
-    const handoffEventTypes = new Set(['complete', 'error', 'interrupted', 'typed_error', 'session_status_changed', 'session_metadata_changed', 'session_flagged', 'session_unflagged', 'name_changed', 'labels_changed', 'project_id_changed', 'title_generated', 'async_operation'])
+    const handoffEventTypes = new Set(['complete', 'error', 'interrupted', 'typed_error', 'session_flagged', 'session_unflagged', 'name_changed', 'title_generated', 'async_operation'])
 
     // Helper to handle side effects (same logic for both paths)
     const handleEffects = (effects: Effect[], sessionId: string, eventType: string) => {
@@ -1254,11 +1252,6 @@ export default function App() {
     window.electronAPI.sessionCommand(sessionId, { type: 'markUnread' })
   }, [updateSessionById])
 
-  const handleSessionStatusChange = useCallback((sessionId: string, state: SessionStatus) => {
-    updateSessionById(sessionId, { sessionStatus: state })
-    window.electronAPI.sessionCommand(sessionId, { type: 'setSessionStatus', state })
-  }, [updateSessionById])
-
   const handleRenameSession = useCallback((sessionId: string, name: string) => {
     updateSessionById(sessionId, { name })
     window.electronAPI.sessionCommand(sessionId, { type: 'rename', name })
@@ -1339,12 +1332,12 @@ export default function App() {
         )
       }
 
-      // Step 3: Extract badges from mentions (sources/skills) with embedded icons
+      // Step 3: Extract badges from retained Skill mentions with embedded icons
       // Badges are self-contained for display in UserMessageBubble and viewer
       // Merge with any externally provided badges (e.g., from EditPopover context badges)
       // Use workspace slug (not UUID) for skill qualification - SDK expects "workspaceSlug:skillSlug"
       const mentionBadges: ContentBadge[] = windowWorkspaceSlug
-        ? extractBadges(message, skills, sources, windowWorkspaceSlug)
+        ? extractBadges(message, skills, windowWorkspaceSlug)
         : []
       const badges: ContentBadge[] = [...(externalBadges || []), ...mentionBadges]
 
@@ -1428,7 +1421,7 @@ export default function App() {
         ]
       }))
     }
-  }, [sessionOptions, updateSessionById, skills, sources, windowWorkspaceId])
+  }, [sessionOptions, updateSessionById, skills, windowWorkspaceId])
 
   /**
    * Unified handler for all session option changes.
@@ -1803,9 +1796,7 @@ export default function App() {
       // (prevents memory growth on repeated workspace switches)
       sessionDraftsRef.current.clear()
 
-      // 7. Reset sources and skills atoms to empty
-      // (prevents stale data flash during workspace switch - AppShell will reload)
-      store.set(sourcesAtom, [])
+      // 7. Reset skills to prevent a stale flash during workspace switch.
       store.set(skillsAtom, [])
 
       // 8. Clear session atoms BEFORE workspace switch
@@ -1868,7 +1859,6 @@ export default function App() {
     onMarkSessionRead: handleMarkSessionRead,
     onMarkSessionUnread: handleMarkSessionUnread,
     onSetActiveViewingSession: handleSetActiveViewingSession,
-    onSessionStatusChange: handleSessionStatusChange,
     onDeleteSession: handleDeleteSession,
     onRespondToPermission: handleRespondToPermission,
     onRespondToCredential: handleRespondToCredential,
@@ -1913,7 +1903,6 @@ export default function App() {
     handleMarkSessionRead,
     handleMarkSessionUnread,
     handleSetActiveViewingSession,
-    handleSessionStatusChange,
     handleDeleteSession,
     handleRespondToPermission,
     handleRespondToCredential,
@@ -2001,34 +1990,11 @@ export default function App() {
             onSelectApiSetupMethod={onboarding.handleSelectApiSetupMethod}
             onSubmitCredential={onboarding.handleSubmitCredential}
             onSubmitLocalModel={onboarding.handleSubmitLocalModel}
-            onStartOAuth={onboarding.handleStartOAuth}
             onFinish={onboarding.handleFinish}
-            isWaitingForCode={onboarding.isWaitingForCode}
-            onSubmitAuthCode={onboarding.handleSubmitAuthCode}
-            onCancelOAuth={onboarding.handleCancelOAuth}
-            copilotDeviceCode={onboarding.copilotDeviceCode}
             onBrowseGitBash={onboarding.handleBrowseGitBash}
             onUseGitBashPath={onboarding.handleUseGitBashPath}
             onRecheckGitBash={onboarding.handleRecheckGitBash}
             onClearError={onboarding.handleClearError}
-          />
-        </ModalProvider>
-      </DismissibleLayerProvider>
-    )
-  }
-
-  // Workspace picker — thin client with no workspace selected
-  if (appState === 'workspace-picker') {
-    return (
-      <DismissibleLayerProvider>
-        <ModalProvider>
-          <WindowCloseHandler />
-          <WorkspacePicker
-            onSelectWorkspace={async (id) => {
-              await window.electronAPI.switchWorkspace(id)
-              setWindowWorkspaceId(id)
-              setAppState('ready')
-            }}
           />
         </ModalProvider>
       </DismissibleLayerProvider>
@@ -2057,7 +2023,6 @@ export default function App() {
           onAutoDeleteEmptySession={handleAutoDeleteEmptySession}
           isReady={appState === 'ready'}
           isSessionsReady={sessionsLoaded}
-          remoteWorkspaceId={windowRemoteWorkspaceId}
         >
           {/* Handle window close requests (X button, Cmd+W) - close modal first if open */}
           <WindowCloseHandler />

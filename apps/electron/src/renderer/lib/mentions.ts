@@ -3,20 +3,19 @@
  *
  * Mention types:
  * - Skills:  [skill:slug]
- * - Sources: [source:slug]
  *
  * Bracket syntax allows mentions anywhere in text without word boundaries.
  */
 
 import type { ContentBadge } from '@mkagent/core'
 import type { MentionItemType } from '@/components/ui/mention-menu'
-import type { LoadedSkill, LoadedSource } from '../../shared/types'
+import type { LoadedSkill } from '../../shared/types'
 import { AGENTS_PLUGIN_NAME } from '@mkagent/shared/skills/types'
-import { getSourceIconSync, getSkillIconSync } from './icon-cache'
+import { getSkillIconSync } from './icon-cache'
 
 // Import and re-export parsing functions from shared (pure string operations, no renderer deps)
-import { parseMentions, stripAllMentions, resolveSkillMentions, resolveSourceMentions, type ParsedMentions } from '@mkagent/shared/mentions'
-export { parseMentions, stripAllMentions, resolveSkillMentions, resolveSourceMentions, type ParsedMentions }
+import { parseMentions, stripAllMentions, resolveSkillMentions, type ParsedMentions } from '@mkagent/shared/mentions'
+export { parseMentions, stripAllMentions, resolveSkillMentions, type ParsedMentions }
 
 // ============================================================================
 // Constants
@@ -48,30 +47,14 @@ export interface MentionMatch {
  *
  * @param text - The message text to search
  * @param availableSkillSlugs - Valid skill slugs
- * @param availableSourceSlugs - Valid source slugs
  * @returns Array of mention matches with positions
  */
 export function findMentionMatches(
   text: string,
   availableSkillSlugs: string[],
-  availableSourceSlugs: string[]
 ): MentionMatch[] {
   const matches: MentionMatch[] = []
-
-  // Match source mentions: [source:slug]
-  const sourcePattern = /(\[source:([\w-]+)\])/g
   let match
-  while ((match = sourcePattern.exec(text)) !== null) {
-    const slug = match[2]
-    if (availableSourceSlugs.includes(slug)) {
-      matches.push({
-        type: 'source',
-        id: slug,
-        fullMatch: match[1],
-        startIndex: match.index,
-      })
-    }
-  }
 
   // Match skill mentions: [skill:slug] or [skill:workspaceId:slug]
   // The pattern captures the full match and extracts the slug (last component)
@@ -127,9 +110,6 @@ export function removeMention(text: string, type: MentionItemType, id: string): 
   let pattern: RegExp
 
   switch (type) {
-    case 'source':
-      pattern = new RegExp(`\\[source:${escapeRegExp(id)}\\]`, 'g')
-      break
     case 'file':
       pattern = new RegExp(`\\[file:${escapeRegExp(id)}\\]`, 'g')
       break
@@ -156,10 +136,9 @@ export function removeMention(text: string, type: MentionItemType, id: string): 
 export function hasMentions(
   text: string,
   availableSkillSlugs: string[],
-  availableSourceSlugs: string[]
 ): boolean {
-  const mentions = parseMentions(text, availableSkillSlugs, availableSourceSlugs)
-  return mentions.skills.length > 0 || mentions.sources.length > 0 || mentions.files.length > 0 || mentions.folders.length > 0
+  const mentions = parseMentions(text, availableSkillSlugs, [])
+  return mentions.skills.length > 0 || mentions.files.length > 0 || mentions.folders.length > 0
 }
 
 // ============================================================================
@@ -196,23 +175,19 @@ export function stripSkillMentions(text: string): string {
  *
  * @param text - Message text with mentions
  * @param skills - Available skills (for label lookup)
- * @param sources - Available sources (for label lookup)
  * @param workspaceId - Workspace ID (for icon lookup)
  * @returns Array of ContentBadge objects
  */
 export function extractBadges(
   text: string,
   skills: LoadedSkill[],
-  sources: LoadedSource[],
   workspaceId: string
 ): ContentBadge[] {
   const skillSlugs = skills.map(s => s.slug)
-  const sourceSlugs = sources.map(s => s.config.slug)
-  const matches = findMentionMatches(text, skillSlugs, sourceSlugs)
+  const matches = findMentionMatches(text, skillSlugs)
 
   // Build lookup maps to avoid linear scans per match
   const skillsBySlug = new Map(skills.map(s => [s.slug, s]))
-  const sourcesBySlug = new Map(sources.map(s => [s.config.slug, s]))
 
   return matches.map(match => {
     let label = match.id
@@ -225,12 +200,6 @@ export function extractBadges(
 
       // Get cached icon as data URL (preserves mime type for SVG, PNG, etc.)
       iconDataUrl = getSkillIconSync(workspaceId, match.id) ?? undefined
-    } else if (match.type === 'source') {
-      const source = sourcesBySlug.get(match.id)
-      label = source?.config.name || match.id
-
-      // Get cached icon as data URL (preserves mime type for SVG, PNG, etc.)
-      iconDataUrl = getSourceIconSync(workspaceId, match.id) ?? undefined
     } else if (match.type === 'file') {
       // Show filename as label, full relative path stored for tooltip
       label = match.id.split('/').pop() || match.id
@@ -252,7 +221,7 @@ export function extractBadges(
     }
 
     return {
-      type: match.type as 'source' | 'skill' | 'file' | 'folder',
+      type: match.type,
       label,
       rawText,
       iconDataUrl,

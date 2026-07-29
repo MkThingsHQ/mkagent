@@ -2,7 +2,6 @@ import { openExternalUrl } from '@mkagent/ui'
 import { WsRpcClient } from '../../../electron/src/transport/client'
 import { buildClientApi } from '../../../electron/src/transport/build-api'
 import { CHANNEL_MAP } from '../../../electron/src/transport/channel-map'
-import { applyCraftRendererCompatibility } from '../../../electron/src/transport/craft-renderer-compat'
 import type { ElectronAPI, TransportConnectionState } from '../../../electron/src/shared/types'
 
 export interface WebApiOptions {
@@ -76,11 +75,23 @@ export function createWebApi(options: WebApiOptions): { api: ElectronAPI; client
       client.reconnectNow()
       return Promise.resolve()
     },
+    onReconnected: callback => {
+      let wasDisconnected = client.getConnectionState().status !== 'connected'
+      return client.onConnectionStateChanged(state => {
+        if (state.status === 'connected' && wasDisconnected) {
+          wasDisconnected = false
+          callback(true)
+        } else if (state.status !== 'connected') {
+          wasDisconnected = true
+        }
+      })
+    },
+    getSystemWarnings: () => Promise.resolve({ vcredistMissing: false }),
+    getFilePath: file => file.name,
     isChannelAvailable: channel => client.isChannelAvailable(channel),
   }
 
   const api = { ...baseApi, ...local } as ElectronAPI
-  applyCraftRendererCompatibility(api as unknown as Record<string, any>, 'web')
   return { api, client }
 }
 

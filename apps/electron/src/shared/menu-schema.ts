@@ -385,9 +385,6 @@ const SETTINGS_ICONS: Record<SettingsSubpage, string> = {
   input: 'Keyboard',
   workspace: 'Building2',
   permissions: 'ShieldCheck',
-  labels: 'Tag',
-  messaging: 'MessageSquare',
-  server: 'Server',
   shortcuts: 'Keyboard',
   preferences: 'UserCircle',
 }
@@ -396,9 +393,7 @@ const SETTINGS_ICONS: Record<SettingsSubpage, string> = {
  * All settings pages - derived from settings-registry (single source of truth)
  * Order is determined by SETTINGS_PAGES in settings-registry.ts
  */
-export const SETTINGS_ITEMS: SettingsMenuItem[] = SETTINGS_PAGES
-  .filter(page => page.id !== 'server' || FEATURE_FLAGS.embeddedServer)
-  .map(page => ({
+export const SETTINGS_ITEMS: SettingsMenuItem[] = SETTINGS_PAGES.map(page => ({
     id: page.id,
     labelKey: page.labelKey,
     icon: SETTINGS_ICONS[page.id],

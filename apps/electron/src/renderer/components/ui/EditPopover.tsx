@@ -70,23 +70,9 @@ export type EditContextKey =
   | 'default-permissions'
   | 'skill-instructions'
   | 'skill-metadata'
-  | 'source-guide'
-  | 'source-config'
-  | 'source-permissions'
-  | 'source-tool-permissions'
   | 'preferences-notes'
-  | 'add-source'
-  | 'add-source-api'   // Filter-specific: user is viewing APIs
-  | 'add-source-mcp'   // Filter-specific: user is viewing MCPs
-  | 'add-source-local' // Filter-specific: user is viewing Local Folders
   | 'add-skill'
-  | 'edit-statuses'
-  | 'edit-labels'
-  | 'edit-auto-rules'
-  | 'add-label'
-  | 'edit-views'
   | 'edit-tool-icons'
-  | 'automation-config'
 
 /**
  * Full edit configuration including context for agent and example for UI.
@@ -188,7 +174,7 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
       filePath: `${location}/SKILL.md`,
       context:
         'The user is editing skill metadata in the YAML frontmatter of SKILL.md. ' +
-        'Frontmatter fields: name (required), description (required), globs (optional array), alwaysAllow (optional array), requiredSources (optional array of source slugs), icon (optional string — emoji or URL). ' +
+        'Frontmatter fields: name (required), description (required), globs (optional array), alwaysAllow (optional array), icon (optional string — emoji or URL). ' +
         'Keep the content after the frontmatter unchanged unless specifically requested. ' +
         'After editing, call skill_validate with the skill slug to verify the changes. ' +
         'Confirm clearly when done.',
@@ -202,84 +188,6 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
   }),
 
   // Source editing contexts
-  'source-guide': (location) => ({
-    context: {
-      label: 'Source Documentation',
-      filePath: `${location}/guide.md`,
-      context:
-        'The user is editing source documentation (guide.md). ' +
-        'This file provides context to the AI about how to use this source - rate limits, API patterns, best practices. ' +
-        'Keep content clear and actionable. ' +
-        'Confirm clearly when done.',
-    },
-    example: 'Add rate limit documentation',
-    displayLabelKey: 'editPopover.label.sourceDocumentation',
-    exampleKey: 'editPopover.example.sourceGuide',
-    model: 'fast',
-    systemPromptPreset: 'mini',
-    inlineExecution: true,
-  }),
-
-  'source-config': (location) => ({
-    context: {
-      label: 'Source Configuration',
-      filePath: `${location}/config.json`,
-      context:
-        'The user is editing source configuration (config.json). ' +
-        'Be careful with JSON syntax. Fields include: type, slug, name, tagline, iconUrl, and transport-specific settings (mcp, api, local). ' +
-        'Do NOT modify the slug unless explicitly requested. ' +
-        'After editing, call source_test with the source slug to verify the configuration. ' +
-        'Confirm clearly when done.',
-    },
-    example: 'Update the display name',
-    displayLabelKey: 'editPopover.label.sourceConfiguration',
-    exampleKey: 'editPopover.example.sourceConfig',
-    model: 'default',
-    systemPromptPreset: 'mini',
-    inlineExecution: true,
-  }),
-
-  'source-permissions': (location) => ({
-    context: {
-      label: 'Source Permissions',
-      filePath: `${location}/permissions.json`,
-      context:
-        'The user is editing source-level permissions (permissions.json). ' +
-        'These rules are auto-scoped to this source - write simple patterns without prefixes. ' +
-        'For MCP: use allowedMcpPatterns (e.g., "list", "get"). For API: use allowedApiEndpoints. ' +
-        'After editing, call config_validate with target "permissions" and the source slug to verify the changes. ' +
-        'Confirm clearly when done.',
-    },
-    example: 'Allow list operations in Explore mode',
-    displayLabelKey: 'editPopover.label.sourcePermissions',
-    exampleKey: 'editPopover.example.sourcePermissions',
-    model: 'default',
-    systemPromptPreset: 'mini',
-    inlineExecution: true,
-  }),
-
-  'source-tool-permissions': (location) => ({
-    context: {
-      label: 'Tool Permissions',
-      filePath: `${location}/permissions.json`,
-      context:
-        'The user is viewing the Tools list for an MCP source and wants to modify tool permissions. ' +
-        'Edit the permissions.json file to control which tools are allowed in Explore mode. ' +
-        'Use allowedMcpPatterns to allow specific tools (e.g., ["list_*", "get_*"] for read-only). ' +
-        'Use blockedTools to explicitly block specific tools. ' +
-        'Patterns are auto-scoped to this source. ' +
-        'After editing, call config_validate with target "permissions" and the source slug to verify the changes. ' +
-        'Confirm clearly when done.',
-    },
-    example: 'Only allow read operations (list, get, search)',
-    displayLabelKey: 'editPopover.label.toolPermissions',
-    exampleKey: 'editPopover.example.sourceToolPermissions',
-    model: 'default',
-    systemPromptPreset: 'mini',
-    inlineExecution: true,
-  }),
-
-  // Preferences editing context
   'preferences-notes': (location) => ({
     context: {
       label: 'Preferences Notes',
@@ -300,87 +208,6 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
   }),
 
   // Add new source/skill contexts - use overridePlaceholder for inspiring, contextual prompts
-  'add-source': (location) => ({
-    context: {
-      label: 'Add Source',
-      filePath: `${location}/sources/`, // location is the workspace root path
-      context:
-        'The user wants to add a new source to their workspace. ' +
-        'Sources can be MCP servers (HTTP/SSE or stdio), REST APIs, or local filesystems. ' +
-        'Ask clarifying questions if needed: What service? MCP or API? Auth type? ' +
-        'Create the source folder and config.json in the workspace sources directory. ' +
-        'Follow the patterns in ~/.mkagent/docs/sources.md. ' +
-        'After creating the source, call source_test with the source slug to verify the configuration.',
-    },
-    example: 'Connect to my Craft space',
-    overridePlaceholder: 'What would you like to connect?',
-    displayLabelKey: 'editPopover.label.addSource',
-    exampleKey: 'editPopover.example.addSource',
-    overridePlaceholderKey: 'editPopover.placeholder.addSource',
-  }),
-
-  // Filter-specific add-source contexts: user is viewing a filtered list and wants to add that type
-  'add-source-api': (location) => ({
-    context: {
-      label: 'Add API',
-      filePath: `${location}/sources/`,
-      context:
-        'The user is viewing API sources and wants to add a new REST API. ' +
-        'Default to creating an API source (type: "api") unless they specify otherwise. ' +
-        'APIs connect to REST endpoints with authentication (bearer, header, basic, or query). ' +
-        'Ask about the API endpoint URL and auth type. ' +
-        'Create the source folder and config.json in the workspace sources directory. ' +
-        'Follow the patterns in ~/.mkagent/docs/sources.md. ' +
-        'After creating the source, call source_test with the source slug to verify the configuration.',
-    },
-    example: 'Connect to the OpenAI API',
-    overridePlaceholder: 'What API would you like to connect?',
-    displayLabelKey: 'editPopover.label.addApi',
-    exampleKey: 'editPopover.example.addSourceApi',
-    overridePlaceholderKey: 'editPopover.placeholder.addSourceApi',
-  }),
-
-  'add-source-mcp': (location) => ({
-    context: {
-      label: 'Add MCP Server',
-      filePath: `${location}/sources/`,
-      context:
-        'The user is viewing MCP sources and wants to add a new MCP server. ' +
-        'Default to creating an MCP source (type: "mcp") unless they specify otherwise. ' +
-        'MCP servers can use HTTP/SSE transport (remote) or stdio transport (local subprocess). ' +
-        'Ask about the service they want to connect to and whether it\'s a remote URL or local command. ' +
-        'Create the source folder and config.json in the workspace sources directory. ' +
-        'Follow the patterns in ~/.mkagent/docs/sources.md. ' +
-        'After creating the source, call source_test with the source slug to verify the configuration.',
-    },
-    example: 'Connect to Linear',
-    overridePlaceholder: 'What MCP server would you like to connect?',
-    displayLabelKey: 'editPopover.label.addMcpServer',
-    exampleKey: 'editPopover.example.addSourceMcp',
-    overridePlaceholderKey: 'editPopover.placeholder.addSourceMcp',
-  }),
-
-  'add-source-local': (location) => ({
-    context: {
-      label: 'Add Local Folder',
-      filePath: `${location}/sources/`,
-      context:
-        'The user wants to add a local folder source. ' +
-        'First, look up the guide: mcp__craft-agents-docs__SearchCraftAgents({ query: "filesystem" }). ' +
-        'Local folders are bookmarks - use type: "local" with a local.path field. ' +
-        'They use existing Read, Write, Glob, Grep tools - no MCP server needed. ' +
-        'If unclear, ask about the folder path they want to connect. ' +
-        'Create the source folder and config.json in the workspace sources directory. ' +
-        'Follow the patterns in ~/.mkagent/docs/sources.md. ' +
-        'After creating the source, call source_test with the source slug to verify the configuration.',
-    },
-    example: 'Connect to my Obsidian vault',
-    overridePlaceholder: 'What folder would you like to connect?',
-    displayLabelKey: 'editPopover.label.addLocalFolder',
-    exampleKey: 'editPopover.example.addSourceLocal',
-    overridePlaceholderKey: 'editPopover.placeholder.addSourceLocal',
-  }),
-
   'add-skill': (location) => ({
     context: {
       label: 'Add Skill',
@@ -401,120 +228,6 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
   }),
 
   // Status configuration context
-  'edit-statuses': (location) => ({
-    context: {
-      label: 'Status Configuration',
-      filePath: `${location}/statuses/config.json`,
-      context:
-        'The user wants to customize session statuses (workflow states). ' +
-        'Statuses are stored in statuses/config.json with fields: id, label, icon, category (open/closed), order, isFixed, isDefault. ' +
-        'Fixed statuses (todo, done, cancelled) cannot be deleted but can be reordered or have their label changed. ' +
-        'Icon can be an emoji, an https URL, or a local filename like "name.svg" that maps to statuses/icons/name.svg. ' +
-        'Category "open" shows in inbox, "closed" shows in archive. ' +
-        'After editing, call config_validate with target "statuses" to verify the changes. ' +
-        'Confirm clearly when done.',
-    },
-    example: 'Add a "Blocked" status',
-    displayLabelKey: 'editPopover.label.statusConfiguration',
-    exampleKey: 'editPopover.example.editStatuses',
-    model: 'fast',               // Use fast model for quick config edits
-    systemPromptPreset: 'mini',   // Use focused mini prompt
-    inlineExecution: true,        // Execute inline in popover
-  }),
-
-  // Label configuration context
-  'edit-labels': (location) => ({
-    context: {
-      label: 'Label Configuration',
-      filePath: `${location}/labels/config.json`,
-      context:
-        'The user wants to customize session labels (tagging/categorization). ' +
-        'Labels are stored in labels/config.json as a hierarchical tree. ' +
-        'Each label has: id (slug, globally unique), name (display), color (optional EntityColor), children (sub-labels array). ' +
-        'Colors use EntityColor format: string shorthand (e.g. "blue") or { light, dark } object for theme-aware colors. ' +
-        'Labels are color-only (no icons) — rendered as colored circles in the UI. ' +
-        'Children form a recursive tree structure — array position determines display order. ' +
-        'Read ~/.mkagent/docs/labels.md for full format reference. ' +
-        'Confirm clearly when done.',
-    },
-    example: 'Add a "Bug" label with red color',
-    displayLabelKey: 'editPopover.label.labelConfiguration',
-    exampleKey: 'editPopover.example.editLabels',
-    model: 'fast',               // Use fast model for quick config edits
-    systemPromptPreset: 'mini',   // Use focused mini prompt
-    inlineExecution: true,        // Execute inline in popover
-  }),
-
-  // Auto-label rules context (focused on regex patterns within labels)
-  'edit-auto-rules': (location) => ({
-    context: {
-      label: 'Auto-Apply Rules',
-      filePath: `${location}/labels/config.json`,
-      context:
-        'The user wants to edit auto-apply rules (regex patterns that auto-tag sessions). ' +
-        'Rules live inside the autoRules array on individual labels in labels/config.json. ' +
-        'Each rule has: pattern (regex with capture groups), flags (default "gi"), valueTemplate ($1/$2 substitution), description. ' +
-        'Multiple rules on the same label = multiple ways to trigger. The "g" flag is always enforced. ' +
-        'Avoid catastrophic backtracking patterns (e.g., (a+)+). ' +
-        'Read ~/.mkagent/docs/labels.md for full format reference. ' +
-        'Confirm clearly when done.',
-    },
-    example: 'Add a rule to detect GitHub issue URLs',
-    displayLabelKey: 'editPopover.label.autoApplyRules',
-    exampleKey: 'editPopover.example.editAutoRules',
-    model: 'fast',               // Use fast model for quick config edits
-    systemPromptPreset: 'mini',   // Use focused mini prompt
-    inlineExecution: true,        // Execute inline in popover
-  }),
-
-  // Add new label context (triggered from the # menu when no labels match)
-  'add-label': (location) => ({
-    context: {
-      label: 'Add Label',
-      filePath: `${location}/labels/config.json`,
-      context:
-        'The user wants to create a new label from the # inline menu. ' +
-        'Labels are stored in labels/config.json as a hierarchical tree. ' +
-        'Each label has: id (slug, globally unique), name (display), color (optional EntityColor), children (sub-labels array). ' +
-        'Colors use EntityColor format: string shorthand (e.g. "blue") or { light, dark } object for theme-aware colors. ' +
-        'Labels are color-only (no icons) — rendered as colored circles in the UI. ' +
-        'Read ~/.mkagent/docs/labels.md for full format reference. ' +
-        'Confirm clearly when done.',
-    },
-    example: 'A red "Bug" label',
-    overridePlaceholder: 'What label would you like to create?',
-    displayLabelKey: 'editPopover.label.addLabel',
-    exampleKey: 'editPopover.example.addLabel',
-    overridePlaceholderKey: 'editPopover.placeholder.addLabel',
-    model: 'fast',               // Use fast model for quick config edits
-    systemPromptPreset: 'mini',   // Use focused mini prompt
-    inlineExecution: true,        // Execute inline in popover
-  }),
-
-  // Views configuration context
-  'edit-views': (location) => ({
-    context: {
-      label: 'Views Configuration',
-      filePath: `${location}/views.json`,
-      context:
-        'The user wants to edit views (dynamic, expression-based filters). ' +
-        'Views are stored in views.json at the workspace root under a "views" array. ' +
-        'Each view has: id (unique slug), name (display text), description (optional), color (optional EntityColor), expression (Filtrex string). ' +
-        'Expressions are evaluated against session context fields: name, preview, sessionStatus (also available as deprecated alias todoState), permissionMode, model, lastMessageRole, ' +
-        'lastUsedAt, createdAt, messageCount, labelCount, isFlagged, hasUnread, isProcessing, hasPendingPlan, tokenUsage.*, labels. ' +
-        'Available functions: daysSince(timestamp), contains(array, value). ' +
-        'Colors use EntityColor format: string shorthand (e.g. "orange") or { light, dark } object. ' +
-        'Confirm clearly when done.',
-    },
-    example: 'Add a "Stale" view for sessions inactive > 7 days',
-    displayLabelKey: 'editPopover.label.viewsConfiguration',
-    exampleKey: 'editPopover.example.editViews',
-    model: 'fast',               // Use fast model for quick config edits
-    systemPromptPreset: 'mini',   // Use focused mini prompt
-    inlineExecution: true,        // Execute inline in popover
-  }),
-
-  // Tool icons configuration context
   'edit-tool-icons': (location) => ({
     context: {
       label: 'Tool Icons',
@@ -537,24 +250,6 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
     inlineExecution: true,        // Execute inline in popover
   }),
 
-  'automation-config': (location) => ({
-    context: {
-      label: 'Automation Configuration',
-      filePath: `${location}/automations.json`,
-      context:
-        'The user is editing automations.json which configures automations. ' +
-        'Structure: { version: 2, automations: { EventName: [{ name?, matcher?, cron?, timezone?, permissionMode?, labels?, actions: [...] }] } }. ' +
-        'Each event maps to an array of matcher entries. Each matcher has an actions array ({ type: "prompt", prompt }). ' +
-        'Read ~/.mkagent/docs/automations.md for full format reference. ' +
-        'After editing, confirm clearly what changed.',
-    },
-    example: 'Change the cron schedule to every 30 minutes',
-    displayLabelKey: 'editPopover.label.automationConfiguration',
-    exampleKey: 'editPopover.example.automationConfig',
-    model: 'default',
-    systemPromptPreset: 'mini',
-    inlineExecution: true,
-  }),
 }
 
 /**

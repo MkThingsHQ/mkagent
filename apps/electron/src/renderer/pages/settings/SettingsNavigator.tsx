@@ -23,7 +23,6 @@ import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { SettingsSubpage } from '../../../shared/types'
 import { SETTINGS_ITEMS } from '../../../shared/menu-schema'
 import { SETTINGS_ICONS } from '@/components/icons/SettingsIcons'
-import { MKAGENT_UI_PROFILE } from '@/config/product-profile'
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -156,7 +155,7 @@ export default function SettingsNavigator({
   const { t } = useTranslation()
 
   const settingsItems: SettingsItem[] = useMemo(() =>
-    SETTINGS_ITEMS.filter(item => MKAGENT_UI_PROFILE.settings.has(item.id)).map((item) => ({
+    SETTINGS_ITEMS.map((item) => ({
       id: item.id,
       label: t(item.labelKey),
       icon: SETTINGS_ICONS[item.id],

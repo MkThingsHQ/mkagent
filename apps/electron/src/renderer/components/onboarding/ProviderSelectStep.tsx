@@ -1,18 +1,14 @@
 import { useTranslation } from "react-i18next"
 import { cn } from "@/lib/utils"
 import { Key, Monitor } from "lucide-react"
-import { CraftAgentsSymbol } from "@/components/icons/CraftAgentsSymbol"
+import { MkAgentAppIcon } from "@/components/icons/MkAgentAppIcon"
 import { StepFormLayout } from "./primitives"
-
-import claudeIcon from "@/assets/provider-icons/claude.svg"
-import openaiIcon from "@/assets/provider-icons/openai.svg"
-import copilotIcon from "@/assets/provider-icons/copilot.svg"
 
 /**
  * The high-level provider choice the user makes on first launch.
  * This maps to one or more ApiSetupMethods downstream.
  */
-export type ProviderChoice = 'claude' | 'chatgpt' | 'copilot' | 'api_key' | 'local'
+export type ProviderChoice = 'api_key' | 'local'
 
 interface ProviderOption {
   id: ProviderChoice
@@ -22,9 +18,6 @@ interface ProviderOption {
 }
 
 const PROVIDER_ICONS: Record<ProviderChoice, React.ReactNode> = {
-  claude: <img src={claudeIcon} alt="" className="size-5 rounded-[3px]" />,
-  chatgpt: <img src={openaiIcon} alt="" className="size-5 rounded-[3px]" />,
-  copilot: <img src={copilotIcon} alt="" className="size-5 rounded-[3px]" />,
   api_key: <Key className="size-5" />,
   local: <Monitor className="size-5" />,
 }
@@ -47,24 +40,6 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
 
   const PROVIDER_OPTIONS: ProviderOption[] = [
     {
-      id: 'claude',
-      name: t("onboarding.providerSelect.claudeProMax"),
-      description: t("onboarding.providerSelect.claudeProMaxDesc"),
-      icon: PROVIDER_ICONS.claude,
-    },
-    {
-      id: 'chatgpt',
-      name: t("onboarding.providerSelect.codexChatGPT"),
-      description: t("onboarding.providerSelect.codexChatGPTDesc"),
-      icon: PROVIDER_ICONS.chatgpt,
-    },
-    {
-      id: 'copilot',
-      name: t("onboarding.providerSelect.githubCopilot"),
-      description: t("onboarding.providerSelect.githubCopilotDesc"),
-      icon: PROVIDER_ICONS.copilot,
-    },
-    {
       id: 'api_key',
       name: t("onboarding.providerSelect.otherProvider"),
       description: 'Anthropic, AWS Bedrock, OpenRouter, Google or any compatible provider.',
@@ -82,7 +57,7 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
     <StepFormLayout
       iconElement={
         <div className="flex size-16 items-center justify-center">
-          <CraftAgentsSymbol className="size-10 text-accent" />
+          <MkAgentAppIcon className="size-10 text-accent" />
         </div>
       }
       title={t("onboarding.providerSelect.title")}

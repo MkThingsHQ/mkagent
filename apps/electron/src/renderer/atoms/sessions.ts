@@ -28,11 +28,6 @@ export interface SessionMeta {
   isFlagged?: boolean
   lastReadMessageId?: string
   workingDirectory?: string
-  enabledSourceSlugs?: string[]
-  /** Shared viewer URL (if shared via viewer) */
-  sharedUrl?: string
-  /** Shared session ID in viewer (for revoke) */
-  sharedId?: string
   /** ID of the last final (non-intermediate) assistant message - for unread detection */
   lastFinalMessageId?: string
   /**
@@ -41,12 +36,8 @@ export interface SessionMeta {
    * Set to false when user views the session (and not processing).
    */
   hasUnread?: boolean
-  /** Labels for filtering (additive tags, many-per-session) */
-  labels?: string[]
-  /** Permission mode ('safe', 'ask', 'allow-all') — used by view expressions */
+  /** Permission mode ('safe', 'ask', 'allow-all') */
   permissionMode?: string
-  /** Session status for filtering */
-  sessionStatus?: string
   /** Role/type of the last message (for badge display without loading messages) */
   lastMessageRole?: 'user' | 'assistant' | 'plan' | 'tool' | 'error'
   /** Whether an async operation is ongoing (sharing, updating share, revoking, title regeneration) */
@@ -75,22 +66,6 @@ export interface SessionMeta {
   isArchived?: boolean
   /** Timestamp when session was archived (for retention policy) */
   archivedAt?: number
-  /** Workspace-scoped project id this session is bound to (undefined = unbound) */
-  projectId?: string
-  /** Parent session id — when set, this session is a subtask of the parent (undefined = top-level task) */
-  parentSessionId?: string
-  /** Kanban board column id ('todo' | 'in-progress' | 'done'); independent of sessionStatus */
-  kanbanColumn?: string
-  /** Tasks Conductor: slug of the task spec this session belongs to (orchestrator + child nodes) */
-  taskSlug?: string
-  /** Tasks Conductor: id of the run that spawned this child session (Conductor-owned children only) */
-  taskRunId?: string
-  /** Tasks Conductor: id of the DAG node this child session executes (Conductor-owned children only) */
-  taskNodeId?: string
-  /** Tasks Conductor: total DAG node count (orchestrator only) — stable board progress denominator while children spawn lazily */
-  taskNodeCount?: number
-  /** Tasks Conductor: a generate-time draft orchestrator, hidden from the board until adopted by createTask. */
-  taskDraft?: boolean
 }
 
 /**
@@ -561,7 +536,7 @@ export const syncSessionsToAtomsAtom = atom(
  * Uses promise deduplication to prevent redundant IPC calls from concurrent requests.
  *
  * IMPORTANT: This only merges messages into the existing session atom.
- * UI state fields (hasUnread, isFlagged, sessionStatus, etc.) are preserved from
+ * UI state fields (hasUnread, isFlagged, etc.) are preserved from
  * the in-memory atom, NOT overwritten with potentially stale disk data.
  * This prevents a race condition where optimistic updates (e.g., clearing the
  * NEW badge on session view) get clobbered by async message loading that reads
@@ -757,4 +732,3 @@ export const windowWorkspaceIdAtom = atom<string | null>(null)
  * State for "Send to Workspace" dialog.
  * Set session IDs to open; clear to close.
  */
-export const sendToWorkspaceAtom = atom<string[]>([])

@@ -1,82 +1,153 @@
 #!/usr/bin/env bun
 
 /**
- * Verifies renderer files that are intentionally reused verbatim from Craft.
+ * Guard the MkAgent renderer's Craft lineage.
  *
- * Product adapters live outside this manifest. A manifest entry may only differ
- * by the workspace package scope (`@craft-agent` -> `@mkagent`). Keeping this
- * check explicit prevents copied UI primitives from silently drifting again.
+ * Files outside the Lite customization seams must remain byte-for-byte equal
+ * after package/brand normalization. The guard also rejects reintroduction of
+ * product surfaces intentionally removed from MkAgent.
  */
 
 import { readFile, readdir } from 'node:fs/promises'
 import { resolve } from 'node:path'
 
 const repoRoot = resolve(import.meta.dir, '..')
-const craftRoot = process.env.CRAFT_AGENT_SOURCE
-  ?? resolve(repoRoot, '..', 'craft-agents-oss')
-
+const craftRoot = process.env.CRAFT_AGENT_SOURCE ?? resolve(repoRoot, '..', 'craft-agents-oss')
 const rendererRoot = 'apps/electron/src/renderer'
-const allowedOverrides = new Set([
-  `${rendererRoot}/components/app-menu/DesktopAppMenu.tsx`,
-  `${rendererRoot}/components/app-menu/MobileAppMenu.tsx`,
-  `${rendererRoot}/components/app-shell/AppShell.tsx`,
-  `${rendererRoot}/components/app-shell/input/FreeFormInput.tsx`,
-  `${rendererRoot}/components/SplashScreen.tsx`,
+
+const intentionalOverridePrefixes = [
+  `${rendererRoot}/App.tsx`,
+  `${rendererRoot}/atoms/`,
+  `${rendererRoot}/context/`,
+  `${rendererRoot}/contexts/`,
+  `${rendererRoot}/event-processor/`,
+  `${rendererRoot}/components/app-menu/`,
+  `${rendererRoot}/components/app-shell/`,
+  `${rendererRoot}/components/onboarding/`,
+  `${rendererRoot}/components/workspace/`,
+  `${rendererRoot}/hooks/`,
+  `${rendererRoot}/pages/`,
+  `${rendererRoot}/utils/session`,
+  `${rendererRoot}/lib/mentions`,
+  `${rendererRoot}/lib/nav-helpers`,
+  `${rendererRoot}/lib/navigation-registry`,
+]
+
+const intentionalOverrideFiles = new Set([
   `${rendererRoot}/index.html`,
-  `${rendererRoot}/pages/settings/SettingsNavigator.tsx`,
+  `${rendererRoot}/components/SplashScreen.tsx`,
+  `${rendererRoot}/components/ServerDirectoryBrowser.tsx`,
+  `${rendererRoot}/components/browser/BrowserTabStrip.tsx`,
+  `${rendererRoot}/components/apisetup/index.ts`,
+  `${rendererRoot}/components/apisetup/ApiKeyInput.tsx`,
+  `${rendererRoot}/components/chat/EmptyStateHint.tsx`,
+  `${rendererRoot}/components/icons/SettingsIcons.tsx`,
+  `${rendererRoot}/components/info/index.ts`,
+  `${rendererRoot}/components/ui/EditPopover.tsx`,
+  `${rendererRoot}/components/ui/mention-badge.tsx`,
+  `${rendererRoot}/components/ui/mention-menu.tsx`,
+  `${rendererRoot}/components/ui/rich-text-input.tsx`,
+  `${rendererRoot}/lib/__tests__/mentions.test.ts`,
+  `${rendererRoot}/lib/provider-icons.ts`,
+  `${rendererRoot}/utils/__tests__/session-list-collapse.test.ts`,
+  `${rendererRoot}/utils/auth-validation.ts`,
+  `${rendererRoot}/utils/__tests__/auth-validation.test.ts`,
 ])
 
-const productCopyReplacements = new Map<string, ReadonlyArray<readonly [string, string]>>([
-  [`${rendererRoot}/pages/settings/AiSettingsPage.tsx`, [
-    ['Craft Agents Backend Compatible', 'Pi Backend Compatible'],
-    ['Craft Agents Backend', 'Pi Backend'],
-  ]],
-  [`${rendererRoot}/lib/provider-icons.ts`, [['Craft Agents Backend', 'Pi Backend']]],
-  [`${rendererRoot}/components/apisetup/ApiKeyInput.tsx`, [['Craft Agents Backend', 'Pi Backend']]],
-  [`${rendererRoot}/components/app-shell/input/model-picker-helpers.ts`, [['Craft Agents Backend', 'Pi Backend']]],
-  [`${rendererRoot}/components/app-shell/input/__tests__/model-picker-helpers.test.ts`, [['Craft Agents Backend', 'Pi Backend']]],
-  [`${rendererRoot}/hooks/useNotifications.ts`, [['Craft Agent has a new message for you', 'The agent has a new message for you']]],
-  [`${rendererRoot}/playground.html`, [['Craft Agent', 'MkAgent']]],
-  [`${rendererRoot}/components/workspace/AddWorkspaceStep_ConnectRemote.tsx`, [
-    ['Connect to a remote Craft Agent Server for this workspace.', 'Connect to a remote agent server for this workspace.'],
-  ]],
-])
+const allowedMkOnlyPrefixes = [
+  `${rendererRoot}/assets/mkagent_`,
+  `${rendererRoot}/components/icons/MkAgentAppIcon.tsx`,
+]
 
-const normalizeUpstream = (file: string, source: string) => {
-  let normalized = source
-    .replaceAll('@craft-agent/', '@mkagent/')
-    .replaceAll('craftagents://', 'mkagent://')
-    .replaceAll('.craft-agent', '.mkagent')
-  for (const [from, to] of productCopyReplacements.get(file) ?? []) {
-    normalized = normalized.replaceAll(from, to)
-  }
-  return normalized
-}
+const excludedPathFragments = [
+  '/automations/',
+  '/messaging/',
+  '/projects/',
+  '/kanban/',
+  '/sources/',
+  '/playground/',
+]
 
-async function listFiles(dir: string): Promise<string[]> {
-  const entries = await readdir(resolve(craftRoot, dir), { withFileTypes: true })
+const excludedFiles = [
+  'WorkspacePicker.tsx',
+  'AddWorkspaceStep_ConnectRemote.tsx',
+  'AuthRequestCard.tsx',
+  'craft-renderer-compat.ts',
+  'playground.html',
+]
+
+const forbiddenSourcePatterns: Array<[RegExp, string]> = [
+  [/\bperformOAuth\b/, 'Sources/MCP OAuth'],
+  [/\bgetServerWorkspaces\b|\bcreateServerWorkspace\b/, 'remote workspace picker'],
+  [/\bremoteServer\b/, 'remote workspace binding'],
+  [/\b(?:sources_changed|labels_changed|project_id_changed|session_status_changed|session_shared|source_activated)\b/, 'excluded session metadata event'],
+  [/@mkagent\/shared\/(?:labels|projects|sources|statuses|views)/, 'excluded shared feature module'],
+]
+
+const normalizeUpstream = (source: string) => source
+  .replaceAll('@craft-agent/', '@mkagent/')
+  .replaceAll('craftagents://', 'mkagent://')
+  .replaceAll('.craft-agent', '.mkagent')
+  .replaceAll('Craft Agents Backend Compatible', 'Pi Backend Compatible')
+  .replaceAll('Craft Agents Backend', 'Pi Backend')
+
+async function listFiles(base: string, dir: string): Promise<string[]> {
+  const entries = await readdir(resolve(base, dir), { withFileTypes: true })
   const nested = await Promise.all(entries.map(async entry => {
     const path = `${dir}/${entry.name}`
-    return entry.isDirectory() ? listFiles(path) : [path]
+    return entry.isDirectory() ? listFiles(base, path) : [path]
   }))
   return nested.flat()
 }
 
-const reusedFiles = (await listFiles(rendererRoot)).filter(file => !allowedOverrides.has(file))
+const [mkFiles, craftFiles] = await Promise.all([
+  listFiles(repoRoot, rendererRoot),
+  listFiles(craftRoot, rendererRoot),
+])
+const craftFileSet = new Set(craftFiles)
+const errors: string[] = []
+let verifiedReuse = 0
+let intentionalOverrides = 0
 
-const drifted: string[] = []
-for (const file of reusedFiles) {
-  const [craft, mkagent] = await Promise.all([
-    readFile(resolve(craftRoot, file), 'utf8'),
-    readFile(resolve(repoRoot, file), 'utf8'),
-  ])
-  if (normalizeUpstream(file, craft) !== mkagent) drifted.push(file)
+for (const file of mkFiles) {
+  if (excludedPathFragments.some(fragment => file.includes(fragment)) || excludedFiles.some(name => file.endsWith(`/${name}`))) {
+    errors.push(`excluded UI file is present: ${file}`)
+    continue
+  }
+
+  const isOverride = intentionalOverrideFiles.has(file)
+    || intentionalOverridePrefixes.some(prefix => file === prefix || file.startsWith(prefix))
+  if (isOverride) intentionalOverrides += 1
+
+  let source: string | null = null
+  if (/\.(?:ts|tsx|js|jsx|html)$/.test(file)) {
+    source = await readFile(resolve(repoRoot, file), 'utf8')
+    for (const [pattern, feature] of forbiddenSourcePatterns) {
+      if (pattern.test(source)) errors.push(`${feature} residue in ${file}`)
+    }
+  }
+
+  if (!craftFileSet.has(file)) {
+    if (!allowedMkOnlyPrefixes.some(prefix => file.startsWith(prefix))) {
+      errors.push(`unregistered MkAgent-only renderer file: ${file}`)
+    }
+    continue
+  }
+
+  if (isOverride) continue
+  const craftSource = await readFile(resolve(craftRoot, file), 'utf8')
+  const mkSource = source ?? await readFile(resolve(repoRoot, file), 'utf8')
+  if (normalizeUpstream(craftSource) !== mkSource) {
+    errors.push(`unexpected Craft source drift: ${file}`)
+  } else {
+    verifiedReuse += 1
+  }
 }
 
-if (drifted.length > 0) {
-  console.error('Craft UI source drift detected:')
-  for (const file of drifted) console.error(`- ${file}`)
+if (errors.length > 0) {
+  console.error('Craft Lite boundary check failed:')
+  for (const error of errors) console.error(`- ${error}`)
   process.exit(1)
 }
 
-console.log(`Craft UI sync verified (${reusedFiles.length} files)`)
+console.log(`Craft Lite boundary verified (${verifiedReuse} normalized-identical files, ${intentionalOverrides} registered overrides, ${mkFiles.length} renderer files total)`)

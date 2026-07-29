@@ -40,8 +40,6 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useAtomValue, useSetAtom, useStore } from 'jotai'
 import { useSession } from '@/hooks/useSession'
-import { useLabels } from '@/hooks/useLabels'
-import { matchesLabelFilter } from '@mkagent/shared/labels'
 import {
   parseRoute,
   parseRouteToNavigationState,
@@ -60,21 +58,16 @@ import type {
   Session,
   NavigationState,
   SessionFilter,
-  SourceFilter,
   RightSidebarPanel,
   ContentBadge,
 } from '../../shared/types'
 import {
   isSessionsNavigation,
-  isSourcesNavigation,
   isSettingsNavigation,
   isSkillsNavigation,
-  isAutomationsNavigation,
-  isProjectsNavigation,
   DEFAULT_NAVIGATION_STATE,
 } from '../../shared/types'
-import { sessionMetaMapAtom, updateSessionMetaAtom, type SessionMeta } from '@/atoms/sessions'
-import { sourcesAtom } from '@/atoms/sources'
+import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
 import { skillsAtom } from '@/atoms/skills'
 import {
   panelStackAtom,
@@ -93,7 +86,7 @@ export type { Route }
 
 // Re-export navigation state types for consumers
 export type { NavigationState, SessionFilter }
-export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation, isAutomationsNavigation, isProjectsNavigation }
+export { isSessionsNavigation, isSettingsNavigation, isSkillsNavigation }
 
 // =============================================================================
 // Context
@@ -118,8 +111,6 @@ interface NavigationContextValue {
   updateRightSidebar: (panel: RightSidebarPanel | undefined) => void
   /** Toggle right sidebar (with optional panel) */
   toggleRightSidebar: (panel?: RightSidebarPanel) => void
-  /** Navigate to a source (or source list if no slug), preserving the current filter type */
-  navigateToSource: (sourceSlug?: string) => void
   /** Navigate to a session, preserving the current filter type */
   navigateToSession: (sessionId: string) => void
 }
@@ -146,8 +137,6 @@ interface NavigationProviderProps {
   isReady?: boolean
   /** Whether session metadata has been initialized (required for deterministic route restoration) */
   isSessionsReady?: boolean
-  /** Remote workspace ID — when set, sessions with this ID are also considered part of the workspace */
-  remoteWorkspaceId?: string | null
 }
 
 export function NavigationProvider({
@@ -161,7 +150,6 @@ export function NavigationProvider({
   onAutoDeleteEmptySession,
   isReady = true,
   isSessionsReady = true,
-  remoteWorkspaceId,
 }: NavigationProviderProps) {
   const { t } = useTranslation()
   const [, setSession] = useSession()
@@ -169,17 +157,10 @@ export function NavigationProvider({
   // Read session metadata directly from atom (reactive to session changes)
   const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const sessionMetas = useMemo(() => Array.from(sessionMetaMap.values()), [sessionMetaMap])
-  const updateSessionMeta = useSetAtom(updateSessionMetaAtom)
-  // Label tree for filter matching (auto-select must agree with the visible list).
-  const { labels: labelConfigs } = useLabels(workspaceId)
-
   const pushPanel = useSetAtom(pushPanelAtom)
 
   // Store reference for reading fresh atom values in callbacks (avoids stale closures)
   const store = useStore()
-
-  // Read sources from atom (populated by AppShell)
-  const sources = useAtomValue(sourcesAtom)
 
   // Read skills from atom (populated by AppShell)
   const skills = useAtomValue(skillsAtom)
@@ -549,23 +530,12 @@ export function NavigationProvider({
             return session.isFlagged === true && session.isArchived !== true
           case 'archived':
             return session.isArchived === true
-          case 'state':
-            return session.sessionStatus === filter.stateId && session.isArchived !== true
-          case 'label': {
-            if (session.isArchived === true) return false
-            // Shared predicate — descendant-aware and project-scoped, matching
-            // exactly what the session list renders (auto-select must agree).
-            return matchesLabelFilter(session, filter, labelConfigs)
-          }
-          case 'view':
-            if (session.isArchived === true) return false
-            return true
           default:
             return false
         }
       })
     },
-    [sessionMetas, workspaceId, labelConfigs]
+    [sessionMetas, workspaceId]
   )
 
   const getFirstSessionId = useCallback(
@@ -591,16 +561,6 @@ export function NavigationProvider({
     [workspaceId, filterSessionsByFilter]
   )
 
-  const getFirstSourceSlug = useCallback(
-    (filter?: SourceFilter | null): string | null => {
-      if (!filter) {
-        return sources[0]?.config.slug ?? null
-      }
-      const filtered = sources.filter(s => s.config.type === filter.sourceType)
-      return filtered[0]?.config.slug ?? null
-    },
-    [sources]
-  )
 
   const getFirstSkillSlug = useCallback(
     (): string | null => {
@@ -622,13 +582,11 @@ export function NavigationProvider({
     (newState: NavigationState, options?: { skipAutoSelect?: boolean }): NavigationState => {
       let nextState = newState
 
-      // Validate session exists in current workspace (local or remote ID)
+      // Validate session exists in the current local workspace.
       if (isSessionsNavigation(nextState) && nextState.details) {
         const freshMetaMap = store.get(sessionMetaMapAtom)
         const meta = freshMetaMap.get(nextState.details.sessionId)
-        const matchesWorkspace = !workspaceId
-          || meta?.workspaceId === workspaceId
-          || (remoteWorkspaceId && meta?.workspaceId === remoteWorkspaceId)
+        const matchesWorkspace = !workspaceId || meta?.workspaceId === workspaceId
         if (!meta || !matchesWorkspace) {
           nextState = { ...nextState, details: null }
         }
@@ -639,7 +597,6 @@ export function NavigationProvider({
       // navigating to the board would immediately resolve into a chat route.
       if (
         isSessionsNavigation(nextState) &&
-        nextState.viewMode !== 'board' &&
         !nextState.details &&
         !options?.skipAutoSelect
       ) {
@@ -647,15 +604,6 @@ export function NavigationProvider({
         const fallbackSessionId = lastSelectedSessionId ?? getFirstSessionId(nextState.filter)
         if (fallbackSessionId) {
           return { ...nextState, details: { type: 'session', sessionId: fallbackSessionId } }
-        }
-        return nextState
-      }
-
-      // Sources: auto-select first source
-      if (isSourcesNavigation(nextState) && !nextState.details && !options?.skipAutoSelect) {
-        const firstSourceSlug = getFirstSourceSlug(nextState.filter)
-        if (firstSourceSlug) {
-          return { ...nextState, details: { type: 'source', sourceSlug: firstSourceSlug } }
         }
         return nextState
       }
@@ -671,7 +619,7 @@ export function NavigationProvider({
 
       return nextState
     },
-    [store, workspaceId, remoteWorkspaceId, getLastSelectedSessionId, getFirstSessionId, getFirstSourceSlug, getFirstSkillSlug]
+    [store, workspaceId, getLastSelectedSessionId, getFirstSessionId, getFirstSkillSlug]
   )
 
   // Ref keeps resolveAutoSelection fresh for reconcileFromUrlParams (defined earlier in the file)
@@ -704,40 +652,13 @@ export function NavigationProvider({
           if (parsed.params.systemPrompt) {
             createOptions.systemPromptPreset = parsed.params.systemPrompt as 'default' | 'mini' | string
           }
-          if (parsed.params.status) {
-            createOptions.sessionStatus = parsed.params.status
-          }
-          if (parsed.params.label) {
-            createOptions.labels = [parsed.params.label]
-          }
-          if (parsed.params.project) {
-            createOptions.projectId = parsed.params.project
-          }
           const session = await onCreateSession(workspaceId, createOptions)
 
           if (parsed.params.name) {
             await window.electronAPI.sessionCommand(session.id, { type: 'rename', name: parsed.params.name })
           }
 
-          if (parsed.params.status) {
-            updateSessionMeta(session.id, { sessionStatus: parsed.params.status })
-          }
-          if (parsed.params.label) {
-            updateSessionMeta(session.id, { labels: [parsed.params.label] })
-          }
-
-          if (parsed.params.status) {
-            await window.electronAPI.sessionCommand(session.id, { type: 'setSessionStatus', state: parsed.params.status })
-          }
-          if (parsed.params.label) {
-            await window.electronAPI.sessionCommand(session.id, { type: 'setLabels', labels: [parsed.params.label] })
-          }
-
-          // Determine navigation filter
-          const filter: import('../../shared/types').SessionFilter =
-            parsed.params.status ? { kind: 'state', stateId: parsed.params.status } :
-            parsed.params.label ? { kind: 'label', labelId: parsed.params.label } :
-            { kind: 'allSessions' }
+          const filter: import('../../shared/types').SessionFilter = { kind: 'allSessions' }
 
           if (options?.newPanel) {
             // Open the new session in a new panel using lane-aware routing (pushPanel auto-focuses it)
@@ -814,18 +735,6 @@ export function NavigationProvider({
           }
           break
 
-        case 'oauth':
-          if (parsed.id) {
-            await window.electronAPI.performOAuth({ sourceSlug: parsed.id })
-          }
-          break
-
-        case 'delete-source':
-          if (parsed.id) {
-            await window.electronAPI.deleteSource(workspaceId, parsed.id)
-          }
-          break
-
         case 'set-mode':
           if (parsed.id && parsed.params.mode) {
             const parsedMode = parsePermissionMode(parsed.params.mode)
@@ -850,7 +759,7 @@ export function NavigationProvider({
           console.warn('[Navigation] Unknown action:', parsed.name)
       }
     },
-    [workspaceId, onCreateSession, onInputChange, pushPanel, store, updateSessionMeta]
+    [workspaceId, onCreateSession, onInputChange, pushPanel, store]
   )
 
   // =========================================================================
@@ -1185,22 +1094,6 @@ export function NavigationProvider({
   // PRESERVE-FILTER NAVIGATION HELPERS
   // =========================================================================
 
-  const navigateToSource = useCallback((sourceSlug?: string) => {
-    if (isSourcesNavigation(navigationState) && navigationState.filter?.kind === 'type') {
-      switch (navigationState.filter.sourceType) {
-        case 'api':
-          navigate(routes.view.sourcesApi(sourceSlug))
-          return
-        case 'mcp':
-          navigate(routes.view.sourcesMcp(sourceSlug))
-          return
-        case 'local':
-          navigate(routes.view.sourcesLocal(sourceSlug))
-          return
-      }
-    }
-    navigate(routes.view.sources(sourceSlug ? { sourceSlug } : undefined))
-  }, [navigationState, navigate])
 
   const navigateToSession = useCallback((sessionId: string) => {
     if (!isSessionsNavigation(navigationState)) {
@@ -1218,15 +1111,6 @@ export function NavigationProvider({
         break
       case 'archived':
         navigate(routes.view.archived(sessionId))
-        break
-      case 'state':
-        navigate(routes.view.state(filter.stateId, sessionId))
-        break
-      case 'label':
-        navigate(routes.view.label(filter.labelId, sessionId))
-        break
-      case 'view':
-        navigate(routes.view.view(filter.viewId, sessionId))
         break
       default:
         navigate(routes.view.allSessions(sessionId))
@@ -1276,7 +1160,6 @@ export function NavigationProvider({
         goForward,
         updateRightSidebar,
         toggleRightSidebar,
-        navigateToSource,
         navigateToSession,
       }}
     >

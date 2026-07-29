@@ -69,8 +69,6 @@ export function getPanelTypeFromRoute(route: ViewRoute): PanelType {
   switch (navState.navigator) {
     case 'sessions':
       return 'session'
-    case 'sources':
-      return 'source'
     case 'settings':
       return 'settings'
     case 'skills':

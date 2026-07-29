@@ -18,13 +18,13 @@ describe('panel stack single-lane behavior', () => {
     const store = createStore()
 
     store.set(pushPanelAtom, { route: 'allSessions/session/s1' })
-    store.set(pushPanelAtom, { route: 'sources/source/github' })
+    store.set(pushPanelAtom, { route: 'skills/skill/commit' })
     store.set(pushPanelAtom, { route: 'settings' })
 
     const stack = getStack(store)
     expect(stack).toHaveLength(3)
     expect(stack[0].route).toBe('allSessions/session/s1')
-    expect(stack[1].route).toBe('sources/source/github')
+    expect(stack[1].route).toBe('skills/skill/commit')
     expect(stack[2].route).toBe('settings')
     expect(stack.every((p) => p.laneId === 'main')).toBe(true)
   })
@@ -33,11 +33,11 @@ describe('panel stack single-lane behavior', () => {
     const store = createStore()
 
     store.set(pushPanelAtom, { route: 'allSessions/session/s1' })
-    store.set(pushPanelAtom, { route: 'sources/source/github' })
+    store.set(pushPanelAtom, { route: 'skills/skill/commit' })
 
-    const sourcePanel = getStack(store).find((p) => p.route === 'sources/source/github')
-    expect(sourcePanel).toBeDefined()
-    store.set(focusedPanelIdAtom, sourcePanel!.id)
+    const skillPanel = getStack(store).find((p) => p.route === 'skills/skill/commit')
+    expect(skillPanel).toBeDefined()
+    store.set(focusedPanelIdAtom, skillPanel!.id)
 
     store.set(updateFocusedPanelRouteAtom, 'allSessions/session/s2')
 
@@ -53,12 +53,12 @@ describe('panel stack single-lane behavior', () => {
     store.set(pushPanelAtom, { route: 'allSessions/session/s1' })
     store.set(pushPanelAtom, { route: 'allSessions/session/s2' })
 
-    store.set(pushPanelAtom, { route: 'sources/source/linear', afterIndex: 0 })
+    store.set(pushPanelAtom, { route: 'skills/skill/review', afterIndex: 0 })
 
     const stack = getStack(store)
     expect(stack).toHaveLength(3)
     expect(stack[0].route).toBe('allSessions/session/s1')
-    expect(stack[1].route).toBe('sources/source/linear')
+    expect(stack[1].route).toBe('skills/skill/review')
     expect(stack[2].route).toBe('allSessions/session/s2')
   })
 

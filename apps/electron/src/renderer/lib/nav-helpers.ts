@@ -27,10 +27,7 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
       return navState.details !== null
     case 'settings':
       return navState.subpage !== null
-    case 'sources':
     case 'skills':
-    case 'automations':
-    case 'projects':
       return navState.details !== null
   }
 }

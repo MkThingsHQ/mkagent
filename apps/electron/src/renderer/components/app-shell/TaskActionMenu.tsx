@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from "react-i18next"
 import { useSetAtom } from 'jotai'
-import { ChevronDown, Square, ArrowUpRight, CheckCircle2, XCircle, AlertTriangle, X } from 'lucide-react'
+import { ChevronDown, Square, CheckCircle2, XCircle, AlertTriangle, X } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/styled-dropdown'
 import { Spinner } from '@mkagent/ui'
 import { cn } from '@/lib/utils'
-import { toast } from 'sonner'
 import type { BackgroundTask } from './ActiveTasksBar'
 import { backgroundTasksAtomFamily } from '@/atoms/sessions'
 
@@ -60,7 +59,6 @@ export interface TaskActionMenuProps {
  * TaskActionMenu - Dropdown menu for background task actions
  *
  * Provides contextual actions for background tasks:
- * - View Output: Opens task output in terminal overlay
  * - Dismiss: Hides the renderer-only chip without stopping the task
  * - Stop Task: Kills shell tasks (agent tasks show warning)
  */
@@ -96,33 +94,6 @@ export function TaskActionMenu({ task, sessionId, onKillTask, onInsertMessage, o
 
   // Prefer the human-readable intent over the opaque task ID for the chip label.
   const taskLabel = task.intent?.trim() ?? ''
-
-  const handleViewOutput = async () => {
-    try {
-      // Fetch task output via IPC (reads the file stored on task_completed).
-      const output = await window.electronAPI.getTaskOutput(task.id)
-
-      if (onShowTerminalOverlay) {
-        // Preferred path: show in the terminal overlay.
-        onShowTerminalOverlay({
-          command: task.intent || `${task.type} task`,
-          output: output || t('chat.noOutputYet'),
-          description: task.intent,
-          toolType: 'bash', // Use 'bash' for both shell and agent tasks
-        })
-      } else if (output) {
-        // Fallback when no overlay handler is wired: copy the full output to the
-        // clipboard so it's still retrievable. (Running tasks have no output yet.)
-        await navigator.clipboard?.writeText(output)
-        toast.success(t('toast.taskOutputCopied', 'Task output copied to clipboard'))
-      } else {
-        toast.info(t('chat.noOutputYet'))
-      }
-      setOpen(false)
-    } catch (err) {
-      toast.error(t('toast.failedToLoadTaskOutput'))
-    }
-  }
 
   const handleStopTask = () => {
     onKillTask(task.id)
@@ -245,12 +216,6 @@ export function TaskActionMenu({ task, sessionId, onKillTask, onInsertMessage, o
         </button>
       </DropdownMenuTrigger>
       <StyledDropdownMenuContent align="start" sideOffset={4}>
-        {/* View Output - Primary action */}
-        <StyledDropdownMenuItem onClick={handleViewOutput}>
-          <ArrowUpRight />
-          {t('chat.viewOutput')}
-        </StyledDropdownMenuItem>
-
         {/* Dismiss - remove the chip (renderer-only; does not kill the task) */}
         <StyledDropdownMenuItem onClick={handleDismiss}>
           <X />

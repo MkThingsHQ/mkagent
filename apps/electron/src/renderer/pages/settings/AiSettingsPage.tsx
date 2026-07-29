@@ -18,7 +18,7 @@ import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { routes } from '@/lib/navigate'
 import { X, MoreHorizontal, Pencil, Trash2, Star, ChevronDown, ChevronRight, CheckCircle2, AlertTriangle, RefreshCcw, Settings2, MessageSquareMore, Zap, Clock, Check } from 'lucide-react'
 import type { CredentialHealthStatus, CredentialHealthIssue } from '../../../shared/types'
-import { Spinner, FullscreenOverlayBase, Tooltip, TooltipTrigger, TooltipContent } from '@mkagent/ui'
+import { Spinner, FullscreenOverlayBase } from '@mkagent/ui'
 import { useSetAtom } from 'jotai'
 import { fullscreenOverlayOpenAtom } from '@/atoms/overlay'
 import { motion, AnimatePresence } from 'motion/react'
@@ -123,10 +123,10 @@ function getHealthIssueMessage(issue: CredentialHealthIssue, t: (key: string) =>
 
 interface CredentialHealthBannerProps {
   issues: CredentialHealthIssue[]
-  onReauthenticate: () => void
+  onResolve: () => void
 }
 
-function CredentialHealthBanner({ issues, onReauthenticate }: CredentialHealthBannerProps) {
+function CredentialHealthBanner({ issues, onResolve }: CredentialHealthBannerProps) {
   const { t } = useTranslation()
   if (issues.length === 0) return null
 
@@ -145,10 +145,10 @@ function CredentialHealthBanner({ issues, onReauthenticate }: CredentialHealthBa
         <Button
           variant="outline"
           size="sm"
-          onClick={onReauthenticate}
+          onClick={onResolve}
           className="flex-shrink-0 border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10"
         >
-          {t("settings.ai.reAuthenticate")}
+          {t("common.edit")}
         </Button>
       </div>
     </div>
@@ -175,7 +175,6 @@ const PI_AUTH_PROVIDER_LABELS: Record<string, string> = {
   zai: 'z.ai',
   huggingface: 'Hugging Face',
   'vercel-ai-gateway': 'Vercel AI Gateway',
-  'github-copilot': 'GitHub Copilot',
 }
 
 // ============================================
@@ -191,16 +190,13 @@ interface ConnectionRowProps {
   onDelete: () => void
   onSetDefault: () => void
   onValidate: () => void
-  onReauthenticate: () => void
   onEdit: () => void
   onSetMidStreamBehavior: (behavior: MidStreamBehavior) => void
   validationState: ValidationState
   validationError?: string
-  /** True when another OAuth connection resolves to the same Anthropic account (issue #838) */
-  isDuplicateAccount?: boolean
 }
 
-function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, onSetDefault, onValidate, onReauthenticate, onEdit, onSetMidStreamBehavior, validationState, validationError, isDuplicateAccount }: ConnectionRowProps) {
+function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, onSetDefault, onValidate, onEdit, onSetMidStreamBehavior, validationState, validationError }: ConnectionRowProps) {
   const { t } = useTranslation()
   const [menuOpen, setMenuOpen] = useState(false)
   const [piBaseUrl, setPiBaseUrl] = useState<string | undefined>(undefined)
@@ -233,14 +229,11 @@ function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, 
     const parts: string[] = []
 
     // Provider type (fall back to legacy 'type' field if providerType missing)
-    // OAuth = subscription (Pro/Plus/Max), API key = API
     const provider = connection.providerType || connection.type
-    const isSubscription = connection.authType === 'oauth'
     switch (provider) {
-      case 'anthropic': parts.push(isSubscription ? 'Anthropic Subscription' : 'Anthropic API'); break
       case 'pi': {
         // Show upstream provider name for API key connections (e.g. "Google AI Studio")
-        const piLabel = !isSubscription && connection.piAuthProvider
+        const piLabel = connection.piAuthProvider
           ? PI_AUTH_PROVIDER_LABELS[connection.piAuthProvider]
           : null
         parts.push(piLabel ?? 'Pi Backend')
@@ -254,24 +247,18 @@ function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, 
       default: parts.push(provider || 'Unknown')
     }
 
-    // Base URL for API key connections (show custom endpoint or default for provider)
-    if (connection.authType !== 'oauth') {
-      let endpoint = connection.baseUrl
-      // Use default endpoints for standard providers if no custom baseUrl
-      if (!endpoint) {
-        if (provider === 'anthropic') endpoint = 'https://api.anthropic.com'
-        else if (provider === 'pi' && connection.piAuthProvider) {
-          endpoint = piBaseUrl
-        }
-      }
-      if (endpoint) {
-        // Extract hostname from URL for cleaner display
-        try {
-          const url = new URL(endpoint)
-          parts.push(url.host)
-        } catch {
-          parts.push(endpoint)
-        }
+    // Base URL for API key connections (show custom endpoint or provider default)
+    let endpoint = connection.baseUrl
+    if (!endpoint && provider === 'pi' && connection.piAuthProvider) {
+      endpoint = piBaseUrl
+    }
+    if (endpoint) {
+      // Extract hostname from URL for cleaner display
+      try {
+        const url = new URL(endpoint)
+        parts.push(url.host)
+      } catch {
+        parts.push(endpoint)
       }
     }
 
@@ -280,13 +267,6 @@ function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, 
 
     return parts.join(' · ')
   }
-
-  // Resolved Anthropic identity (issue #838): render `email · org` independently of
-  // validation state. It cannot live in getDescription() — that short-circuits for
-  // validating/success/error and would hide the identity during those states.
-  const oauthIdentityLine = connection.authType === 'oauth' && connection.oauthAccountEmail
-    ? [connection.oauthAccountEmail, connection.oauthOrganizationName].filter(Boolean).join(' · ')
-    : null
 
   return (
     <SettingsRow
@@ -300,20 +280,7 @@ function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, 
                 {t("common.default")}
               </span>
             )}
-            {isDuplicateAccount && (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="inline-flex items-center" aria-label={t("settings.ai.duplicateAccount")}>
-                    <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent>{t("settings.ai.duplicateAccount")}</TooltipContent>
-              </Tooltip>
-            )}
           </div>
-          {oauthIdentityLine && (
-            <span className="text-xs text-muted-foreground truncate">{oauthIdentityLine}</span>
-          )}
         </div>
       )}
       description={getDescription()}
@@ -338,17 +305,10 @@ function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, 
               <span>{t("settings.ai.setAsDefault")}</span>
             </StyledDropdownMenuItem>
           )}
-          {connection.authType === 'oauth' ? (
-            <StyledDropdownMenuItem onClick={() => runAfterMenuClose(onReauthenticate)}>
-              <RefreshCcw className="h-3.5 w-3.5" />
-              <span>{t("settings.ai.reAuthenticate")}</span>
-            </StyledDropdownMenuItem>
-          ) : (
-            <StyledDropdownMenuItem onClick={() => runAfterMenuClose(onEdit)}>
-              <Settings2 className="h-3.5 w-3.5" />
-              <span>{t("common.edit")}</span>
-            </StyledDropdownMenuItem>
-          )}
+          <StyledDropdownMenuItem onClick={() => runAfterMenuClose(onEdit)}>
+            <Settings2 className="h-3.5 w-3.5" />
+            <span>{t("common.edit")}</span>
+          </StyledDropdownMenuItem>
           <StyledDropdownMenuItem
             onClick={onValidate}
             disabled={validationState === 'validating'}
@@ -568,8 +528,7 @@ function WorkspaceOverrideCard({ workspace, llmConnections, onSettingsChange }: 
                   ...llmConnections.map((conn) => ({
                     value: conn.slug,
                     label: conn.name,
-                    description: conn.providerType === 'anthropic' ? 'Anthropic' :
-                                 conn.providerType === 'pi' ? 'Pi Backend' :
+                    description: conn.providerType === 'pi' ? 'Pi Backend' :
                                  conn.providerType || 'Unknown',
                   })),
                 ]}
@@ -614,9 +573,8 @@ function WorkspaceOverrideCard({ workspace, llmConnections, onSettingsChange }: 
 
 /** Map a connection's provider type to the corresponding API key setup method. */
 function getApiKeyMethodForConnection(conn: LlmConnectionWithStatus): ApiSetupMethod {
-  const provider = conn.providerType || conn.type
-  if (provider === 'pi' || provider === 'pi_compat') return 'pi_api_key'
-  return 'anthropic_api_key'
+  void conn
+  return 'pi_api_key'
 }
 
 // ============================================
@@ -748,7 +706,7 @@ export default function AiSettingsPage() {
     setEditInitialValues(undefined)
   }, [closeApiSetup, refreshLlmConnections, apiSetupOnboarding])
 
-  // Handler for closing the modal via X button or Escape - resets state and cancels OAuth
+  // Handler for closing the modal via X button or Escape.
   const handleCloseApiSetup = useCallback(() => {
     closeApiSetup()
     apiSetupOnboarding.reset()
@@ -756,8 +714,8 @@ export default function AiSettingsPage() {
     setEditInitialValues(undefined)
   }, [closeApiSetup, apiSetupOnboarding])
 
-  // Handler for re-authenticate button in credential health banner
-  const handleReauthenticate = useCallback(() => {
+  // Open the affected API-key connection for repair.
+  const handleResolveCredentialIssue = useCallback(() => {
     // Open API setup for the default connection (or first connection if available)
     const defaultConn = llmConnections.find(c => c.isDefault) || llmConnections[0]
     if (defaultConn) {
@@ -802,18 +760,6 @@ export default function AiSettingsPage() {
     setRenamingConnection(null)
     setRenameValue('')
   }, [renamingConnection, renameValue, refreshLlmConnections])
-
-  const handleReauthenticateConnection = useCallback((connection: LlmConnectionWithStatus) => {
-    openApiSetup(connection.slug)
-    apiSetupOnboarding.reset()
-
-    if (connection.authType === 'oauth') {
-      const method = connection.providerType === 'pi'
-                   ? (connection.piAuthProvider === 'github-copilot' ? 'pi_copilot_oauth' : 'pi_chatgpt_oauth')
-                   : 'claude_oauth'
-      apiSetupOnboarding.handleStartOAuth(method, connection.slug)
-    }
-  }, [apiSetupOnboarding, openApiSetup])
 
   const handleEditConnection = useCallback(async (connection: LlmConnectionWithStatus) => {
     // Fetch stored API key (best-effort — if IPC not available yet, skip pre-fill)
@@ -945,17 +891,6 @@ export default function AiSettingsPage() {
     return llmConnections.find(c => c.isDefault)
   }, [llmConnections])
 
-  // Anthropic account UUIDs that resolve from 2+ connections (issue #838).
-  // Surfaces a warning when several Claude connections share one account/quota.
-  const duplicateAccountUuids = useMemo(() => {
-    const counts = new Map<string, number>()
-    for (const conn of llmConnections) {
-      const uuid = conn.oauthAccountUuid
-      if (uuid) counts.set(uuid, (counts.get(uuid) ?? 0) + 1)
-    }
-    return new Set([...counts].filter(([, n]) => n > 1).map(([uuid]) => uuid))
-  }, [llmConnections])
-
   const defaultModel = defaultConnection?.defaultModel ?? ''
 
   // App-level default handlers
@@ -1045,7 +980,7 @@ export default function AiSettingsPage() {
             {/* Credential Health Warning Banner */}
             <CredentialHealthBanner
               issues={credentialHealthIssues}
-              onReauthenticate={handleReauthenticate}
+              onResolve={handleResolveCredentialIssue}
             />
 
             <div className="space-y-8">
@@ -1061,8 +996,7 @@ export default function AiSettingsPage() {
                     options={llmConnections.map((conn) => ({
                       value: conn.slug,
                       label: conn.name,
-                      description: conn.providerType === 'anthropic' ? 'Anthropic API' :
-                                   conn.providerType === 'pi' ? 'Pi Backend' :
+                      description: conn.providerType === 'pi' ? 'Pi Backend' :
                                    conn.providerType === 'pi_compat' ? (conn.baseUrl?.toLowerCase().includes('manifest.build') ? 'Manifest' : 'Pi Backend Compatible') :
                                    conn.providerType || 'Unknown',
                     }))}
@@ -1130,12 +1064,10 @@ export default function AiSettingsPage() {
                         onDelete={() => handleDeleteConnection(conn.slug)}
                         onSetDefault={() => handleSetDefaultConnection(conn.slug)}
                         onValidate={() => handleValidateConnection(conn.slug)}
-                        onReauthenticate={() => handleReauthenticateConnection(conn)}
                         onEdit={() => handleEditConnection(conn)}
                         onSetMidStreamBehavior={(behavior) => handleSetMidStreamBehavior(conn, behavior)}
                         validationState={validationStates[conn.slug]?.state || 'idle'}
                         validationError={validationStates[conn.slug]?.error}
-                        isDuplicateAccount={!!conn.oauthAccountUuid && duplicateAccountUuids.has(conn.oauthAccountUuid)}
                       />
                     ))
                   )}
@@ -1240,12 +1172,7 @@ export default function AiSettingsPage() {
                   onSelectApiSetupMethod={apiSetupOnboarding.handleSelectApiSetupMethod}
                   onSubmitCredential={apiSetupOnboarding.handleSubmitCredential}
                   onSubmitLocalModel={apiSetupOnboarding.handleSubmitLocalModel}
-                  onStartOAuth={apiSetupOnboarding.handleStartOAuth}
                   onFinish={handleApiSetupFinish}
-                  isWaitingForCode={apiSetupOnboarding.isWaitingForCode}
-                  onSubmitAuthCode={apiSetupOnboarding.handleSubmitAuthCode}
-                  onCancelOAuth={apiSetupOnboarding.handleCancelOAuth}
-                  copilotDeviceCode={apiSetupOnboarding.copilotDeviceCode}
                   editInitialValues={editInitialValues}
                   className="h-full"
                 />

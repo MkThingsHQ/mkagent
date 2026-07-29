@@ -24,33 +24,20 @@ export const browserInstanceCountAtom = atom<number>(
 /**
  * Filter browser instances to those visible in the given workspace context.
  *
- * Renderers in remote-connected workspaces have TWO relevant workspace IDs:
- *
- * - `activeWorkspaceId` — the local Craft Agents window's workspace identity
- *   (used to stamp locally-opened manual tabs).
- * - `remoteWorkspaceId` — the remote server's workspace identity for the same
- *   conceptual workspace (used by the remote agent when it stamps tabs
- *   through the WS bridge). Read from `activeWorkspace.remoteServer.remoteWorkspaceId`.
- *
  * An instance is visible when:
  *   - its `workspaceId` is null/undefined (truly unbound, visible everywhere), OR
- *   - its `workspaceId` matches the local workspace, OR
- *   - its `workspaceId` matches the remote-mirror workspace.
+ *   - its `workspaceId` matches the active local workspace.
  *
- * When both context IDs are null (no workspace resolved yet), returns the
+ * When the context ID is null (no workspace resolved yet), returns the
  * unfiltered list — safe default.
  */
 export function filterInstancesForWorkspace(
   all: BrowserInstanceInfo[],
   activeWorkspaceId: string | null,
-  remoteWorkspaceId: string | null,
 ): BrowserInstanceInfo[] {
-  if (!activeWorkspaceId && !remoteWorkspaceId) return all
+  if (!activeWorkspaceId) return all
   return all.filter(
-    (i) =>
-      !i.workspaceId ||
-      i.workspaceId === activeWorkspaceId ||
-      i.workspaceId === remoteWorkspaceId,
+    (i) => !i.workspaceId || i.workspaceId === activeWorkspaceId,
   )
 }
 

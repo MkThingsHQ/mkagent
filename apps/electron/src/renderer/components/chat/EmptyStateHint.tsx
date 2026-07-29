@@ -2,11 +2,10 @@
  * EmptyStateHint - Rotating workflow suggestions for empty chat state
  *
  * Displays inspirational hints showing what users can do with the agent.
- * Each hint contains inline entity badges (sources, files, folders, skills)
+ * Each hint contains inline entity badges (files, folders, skills)
  * with generic Lucide icons.
  *
  * Entity token format in hints:
- * - {source:Gmail} → Globe icon + "Gmail" label
  * - {file:screenshot} → Paperclip icon + "screenshot" label
  * - {folder} → Folder icon + "folder" label
  * - {skill} → Zap icon + "skill" label
@@ -21,7 +20,7 @@ import { cn } from '@/lib/utils'
 // ============================================================================
 
 /** Entity types that can appear in hints */
-type EntityType = 'source' | 'file' | 'folder' | 'skill'
+type EntityType = 'file' | 'folder' | 'skill'
 
 /** Parsed segment of a hint - either text or an entity */
 type HintSegment =
@@ -43,26 +42,16 @@ interface ParsedHint {
  * Format: {type:label} or {type} for default label
  *
  * Supported tokens:
- * - {source:name} - Source with specific provider (gmail, slack, github, etc.)
  * - {file:label} - File attachment with custom label
  * - {folder} - Working directory
  * - {skill} - Custom skill
  */
 const HINT_TEMPLATE_KEYS = [
-  'hints.summarizeGmail',
   'hints.screenshotToWebsite',
-  'hints.pullIssuesLinear',
   'hints.transcribeVoiceMemo',
   'hints.analyzeSpreadsheet',
-  'hints.reviewGitHubPRs',
   'hints.parseInvoicePDF',
-  'hints.researchExa',
   'hints.refactorCode',
-  'hints.syncCalendar',
-  'hints.meetingNotesToTickets',
-  'hints.queryDatabase',
-  'hints.fetchFigmaDesigns',
-  'hints.combineSlackThreads',
   'hints.runSkillAnalyze',
 ]
 
@@ -72,12 +61,12 @@ const HINT_TEMPLATE_KEYS = [
 
 /**
  * Parse a hint template into segments
- * Tokens: {source:Gmail}, {file:screenshot}, {folder}, {skill}
+ * Tokens: {file:screenshot}, {folder}, {skill}
  */
 function parseHintTemplate(template: string, id: string): ParsedHint {
   const segments: HintSegment[] = []
   // Regex matches {type} or {type:label}
-  const tokenRegex = /\{(source|file|folder|skill)(?::([^}]+))?\}/g
+  const tokenRegex = /\{(file|folder|skill)(?::([^}]+))?\}/g
 
   let lastIndex = 0
   let match
@@ -92,24 +81,12 @@ function parseHintTemplate(template: string, id: string): ParsedHint {
     }
 
     const entityType = match[1] as EntityType
-    const labelOrProvider = match[2]
-
-    // For source type, the second part is the provider/label
-    // For other types, it's just a custom label
-    if (entityType === 'source') {
-      segments.push({
-        type: 'entity',
-        entityType,
-        label: labelOrProvider || 'source',
-        provider: labelOrProvider?.toLowerCase(),
-      })
-    } else {
-      segments.push({
-        type: 'entity',
-        entityType,
-        label: labelOrProvider || entityType,
-      })
-    }
+    const customLabel = match[2]
+    segments.push({
+      type: 'entity',
+      entityType,
+      label: customLabel || entityType,
+    })
 
     lastIndex = match.index + match[0].length
   }

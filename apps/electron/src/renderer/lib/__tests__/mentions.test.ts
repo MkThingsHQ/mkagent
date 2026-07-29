@@ -9,7 +9,7 @@
  * - Dots (.)
  */
 import { describe, it, expect } from 'bun:test'
-import { parseMentions, findMentionMatches, removeMention, stripAllMentions, resolveSkillMentions, resolveSourceMentions, extractBadges } from '../mentions'
+import { parseMentions, findMentionMatches, removeMention, stripAllMentions, resolveSkillMentions, extractBadges } from '../mentions'
 
 // ============================================================================
 // parseMentions - Skill Pattern Tests
@@ -103,7 +103,7 @@ describe('findMentionMatches - skill pattern with workspace IDs', () => {
   const availableSkills = ['commit', 'review-pr']
 
   it('finds skill with workspace ID containing space', () => {
-    const matches = findMentionMatches('[skill:My Workspace:commit]', availableSkills, [])
+    const matches = findMentionMatches('[skill:My Workspace:commit]', availableSkills)
     expect(matches).toHaveLength(1)
     expect(matches[0]).toMatchObject({
       type: 'skill',
@@ -113,7 +113,7 @@ describe('findMentionMatches - skill pattern with workspace IDs', () => {
   })
 
   it('finds skill with workspace ID containing hyphen', () => {
-    const matches = findMentionMatches('[skill:my-workspace:review-pr]', availableSkills, [])
+    const matches = findMentionMatches('[skill:my-workspace:review-pr]', availableSkills)
     expect(matches).toHaveLength(1)
     expect(matches[0]).toMatchObject({
       type: 'skill',
@@ -123,7 +123,7 @@ describe('findMentionMatches - skill pattern with workspace IDs', () => {
   })
 
   it('finds skill with workspace ID containing dot', () => {
-    const matches = findMentionMatches('[skill:my.workspace:commit]', availableSkills, [])
+    const matches = findMentionMatches('[skill:my.workspace:commit]', availableSkills)
     expect(matches).toHaveLength(1)
     expect(matches[0]).toMatchObject({
       type: 'skill',
@@ -134,7 +134,7 @@ describe('findMentionMatches - skill pattern with workspace IDs', () => {
 
   it('returns correct start index', () => {
     const text = 'Please use [skill:My Workspace:commit] for this'
-    const matches = findMentionMatches(text, availableSkills, [])
+    const matches = findMentionMatches(text, availableSkills)
     expect(matches[0]?.startIndex).toBe(11)
   })
 })
@@ -200,10 +200,6 @@ describe('stripAllMentions - replaces skill mentions with slugs', () => {
     expect(result).toBe('commit and review')
   })
 
-  it('replaces source mentions with slug', () => {
-    const result = stripAllMentions('[source:github] check this')
-    expect(result).toBe('github check this')
-  })
 })
 
 // ============================================================================
@@ -248,32 +244,6 @@ describe('resolveSkillMentions', () => {
 })
 
 // ============================================================================
-// resolveSourceMentions - Semantic marker tests
-// ============================================================================
-
-describe('resolveSourceMentions', () => {
-  it('resolves source mention to semantic marker', () => {
-    const result = resolveSourceMentions('[source:github] check this')
-    expect(result).toBe('[Mentioned source: github] check this')
-  })
-
-  it('preserves sentence structure', () => {
-    const result = resolveSourceMentions('check my emails in [source:gmail]')
-    expect(result).toBe('check my emails in [Mentioned source: gmail]')
-  })
-
-  it('resolves multiple source mentions', () => {
-    const result = resolveSourceMentions('[source:github] and [source:linear]')
-    expect(result).toBe('[Mentioned source: github] and [Mentioned source: linear]')
-  })
-
-  it('leaves text without mentions unchanged', () => {
-    const result = resolveSourceMentions('no mentions here')
-    expect(result).toBe('no mentions here')
-  })
-})
-
-// ============================================================================
 // extractBadges - Skill Qualification Tests
 // ============================================================================
 
@@ -282,10 +252,9 @@ describe('extractBadges - skill qualification with workspace slug', () => {
     { slug: 'commit', metadata: { name: 'Commit' }, source: 'workspace' },
     { slug: 'review-pr', metadata: { name: 'Review PR' }, source: 'workspace' },
   ] as any[]
-  const mockSources = [] as any[]
 
   it('qualifies skill rawText with workspace slug (not UUID)', () => {
-    const badges = extractBadges('[skill:commit]', mockSkills, mockSources, 'my-project')
+    const badges = extractBadges('[skill:commit]', mockSkills, 'my-project')
     expect(badges).toHaveLength(1)
     expect(badges[0]!.rawText).toBe('[skill:my-project:commit]')
     expect(badges[0]!.label).toBe('Commit')
@@ -293,7 +262,7 @@ describe('extractBadges - skill qualification with workspace slug', () => {
   })
 
   it('qualifies skill rawText preserving slug with hyphens', () => {
-    const badges = extractBadges('[skill:review-pr]', mockSkills, mockSources, 'my-workspace')
+    const badges = extractBadges('[skill:review-pr]', mockSkills, 'my-workspace')
     expect(badges).toHaveLength(1)
     expect(badges[0]!.rawText).toBe('[skill:my-workspace:review-pr]')
     expect(badges[0]!.label).toBe('Review PR')
@@ -301,17 +270,10 @@ describe('extractBadges - skill qualification with workspace slug', () => {
 
   it('does not re-qualify already qualified skill mentions', () => {
     // When message already has workspace:slug format, rawText should still be workspace:slug
-    const badges = extractBadges('[skill:other-ws:commit]', mockSkills, mockSources, 'my-project')
+    const badges = extractBadges('[skill:other-ws:commit]', mockSkills, 'my-project')
     expect(badges).toHaveLength(1)
     // extractBadges always overwrites rawText for skills with the provided workspaceId
     expect(badges[0]!.rawText).toBe('[skill:my-project:commit]')
   })
 
-  it('does not modify source rawText', () => {
-    const sources = [{ config: { slug: 'linear', name: 'Linear' } }] as any[]
-    const badges = extractBadges('[source:linear]', [], sources, 'my-project')
-    expect(badges).toHaveLength(1)
-    expect(badges[0]!.rawText).toBe('[source:linear]')
-    expect(badges[0]!.type).toBe('source')
-  })
 })

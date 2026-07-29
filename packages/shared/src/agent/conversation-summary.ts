@@ -42,7 +42,3 @@ export async function generateConversationSummary(
   if (!prompt) return null;
   return runMiniCompletion(prompt);
 }
-
-export function buildTransferredSessionContext(summary: string): string {
-  return `<session_transfer_summary>\nThis session was transferred from another workspace. The original conversation was summarized before transfer.\nUse the summary below as prior context for the next turn.\n\n${summary}\n</session_transfer_summary>`;
-}

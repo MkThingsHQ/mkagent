@@ -3,22 +3,13 @@ import type { SessionFilter } from '../../shared/types'
 export interface CollapsedGroupScopeOptions {
   workspaceId?: string
   currentFilter?: SessionFilter
-  groupingMode: 'date' | 'status' | 'unread' | 'project'
+  groupingMode: 'date' | 'unread'
 }
 
 export function serializeSessionFilterForScope(filter?: SessionFilter): string {
   if (!filter) return 'allSessions'
 
-  switch (filter.kind) {
-    case 'state':
-      return `state:${encodeURIComponent(filter.stateId)}`
-    case 'label':
-      return `label:${encodeURIComponent(filter.labelId)}`
-    case 'view':
-      return `view:${encodeURIComponent(filter.viewId)}`
-    default:
-      return filter.kind
-  }
+  return filter.kind
 }
 
 /**

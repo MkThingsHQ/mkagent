@@ -3,15 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 import { FadingText } from '@/components/ui/fading-text'
 import { SkillAvatar } from '@/components/ui/skill-avatar'
-import { SourceAvatar } from '@/components/ui/source-avatar'
-import type { LoadedSkill, LoadedSource, FileSearchResult } from '../../../shared/types'
+import type { LoadedSkill, FileSearchResult } from '../../../shared/types'
 import { AGENTS_PLUGIN_NAME } from '@mkagent/shared/skills/types'
 
 // ============================================================================
 // Types
 // ============================================================================
 
-export type MentionItemType = 'skill' | 'source' | 'file' | 'folder'
+export type MentionItemType = 'skill' | 'file' | 'folder'
 
 export interface MentionItem {
   id: string
@@ -20,7 +19,6 @@ export interface MentionItem {
   description?: string
   // Type-specific data
   skill?: LoadedSkill
-  source?: LoadedSource
   file?: { path: string; type: 'file' | 'directory'; relativePath: string }
 }
 
@@ -52,7 +50,7 @@ const MENU_CONTAINER_STYLE = 'overflow-hidden rounded-[8px] bg-background text-f
 const MENU_LIST_STYLE = 'max-h-[240px] overflow-y-auto py-1'
 const MENU_ITEM_STYLE = 'flex cursor-pointer select-none items-center gap-3 rounded-[6px] mx-1 px-2 py-1.5 text-[13px]'
 const MENU_ITEM_SELECTED = 'bg-foreground/5'
-// Type badge shown to the right of each item label (e.g. "Skill", "Source")
+// Type badge shown to the right of each item label (e.g. "Skill", "File")
 const MENU_TYPE_BADGE = 'rounded-[4px] shadow-minimal bg-background px-1.5 py-0.5 text-[10px] text-muted-foreground shrink-0'
 
 // ============================================================================
@@ -300,7 +298,7 @@ export function InlineMentionMenu({
     >
       {/* Menu header — sticky above scroll area */}
       <div className="px-3 py-1.5 text-[12px] font-medium text-muted-foreground border-b border-foreground/5">
-        {t('chat.mentionFilesSkillsSources')}
+        {t('chat.mentionFilesSkills')}
       </div>
 
       <div ref={listRef} className={MENU_LIST_STYLE}>
@@ -329,9 +327,6 @@ export function InlineMentionMenu({
                 {item.type === 'skill' && item.skill && (
                   <SkillAvatar skill={item.skill} size="sm" workspaceId={workspaceId} />
                 )}
-                {item.type === 'source' && item.source && (
-                  <SourceAvatar source={item.source} size="sm" />
-                )}
                 {item.type === 'folder' && (
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" className="text-muted-foreground">
                     <path d="M20.5 10C20.5 9.07003 20.5 8.60504 20.3978 8.22354C20.1204 7.18827 19.3117 6.37962 18.2765 6.10222C17.895 6 17.43 6 16.5 6H13.1008C12.4742 6 12.1609 6 11.8739 5.91181C11.6824 5.85298 11.5009 5.76572 11.3353 5.65295C11.0871 5.48389 10.8914 5.23926 10.5 4.75L10.4095 4.63693C10.107 4.25881 9.9558 4.06975 9.7736 3.92674C9.54464 3.74703 9.27921 3.61946 8.99585 3.55294C8.77037 3.5 8.52825 3.5 8.04402 3.5C6.60485 3.5 5.88527 3.5 5.32008 3.74178C4.61056 4.0453 4.0453 4.61056 3.74178 5.32008C3.5 5.88527 3.5 6.60485 3.5 8.04402V10M9.46502 20.5H14.535C16.9102 20.5 18.0978 20.5 18.9301 19.8113C19.7624 19.1226 19.9846 17.9559 20.429 15.6227L20.8217 13.5613C21.1358 11.9121 21.2929 11.0874 20.843 10.5437C20.393 10 19.5536 10 17.8746 10H6.12537C4.44643 10 3.60696 10 3.15704 10.5437C2.70713 11.0874 2.8642 11.9121 3.17835 13.5613L3.57099 15.6227C4.01541 17.9559 4.23763 19.1226 5.06992 19.8113C5.90221 20.5 7.08981 20.5 9.46502 20.5Z"/>
@@ -355,12 +350,12 @@ export function InlineMentionMenu({
                 </>
               ) : (
                 <>
-                  {/* Skill/source: label with type badge */}
+                  {/* Skill: label with type badge */}
                   <div className="flex-1 min-w-0">
                     <span className="truncate block">{item.label}</span>
                   </div>
                   <span className={MENU_TYPE_BADGE}>
-                    {item.type === 'skill' ? t('common.skill') : t('common.source')}
+                    {t('common.skill')}
                   </span>
                 </>
               )}
@@ -449,7 +444,6 @@ export interface UseInlineMentionOptions {
   /** Ref to input element (textarea or RichTextInput handle) */
   inputRef: React.RefObject<MentionInputElement | null>
   skills: LoadedSkill[]
-  sources: LoadedSource[]
   /** Base path for file search (working directory) */
   basePath?: string
   onSelect: (item: MentionItem) => void
@@ -472,7 +466,6 @@ export interface UseInlineMentionReturn {
 export function useInlineMention({
   inputRef,
   skills,
-  sources,
   basePath,
   onSelect,
   workspaceId,
@@ -503,7 +496,7 @@ export function useInlineMention({
     }
   }, [])
 
-  // Build sections from available data (skills, sources, and file search results)
+  // Build sections from available data (skills and file search results)
   const sections = React.useMemo((): MentionSection[] => {
     const result: MentionSection[] = []
 
@@ -522,23 +515,6 @@ export function useInlineMention({
       })
     }
 
-    // Sources section
-    if (sources.length > 0) {
-      result.push({
-        id: 'sources',
-        label: 'Sources',
-        items: sources
-          .filter(source => source.config.slug && source.config.name)
-          .map(source => ({
-            id: source.config.slug,
-            type: 'source' as const,
-            label: source.config.name,
-            description: source.config.tagline,
-            source,
-          })),
-      })
-    }
-
     // Files section (from async search results)
     if (fileResults.length > 0) {
       result.push({
@@ -549,7 +525,7 @@ export function useInlineMention({
     }
 
     return result
-  }, [skills, sources, fileResults])
+  }, [skills, fileResults])
 
   const handleInputChange = React.useCallback((value: string, cursorPosition: number) => {
     // Store current state for handleSelect
@@ -571,7 +547,7 @@ export function useInlineMention({
       // Slack-style auto-close: if the query contains a space and the file cache is
       // populated but produces zero matches, close the menu. This prevents the
       // "infinite spaces" problem while still allowing multi-word queries like
-      // "app availability.md". Skills/sources rarely have spaces in names, so
+      // "app availability.md". Skills rarely have spaces in names, so
       // file cache is the authoritative signal here.
       if (filterText.includes(' ') && fileCache.current.length > 0) {
         const fileMatches = filterCacheResults(fileCache.current, filterText)
@@ -684,7 +660,7 @@ export function useInlineMention({
       const before = currentValue.slice(0, atStart)
       const after = currentValue.slice(cursorPosition)
 
-      const buildMentionText = (kind: 'skill' | 'source' | 'file' | 'folder', value: string): string =>
+      const buildMentionText = (kind: 'skill' | 'file' | 'folder', value: string): string =>
         '[' + kind + ':' + value + '] '
 
       // Build the mention text based on type using bracket syntax.
@@ -697,8 +673,6 @@ export function useInlineMention({
         const pluginName = item.skill?.source === 'workspace' ? workspaceId : AGENTS_PLUGIN_NAME
         const qualifiedName = pluginName ? `${pluginName}:${item.id}` : item.id
         mentionText = buildMentionText('skill', qualifiedName)
-      } else if (item.type === 'source') {
-        mentionText = buildMentionText('source', item.id)
       } else if (item.type === 'file') {
         // Use relative path for file mentions
         mentionText = buildMentionText('file', item.file?.relativePath || item.id)

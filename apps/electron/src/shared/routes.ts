@@ -42,11 +42,8 @@ export const routes = {
      * @param input - Optional initial message to pre-fill or send
      * @param name - Optional session name
      * @param send - If true and input is provided, immediately sends the message
-     * @param status - Optional status/todo-state ID to apply to the new session
-     * @param label - Optional label ID to apply to the new session
-     * @param project - Optional project id to bind the new session to
      */
-    newSession: (params?: { input?: string; name?: string; send?: boolean; status?: string; label?: string; project?: string }) =>
+    newSession: (params?: { input?: string; name?: string; send?: boolean }) =>
       `action/new-session${toQueryString(params ? { ...params, send: params.send ? 'true' : undefined } : undefined)}` as const,
 
     /** Rename a session */
@@ -64,19 +61,6 @@ export const routes = {
     /** Unflag a session */
     unflagSession: (sessionId: string) =>
       `action/unflag-session/${sessionId}` as const,
-
-    /** Start OAuth flow for a source */
-    oauth: (sourceSlug: string) => `action/oauth/${sourceSlug}` as const,
-
-    /** Open add source UI */
-    addSource: () => 'action/add-source' as const,
-
-    // Note: test-source route can be added when API support is available
-    // testSource: (sourceSlug: string) => `action/test-source/${sourceSlug}` as const,
-
-    /** Delete a source */
-    deleteSource: (sourceSlug: string) =>
-      `action/delete-source/${sourceSlug}` as const,
 
     /** Set permission mode for a session */
     setPermissionMode: (
@@ -105,93 +89,17 @@ export const routes = {
     archived: (sessionId?: string) =>
       sessionId ? `archived/session/${sessionId}` as const : 'archived' as const,
 
-    /** Todo state filter view (sessions navigator, state filter) */
-    state: (stateId: string, sessionId?: string) =>
-      sessionId
-        ? `state/${stateId}/session/${sessionId}` as const
-        : `state/${stateId}` as const,
-
-    /** Label filter view (sessions navigator, label filter — includes descendants via tree hierarchy) */
-    label: (labelId: string, sessionId?: string) =>
-      sessionId
-        ? `label/${encodeURIComponent(labelId)}/session/${sessionId}` as const
-        : `label/${encodeURIComponent(labelId)}` as const,
-
-    /** View filter (sessions navigator, view filter — evaluated dynamically) */
-    view: (viewId: string, sessionId?: string) =>
-      sessionId
-        ? `view/${encodeURIComponent(viewId)}/session/${sessionId}` as const
-        : `view/${encodeURIComponent(viewId)}` as const,
-
-    /** Sources view (sources navigator) - supports type filtering */
-    sources: (params?: { sourceSlug?: string; type?: 'api' | 'mcp' | 'local' }) => {
-      const { sourceSlug, type } = params ?? {}
-      // Build base from filter type
-      const base = type ? `sources/${type}` : 'sources'
-      if (sourceSlug) {
-        return `${base}/source/${sourceSlug}` as const
-      }
-      return base as 'sources' | `sources/${'api' | 'mcp' | 'local'}`
-    },
-
-    /** API sources view (sources navigator, api filter) */
-    sourcesApi: (sourceSlug?: string) =>
-      sourceSlug
-        ? `sources/api/source/${sourceSlug}` as const
-        : 'sources/api' as const,
-
-    /** MCP sources view (sources navigator, mcp filter) */
-    sourcesMcp: (sourceSlug?: string) =>
-      sourceSlug
-        ? `sources/mcp/source/${sourceSlug}` as const
-        : 'sources/mcp' as const,
-
-    /** Local folder sources view (sources navigator, local filter) */
-    sourcesLocal: (sourceSlug?: string) =>
-      sourceSlug
-        ? `sources/local/source/${sourceSlug}` as const
-        : 'sources/local' as const,
-
     /** Skills view (skills navigator). Pass a slug string for a local skill detail view. */
     skills: (skillSlug?: string) => {
       if (!skillSlug) return 'skills' as const
       return `skills/skill/${skillSlug}` as const
     },
 
-    /** Automations view (automations navigator) - supports type filtering */
-    automations: (params?: { automationId?: string; type?: 'scheduled' | 'event' | 'agentic' }) => {
-      const { automationId, type } = params ?? {}
-      const base = type ? `automations/${type}` : 'automations'
-      if (automationId) return `${base}/automation/${automationId}` as const
-      return base as 'automations' | `automations/${'scheduled' | 'event' | 'agentic'}`
-    },
-
-    /** Scheduled automations view (automations navigator, scheduled filter) */
-    automationsScheduled: (automationId?: string) =>
-      automationId ? `automations/scheduled/automation/${automationId}` as const : 'automations/scheduled' as const,
-
-    /** Event-based automations view (automations navigator, event filter) */
-    automationsEvent: (automationId?: string) =>
-      automationId ? `automations/event/automation/${automationId}` as const : 'automations/event' as const,
-
-    /** Agentic automations view (automations navigator, agentic filter) */
-    automationsAgentic: (automationId?: string) =>
-      automationId ? `automations/agentic/automation/${automationId}` as const : 'automations/agentic' as const,
-
     /** Settings view (settings navigator) - uses SettingsSubpage from registry */
     settings: (subpage?: SettingsSubpage) =>
       subpage
         ? `settings/${subpage}` as const
         : 'settings' as const,
-
-    /** Projects view (projects navigator) */
-    projects: (projectSlug?: string) =>
-      projectSlug
-        ? `projects/project/${projectSlug}` as const
-        : 'projects' as const,
-
-    /** Kanban board view (sessions navigator, board view mode, all sessions) */
-    board: () => 'board' as const,
   },
 } as const
 

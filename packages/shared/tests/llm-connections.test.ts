@@ -24,7 +24,7 @@ describe('getMiniModel()', () => {
   // --- Anthropic providers ---
 
   it('finds haiku for anthropic provider', () => {
-    const conn = makeConnection('anthropic', [
+    const conn = makeConnection('pi', [
       'claude-opus-4-7',
       'claude-sonnet-4-6',
       'claude-haiku-4-5-20251001',
@@ -101,17 +101,17 @@ describe('getMiniModel()', () => {
   // --- Edge cases ---
 
   it('returns undefined for empty model list', () => {
-    const conn = makeConnection('anthropic', []);
+    const conn = makeConnection('pi', []);
     expect(getMiniModel(conn)).toBeUndefined();
   });
 
   it('returns undefined for undefined models', () => {
-    const conn = { providerType: 'anthropic' as LlmProviderType, models: undefined };
+    const conn = { providerType: 'pi' as LlmProviderType, models: undefined };
     expect(getMiniModel(conn)).toBeUndefined();
   });
 
   it('falls back to last model when no keyword match', () => {
-    const conn = makeConnection('anthropic', [
+    const conn = makeConnection('pi', [
       'claude-opus-4-7',
       'claude-sonnet-4-6',
     ]);

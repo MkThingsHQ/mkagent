@@ -28,8 +28,6 @@ export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.theme.SET_WORKSPACE_COLOR_THEME,
   RPC_CHANNELS.theme.GET_ALL_WORKSPACE_THEMES,
   RPC_CHANNELS.theme.BROADCAST_WORKSPACE_THEME,
-  RPC_CHANNELS.views.LIST,
-  RPC_CHANNELS.views.SAVE,
   RPC_CHANNELS.toolIcons.GET_MAPPINGS,
   RPC_CHANNELS.logo.GET_URL,
 ] as const
@@ -333,29 +331,6 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
   // Broadcast workspace theme change to all other windows (for cross-window sync)
   server.handle(RPC_CHANNELS.theme.BROADCAST_WORKSPACE_THEME, async (ctx, workspaceId: string, themeId: string | null) => {
     pushTyped(server, RPC_CHANNELS.theme.WORKSPACE_THEME_CHANGED, { to: 'all' }, { workspaceId, themeId })
-  })
-
-  // ============================================================
-  // Views
-  // ============================================================
-
-  // List views for a workspace (dynamic expression-based filters stored in views.json)
-  server.handle(RPC_CHANNELS.views.LIST, async (_ctx, workspaceId: string) => {
-    const workspace = getWorkspaceByNameOrId(workspaceId)
-    if (!workspace) throw new Error('Workspace not found')
-
-    const { listViews } = await import('@mkagent/shared/views/storage')
-    return listViews(workspace.rootPath)
-  })
-
-  // Save views (replaces full array)
-  server.handle(RPC_CHANNELS.views.SAVE, async (_ctx, workspaceId: string, views: import('@mkagent/shared/views').ViewConfig[]) => {
-    const workspace = getWorkspaceByNameOrId(workspaceId)
-    if (!workspace) throw new Error('Workspace not found')
-
-    const { saveViews } = await import('@mkagent/shared/views/storage')
-    saveViews(workspace.rootPath, views)
-    return views
   })
 
   // ============================================================

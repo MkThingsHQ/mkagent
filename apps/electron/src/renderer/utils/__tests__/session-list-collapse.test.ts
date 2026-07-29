@@ -11,35 +11,30 @@ describe('serializeSessionFilterForScope', () => {
     expect(serializeSessionFilterForScope({ kind: 'archived' })).toBe('archived')
   })
 
-  it('serializes id-based filters with stable prefixes', () => {
-    expect(serializeSessionFilterForScope({ kind: 'state', stateId: 'in-progress' })).toBe('state:in-progress')
-    expect(serializeSessionFilterForScope({ kind: 'label', labelId: 'priority/high' })).toBe('label:priority%2Fhigh')
-    expect(serializeSessionFilterForScope({ kind: 'view', viewId: 'mine+active' })).toBe('view:mine%2Bactive')
-  })
 })
 
 describe('buildCollapsedGroupsScopeSuffix', () => {
   it('creates different keys for different filters and grouping modes', () => {
-    const inProgressDate = buildCollapsedGroupsScopeSuffix({
+    const allSessionsDate = buildCollapsedGroupsScopeSuffix({
       workspaceId: 'ws-1',
-      currentFilter: { kind: 'state', stateId: 'in-progress' },
+      currentFilter: { kind: 'allSessions' },
       groupingMode: 'date',
     })
 
-    const inProgressStatus = buildCollapsedGroupsScopeSuffix({
+    const allSessionsUnread = buildCollapsedGroupsScopeSuffix({
       workspaceId: 'ws-1',
-      currentFilter: { kind: 'state', stateId: 'in-progress' },
-      groupingMode: 'status',
+      currentFilter: { kind: 'allSessions' },
+      groupingMode: 'unread',
     })
 
-    const doneDate = buildCollapsedGroupsScopeSuffix({
+    const flaggedDate = buildCollapsedGroupsScopeSuffix({
       workspaceId: 'ws-1',
-      currentFilter: { kind: 'state', stateId: 'done' },
+      currentFilter: { kind: 'flagged' },
       groupingMode: 'date',
     })
 
-    expect(inProgressDate).not.toBe(inProgressStatus)
-    expect(inProgressDate).not.toBe(doneDate)
+    expect(allSessionsDate).not.toBe(allSessionsUnread)
+    expect(allSessionsDate).not.toBe(flaggedDate)
   })
 
   it('creates different keys across workspaces', () => {

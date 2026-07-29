@@ -29,7 +29,6 @@ function isWrongPlatformPath(path: string, serverHomePath: string | null): boole
   // Server is Windows — reject Unix absolute paths
   return path.startsWith('/')
 }
-
 interface ServerDirectoryBrowserProps {
   open: boolean
   mode: 'browse' | 'manual'

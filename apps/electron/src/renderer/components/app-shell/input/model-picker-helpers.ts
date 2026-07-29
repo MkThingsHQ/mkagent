@@ -29,23 +29,20 @@ export type ConnectionGroup = [groupName: string, connections: LlmConnection[]]
 
 /**
  * Group connections by provider type for hierarchical picker rendering.
- * Each provider section can contain multiple connections (API Key, OAuth, …).
- * Order is significant for UI: Anthropic, Local, Pi Backend.
+ * Each provider section can contain multiple API-key connections.
+ * Order is significant for UI: Local, Pi Backend.
  * Empty groups are dropped.
  */
 export function groupConnectionsByProvider<T extends LlmConnection>(
   connections: readonly T[],
 ): Array<[string, T[]]> {
   const groups: Record<string, T[]> = {
-    'Anthropic': [],
     'Local': [],
     'Pi Backend': [],
   }
   for (const conn of connections) {
-    const provider = conn.providerType || 'anthropic'
-    if (provider === 'anthropic') {
-      groups['Anthropic'].push(conn)
-    } else if (provider === 'pi_compat' && isLocalConnection(conn)) {
+    const provider = conn.providerType || 'pi'
+    if (provider === 'pi_compat' && isLocalConnection(conn)) {
       groups['Local'].push(conn)
     } else if (provider === 'pi' || provider === 'pi_compat') {
       groups['Pi Backend'].push(conn)

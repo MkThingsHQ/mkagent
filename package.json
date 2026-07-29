@@ -45,6 +45,7 @@
     "lint:shared": "cd packages/shared && npx eslint .",
     "lint:ui": "cd packages/ui && npx eslint .",
     "lint:craft-ui-sync": "bun run scripts/check-craft-ui-sync.ts",
+    "audit:craft-reuse": "bun run scripts/audit-craft-reuse.ts",
     "lint:i18n:parity": "bun run scripts/check-i18n-parity.ts",
     "sort-locales": "bun scripts/sort-locales.ts",
     "lint:i18n:sorted": "bun scripts/sort-locales.ts --check",

@@ -5,7 +5,7 @@
  * All agent events flow through a single pure function for consistent state transitions.
  */
 
-import type { Session, Message, PermissionRequest, CredentialRequest, TypedError, PermissionMode, SessionStatus, AuthRequest, ToolDisplayMeta } from '../../shared/types'
+import type { Session, Message, PermissionRequest, CredentialRequest, TypedError, PermissionMode, SessionStatus, ToolDisplayMeta } from '../../shared/types'
 
 /**
  * Streaming state for a session - replaces streamingTextRef
@@ -127,52 +127,6 @@ export interface PermissionRequestEvent {
   type: 'permission_request'
   sessionId: string
   request: PermissionRequest
-}
-
-/**
- * Sources changed event
- */
-export interface SourcesChangedEvent {
-  type: 'sources_changed'
-  sessionId: string
-  enabledSourceSlugs: string[]
-}
-
-/**
- * Labels changed event
- */
-export interface LabelsChangedEvent {
-  type: 'labels_changed'
-  sessionId: string
-  labels: string[]
-}
-
-/**
- * Project id changed event (session bound/unbound to a workspace project)
- */
-export interface ProjectIdChangedEvent {
-  type: 'project_id_changed'
-  sessionId: string
-  projectId: string | null
-}
-
-/**
- * Todo state changed event (external metadata change or agent tool)
- */
-export interface SessionStatusChangedEvent {
-  type: 'session_status_changed'
-  sessionId: string
-  sessionStatus?: string
-}
-
-/**
- * Session metadata changed event — generic live push for programmatic metadata writes
- * (taskNodeCount, kanbanColumn) that don't ride the header-signature file-watch path.
- */
-export interface SessionMetadataChangedEvent {
-  type: 'session_metadata_changed'
-  sessionId: string
-  changes: Partial<Pick<Session, 'taskNodeCount' | 'kanbanColumn' | 'taskDraft' | 'taskSlug' | 'projectId'>>
 }
 
 /**
@@ -447,58 +401,6 @@ export interface MessageAnnotationsUpdatedEvent {
 }
 
 /**
- * Session shared event - session was shared to viewer
- */
-export interface SessionSharedEvent {
-  type: 'session_shared'
-  sessionId: string
-  sharedUrl: string
-}
-
-/**
- * Session unshared event - session share was revoked
- */
-export interface SessionUnsharedEvent {
-  type: 'session_unshared'
-  sessionId: string
-}
-
-/**
- * Auth request event - unified auth flow (credential or OAuth)
- * Adds auth-request message to session and displays inline auth UI
- */
-export interface AuthRequestEvent {
-  type: 'auth_request'
-  sessionId: string
-  message: Message
-  request: AuthRequest
-}
-
-/**
- * Auth completed event - auth request was completed (success, failure, or cancelled)
- * Updates the auth-request message status
- */
-export interface AuthCompletedEvent {
-  type: 'auth_completed'
-  sessionId: string
-  requestId: string
-  success: boolean
-  cancelled?: boolean
-  error?: string
-}
-
-/**
- * Source activated event - a source was auto-activated mid-turn.
- * The server owns the auto-retry; renderers should treat this as UI feedback only.
- */
-export interface SourceActivatedEvent {
-  type: 'source_activated'
-  sessionId: string
-  sourceSlug: string
-  originalMessage: string
-}
-
-/**
  * Usage update event - real-time context usage during processing
  * Allows UI to show growing context as agent processes, not just on complete
  */
@@ -524,11 +426,6 @@ export type AgentEvent =
   | TypedErrorEvent
   | PermissionRequestEvent
   | CredentialRequestEvent
-  | SourcesChangedEvent
-  | LabelsChangedEvent
-  | ProjectIdChangedEvent
-  | SessionStatusChangedEvent
-  | SessionMetadataChangedEvent
   | SessionFlaggedEvent
   | SessionUnflaggedEvent
   | SessionArchivedEvent
@@ -553,11 +450,6 @@ export type AgentEvent =
   | WorkflowAgentCompletedEvent
   | UserMessageEvent
   | MessageAnnotationsUpdatedEvent
-  | SessionSharedEvent
-  | SessionUnsharedEvent
-  | AuthRequestEvent
-  | AuthCompletedEvent
-  | SourceActivatedEvent
   | UsageUpdateEvent
 
 /**

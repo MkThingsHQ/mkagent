@@ -15,7 +15,6 @@ import {
 import { WsRpcClient, type TransportConnectionState } from '../transport/client'
 import { buildClientApi } from '../transport/build-api'
 import { CHANNEL_MAP } from '../transport/channel-map'
-import { applyCraftRendererCompatibility } from '../transport/craft-renderer-compat'
 
 const webContentsId = ipcRenderer.sendSync('__get-web-contents-id') as number
 const workspaceId = ipcRenderer.sendSync('__get-workspace-id') as string
@@ -47,8 +46,21 @@ api.reconnectTransport = () => {
   client.reconnectNow()
   return Promise.resolve()
 }
+api.onReconnected = callback => {
+  let wasDisconnected = client.getConnectionState().status !== 'connected'
+  return client.onConnectionStateChanged(state => {
+    if (state.status === 'connected' && wasDisconnected) {
+      wasDisconnected = false
+      callback(true)
+    } else if (state.status !== 'connected') {
+      wasDisconnected = true
+    }
+  })
+}
+api.getSystemWarnings = async () => ({
+  vcredistMissing: process.platform === 'win32' && process.env.MKAGENT_VCREDIST_MISSING === '1',
+})
 api.getFilePath = (file: File) => webUtils.getPathForFile(file)
 api.changeLanguage = (language: string) => ipcRenderer.invoke('__i18n:changeLanguage', language)
-applyCraftRendererCompatibility(api, process.platform)
 
 contextBridge.exposeInMainWorld('electronAPI', api)

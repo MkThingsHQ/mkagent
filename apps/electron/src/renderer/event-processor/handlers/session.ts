@@ -1,7 +1,7 @@
 /**
  * Session Event Handlers
  *
- * Handles complete, error, sources_changed, etc.
+ * Handles complete, error, session metadata, and related lifecycle events.
  * Pure functions that return new state - no side effects.
  */
 
@@ -11,11 +11,6 @@ import type {
   CompleteEvent,
   ErrorEvent,
   TypedErrorEvent,
-  SourcesChangedEvent,
-  LabelsChangedEvent,
-  ProjectIdChangedEvent,
-  SessionStatusChangedEvent,
-  SessionMetadataChangedEvent,
   SessionFlaggedEvent,
   SessionUnflaggedEvent,
   SessionArchivedEvent,
@@ -36,10 +31,6 @@ import type {
   LLMConnectionChangedEvent,
   UserMessageEvent,
   MessageAnnotationsUpdatedEvent,
-  SessionSharedEvent,
-  SessionUnsharedEvent,
-  AuthRequestEvent,
-  AuthCompletedEvent,
   UsageUpdateEvent,
   Effect,
 } from '../types'
@@ -620,105 +611,6 @@ export function handleMessageAnnotationsUpdated(
 }
 
 /**
- * Handle sources_changed - update session's enabled sources
- */
-export function handleSourcesChanged(
-  state: SessionState,
-  event: SourcesChangedEvent
-): ProcessResult {
-  const { session, streaming } = state
-
-  return {
-    state: {
-      session: {
-        ...session,
-        enabledSourceSlugs: event.enabledSourceSlugs,
-      },
-      streaming,
-    },
-    effects: [],
-  }
-}
-
-/**
- * Handle labels_changed - update session's labels
- */
-export function handleLabelsChanged(
-  state: SessionState,
-  event: LabelsChangedEvent
-): ProcessResult {
-  const { session, streaming } = state
-
-  return {
-    state: {
-      session: {
-        ...session,
-        labels: event.labels,
-      },
-      streaming,
-    },
-    effects: [],
-  }
-}
-
-/**
- * Handle project_id_changed - update session's projectId binding
- */
-export function handleProjectIdChanged(
-  state: SessionState,
-  event: ProjectIdChangedEvent
-): ProcessResult {
-  const { session, streaming } = state
-
-  return {
-    state: {
-      session: {
-        ...session,
-        projectId: event.projectId ?? undefined,
-      },
-      streaming,
-    },
-    effects: [],
-  }
-}
-
-/**
- * Handle session_status_changed - update session's sessionStatus (external metadata change or agent tool)
- */
-export function handleSessionStatusChanged(
-  state: SessionState,
-  event: SessionStatusChangedEvent
-): ProcessResult {
-  const { session, streaming } = state
-  return {
-    state: {
-      session: { ...session, sessionStatus: event.sessionStatus },
-      streaming,
-    },
-    effects: [],
-  }
-}
-
-/**
- * Handle session_metadata_changed - merge programmatic metadata changes (taskNodeCount,
- * kanbanColumn, and the taskDraft→taskSlug promotion on orchestrator adoption) that don't
- * propagate via the header-signature file watch.
- */
-export function handleSessionMetadataChanged(
-  state: SessionState,
-  event: SessionMetadataChangedEvent
-): ProcessResult {
-  const { session, streaming } = state
-  return {
-    state: {
-      session: { ...session, ...event.changes },
-      streaming,
-    },
-    effects: [],
-  }
-}
-
-/**
  * Handle session_flagged - mark session as flagged
  */
 export function handleSessionFlagged(
@@ -854,114 +746,6 @@ export function handlePlanSubmitted(
 }
 
 /**
- * Handle session_shared - session was shared to viewer
- */
-export function handleSessionShared(
-  state: SessionState,
-  event: SessionSharedEvent
-): ProcessResult {
-  const { session, streaming } = state
-
-  return {
-    state: {
-      session: {
-        ...session,
-        sharedUrl: event.sharedUrl,
-      },
-      streaming,
-    },
-    effects: [],
-  }
-}
-
-/**
- * Handle session_unshared - session share was revoked
- */
-export function handleSessionUnshared(
-  state: SessionState,
-  _event: SessionUnsharedEvent
-): ProcessResult {
-  const { session, streaming } = state
-
-  return {
-    state: {
-      session: {
-        ...session,
-        sharedUrl: undefined,
-        sharedId: undefined,
-      },
-      streaming,
-    },
-    effects: [],
-  }
-}
-
-/**
- * Handle auth_request - add auth-request message to session
- * This is the unified auth flow - execution is paused until auth completes
- */
-export function handleAuthRequest(
-  state: SessionState,
-  event: AuthRequestEvent
-): ProcessResult {
-  const { session, streaming } = state
-
-  // Add auth-request message to session
-  return {
-    state: {
-      session: {
-        ...appendMessage(session, event.message),
-        isProcessing: false,  // Agent execution is paused
-      },
-      streaming: null,  // Clear any streaming state
-    },
-    effects: [],
-  }
-}
-
-/**
- * Handle auth_completed - update auth-request message status
- * The agent will resume via a new user message (sent by session manager)
- */
-export function handleAuthCompleted(
-  state: SessionState,
-  event: AuthCompletedEvent
-): ProcessResult {
-  const { session, streaming } = state
-
-  // Update the auth-request message status
-  const updatedMessages = session.messages.map(m => {
-    if (
-      m.role === 'auth-request' &&
-      m.authRequestId === event.requestId &&
-      m.authStatus === 'pending'
-    ) {
-      return {
-        ...m,
-        authStatus: event.success
-          ? ('completed' as const)
-          : event.cancelled
-            ? ('cancelled' as const)
-            : ('failed' as const),
-        authError: event.error,
-      }
-    }
-    return m
-  })
-
-  return {
-    state: {
-      session: {
-        ...session,
-        messages: updatedMessages,
-      },
-      streaming,
-    },
-    effects: [],
-  }
-}
-
-/**
  * Handle usage_update - real-time context usage during processing
  * Merges usage update into existing tokenUsage (preserves outputTokens, costUsd, etc.)
  */
@@ -994,4 +778,3 @@ export function handleUsageUpdate(
     effects: [],
   }
 }
-

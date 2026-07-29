@@ -2,7 +2,7 @@
  * Tests for auth-validation utilities.
  *
  * These tests verify the shared authentication validation functions
- * used by both CredentialRequest and AuthRequestCard components.
+ * used by the structured CredentialRequest component.
  */
 import { describe, it, expect } from 'bun:test'
 import {

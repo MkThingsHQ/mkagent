@@ -184,7 +184,7 @@ describe('session branching validation semantics', () => {
       targetProvider: 'pi',
       targetPiAuthProvider: 'openai-codex',
       sourceProvider: 'pi',
-      sourcePiAuthProvider: 'github-copilot',
+      sourcePiAuthProvider: 'openai',
       sourceManagedWorkspaceRootPath: '/ws-a',
       sourceSession: { messages: [{ id: 'm1' }] },
     })).toThrow('Branching is only supported within the same provider/backend')

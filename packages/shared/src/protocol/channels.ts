@@ -211,10 +211,6 @@ export const RPC_CHANNELS = {
     OPEN_FINDER: 'skills:openFinder',
     CHANGED: 'skills:changed',
   },
-  views: {
-    LIST: 'views:list',
-    SAVE: 'views:save',
-  },
   toolIcons: {
     GET_MAPPINGS: 'toolIcons:getMappings',
   },

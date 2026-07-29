@@ -69,8 +69,6 @@ export interface ApiKeyInputProps {
   formId?: string
   /** Disable the input (e.g. during validation) */
   disabled?: boolean
-  /** Provider type determines which presets and placeholders to show */
-  providerType?: 'anthropic' | 'openai' | 'pi' | 'google' | 'pi_api_key'
   /** Pre-fill values when editing an existing connection */
   initialValues?: {
     apiKey?: string
@@ -90,9 +88,8 @@ interface Preset {
   placeholder?: string
 }
 
-// Anthropic provider presets - for Claude Code backend
-// Also used by Pi API key flow (same providers, routed via Pi SDK)
-const ANTHROPIC_PRESETS: Preset[] = [
+// Provider presets routed through the Pi SDK.
+const PI_PROVIDER_PRESETS: Preset[] = [
   { key: 'anthropic', label: 'Anthropic', url: 'https://api.anthropic.com', placeholder: 'sk-ant-...' },
   { key: 'openai', label: 'OpenAI', url: 'https://api.openai.com/v1', placeholder: 'sk-...' },
   { key: 'openai-eu', label: 'OpenAI EU', url: 'https://eu.api.openai.com/v1', placeholder: 'sk-...' },
@@ -123,41 +120,9 @@ const ANTHROPIC_PRESETS: Preset[] = [
  */
 const OPENAI_COMPAT_CUSTOM_URL_PRESETS: ReadonlySet<string> = new Set(['manifest'])
 
-// OpenAI provider presets - for Codex backend
-// Only direct OpenAI is supported; 3PP providers (OpenRouter, Vercel, Ollama) should be
-// configured via the Anthropic/Claude connection which routes through the Claude Agent SDK.
-const OPENAI_PRESETS: Preset[] = [
-  { key: 'openai', label: 'OpenAI', url: '' },
-]
-
-// Pi provider presets - unified API for 20+ LLM providers
-const PI_PRESETS: Preset[] = [
-  { key: 'pi', label: 'Pi Backend (Direct)', url: '' },
-  { key: 'openrouter', label: 'OpenRouter', url: 'https://openrouter.ai/api' },
-  { key: 'custom', label: 'Custom', url: '' },
-]
-
-// Google AI Studio preset - single endpoint, no custom URL needed
-const GOOGLE_PRESETS: Preset[] = [
-  { key: 'google', label: 'Google AI Studio', url: '' },
-]
-
-/** Presets that require the Pi SDK for authentication — hidden in Anthropic API Key mode */
-const PI_ONLY_PRESET_KEYS: ReadonlySet<string> = new Set(['minimax-global', 'minimax-cn'])
-
-const COMPAT_ANTHROPIC_DEFAULTS = 'claude-opus-4-8, claude-opus-4-7, claude-sonnet-4-6, claude-haiku-4-5'
-const COMPAT_OPENAI_DEFAULTS = 'openai/gpt-5.2-codex, openai/gpt-5.1-codex-mini'
+const COMPAT_CUSTOM_DEFAULTS = 'claude-opus-4-8, claude-opus-4-7, claude-sonnet-4-6, claude-haiku-4-5'
 const COMPAT_MINIMAX_DEFAULTS = 'MiniMax-M2.5, MiniMax-M2.5-highspeed'
 const COMPAT_KIMI_DEFAULTS = 'k2p5, kimi-k2-thinking'
-
-function getPresetsForProvider(providerType: 'anthropic' | 'openai' | 'pi' | 'google' | 'pi_api_key'): Preset[] {
-  if (providerType === 'pi_api_key') return ANTHROPIC_PRESETS
-  if (providerType === 'google') return GOOGLE_PRESETS
-  if (providerType === 'pi') return PI_PRESETS
-  if (providerType === 'openai') return OPENAI_PRESETS
-  // Anthropic mode: exclude presets that only work via Pi SDK
-  return ANTHROPIC_PRESETS.filter(p => !PI_ONLY_PRESET_KEYS.has(p.key))
-}
 
 function getPresetForUrl(url: string, presets: Preset[]): PresetKey {
   const match = presets.find(p => p.key !== 'custom' && p.url === url)
@@ -181,11 +146,9 @@ export function ApiKeyInput({
   onSubmit,
   formId = "api-key-form",
   disabled,
-  providerType = 'anthropic',
   initialValues,
 }: ApiKeyInputProps) {
-  // Get presets based on provider type
-  const presets = getPresetsForProvider(providerType)
+  const presets = PI_PROVIDER_PRESETS
   const defaultPreset = presets[0]
 
   // Compute initial preset: explicit (Pi piAuthProvider), derived from URL, or default
@@ -225,7 +188,6 @@ export function ApiKeyInput({
 
   const isDisabled = disabled || status === 'validating'
 
-  const isPiApiKeyFlow = providerType === 'pi_api_key'
   const isBedrock = activePreset === 'amazon-bedrock'
   // Hide endpoint/model fields for providers with well-known endpoints handled by the SDK
   const DEFAULT_ENDPOINT_PROVIDERS = new Set(['anthropic', 'openai', 'pi', 'google'])
@@ -233,16 +195,12 @@ export function ApiKeyInput({
 
   // Provider-specific placeholders from the active preset
   const activePresetObj = presets.find(p => p.key === activePreset)
-  const apiKeyPlaceholder = activePresetObj?.placeholder
-    ?? (providerType === 'google' ? 'AIza...'
-    : providerType === 'pi' ? 'pi-...'
-    : providerType === 'openai' ? 'sk-...'
-    : 'Paste your key here...')
+  const apiKeyPlaceholder = activePresetObj?.placeholder ?? 'Paste your key here...'
 
   // Fetch Pi SDK models when a provider is selected in pi_api_key flow.
   // Returns all models sorted by cost (expensive-first) for the searchable tier dropdowns.
   const loadPiModels = useCallback(async (provider: string) => {
-    if (!isPiApiKeyFlow || !provider || provider === 'custom' || DEFAULT_ENDPOINT_PROVIDERS.has(provider) || OPENAI_COMPAT_CUSTOM_URL_PRESETS.has(provider)) {
+    if (!provider || provider === 'custom' || DEFAULT_ENDPOINT_PROVIDERS.has(provider) || OPENAI_COMPAT_CUSTOM_URL_PRESETS.has(provider)) {
       setPiModels([])
       return
     }
@@ -264,14 +222,14 @@ export function ApiKeyInput({
     } finally {
       setPiModelsLoading(false)
     }
-  }, [isPiApiKeyFlow])
+  }, [initialPreset, initialValues?.models])
 
   useEffect(() => {
     loadPiModels(activePreset)
   }, [activePreset, loadPiModels])
 
   // Whether to show 3 tier dropdowns instead of text input
-  const hasPiModels = isPiApiKeyFlow && piModels.length > 0 && !isDefaultProviderPreset && activePreset !== 'custom' && !isBedrock
+  const hasPiModels = piModels.length > 0 && !isDefaultProviderPreset && activePreset !== 'custom' && !isBedrock
 
   const handlePresetSelect = (preset: Preset) => {
     setActivePreset(preset.key)
@@ -289,7 +247,7 @@ export function ApiKeyInput({
     if (preset.key === 'ollama') {
       setConnectionDefaultModel('qwen3-coder')
     } else if (preset.key === 'openrouter' || preset.key === 'vercel-ai-gateway') {
-      setConnectionDefaultModel(providerType === 'openai' ? COMPAT_OPENAI_DEFAULTS : COMPAT_ANTHROPIC_DEFAULTS)
+      setConnectionDefaultModel(COMPAT_CUSTOM_DEFAULTS)
     } else if (preset.key === 'minimax-global' || preset.key === 'minimax-cn') {
       setConnectionDefaultModel(COMPAT_MINIMAX_DEFAULTS)
     } else if (preset.key === 'kimi-coding') {
@@ -297,7 +255,7 @@ export function ApiKeyInput({
     } else if (preset.key === 'manifest') {
       setConnectionDefaultModel('auto')
     } else if (preset.key === 'custom' || OPENAI_COMPAT_CUSTOM_URL_PRESETS.has(preset.key)) {
-      setConnectionDefaultModel(providerType === 'openai' ? COMPAT_OPENAI_DEFAULTS : COMPAT_ANTHROPIC_DEFAULTS)
+      setConnectionDefaultModel(COMPAT_CUSTOM_DEFAULTS)
     } else {
       setConnectionDefaultModel('')
     }
@@ -326,7 +284,7 @@ export function ApiKeyInput({
       } else if (presetKey === 'kimi-coding') {
         setConnectionDefaultModel(COMPAT_KIMI_DEFAULTS)
       } else if (presetKey === 'openrouter' || presetKey === 'vercel-ai-gateway' || presetKey === 'custom') {
-        setConnectionDefaultModel(providerType === 'openai' ? COMPAT_OPENAI_DEFAULTS : COMPAT_ANTHROPIC_DEFAULTS)
+        setConnectionDefaultModel(COMPAT_CUSTOM_DEFAULTS)
       }
     }
   }
@@ -334,9 +292,7 @@ export function ApiKeyInput({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
 
-    const effectivePiAuthProvider = isPiApiKeyFlow
-      ? resolvePiAuthProviderForSubmit(activePreset, lastNonCustomPreset)
-      : undefined
+    const effectivePiAuthProvider = resolvePiAuthProviderForSubmit(activePreset, lastNonCustomPreset)
 
     // Pi API key flow with tier dropdowns — submit selected models
     if (hasPiModels) {
@@ -414,9 +370,7 @@ export function ApiKeyInput({
       connectionDefaultModel: parsedModels[0],
       models: parsedModels.length > 0 ? parsedModels : undefined,
       piAuthProvider: resolvedPiAuthProvider,
-      modelSelectionMode: isPiApiKeyFlow
-        ? (parsedModels.length > 0 ? 'userDefined3Tier' : 'automaticallySyncedFromProvider')
-        : undefined,
+      modelSelectionMode: parsedModels.length > 0 ? 'userDefined3Tier' : 'automaticallySyncedFromProvider',
       customEndpoint,
     })
   }

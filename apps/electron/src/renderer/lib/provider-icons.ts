@@ -8,7 +8,6 @@
 import awsIcon from '@/assets/provider-icons/aws.svg'
 import azureIcon from '@/assets/provider-icons/azure.svg'
 import claudeIcon from '@/assets/provider-icons/claude.svg'
-import copilotIcon from '@/assets/provider-icons/copilot.svg'
 import googleIcon from '@/assets/provider-icons/google.svg'
 import huggingfaceIcon from '@/assets/provider-icons/huggingface.svg'
 import kimiIcon from '@/assets/provider-icons/kimi.svg'
@@ -29,7 +28,6 @@ export const providerIcons = {
   anthropic: claudeIcon,
   aws: awsIcon,
   azure: azureIcon,
-  copilot: copilotIcon,
   google: googleIcon,
   huggingface: huggingfaceIcon,
   kimi: kimiIcon,
@@ -49,7 +47,6 @@ const providerDisplayNames: Record<string, string> = {
   anthropic: 'Anthropic',
   openai: 'OpenAI',
   openai_compat: 'OpenAI',
-  copilot: 'GitHub Copilot',
   deepseek: 'DeepSeek',
   kimi: 'Kimi',
   minimax: 'Minimax',
@@ -108,8 +105,6 @@ function piAuthProviderToIcon(piAuthProvider: string): ProviderIconKey | null {
       return 'openai'
     case 'anthropic':
       return 'anthropic'
-    case 'github-copilot':
-      return 'copilot'
     case 'openrouter':
       return 'openrouter'
     case 'google':
@@ -154,7 +149,7 @@ const PI_AUTH_PROVIDER_DOMAINS: Record<string, string> = {
  *
  * @param providerType - The LLM provider type
  * @param baseUrl - Optional custom base URL for detection
- * @param piAuthProvider - Optional Pi SDK auth provider (e.g. 'openai-codex', 'github-copilot')
+ * @param piAuthProvider - Optional Pi SDK auth provider (e.g. 'openai-codex')
  * @returns Icon URL string or null if no matching icon
  */
 export function getProviderIcon(
@@ -181,8 +176,6 @@ export function getProviderIcon(
     case 'openai':
     case 'openai_compat':
       return providerIcons.openai
-    case 'copilot':
-      return providerIcons.copilot
     case 'pi':
     case 'pi_compat': {
       // Resolve to actual upstream provider icon

@@ -2,7 +2,6 @@ import * as React from "react"
 import i18next from "i18next"
 import type { Session, Message } from "../../shared/types"
 import type { SessionMeta } from "../atoms/sessions"
-import type { SessionStatusId } from "../config/session-status-config"
 
 /** Common session fields used by getSessionTitle */
 type SessionLike = Pick<Session, 'name' | 'preview'> & { messages?: Session['messages'] }
@@ -175,9 +174,6 @@ export function countUnreadMessages(session: Session): number {
 // SessionMeta helpers (lightweight, no full Session needed)
 // ---------------------------------------------------------------------------
 
-export function getSessionStatus(session: SessionMeta): SessionStatusId {
-  return (session.sessionStatus as SessionStatusId) || 'todo'
-}
 
 export function hasUnreadMeta(session: SessionMeta): boolean {
   return session.hasUnread === true
