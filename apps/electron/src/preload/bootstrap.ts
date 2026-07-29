@@ -15,6 +15,7 @@ import {
 import { WsRpcClient, type TransportConnectionState } from '../transport/client'
 import { buildClientApi } from '../transport/build-api'
 import { CHANNEL_MAP } from '../transport/channel-map'
+import { applyCraftRendererCompatibility } from '../transport/craft-renderer-compat'
 
 const webContentsId = ipcRenderer.sendSync('__get-web-contents-id') as number
 const workspaceId = ipcRenderer.sendSync('__get-workspace-id') as string
@@ -48,5 +49,6 @@ api.reconnectTransport = () => {
 }
 api.getFilePath = (file: File) => webUtils.getPathForFile(file)
 api.changeLanguage = (language: string) => ipcRenderer.invoke('__i18n:changeLanguage', language)
+applyCraftRendererCompatibility(api, process.platform)
 
 contextBridge.exposeInMainWorld('electronAPI', api)

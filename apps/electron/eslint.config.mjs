@@ -71,6 +71,12 @@ export default [
           'no-direct-file-open': noDirectFileOpen,
         },
       },
+      // Upstream Craft renderer files retain Craft's inline rule names.
+      'craft-links': {
+        rules: {
+          'no-direct-file-open': noDirectFileOpen,
+        },
+      },
       // Custom style rules
       'mkagent-styles': {
         rules: {
@@ -132,6 +138,18 @@ export default [
           }
         ],
       }],
+    },
+  },
+
+  // The renderer is source-synced from Craft and validated by the upstream
+  // source-drift check. Do not rewrite it to satisfy MkAgent-only style rules.
+  {
+    files: ['src/renderer/**/*.{ts,tsx}'],
+    rules: {
+      'mkagent/no-localstorage': 'off',
+      'mkagent-links/no-direct-file-open': 'off',
+      'craft-links/no-direct-file-open': 'off',
+      'mkagent-styles/no-nonstandard-shadows': 'off',
     },
   },
 

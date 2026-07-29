@@ -1,56 +1,278 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+/**
+ * PreferencesPage
+ *
+ * Form-based editor for stored user preferences (~/.mkagent/preferences.json).
+ * Features:
+ * - Fixed input fields for known preferences (name, timezone, location, language)
+ * - Free-form textarea for notes
+ * - Auto-saves on change with debouncing
+ */
+
+import * as React from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Spinner } from '@mkagent/ui'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
+import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Button } from '@/components/ui/button'
-import { SettingsCard } from '@/components/settings/SettingsCard'
-import { SettingsInput } from '@/components/settings/SettingsInput'
-import { SettingsSection } from '@/components/settings/SettingsSection'
-import { SettingsTextarea } from '@/components/settings/SettingsTextarea'
+import { routes } from '@/lib/navigate'
+import { Spinner } from '@mkagent/ui'
+import {
+  SettingsSection,
+  SettingsCard,
+  SettingsInput,
+  SettingsTextarea,
+} from '@/components/settings'
+import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopover'
+import type { DetailsPageMeta } from '@/lib/navigation-registry'
 
-interface PreferencesFormState { name: string; timezone: string; city: string; country: string; notes: string }
-const emptyState: PreferencesFormState = { name: '', timezone: '', city: '', country: '', notes: '' }
-
-function parsePreferences(content: string): PreferencesFormState {
-  try { const value = JSON.parse(content); return { name: value.name || '', timezone: value.timezone || '', city: value.location?.city || '', country: value.location?.country || '', notes: value.notes || '' } } catch { return emptyState }
+export const meta: DetailsPageMeta = {
+  navigator: 'settings',
+  slug: 'preferences',
 }
 
+interface PreferencesFormState {
+  name: string
+  timezone: string
+  city: string
+  country: string
+  notes: string
+}
+
+const emptyFormState: PreferencesFormState = {
+  name: '',
+  timezone: '',
+  city: '',
+  country: '',
+  notes: '',
+}
+
+// Parse JSON to form state
+function parsePreferences(json: string): PreferencesFormState {
+  try {
+    const prefs = JSON.parse(json)
+    return {
+      name: prefs.name || '',
+      timezone: prefs.timezone || '',
+      city: prefs.location?.city || '',
+      country: prefs.location?.country || '',
+      notes: prefs.notes || '',
+    }
+  } catch {
+    return emptyFormState
+  }
+}
+
+// Serialize form state to JSON
 function serializePreferences(state: PreferencesFormState): string {
-  const value: Record<string, unknown> = {}
-  if (state.name) value.name = state.name
-  if (state.timezone) value.timezone = state.timezone
-  if (state.city || state.country) value.location = { ...(state.city ? { city: state.city } : {}), ...(state.country ? { country: state.country } : {}) }
-  if (state.notes) value.notes = state.notes
-  value.updatedAt = Date.now()
-  return JSON.stringify(value, null, 2)
+  const prefs: Record<string, unknown> = {}
+
+  if (state.name) prefs.name = state.name
+  if (state.timezone) prefs.timezone = state.timezone
+
+  if (state.city || state.country) {
+    const location: Record<string, string> = {}
+    if (state.city) location.city = state.city
+    if (state.country) location.country = state.country
+    prefs.location = location
+  }
+
+  if (state.notes) prefs.notes = state.notes
+  prefs.updatedAt = Date.now()
+
+  return JSON.stringify(prefs, null, 2)
 }
 
-export default function PreferencesPage({ onAgentEdit }: { onAgentEdit?: (path: string) => void }) {
+export default function PreferencesPage() {
   const { t } = useTranslation()
-  const [form, setForm] = useState(emptyState)
-  const [loading, setLoading] = useState(true)
-  const [preferencesPath, setPreferencesPath] = useState('')
-  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const initial = useRef(true)
-  const current = useRef(form)
-  useEffect(() => { current.current = form }, [form])
-  useEffect(() => { void window.electronAPI.readPreferences().then(result => { setForm(parsePreferences(result.content)); setPreferencesPath(result.path) }).finally(() => { setLoading(false); setTimeout(() => { initial.current = false }, 100) }) }, [])
+  const [formState, setFormState] = useState<PreferencesFormState>(emptyFormState)
+  const [isLoading, setIsLoading] = useState(true)
+  const [preferencesPath, setPreferencesPath] = useState<string | null>(null)
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const isInitialLoadRef = useRef(true)
+  const formStateRef = useRef(formState)
+  const lastSavedRef = useRef<string | null>(null)
+
+  // Keep formStateRef in sync for use in cleanup
   useEffect(() => {
-    if (initial.current || loading) return
-    if (saveTimer.current) clearTimeout(saveTimer.current)
-    saveTimer.current = setTimeout(() => void window.electronAPI.writePreferences(serializePreferences(form)), 500)
-    return () => { if (saveTimer.current) clearTimeout(saveTimer.current) }
-  }, [form, loading])
-  useEffect(() => () => { if (!initial.current) void window.electronAPI.writePreferences(serializePreferences(current.current)) }, [])
-  const update = useCallback(<K extends keyof PreferencesFormState>(key: K, value: PreferencesFormState[K]) => setForm(previous => ({ ...previous, [key]: value })), [])
-  if (loading) return <div className="flex h-full items-center justify-center"><Spinner className="text-lg text-muted-foreground" /></div>
-  return <div className="flex h-full flex-col">
-    <PanelHeader title={t('settings.preferences.title')} />
-    <div className="mask-fade-y min-h-0 flex-1"><ScrollArea className="h-full"><div className="mx-auto max-w-3xl space-y-8 px-5 py-7">
-      <SettingsSection title={t('settings.preferences.basicInfo')} description={t('settings.preferences.basicInfoDesc')}><SettingsCard><SettingsInput label={t('settings.preferences.name')} description={t('settings.preferences.nameDesc')} value={form.name} onChange={value => update('name', value)} placeholder={t('settings.preferences.namePlaceholder')} inCard /><SettingsInput label={t('settings.preferences.timezone')} description={t('settings.preferences.timezoneDesc')} value={form.timezone} onChange={value => update('timezone', value)} placeholder={t('settings.preferences.timezonePlaceholder')} inCard /></SettingsCard></SettingsSection>
-      <SettingsSection title={t('settings.preferences.location')} description={t('settings.preferences.locationDesc')}><SettingsCard><SettingsInput label={t('settings.preferences.city')} description={t('settings.preferences.cityDesc')} value={form.city} onChange={value => update('city', value)} placeholder={t('settings.preferences.cityPlaceholder')} inCard /><SettingsInput label={t('settings.preferences.country')} description={t('settings.preferences.countryDesc')} value={form.country} onChange={value => update('country', value)} placeholder={t('settings.preferences.countryPlaceholder')} inCard /></SettingsCard></SettingsSection>
-      <SettingsSection title={t('settings.preferences.notes')} description={t('settings.preferences.notesDesc')} action={preferencesPath && onAgentEdit ? <Button size="sm" variant="outline" onClick={() => onAgentEdit(preferencesPath)}>{t('common.edit')}</Button> : undefined}><SettingsCard divided={false}><SettingsTextarea value={form.notes} onChange={value => update('notes', value)} placeholder={t('settings.preferences.notesPlaceholder')} rows={5} inCard /></SettingsCard></SettingsSection>
-    </div></ScrollArea></div>
-  </div>
+    formStateRef.current = formState
+  }, [formState])
+
+  // Load stored user preferences on mount
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const result = await window.electronAPI.readPreferences()
+        const parsed = parsePreferences(result.content)
+        setFormState(parsed)
+        setPreferencesPath(result.path)
+        lastSavedRef.current = serializePreferences(parsed)
+      } catch (err) {
+        console.error('Failed to load stored user preferences:', err)
+        setFormState(emptyFormState)
+      } finally {
+        setIsLoading(false)
+        // Mark initial load as complete after a short delay
+        setTimeout(() => {
+          isInitialLoadRef.current = false
+        }, 100)
+      }
+    }
+    load()
+  }, [])
+
+  // Auto-save with debouncing
+  useEffect(() => {
+    // Skip auto-save during initial load
+    if (isInitialLoadRef.current || isLoading) return
+
+    // Clear any pending save
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current)
+    }
+
+    // Debounce save by 500ms
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        const json = serializePreferences(formState)
+        const result = await window.electronAPI.writePreferences(json)
+        if (result.success) {
+          lastSavedRef.current = json
+        } else {
+          console.error('Failed to save preferences:', result.error)
+        }
+      } catch (err) {
+        console.error('Failed to save preferences:', err)
+      }
+    }, 500)
+
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+    }
+  }, [formState, isLoading])
+
+  // Force save on unmount if there are unsaved changes
+  useEffect(() => {
+    return () => {
+      // Clear any pending debounced save
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current)
+      }
+
+      // Check if there are unsaved changes and save immediately
+      const currentJson = serializePreferences(formStateRef.current)
+      if (lastSavedRef.current !== currentJson && !isInitialLoadRef.current) {
+        // Fire and forget - we can't await in cleanup
+        window.electronAPI.writePreferences(currentJson).catch((err) => {
+          console.error('Failed to save preferences on unmount:', err)
+        })
+      }
+    }
+  }, [])
+
+  const updateField = useCallback(<K extends keyof PreferencesFormState>(
+    field: K,
+    value: PreferencesFormState[K]
+  ) => {
+    setFormState(prev => ({ ...prev, [field]: value }))
+  }, [])
+
+  if (isLoading) {
+    return (
+      <div className="h-full flex items-center justify-center">
+        <Spinner className="text-lg text-muted-foreground" />
+      </div>
+    )
+  }
+
+  return (
+    <div className="h-full flex flex-col">
+      <PanelHeader title={t("settings.preferences.title")} actions={<HeaderMenu route={routes.view.settings('preferences')} helpFeature="preferences" />} />
+      <div className="flex-1 min-h-0 mask-fade-y">
+        <ScrollArea className="h-full">
+          <div className="px-5 py-7 max-w-3xl mx-auto space-y-8">
+          {/* Basic Info */}
+          <SettingsSection
+            title={t("settings.preferences.basicInfo")}
+            description={t("settings.preferences.basicInfoDesc")}
+          >
+            <SettingsCard divided>
+              <SettingsInput
+                label={t("settings.preferences.name")}
+                description={t("settings.preferences.nameDesc")}
+                value={formState.name}
+                onChange={(v) => updateField('name', v)}
+                placeholder={t("settings.preferences.namePlaceholder")}
+                inCard
+              />
+              <SettingsInput
+                label={t("settings.preferences.timezone")}
+                description={t("settings.preferences.timezoneDesc")}
+                value={formState.timezone}
+                onChange={(v) => updateField('timezone', v)}
+                placeholder={t("settings.preferences.timezonePlaceholder")}
+                inCard
+              />
+            </SettingsCard>
+          </SettingsSection>
+
+          {/* Location */}
+          <SettingsSection
+            title={t("settings.preferences.location")}
+            description={t("settings.preferences.locationDesc")}
+          >
+            <SettingsCard divided>
+              <SettingsInput
+                label={t("settings.preferences.city")}
+                description={t("settings.preferences.cityDesc")}
+                value={formState.city}
+                onChange={(v) => updateField('city', v)}
+                placeholder={t("settings.preferences.cityPlaceholder")}
+                inCard
+              />
+              <SettingsInput
+                label={t("settings.preferences.country")}
+                description={t("settings.preferences.countryDesc")}
+                value={formState.country}
+                onChange={(v) => updateField('country', v)}
+                placeholder={t("settings.preferences.countryPlaceholder")}
+                inCard
+              />
+            </SettingsCard>
+          </SettingsSection>
+
+          {/* Notes */}
+          <SettingsSection
+            title={t("settings.preferences.notes")}
+            description={t("settings.preferences.notesDesc")}
+            action={
+              // EditPopover for AI-assisted notes editing with "Edit File" as secondary action
+              preferencesPath ? (
+                <EditPopover
+                  trigger={<EditButton />}
+                  {...getEditConfig('preferences-notes', preferencesPath)}
+                  secondaryAction={{
+                    label: t("common.editFile"),
+                    filePath: preferencesPath!,
+                  }}
+                />
+              ) : null
+            }
+          >
+            <SettingsCard divided={false}>
+              <SettingsTextarea
+                value={formState.notes}
+                onChange={(v) => updateField('notes', v)}
+                placeholder={t("settings.preferences.notesPlaceholder")}
+                rows={5}
+                inCard
+              />
+            </SettingsCard>
+          </SettingsSection>
+        </div>
+        </ScrollArea>
+      </div>
+    </div>
+  )
 }

@@ -1,31 +1,199 @@
-import { useEffect, useMemo, useState } from 'react'
-import { ArrowLeft } from 'lucide-react'
-import { useTranslation } from 'react-i18next'
-import { cn } from '@/lib/utils'
-import { Input } from '@/components/ui/input'
-import { AddWorkspaceContainer, AddWorkspacePrimaryButton, AddWorkspaceStepHeader } from './primitives'
+import { useState, useEffect, useCallback } from "react"
+import { useTranslation } from "react-i18next"
+import { ArrowLeft } from "lucide-react"
+import { cn } from "@/lib/utils"
+import { slugify } from "@/lib/slugify"
+import { Input } from "../ui/input"
+import { Button } from "../ui/button"
+import { AddWorkspaceContainer, AddWorkspaceStepHeader, AddWorkspaceSecondaryButton, AddWorkspacePrimaryButton } from "./primitives"
+import { AddWorkspace_RadioOption } from "./AddWorkspace_RadioOption"
+import { useDirectoryPicker } from "@/hooks/useDirectoryPicker"
+import { ServerDirectoryBrowser } from "@/components/ServerDirectoryBrowser"
 
-const slugify = (value: string) => value.toLowerCase().trim().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
+type LocationOption = 'default' | 'custom'
 
-export function AddWorkspaceStepCreateNew({ onBack, onCreate, isCreating }: { onBack: () => void; onCreate: (folderPath: string, name: string) => Promise<void>; isCreating: boolean }) {
+interface AddWorkspaceStep_CreateNewProps {
+  onBack: () => void
+  onCreate: (folderPath: string, name: string) => Promise<void>
+  isCreating: boolean
+}
+
+/**
+ * AddWorkspaceStep_CreateNew - Create a new workspace
+ *
+ * Fields:
+ * - Workspace name (required)
+ * - Location: Default (~/.mkagent/workspaces/) or Custom
+ */
+export function AddWorkspaceStep_CreateNew({
+  onBack,
+  onCreate,
+  isCreating
+}: AddWorkspaceStep_CreateNewProps) {
   const { t } = useTranslation()
   const [name, setName] = useState('')
-  const [workspacePath, setWorkspacePath] = useState('')
-  const [exists, setExists] = useState(false)
-  const slug = useMemo(() => slugify(name), [name])
+  const [locationOption, setLocationOption] = useState<LocationOption>('default')
+  const [customPath, setCustomPath] = useState<string | null>(null)
+  const [homeDir, setHomeDir] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [isValidating, setIsValidating] = useState(false)
 
+  // Get home directory on mount
   useEffect(() => {
-    if (!slug) { setWorkspacePath(''); setExists(false); return }
-    const timer = setTimeout(() => void window.electronAPI.checkWorkspaceSlug(slug).then(result => { setWorkspacePath(result.path); setExists(result.exists) }), 200)
-    return () => clearTimeout(timer)
+    window.electronAPI.getHomeDir().then(setHomeDir)
+  }, [])
+
+  const slug = slugify(name)
+  const defaultBasePath = homeDir ? `${homeDir}/.mkagent/workspaces` : null
+  const finalPath = locationOption === 'default'
+    ? (defaultBasePath && slug ? `${defaultBasePath}/${slug}` : null)
+    : customPath && slug
+      ? `${customPath}/${slug}`
+      : null
+
+  // Validate slug uniqueness when name changes
+  useEffect(() => {
+    if (!slug) {
+      setError(null)
+      return
+    }
+
+    const validateSlug = async () => {
+      setIsValidating(true)
+      try {
+        const result = await window.electronAPI.checkWorkspaceSlug(slug)
+        if (result.exists) {
+          setError(`A workspace named "${slug}" already exists`)
+        } else {
+          setError(null)
+        }
+      } catch (err) {
+        console.error('Failed to validate workspace slug:', err)
+      } finally {
+        setIsValidating(false)
+      }
+    }
+
+    // Debounce validation
+    const timeout = setTimeout(validateSlug, 300)
+    return () => clearTimeout(timeout)
   }, [slug])
 
-  return <AddWorkspaceContainer>
-    <button onClick={onBack} disabled={isCreating} className={cn('mb-4 flex self-start items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground', isCreating && 'cursor-not-allowed opacity-50')}><ArrowLeft className="h-4 w-4" />{t('common.back')}</button>
-    <AddWorkspaceStepHeader title={t('workspace.createWorkspace')} description={t('workspace.createWorkspaceDesc')} />
-    <div className="mt-6 w-full space-y-6">
-      <div className="space-y-2"><label className="mb-2.5 block text-sm font-medium text-foreground">{t('workspace.nameLabel')}</label><div className="rounded-lg bg-background shadow-minimal"><Input value={name} onChange={event => setName(event.target.value)} placeholder={t('workspace.myWorkspace')} disabled={isCreating} autoFocus className="border-0 bg-transparent shadow-none" /></div>{workspacePath && <p className="truncate text-xs text-muted-foreground">{workspacePath}</p>}{exists && <p className="text-xs text-destructive">A workspace with this name already exists.</p>}</div>
-      <AddWorkspacePrimaryButton onClick={() => onCreate(workspacePath, name.trim())} disabled={!name.trim() || !workspacePath || exists} loading={isCreating} loadingText={t('workspace.creating')}>{t('workspace.createWorkspace')}</AddWorkspacePrimaryButton>
-    </div>
-  </AddWorkspaceContainer>
+  const handleFolderSelected = useCallback((path: string) => {
+    setCustomPath(path)
+  }, [])
+
+  const {
+    pickDirectory,
+    showServerBrowser,
+    serverBrowserMode,
+    cancelServerBrowser,
+    confirmServerBrowser,
+  } = useDirectoryPicker(handleFolderSelected)
+
+  const handleCreate = useCallback(async () => {
+    if (!name.trim() || !finalPath || error) return
+    await onCreate(finalPath, name.trim())
+  }, [name, finalPath, error, onCreate])
+
+  const canCreate = name.trim() && finalPath && !error && !isValidating && !isCreating
+
+  return (
+    <AddWorkspaceContainer>
+      {/* Back button */}
+      <button
+        onClick={onBack}
+        disabled={isCreating}
+        className={cn(
+          "self-start flex items-center gap-1 text-sm text-muted-foreground",
+          "hover:text-foreground transition-colors mb-4",
+          isCreating && "opacity-50 cursor-not-allowed"
+        )}
+      >
+        <ArrowLeft className="h-4 w-4" />
+        {t("common.back")}
+      </button>
+
+      <AddWorkspaceStepHeader
+        title={t("workspace.createWorkspace")}
+        description={t("workspace.createWorkspaceDesc")}
+      />
+
+      <div className="mt-6 w-full space-y-6">
+        {/* Workspace name */}
+        <div className="space-y-2">
+          <label className="block text-sm font-medium text-foreground mb-2.5">
+            {t("workspace.nameLabel")}
+          </label>
+          <div className="bg-background shadow-minimal rounded-lg">
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder={t("workspace.myWorkspace")}
+              disabled={isCreating}
+              autoFocus
+              className="border-0 bg-transparent shadow-none"
+            />
+          </div>
+          {error && (
+            <p className="text-xs text-destructive">{error}</p>
+          )}
+        </div>
+
+        {/* Location selection */}
+        <div className="space-y-3">
+          <label className="block text-sm font-medium text-foreground mb-2.5">
+            {t("workspace.locationLabel")}
+          </label>
+
+          {/* Default location option */}
+          <AddWorkspace_RadioOption
+            name="location"
+            checked={locationOption === 'default'}
+            onChange={() => setLocationOption('default')}
+            disabled={isCreating}
+            title={t("workspace.defaultLocation")}
+            subtitle={t("workspace.underDefaultFolder")}
+          />
+
+          {/* Custom location option */}
+          <AddWorkspace_RadioOption
+            name="location"
+            checked={locationOption === 'custom'}
+            onChange={() => setLocationOption('custom')}
+            disabled={isCreating}
+            title={t("workspace.chooseLocation")}
+            subtitle={customPath || t("workspace.pickLocation")}
+            action={locationOption === 'custom' ? (
+              <AddWorkspaceSecondaryButton
+                onClick={(e) => {
+                  e.preventDefault()
+                  pickDirectory()
+                }}
+                disabled={isCreating}
+              >
+                {t("common.browse")}
+              </AddWorkspaceSecondaryButton>
+            ) : undefined}
+          />
+        </div>
+
+        {/* Create button */}
+        <AddWorkspacePrimaryButton
+          onClick={handleCreate}
+          disabled={!canCreate}
+          loading={isCreating}
+          loadingText={t("workspace.creating")}
+        >
+          {t("common.create")}
+        </AddWorkspacePrimaryButton>
+      </div>
+      <ServerDirectoryBrowser
+        open={showServerBrowser}
+        mode={serverBrowserMode}
+        onSelect={confirmServerBrowser}
+        onCancel={cancelServerBrowser}
+      />
+    </AddWorkspaceContainer>
+  )
 }

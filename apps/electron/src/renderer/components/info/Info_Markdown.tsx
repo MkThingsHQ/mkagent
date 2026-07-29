@@ -10,7 +10,7 @@ import * as React from 'react'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Maximize2 } from 'lucide-react'
-import { Markdown } from '@mkagent/ui'
+import { Markdown } from '@/components/markdown'
 import { DocumentFormattedMarkdownOverlay } from '@mkagent/ui'
 import { cn } from '@/lib/utils'
 
@@ -25,6 +25,7 @@ export interface Info_MarkdownProps {
   /** Enable fullscreen button (shows Maximize2 icon on hover) */
   fullscreen?: boolean
 }
+
 export function Info_Markdown({
   children,
   maxHeight,

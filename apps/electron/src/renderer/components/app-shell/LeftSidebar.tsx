@@ -4,15 +4,49 @@ import { AnimatePresence, motion, type Variants } from "motion/react"
 import { ChevronRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { ContextMenu, ContextMenuTrigger, StyledContextMenuContent } from '@/components/ui/styled-context-menu'
+import {
+  ContextMenu,
+  ContextMenuTrigger,
+  StyledContextMenuContent,
+} from '@/components/ui/styled-context-menu'
 import { ContextMenuProvider } from '@/components/ui/menu-context'
 import { SidebarMenu, type SidebarMenuType } from './SidebarMenu'
 import { SortableList, type SortableItemData } from '@/components/ui/sortable-list'
 
+/** Context menu configuration for sidebar items */
 export interface SidebarContextMenuConfig {
+  /** Type of sidebar item (determines available menu items) */
   type: SidebarMenuType
+  /** Status ID for status items (e.g., 'todo', 'done') - not currently used but kept for future */
+  statusId?: string
+  /** Label ID — when set, this is an individual label (enables Delete Label) */
+  labelId?: string
+  /** Handler for "Configure Statuses" action - for allSessions/status/flagged types */
+  onConfigureStatuses?: () => void
+  /** Handler for "Mark All Read" action - for allSessions type */
   onMarkAllRead?: () => void
+  /** Handler for "Configure Labels" action - receives labelId when triggered from a specific label */
+  onConfigureLabels?: (labelId?: string) => void
+  /** Handler for "Add New Label" action - creates a label (parentId passed from labelId) */
+  onAddLabel?: (parentId?: string) => void
+  /** Handler for "Delete Label" action - deletes the label by labelId */
+  onDeleteLabel?: (labelId: string) => void
+  /** Handler for "Add Source" action - for sources type */
+  onAddSource?: () => void
+  /** Handler for "Add Skill" action - for skills type */
   onAddSkill?: () => void
+  /** Handler for "Add Automation" action - for automations type */
+  onAddAutomation?: () => void
+  /** Handler for "Add Project" action - for projects type */
+  onAddProject?: () => void
+  /** Source type filter for "Learn More" link - determines which docs page to open */
+  sourceType?: 'api' | 'mcp' | 'local'
+  /** Handler for "Edit Views" action - for views type */
+  onConfigureViews?: () => void
+  /** View ID — when set, this is an individual view (enables Delete) */
+  viewId?: string
+  /** Handler for "Delete View" action */
+  onDeleteView?: (id: string) => void
 }
 
 /**
@@ -43,6 +77,7 @@ export interface LinkItem {
   compact?: boolean
   // Tutorial system
   dataTutorial?: string // data-tutorial attribute for tutorial targeting
+  // Context menu configuration (optional - if provided, right-click shows context menu)
   contextMenu?: SidebarContextMenuConfig
   // Drag-and-drop: flat list reorder (e.g., statuses)
   sortable?: SortableConfig
@@ -187,9 +222,42 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
             ? renderExpandedContent(link, getItemProps, focusedItemId, isNested)
             : null
 
+          // Wrap with context menu if configured, scoped to button only.
+          // ContextMenuTrigger with asChild sets data-state="open" on the button
+          // so only the clicked item highlights, not the entire section.
           const content = (
             <div className="group/section">
-              {link.contextMenu ? <ContextMenu modal={true}><ContextMenuTrigger asChild>{buttonElement}</ContextMenuTrigger><StyledContextMenuContent><ContextMenuProvider><SidebarMenu type={link.contextMenu.type} onMarkAllRead={link.contextMenu.onMarkAllRead} onAddSkill={link.contextMenu.onAddSkill} /></ContextMenuProvider></StyledContextMenuContent></ContextMenu> : buttonElement}
+              {link.contextMenu ? (
+                <ContextMenu modal={true}>
+                  <ContextMenuTrigger asChild>
+                    {buttonElement}
+                  </ContextMenuTrigger>
+                  <StyledContextMenuContent>
+                    <ContextMenuProvider>
+                      <SidebarMenu
+                        type={link.contextMenu.type}
+                        statusId={link.contextMenu.statusId}
+                        labelId={link.contextMenu.labelId}
+                        onConfigureStatuses={link.contextMenu.onConfigureStatuses}
+                        onMarkAllRead={link.contextMenu.onMarkAllRead}
+                        onConfigureLabels={link.contextMenu.onConfigureLabels}
+                        onAddLabel={link.contextMenu.onAddLabel}
+                        onDeleteLabel={link.contextMenu.onDeleteLabel}
+                        onAddSource={link.contextMenu.onAddSource}
+                        onAddSkill={link.contextMenu.onAddSkill}
+                        onAddAutomation={link.contextMenu.onAddAutomation}
+                        onAddProject={link.contextMenu.onAddProject}
+                        sourceType={link.contextMenu.sourceType}
+                        onConfigureViews={link.contextMenu.onConfigureViews}
+                        viewId={link.contextMenu.viewId}
+                        onDeleteView={link.contextMenu.onDeleteView}
+                      />
+                    </ContextMenuProvider>
+                  </StyledContextMenuContent>
+                </ContextMenu>
+              ) : (
+                buttonElement
+              )}
               {/* Expandable subitems — outside context menu scope so only the
                 * clicked button gets data-state="open", not nested children */}
               {link.expandable && link.items && (
@@ -316,10 +384,42 @@ function SortableStatusList({ items, onReorder, getItemProps, focusedItemId, tra
           className="grid gap-0.5"
           renderItem={(item) => (
             <div className="group/section">
-              <SidebarButton
-                link={item}
-                itemProps={getItemProps?.(item.id)}
-              />
+              {item.contextMenu ? (
+                <ContextMenu modal={true}>
+                  <ContextMenuTrigger asChild>
+                    <SidebarButton
+                      link={item}
+                      itemProps={getItemProps?.(item.id)}
+                    />
+                  </ContextMenuTrigger>
+                  <StyledContextMenuContent>
+                    <ContextMenuProvider>
+                      <SidebarMenu
+                        type={item.contextMenu.type}
+                        statusId={item.contextMenu.statusId}
+                        labelId={item.contextMenu.labelId}
+                        onConfigureStatuses={item.contextMenu.onConfigureStatuses}
+                        onMarkAllRead={item.contextMenu.onMarkAllRead}
+                        onConfigureLabels={item.contextMenu.onConfigureLabels}
+                        onAddLabel={item.contextMenu.onAddLabel}
+                        onDeleteLabel={item.contextMenu.onDeleteLabel}
+                        onAddSource={item.contextMenu.onAddSource}
+                        onAddSkill={item.contextMenu.onAddSkill}
+                        onAddAutomation={item.contextMenu.onAddAutomation}
+                        sourceType={item.contextMenu.sourceType}
+                        onConfigureViews={item.contextMenu.onConfigureViews}
+                        viewId={item.contextMenu.viewId}
+                        onDeleteView={item.contextMenu.onDeleteView}
+                      />
+                    </ContextMenuProvider>
+                  </StyledContextMenuContent>
+                </ContextMenu>
+              ) : (
+                <SidebarButton
+                  link={item}
+                  itemProps={getItemProps?.(item.id)}
+                />
+              )}
             </div>
           )}
           renderOverlay={(item) => (

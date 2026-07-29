@@ -1,0 +1,19 @@
+.planner-sortable-item {
+  --sortable-shadow-base: none;
+  /* Shared drag-lift elevation — see `--shadow-dragging` in index.css. */
+  --sortable-shadow-active: var(--shadow-dragging);
+  --sortable-scale-active: 1.025;
+
+  position: relative;
+  box-shadow: var(--sortable-shadow-base);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.planner-sortable-item--selected {
+  --sortable-shadow-base: var(--shadow-minimal);
+}
+
+.planner-sortable-item[aria-grabbed='true'] {
+  transform: scale(var(--sortable-scale-active));
+  box-shadow: var(--sortable-shadow-active);
+}

@@ -2,6 +2,7 @@ import { openExternalUrl } from '@mkagent/ui'
 import { WsRpcClient } from '../../../electron/src/transport/client'
 import { buildClientApi } from '../../../electron/src/transport/build-api'
 import { CHANNEL_MAP } from '../../../electron/src/transport/channel-map'
+import { applyCraftRendererCompatibility } from '../../../electron/src/transport/craft-renderer-compat'
 import type { ElectronAPI, TransportConnectionState } from '../../../electron/src/shared/types'
 
 export interface WebApiOptions {
@@ -78,7 +79,9 @@ export function createWebApi(options: WebApiOptions): { api: ElectronAPI; client
     isChannelAvailable: channel => client.isChannelAvailable(channel),
   }
 
-  return { api: { ...baseApi, ...local } as ElectronAPI, client }
+  const api = { ...baseApi, ...local } as ElectronAPI
+  applyCraftRendererCompatibility(api as unknown as Record<string, any>, 'web')
+  return { api, client }
 }
 
 const RPC_WINDOW_SWITCH = 'window:switchWorkspace'

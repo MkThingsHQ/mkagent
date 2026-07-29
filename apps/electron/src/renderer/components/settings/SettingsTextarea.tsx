@@ -34,6 +34,7 @@ export interface SettingsTextareaProps {
   /** Whether inside a card */
   inCard?: boolean
 }
+
 /**
  * SettingsTextarea - Multiline text input with character count
  *

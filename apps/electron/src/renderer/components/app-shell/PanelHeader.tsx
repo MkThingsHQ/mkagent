@@ -33,6 +33,7 @@ import { motion } from 'motion/react'
 import { ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useCompensateForStoplight } from '@/context/StoplightContext'
+import { useAppShellContext } from '@/context/AppShellContext'
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -114,8 +115,12 @@ export function PanelHeader({
   className,
   isRegeneratingTitle,
 }: PanelHeaderProps) {
-  const isCompactMode = false
-  const leadingAction = explicitLeadingAction
+  // Fall back to AppShellContext.leadingAction so per-panel back buttons (set by
+  // PanelSlot in compact mode) propagate to every page's PanelHeader without each
+  // page having to forward the prop manually. ChatPage explicitly passes its own
+  // value, which overrides the context.
+  const { leadingAction: contextLeadingAction, isCompactMode } = useAppShellContext()
+  const leadingAction = explicitLeadingAction ?? contextLeadingAction
 
   // Use context as fallback when prop is not explicitly set.
   // Skip stoplight compensation when leadingAction is present — the back button

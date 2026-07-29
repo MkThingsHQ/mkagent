@@ -13,6 +13,7 @@
  */
 
 import { RPC_CHANNELS } from './types'
+import { FEATURE_FLAGS } from '@mkagent/shared/feature-flags'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Types
@@ -275,7 +276,7 @@ export const ROOT_MENU = {
     type: 'action',
     id: 'quit',
     actionId: 'app.quit',
-    labelKey: 'menu.quitMkAgent',
+    labelKey: 'menu.quitCraftAgents',
     shortcut: 'CmdOrCtrl+Q',
     shortcutDisplayMac: '⌘Q',
     shortcutDisplayOther: 'Ctrl+Q',
@@ -298,7 +299,7 @@ export const HELP_LINKS: MenuItemUrl[] = [
     type: 'url',
     id: 'helpAndDocs',
     labelKey: 'menu.helpAndDocs',
-    url: 'https://mkagent.app/docs',
+    url: 'https://agents.craft.do/docs',
     icon: 'HelpCircle',
   },
 ]
@@ -384,6 +385,9 @@ const SETTINGS_ICONS: Record<SettingsSubpage, string> = {
   input: 'Keyboard',
   workspace: 'Building2',
   permissions: 'ShieldCheck',
+  labels: 'Tag',
+  messaging: 'MessageSquare',
+  server: 'Server',
   shortcuts: 'Keyboard',
   preferences: 'UserCircle',
 }
@@ -393,6 +397,7 @@ const SETTINGS_ICONS: Record<SettingsSubpage, string> = {
  * Order is determined by SETTINGS_PAGES in settings-registry.ts
  */
 export const SETTINGS_ITEMS: SettingsMenuItem[] = SETTINGS_PAGES
+  .filter(page => page.id !== 'server' || FEATURE_FLAGS.embeddedServer)
   .map(page => ({
     id: page.id,
     labelKey: page.labelKey,

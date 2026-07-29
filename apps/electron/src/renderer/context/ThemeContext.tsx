@@ -63,6 +63,7 @@ interface ThemeContextType {
   /** Shiki theme configuration (light/dark variants) */
   shikiConfig: ShikiThemeConfig
 }
+
 interface StoredTheme {
   mode: ThemeMode
   colorTheme: string
@@ -347,7 +348,7 @@ export function ThemeProvider({
 
   // Inject CSS variables
   useEffect(() => {
-    const styleId = 'mkagent-theme-overrides'
+    const styleId = 'craft-theme-overrides'
     let styleEl = document.getElementById(styleId) as HTMLStyleElement | null
 
     if (!styleEl) {

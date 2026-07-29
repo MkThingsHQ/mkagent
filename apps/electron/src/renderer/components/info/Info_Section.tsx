@@ -19,6 +19,7 @@ export interface Info_SectionProps {
   children: React.ReactNode
   className?: string
 }
+
 export function Info_Section({
   title,
   description,

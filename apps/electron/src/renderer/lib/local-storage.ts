@@ -72,6 +72,7 @@ function buildKey(key: string, suffix?: string): string {
   const base = `${PREFIX}${key}`
   return suffix ? `${base}:${suffix}` : base
 }
+
 /**
  * Get a value from localStorage with JSON parsing.
  * Returns fallback if key doesn't exist or parsing fails.

@@ -1,0 +1,25 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "paths": {
+      "@/*": ["src/renderer/*"],
+      "@config/*": ["../../../craft-agents-oss/packages/shared/src/config/*"],
+      "@mkagent/core": ["../../../craft-agents-oss/packages/core/src/index.ts"],
+      "@mkagent/core/*": ["../../../craft-agents-oss/packages/core/src/*"],
+      "@mkagent/server-core": ["../../../craft-agents-oss/packages/server-core/src/index.ts"],
+      "@mkagent/server-core/*": ["../../../craft-agents-oss/packages/server-core/src/*"],
+      "@mkagent/shared": ["../../../craft-agents-oss/packages/shared/src/index.ts"],
+      "@mkagent/shared/*": ["../../../craft-agents-oss/packages/shared/src/*"],
+      "@mkagent/ui": ["../../../craft-agents-oss/packages/ui/src/index.ts"],
+      "@mkagent/ui/*": ["../../../craft-agents-oss/packages/ui/src/*"]
+    }
+  },
+  "include": [
+    "src/renderer/**/*",
+    "src/shared/types.ts",
+    "src/shared/routes.ts",
+    "src/shared/route-parser.ts",
+    "../../../craft-agents-oss/packages/shared/src/**/*.d.ts"
+  ],
+  "exclude": ["node_modules", "dist", "src/renderer/playground/**/*"]
+}

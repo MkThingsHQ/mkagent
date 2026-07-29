@@ -16,6 +16,7 @@ export interface SettingsSegmentedOption<T extends string = string> {
   /** Optional icon */
   icon?: React.ReactNode
 }
+
 export interface SettingsSegmentedControlProps<T extends string = string> {
   /** Currently selected value */
   value: T

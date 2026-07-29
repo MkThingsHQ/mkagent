@@ -40,6 +40,7 @@ export interface SkillMenuProps {
   /** Send to another workspace (omit to hide the option) */
   onSendToWorkspace?: () => void
 }
+
 /**
  * SkillMenu - Renders the menu items for skill actions
  * This is the content only, not wrapped in a DropdownMenu or ContextMenu

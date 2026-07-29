@@ -76,6 +76,8 @@ export const CHANNEL_MAP = {
   getWorkspaceColorTheme: invoke(RPC_CHANNELS.theme.GET_WORKSPACE_COLOR_THEME),
   setWorkspaceColorTheme: invoke(RPC_CHANNELS.theme.SET_WORKSPACE_COLOR_THEME),
   getAllWorkspaceThemes: invoke(RPC_CHANNELS.theme.GET_ALL_WORKSPACE_THEMES),
+  getToolIconMappings: invoke(RPC_CHANNELS.toolIcons.GET_MAPPINGS),
+  getLogoUrl: invoke(RPC_CHANNELS.logo.GET_URL),
   broadcastThemePreferences: invoke(RPC_CHANNELS.theme.BROADCAST_PREFERENCES),
   onThemePreferencesChange: listener(RPC_CHANNELS.theme.PREFERENCES_CHANGED),
   broadcastWorkspaceThemeChange: invoke(RPC_CHANNELS.theme.BROADCAST_WORKSPACE_THEME),

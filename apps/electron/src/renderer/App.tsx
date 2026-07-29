@@ -1,553 +1,2270 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import {
-  Archive,
-  Flag,
-  Inbox,
-  MoreHorizontal,
-  Plus,
-  Search,
-  Settings,
-  Upload,
-  Zap,
-} from 'lucide-react'
-import type { AnnotationV1, StoredSession, Workspace } from '@mkagent/core/types'
-import type { LlmConnectionWithStatus } from '@mkagent/shared/config'
-import { i18n } from '@mkagent/shared/i18n'
-import type { LoadedSkill } from '@mkagent/shared/skills'
-import type { DeepLinkNavigation, FileAttachment, PermissionRequest, Session, SessionEvent, SkillFile } from '@mkagent/shared/protocol'
-import { SessionViewer, TooltipProvider } from '@mkagent/ui'
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button } from './components/ui/button'
-import { HeaderIconButton } from './components/ui/HeaderIconButton'
-import { EntityRow } from './components/ui/entity-row'
+import { useTheme } from '@/hooks/useTheme'
+import type { ThemeOverrides } from '@config/theme'
+import { useSetAtom, useStore, useAtomValue, useAtom } from 'jotai'
+import type { Session, Workspace, SessionEvent, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, SetupNeeds, SessionStatus, NewChatActionParams, ContentBadge, LlmConnectionWithStatus, PermissionModeState } from '../shared/types'
+import type { SessionDraft, DraftAttachmentRef } from '@mkagent/shared/config'
+import type { SessionOptions, SessionOptionUpdates } from './hooks/useSessionOptions'
+import { defaultSessionOptions, mergeSessionOptions } from './hooks/useSessionOptions'
+import { generateMessageId } from '../shared/types'
+import { useEventProcessor } from './event-processor'
+import type { AgentEvent, Effect } from './event-processor'
+import { AppShell } from '@/components/app-shell/AppShell'
+import type { AppShellContextType } from '@/context/AppShellContext'
+import { OnboardingWizard, ReauthScreen } from '@/components/onboarding'
+import { WorkspacePicker } from '@/components/workspace'
+import { ResetConfirmationDialog } from '@/components/ResetConfirmationDialog'
+import { SplashScreen } from '@/components/SplashScreen'
+import { TooltipProvider } from '@mkagent/ui'
+import { FocusProvider } from '@/context/FocusContext'
+import { ModalProvider } from '@/context/ModalContext'
+import { DismissibleLayerProvider } from '@/context/DismissibleLayerContext'
+import { useWindowCloseHandler } from '@/hooks/useWindowCloseHandler'
+import { useOnboarding } from '@/hooks/useOnboarding'
+import { useNotifications } from '@/hooks/useNotifications'
+import { useSession } from '@/hooks/useSession'
+import { useUpdateChecker } from '@/hooks/useUpdateChecker'
+import { NavigationProvider } from '@/contexts/NavigationContext'
+import { navigate, routes } from './lib/navigate'
+import { attachmentFromContentRef, toDraftRef } from './lib/drafts'
+import { stripMarkdown } from './utils/text'
+import { coerceInputText } from './lib/input-text'
+import { getSessionsToRefreshAfterStaleReconnect } from './lib/reconnect-recovery'
+import { formatSessionLoadFailure, shouldTreatSessionLoadFailureAsTransportFallback } from './lib/session-load'
+import { extractWorkspaceSlugFromPath } from '@mkagent/shared/utils/workspace-slug'
+import { DEFAULT_THINKING_LEVEL } from '@mkagent/shared/agent/thinking-levels'
+import { initRendererPerf } from './lib/perf'
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  StyledDropdownMenuContent,
-  StyledDropdownMenuItem,
-  StyledDropdownMenuSeparator,
-} from './components/ui/styled-dropdown'
-import { LeftSidebar, type SidebarItem } from './components/app-shell/LeftSidebar'
-import { PanelHeader } from './components/app-shell/PanelHeader'
-import { TopBar } from './components/app-shell/TopBar'
-import { SessionMenu } from './components/app-shell/SessionMenu'
-import { CraftChatInput } from './components/app-shell/input/CraftChatInput'
-import { SkillMenu } from './components/app-shell/SkillMenu'
-import SettingsNavigator from './pages/settings/SettingsNavigator'
-import SkillInfoPage from './pages/SkillInfoPage'
-import PreferencesPage from './pages/settings/PreferencesPage'
-import AppSettingsPage from './pages/settings/AppSettingsPage'
-import InputSettingsPage from './pages/settings/InputSettingsPage'
-import { ThemeProvider } from './context/ThemeContext'
-import AppearanceSettingsPage from './pages/settings/AppearanceSettingsPage'
-import WorkspaceSettingsPage from './pages/settings/WorkspaceSettingsPage'
-import PermissionsSettingsPage from './pages/settings/PermissionsSettingsPage'
-import ShortcutsPage from './pages/settings/ShortcutsPage'
-import AiSettingsPage from './pages/settings/AiSettingsPage'
+  initializeSessionsAtom,
+  addSessionAtom,
+  removeSessionAtom,
+  updateSessionAtom,
+  replaceLoadedSessionAtom,
+  refreshSessionsMetadataAtom,
+  sessionAtomFamily,
+  sessionMetaMapAtom,
+  sessionIdsAtom,
+  loadedSessionsAtom,
+  forceSessionMessagesReloadAtom,
+  backgroundTasksAtomFamily,
+  extractSessionMeta,
+  windowWorkspaceIdAtom,
+  type SessionMeta,
+  type BackgroundTask,
+} from '@/atoms/sessions'
+import { sourcesAtom } from '@/atoms/sources'
+import { skillsAtom } from '@/atoms/skills'
+import {
+  showBackgroundFinishedChipAtom,
+  pushBackgroundFinishedAtom,
+} from '@/atoms/background-finished'
+import { visibleSessionIdsAtom } from '@/atoms/panel-stack'
+import { getSessionTitle } from '@/utils/session'
+import { extractBadges } from '@/lib/mentions'
+import { getDefaultStore } from 'jotai'
+import {
+  ShikiThemeProvider,
+  PlatformProvider,
+  ImagePreviewOverlay,
+  PDFPreviewOverlay,
+  CodePreviewOverlay,
+  DocumentFormattedMarkdownOverlay,
+  JSONPreviewOverlay,
+} from '@mkagent/ui'
+import { useLinkInterceptor, type FilePreviewState } from '@/hooks/useLinkInterceptor'
+import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
+import { useStaleSessionRecovery } from '@/hooks/useStaleSessionRecovery'
+import { TransportConnectionBanner, shouldShowTransportConnectionBanner } from '@/components/app-shell/TransportConnectionBanner'
+import {
+  markBackgroundTaskSignal,
+  markLiveBackgroundTasksOrphaned,
+} from '@/components/app-shell/background-task-chip-state'
+import { getFileManagerName } from '@/lib/platform'
+import { rendererLog } from '@/lib/logger'
+import { ActionRegistryProvider } from '@/actions'
+import { toast } from 'sonner'
 
-type Section = 'sessions' | 'skills' | 'settings'
-type SettingsPage = 'app' | 'ai' | 'appearance' | 'input' | 'workspace' | 'permissions' | 'shortcuts' | 'preferences'
-type SessionFilter = 'all' | 'unread' | 'flagged' | 'running' | 'archived'
-interface NavigationSnapshot { section: Section; settingsPage: SettingsPage; sessionFilter: SessionFilter; activeSessionId: string; activeSkillSlug: string }
+type AppState = 'loading' | 'onboarding' | 'reauth' | 'workspace-picker' | 'ready'
 
-const SETTINGS_PAGES: SettingsPage[] = ['app', 'ai', 'appearance', 'input', 'workspace', 'permissions', 'shortcuts', 'preferences']
+/** Type for the Jotai store returned by useStore() */
+type JotaiStore = ReturnType<typeof getDefaultStore>
 
-function cx(...values: Array<string | false | null | undefined>) {
-  return values.filter(Boolean).join(' ')
+type SessionListRefreshOptions = {
+  removeMissing?: boolean
+  reason?: string
+  selectedSessionId?: string | null
 }
 
-function formatRelativeTime(value: number) {
-  const delta = value - Date.now()
-  const seconds = Math.round(delta / 1000)
-  const formatter = new Intl.RelativeTimeFormat(undefined, { numeric: 'auto' })
-  if (Math.abs(seconds) < 60) return formatter.format(seconds, 'second')
-  const minutes = Math.round(seconds / 60)
-  if (Math.abs(minutes) < 60) return formatter.format(minutes, 'minute')
-  const hours = Math.round(minutes / 60)
-  if (Math.abs(hours) < 24) return formatter.format(hours, 'hour')
-  const days = Math.round(hours / 24)
-  if (Math.abs(days) < 7) return formatter.format(days, 'day')
-  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(value)
+const SESSION_REFRESH_LOG_ID_LIMIT = 25
+
+function summarizeIds(ids: Iterable<string>, limit = SESSION_REFRESH_LOG_ID_LIMIT) {
+  const all = Array.from(ids)
+  return {
+    count: all.length,
+    ids: all.slice(0, limit),
+    truncated: all.length > limit,
+  }
 }
 
-function AppButton(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
-  const primary = props.className?.split(' ').includes('primary')
-  return <Button {...props} variant={primary ? 'default' : 'outline'} size="sm" className={props.className} />
+function workspaceDistribution(sessions: Iterable<{ workspaceId?: string }>): Record<string, number> {
+  const distribution: Record<string, number> = {}
+  for (const session of sessions) {
+    const key = session.workspaceId || '(missing)'
+    distribution[key] = (distribution[key] ?? 0) + 1
+  }
+  return distribution
 }
 
-function ChatPanel({ session, workspaceId, onChanged, onDeleted, onBranched }: {
-  session: Session
-  workspaceId: string
-  onChanged: () => void
-  onDeleted: () => void
-  onBranched: (messageId: string, newPanel?: boolean) => void
-}) {
-  const { t } = useTranslation()
-  const [draft, setDraft] = useState('')
-  const [attachments, setAttachments] = useState<FileAttachment[]>([])
-  const [permission, setPermission] = useState<PermissionRequest | null>(null)
-  const [connections, setConnections] = useState<LlmConnectionWithStatus[]>([])
-  const pendingPlanRef = useRef<string | null>(null)
+/**
+ * Helper to handle background task events from the agent.
+ * Updates the backgroundTasksAtomFamily based on event type.
+ * Extracted to avoid code duplication between streaming and non-streaming paths.
+ */
+function handleBackgroundTaskEvent(
+  store: JotaiStore,
+  sessionId: string,
+  event: { type: string },
+  agentEvent: unknown
+): void {
+  // Type guard for accessing properties
+  const evt = agentEvent as Record<string, unknown>
+  const backgroundTasksAtom = backgroundTasksAtomFamily(sessionId)
 
-  useEffect(() => {
-    void window.electronAPI.listLlmConnectionsWithStatus().then(setConnections)
-    return window.electronAPI.onSessionEvent((event: SessionEvent) => {
-      if (event.sessionId !== session.id) return
-      if (event.type === 'permission_request') setPermission(event.request)
-      if (event.type === 'info' && event.statusType === 'compaction_complete' && pendingPlanRef.current !== null) {
-        pendingPlanRef.current = null
-        void window.electronAPI.sendMessage(session.id, i18n.t('plan.approved')).then(async () => {
-          await window.electronAPI.sessionCommand(session.id, { type: 'clearPendingPlanExecution' })
-          onChanged()
-        })
-      }
-      onChanged()
-    })
-  }, [onChanged, session.id])
-
-  const send = async () => {
-    const message = draft.trim()
-    if (!message || session.isProcessing) return
-    setDraft('')
-    const selected = attachments
-    setAttachments([])
-    await window.electronAPI.sendMessage(session.id, message, selected)
-    onChanged()
-  }
-
-  const addAttachment = async () => {
-    const paths = await window.electronAPI.openFileDialog()
-    const loaded = await Promise.all(paths.map(path => window.electronAPI.readFileAttachment(path)))
-    setAttachments(current => [...current, ...loaded.filter((item): item is FileAttachment => item !== null)])
-  }
-
-  const respond = async (allowed: boolean, alwaysAllow = false) => {
-    if (!permission) return
-    await window.electronAPI.respondToPermission(session.id, permission.requestId, allowed, alwaysAllow)
-    setPermission(null)
-  }
-
-  const planPath = session.messages.findLast(message => message.role === 'plan')?.planPath ?? ''
-  const approvePlan = async (compact: boolean) => {
-    await window.electronAPI.sessionCommand(session.id, { type: 'setPermissionMode', mode: 'allow-all' })
-    if (!compact) {
-      await window.electronAPI.sendMessage(session.id, i18n.t('plan.approved'))
-      onChanged()
+  if (event.type === 'task_backgrounded' && 'taskId' in evt && 'toolUseId' in evt) {
+    const currentTasks = store.get(backgroundTasksAtom)
+    const exists = currentTasks.some(t => t.toolUseId === evt.toolUseId)
+    if (!exists) {
+      const isWorkflow = evt.kind === 'workflow'
+      const startTime = Date.now()
+      store.set(backgroundTasksAtom, [
+        ...currentTasks,
+        {
+          id: evt.taskId as string,
+          type: isWorkflow ? ('workflow' as const) : ('agent' as const),
+          toolUseId: evt.toolUseId as string,
+          startTime,
+          elapsedSeconds: 0,
+          lastSignalAt: startTime,
+          intent: evt.intent as string | undefined,
+          status: 'running' as const,
+          ...(isWorkflow ? { workflowId: evt.workflowId as string | undefined, agentsCompleted: 0 } : {}),
+        },
+      ])
+    }
+  } else if (event.type === 'workflow_agent_completed' && 'workflowId' in evt) {
+    // One sub-agent of a running Workflow finished — bump the owning chip's count
+    // and treat it as evidence that a stale workflow is still alive.
+    const currentTasks = store.get(backgroundTasksAtom)
+    const now = Date.now()
+    store.set(backgroundTasksAtom, currentTasks.map(t =>
+      t.type === 'workflow' && t.workflowId === evt.workflowId
+        ? { ...markBackgroundTaskSignal(t, now), agentsCompleted: (t.agentsCompleted ?? 0) + 1 }
+        : t
+    ))
+  } else if (event.type === 'shell_backgrounded' && 'shellId' in evt && 'toolUseId' in evt) {
+    const currentTasks = store.get(backgroundTasksAtom)
+    const exists = currentTasks.some(t => t.toolUseId === evt.toolUseId)
+    if (!exists) {
+      const startTime = Date.now()
+      store.set(backgroundTasksAtom, [
+        ...currentTasks,
+        {
+          id: evt.shellId as string,
+          type: 'shell' as const,
+          toolUseId: evt.toolUseId as string,
+          startTime,
+          elapsedSeconds: 0,
+          lastSignalAt: startTime,
+          intent: evt.intent as string | undefined,
+          status: 'running' as const,
+        },
+      ])
+    }
+  } else if (event.type === 'task_progress' && 'toolUseId' in evt && 'elapsedSeconds' in evt) {
+    const currentTasks = store.get(backgroundTasksAtom)
+    const now = Date.now()
+    store.set(backgroundTasksAtom, currentTasks.map(t =>
+      t.toolUseId === evt.toolUseId
+        ? { ...markBackgroundTaskSignal(t, now), elapsedSeconds: evt.elapsedSeconds as number }
+        : t
+    ))
+  } else if (event.type === 'task_completed' && 'taskId' in evt) {
+    // Transition the chip to a terminal status (keep it visible with a terminal
+    // icon + click-through to output). The ActiveTasksBar auto-expiry ticker
+    // prunes it after a short linger — we no longer remove it instantly, so the
+    // user sees that the task finished rather than the chip just vanishing.
+    const status = (evt.status as BackgroundTask['status']) ?? 'completed'
+    const currentTasks = store.get(backgroundTasksAtom)
+    store.set(backgroundTasksAtom, currentTasks.map(t =>
+      t.id === evt.taskId
+        ? {
+            ...t,
+            status,
+            completedAt: Date.now(),
+            outputFile: (evt.outputFile as string | undefined) ?? t.outputFile,
+            summary: (evt.summary as string | undefined) ?? t.summary,
+          }
+        : t
+    ))
+  } else if (event.type === 'shell_killed' && 'shellId' in evt) {
+    // Mark shell stopped (lingers briefly, then auto-expires) instead of vanishing.
+    const currentTasks = store.get(backgroundTasksAtom)
+    store.set(backgroundTasksAtom, currentTasks.map(t =>
+      t.id === evt.shellId
+        ? { ...t, status: 'stopped' as const, completedAt: Date.now() }
+        : t
+    ))
+  } else if (event.type === 'tool_result' && 'toolUseId' in evt) {
+    // Remove task when it completes - but NOT if this is the initial backgrounding result
+    // Background tasks return immediately with agentId/shell_id/backgroundTaskId,
+    // we should only remove when the task actually completes
+    const result = typeof evt.result === 'string' ? evt.result : JSON.stringify(evt.result)
+    const isBackgroundingResult = result && (
+      /agentId:\s*[a-zA-Z0-9_-]+/.test(result) ||
+      /shell_id:\s*[a-zA-Z0-9_-]+/.test(result) ||
+      /"backgroundTaskId":\s*"[a-zA-Z0-9_-]+"/.test(result)
+    )
+    if (!isBackgroundingResult) {
+      const currentTasks = store.get(backgroundTasksAtom)
+      store.set(backgroundTasksAtom, currentTasks.filter(t => t.toolUseId !== evt.toolUseId))
+    }
+  } else if (event.type === 'complete' || event.type === 'interrupted' || event.type === 'error') {
+    // Orphan backstop: without keep-alive, turn teardown is authoritative evidence
+    // that both running and uncertain/stale background tasks died with the SDK
+    // subprocess. With keep-alive they may genuinely survive, so preserve them for
+    // a later progress or task_completed signal.
+    if (evt.backgroundTasksAlive === true) {
       return
     }
-    pendingPlanRef.current = planPath
-    await window.electronAPI.sessionCommand(session.id, { type: 'setPendingPlanExecution', planPath })
-    await window.electronAPI.sendMessage(session.id, '/compact')
-    onChanged()
+    const currentTasks = store.get(backgroundTasksAtom)
+    const nextTasks = markLiveBackgroundTasksOrphaned(currentTasks, Date.now())
+    if (nextTasks !== currentTasks) {
+      store.set(backgroundTasksAtom, nextTasks)
+    }
   }
-
-  const updateAnnotation = async (command: Parameters<typeof window.electronAPI.sessionCommand>[1]) => {
-    await window.electronAPI.sessionCommand(session.id, command)
-    onChanged()
-  }
-
-  const exportCurrentSession = async () => {
-    const bundle = await window.electronAPI.exportSession(session.id)
-    const url = URL.createObjectURL(new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' }))
-    const link = document.createElement('a')
-    link.href = url
-    link.download = `${session.name || session.id}.mkagent-session.json`
-    link.click()
-    URL.revokeObjectURL(url)
-  }
-
-  const selectedConnection = connections.find(connection => connection.slug === session.llmConnection)
-    ?? connections.find(connection => connection.isDefault)
-  const modelOptions = (selectedConnection?.models ?? []).map(model => typeof model === 'string' ? { id: model, name: model } : model)
-
-  const footer = (
-    <div className="px-4 pb-4 pt-2">
-      {permission && (
-        <div className="mb-2 rounded-[12px] border border-info/20 bg-info/5 p-3 text-sm">
-          <div className="flex flex-col gap-1"><strong>{permission.toolName}</strong><span className="text-muted-foreground">{permission.description ?? permission.command}</span></div>
-          <div className="flex items-center gap-2"><AppButton onClick={() => respond(false)}>Deny</AppButton><AppButton onClick={() => respond(true)}>Allow</AppButton><AppButton onClick={() => respond(true, true)}>Always allow</AppButton></div>
-        </div>
-      )}
-      <CraftChatInput session={session} workspaceId={workspaceId} draft={draft} attachments={attachments} connections={connections} onDraftChange={setDraft} onAttachmentsChange={setAttachments} onAttach={() => void addAttachment()} onSend={() => void send()} onChanged={onChanged} />
-    </div>
-  )
-
-  const header = (
-    <PanelHeader
-      title={session.name || t('session.newSession')}
-      actions={<div className="flex items-center gap-1">
-        <HeaderIconButton icon={<Zap className="h-4 w-4" />} tooltip={t('browser.newWindow')} onClick={() => void window.electronAPI.browserPane.create(session.id)} />
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild><HeaderIconButton icon={<MoreHorizontal className="h-4 w-4" />} tooltip={t('common.more')} /></DropdownMenuTrigger>
-          <StyledDropdownMenuContent align="end">
-            <StyledDropdownMenuItem onClick={() => void window.electronAPI.sessionCommand(session.id, { type: session.isFlagged ? 'unflag' : 'flag' }).then(onChanged)}>{session.isFlagged ? 'Unflag' : 'Flag'}</StyledDropdownMenuItem>
-            <StyledDropdownMenuItem onClick={() => void window.electronAPI.sessionCommand(session.id, { type: session.isArchived ? 'unarchive' : 'archive' }).then(onChanged)}>{session.isArchived ? 'Restore' : 'Archive'}</StyledDropdownMenuItem>
-            <StyledDropdownMenuItem onClick={() => void window.electronAPI.openSessionInNewWindow(workspaceId, session.id)}>Open in new window</StyledDropdownMenuItem>
-            <StyledDropdownMenuItem onClick={() => void exportCurrentSession()}>Export</StyledDropdownMenuItem>
-            <StyledDropdownMenuItem onClick={() => { const name = window.prompt('Session name', session.name ?? ''); if (name?.trim()) void window.electronAPI.sessionCommand(session.id, { type: 'rename', name: name.trim() }).then(onChanged) }}>Rename</StyledDropdownMenuItem>
-            <StyledDropdownMenuSeparator />
-            <StyledDropdownMenuItem variant="destructive" onClick={() => { if (window.confirm('Delete this session?')) void window.electronAPI.deleteSession(session.id).then(onDeleted) }}>Delete</StyledDropdownMenuItem>
-          </StyledDropdownMenuContent>
-        </DropdownMenu>
-      </div>}
-    />
-  )
-
-  return (
-    <SessionViewer
-      session={session as unknown as StoredSession}
-      mode="interactive"
-      defaultExpanded
-      header={header}
-      footer={footer}
-      platformActions={{
-        onOpenUrl: url => window.electronAPI.openUrl(url),
-        onOpenFile: path => window.electronAPI.openFile(path),
-      }}
-      onAcceptPlan={() => approvePlan(false)}
-      onAcceptPlanWithCompact={() => approvePlan(true)}
-      onBranch={(messageId, options) => onBranched(messageId, options?.newPanel)}
-      onAddAnnotation={(messageId, annotation) => updateAnnotation({ type: 'addAnnotation', messageId, annotation })}
-      onRemoveAnnotation={(messageId, annotationId) => updateAnnotation({ type: 'removeAnnotation', messageId, annotationId })}
-      onUpdateAnnotation={(messageId, annotationId, patch: Partial<AnnotationV1>) => updateAnnotation({ type: 'updateAnnotation', messageId, annotationId, patch })}
-      onSaveAndSendFollowUp={async ({ note, selectedText }) => {
-        await window.electronAPI.sendMessage(session.id, `${note}\n\n> ${selectedText}`)
-        onChanged()
-      }}
-    />
-  )
 }
 
-function EmptyState({ title, detail }: { title: string; detail: string }) {
-  return <div className="flex h-full items-center justify-center text-muted-foreground"><p className="text-sm">{detail || title}</p></div>
+function SessionLoadErrorScreen({
+  message,
+  onRetry,
+}: {
+  message: string
+  onRetry: () => void
+}) {
+  const { t } = useTranslation()
+
+  return (
+    <div className="flex h-full items-center justify-center p-6">
+      <div className="max-w-lg rounded-xl border border-border/50 bg-background shadow-minimal p-6 text-center">
+        <h2 className="text-lg font-semibold text-foreground">{t("errors.failedToLoadSessions")}</h2>
+        <p className="mt-2 text-sm text-foreground/60">
+          {t("errors.failedToLoadSessionsDesc")}
+        </p>
+        <p className="mt-3 rounded-lg bg-foreground/5 px-3 py-2 text-left text-xs text-foreground/70 break-words">
+          {message}
+        </p>
+        <button
+          type="button"
+          onClick={onRetry}
+          className="mt-4 inline-flex h-8 items-center justify-center rounded-[8px] bg-foreground text-background px-3 text-sm font-medium hover:opacity-90 transition-opacity"
+        >
+          {t("errors.retryLoadingSessions")}
+        </button>
+      </div>
+    </div>
+  )
 }
 
 export default function App() {
   const { t } = useTranslation()
-  const [section, setSection] = useState<Section>('sessions')
-  const [settingsPage, setSettingsPage] = useState<SettingsPage>('app')
-  const [workspaces, setWorkspaces] = useState<Workspace[]>([])
-  const [workspaceId, setWorkspaceId] = useState('')
-  const [sessions, setSessions] = useState<Session[]>([])
-  const [activeSessionId, setActiveSessionId] = useState('')
-  const [activeSession, setActiveSession] = useState<Session | null>(null)
-  const [skills, setSkills] = useState<LoadedSkill[]>([])
-  const [activeSkill, setActiveSkill] = useState<LoadedSkill | null>(null)
-  const [skillFiles, setSkillFiles] = useState<SkillFile[]>([])
-  const [query, setQuery] = useState('')
-  const [sessionFilter, setSessionFilter] = useState<SessionFilter>('all')
-  const [panelWidths, setPanelWidths] = useState({ navigation: 300, list: 420 })
-  const [sidebarVisible, setSidebarVisible] = useState(true)
-  const [allSessionsExpanded, setAllSessionsExpanded] = useState(false)
-  const [miniSession, setMiniSession] = useState<Session | null>(null)
-  const refreshRef = useRef(0)
-  const resizeRef = useRef<'navigation' | 'list' | null>(null)
-  const applyingHistoryRef = useRef(false)
-  const [navigationHistory, setNavigationHistory] = useState<NavigationSnapshot[]>([])
-  const [navigationIndex, setNavigationIndex] = useState(-1)
 
-  const refreshSessions = useCallback(async () => {
-    const current = ++refreshRef.current
-    const next = await window.electronAPI.getSessions()
-    if (current !== refreshRef.current) return
-    setSessions(next.filter(session => !workspaceId || session.workspaceId === workspaceId))
-    if (activeSessionId) setActiveSession(await window.electronAPI.getSessionMessages(activeSessionId))
-  }, [activeSessionId, workspaceId])
-
-  const refreshWorkspaces = useCallback(async () => {
-    const available = await window.electronAPI.getWorkspaces()
-    setWorkspaces(available)
-    if (!workspaceId && available[0]) setWorkspaceId(available[0].id)
-  }, [workspaceId])
-
+  // Initialize renderer perf tracking early (debug mode = running from source)
+  // Uses useEffect with empty deps to run once on mount before any session switches
   useEffect(() => {
-    void (async () => {
-      const available = await window.electronAPI.getWorkspaces()
-      const selected = await window.electronAPI.getWindowWorkspace()
-      setWorkspaces(available)
-      setWorkspaceId(selected ?? available[0]?.id ?? '')
-    })()
-  }, [])
-
-  useEffect(() => {
-    void window.electronAPI.readPreferences().then(result => {
-      try {
-        const layout = JSON.parse(result.content).uiLayout
-        if (typeof layout?.navigation === 'number' && typeof layout?.list === 'number') {
-          setPanelWidths({ navigation: layout.navigation, list: layout.list })
-        }
-      } catch {
-        // Keep the defaults when the optional UI layout is missing or malformed.
-      }
+    window.electronAPI.isDebugMode().then((isDebug) => {
+      initRendererPerf(isDebug)
     })
   }, [])
 
+  // App state: loading -> check auth -> onboarding or ready
+  const [appState, setAppState] = useState<AppState>('loading')
+  const [setupNeeds, setSetupNeeds] = useState<SetupNeeds | null>(null)
+
+  // Per-session Jotai atom setters for isolated updates
+  // NOTE: No sessionsAtom - we don't store a Session[] array anywhere to prevent memory leaks
+  // Instead we use:
+  // - sessionMetaMapAtom for lightweight listing
+  // - sessionAtomFamily(id) for individual session data
+  const initializeSessions = useSetAtom(initializeSessionsAtom)
+  const addSession = useSetAtom(addSessionAtom)
+  const removeSession = useSetAtom(removeSessionAtom)
+  const updateSessionDirect = useSetAtom(updateSessionAtom)
+  const replaceLoadedSession = useSetAtom(replaceLoadedSessionAtom)
+  const store = useStore()
+
+  // Helper to update a session by ID with partial fields
+  // Uses per-session atom directly instead of updating an array
+  const updateSessionById = useCallback((
+    sessionId: string,
+    updates: Partial<Session> | ((session: Session) => Partial<Session>)
+  ) => {
+    updateSessionDirect(sessionId, (prev) => {
+      if (!prev) return prev
+      const partialUpdates = typeof updates === 'function' ? updates(prev) : updates
+      return { ...prev, ...partialUpdates }
+    })
+  }, [updateSessionDirect])
+
+  const [workspaces, setWorkspaces] = useState<Workspace[]>([])
+  // Window's workspace ID — shared atom so Root/ThemeProvider stays in sync on switch
+  const [windowWorkspaceId, setWindowWorkspaceId] = useAtom(windowWorkspaceIdAtom)
+
+  // Derive workspace slug for SDK skill qualification
+  const windowWorkspaceSlug = useMemo(() => {
+    if (!windowWorkspaceId) return null
+    const workspace = workspaces.find(w => w.id === windowWorkspaceId)
+    return workspace?.slug ?? windowWorkspaceId
+  }, [windowWorkspaceId, workspaces])
+
+  // Get initial sessionId and focused mode from URL params (for "Open in New Window" feature)
+  const { initialSessionId, isFocusedMode } = useMemo(() => {
+    const params = new URLSearchParams(window.location.search)
+    return {
+      initialSessionId: params.get('sessionId'),
+      isFocusedMode: params.get('focused') === 'true',
+    }
+  }, [])
+
+  // Derive remote workspace ID for session matching in NavigationContext
+  const windowRemoteWorkspaceId = useMemo(() => {
+    if (!windowWorkspaceId) return null
+    const workspace = workspaces.find(w => w.id === windowWorkspaceId)
+    return workspace?.remoteServer?.remoteWorkspaceId ?? null
+  }, [windowWorkspaceId, workspaces])
+
+  // LLM connections with authentication status (for provider selection)
+  const [llmConnections, setLlmConnections] = useState<LlmConnectionWithStatus[]>([])
+  // Workspace default LLM connection (for new sessions)
+  const [workspaceDefaultLlmConnection, setWorkspaceDefaultLlmConnection] = useState<string | undefined>()
+  // Global default LLM connection slug (from app config)
+  const [defaultLlmConnectionSlug, setDefaultLlmConnectionSlug] = useState<string | undefined>()
+
+  // Derive connection default model override from the default LLM connection
+  const defaultConnection = useMemo(() => {
+    return llmConnections.find(c => c.slug === defaultLlmConnectionSlug) ?? null
+  }, [llmConnections, defaultLlmConnectionSlug])
+
+  const [menuNewChatTrigger, setMenuNewChatTrigger] = useState(0)
+  // Permission requests per session (queue to handle multiple concurrent requests)
+  const [pendingPermissions, setPendingPermissions] = useState<Map<string, PermissionRequest[]>>(new Map())
+  // Credential requests per session (queue to handle multiple concurrent requests)
+  const [pendingCredentials, setPendingCredentials] = useState<Map<string, CredentialRequest[]>>(new Map())
+  // Draft composer state per session (text + attachment refs), preserved across mode
+  // switches, conversation changes, and app restarts. Using a ref avoids re-renders
+  // during typing; attachments are stored as lightweight refs (path + name) and
+  // hydrated via readFileAttachment() on session switch.
+  const sessionDraftsRef = useRef<Map<string, SessionDraft>>(new Map())
+  // Unified session options for all session-scoped settings
+  const [sessionOptions, setSessionOptions] = useState<Map<string, SessionOptions>>(new Map())
+
+  // Theme state (app-level only)
+  const [appTheme, setAppTheme] = useState<ThemeOverrides | null>(null)
+  // Reset confirmation dialog
+  const [showResetDialog, setShowResetDialog] = useState(false)
+
+  // Auto-update state
+  const updateChecker = useUpdateChecker()
+
+  // Splash screen state - tracks when app is fully ready (all data loaded)
+  const [sessionsLoaded, setSessionsLoaded] = useState(false)
+  const [sessionLoadError, setSessionLoadError] = useState<string | null>(null)
+  const [splashExiting, setSplashExiting] = useState(false)
+  const [splashHidden, setSplashHidden] = useState(false)
+
+  // Notifications enabled state (from app settings)
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true)
+
+  // Sources and skills for badge extraction
+  const sources = useAtomValue(sourcesAtom)
+  const skills = useAtomValue(skillsAtom)
+
+  // Compute if app is fully ready (all data loaded)
+  const isFullyReady = appState === 'ready' && sessionsLoaded
+
+  // Trigger splash exit animation when fully ready
   useEffect(() => {
-    const move = (event: PointerEvent) => {
-      if (resizeRef.current === 'navigation') {
-        setPanelWidths(current => ({ ...current, navigation: Math.min(360, Math.max(220, event.clientX)) }))
-      } else if (resizeRef.current === 'list') {
-        setPanelWidths(current => ({ ...current, list: Math.min(560, Math.max(300, event.clientX - current.navigation)) }))
+    if (isFullyReady && !splashExiting) {
+      setSplashExiting(true)
+    }
+  }, [isFullyReady, splashExiting])
+
+  // Handler for when splash exit animation completes
+  const handleSplashExitComplete = useCallback(() => {
+    setSplashHidden(true)
+  }, [])
+
+  // Apply theme via hook (injects CSS variables)
+  // shikiTheme is passed to ShikiThemeProvider to ensure correct syntax highlighting
+  // theme for dark-only themes in light system mode
+  const { shikiTheme, isDark } = useTheme({ appTheme })
+
+  // Ref for sessionOptions to access current value in event handlers without re-registering
+  const sessionOptionsRef = useRef(sessionOptions)
+  // Keep ref in sync with state
+  useEffect(() => {
+    sessionOptionsRef.current = sessionOptions
+  }, [sessionOptions])
+
+  const applyPermissionModeState = useCallback((sessionId: string, state: PermissionModeState, source: 'event' | 'reconcile') => {
+    setSessionOptions(prev => {
+      const next = new Map(prev)
+      const current = next.get(sessionId) ?? defaultSessionOptions
+      const currentVersion = current.permissionModeVersion ?? -1
+
+      if (state.modeVersion < currentVersion) {
+        window.electronAPI.debugLog(
+          '[ModeSync] Ignoring stale permission mode update',
+          { sessionId, source, incoming: state.modeVersion, current: currentVersion }
+        )
+        return prev
       }
-    }
-    const stop = () => {
-      if (!resizeRef.current) return
-      resizeRef.current = null
-      void window.electronAPI.readPreferences().then(result => {
-        let preferences: Record<string, unknown> = {}
-        try { preferences = JSON.parse(result.content) } catch { /* Start a valid preferences object. */ }
-        return window.electronAPI.writePreferences(JSON.stringify({ ...preferences, uiLayout: panelWidths }, null, 2))
+
+      if (
+        state.modeVersion === currentVersion &&
+        current.permissionMode !== state.permissionMode
+      ) {
+        window.electronAPI.debugLog(
+          '[ModeSync] Equal modeVersion with differing mode detected, applying and requesting reconciliation',
+          {
+            sessionId,
+            source,
+            modeVersion: state.modeVersion,
+            currentMode: current.permissionMode,
+            incomingMode: state.permissionMode,
+          }
+        )
+      }
+
+      next.set(sessionId, {
+        ...current,
+        permissionMode: state.permissionMode,
+        permissionModeVersion: state.modeVersion,
       })
-    }
-    window.addEventListener('pointermove', move)
-    window.addEventListener('pointerup', stop)
-    return () => {
-      window.removeEventListener('pointermove', move)
-      window.removeEventListener('pointerup', stop)
-    }
-  }, [panelWidths])
-
-  useEffect(() => {
-    if (!workspaceId) return
-    void refreshSessions()
-    void window.electronAPI.getSkills(workspaceId).then(setSkills)
-  }, [refreshSessions, workspaceId])
-
-  useEffect(() => window.electronAPI.onSessionEvent(() => void refreshSessions()), [refreshSessions])
-
-  useEffect(() => {
-    const snapshot: NavigationSnapshot = { section, settingsPage, sessionFilter, activeSessionId, activeSkillSlug: activeSkill?.slug || '' }
-    if (applyingHistoryRef.current) { applyingHistoryRef.current = false; return }
-    setNavigationHistory(current => {
-      const previous = current[navigationIndex]
-      if (previous && JSON.stringify(previous) === JSON.stringify(snapshot)) return current
-      const next = [...current.slice(0, navigationIndex + 1), snapshot]
-      setNavigationIndex(next.length - 1)
       return next
     })
-  }, [activeSessionId, activeSkill?.slug, navigationIndex, section, sessionFilter, settingsPage])
+  }, [])
 
-  const moveHistory = useCallback(async (offset: -1 | 1) => {
-    const nextIndex = navigationIndex + offset
-    const snapshot = navigationHistory[nextIndex]
-    if (!snapshot) return
-    applyingHistoryRef.current = true
-    setNavigationIndex(nextIndex)
-    setSection(snapshot.section)
-    setSettingsPage(snapshot.settingsPage)
-    setSessionFilter(snapshot.sessionFilter)
-    setActiveSessionId(snapshot.activeSessionId)
-    setActiveSession(snapshot.activeSessionId ? await window.electronAPI.getSessionMessages(snapshot.activeSessionId) : null)
-    const skill = skills.find(item => item.slug === snapshot.activeSkillSlug) || null
-    setActiveSkill(skill)
-    setSkillFiles(skill ? await window.electronAPI.getSkillFiles(workspaceId, skill.slug) : [])
-  }, [navigationHistory, navigationIndex, skills, workspaceId])
+  const reconcilePermissionModeState = useCallback(async (sessionId: string) => {
+    try {
+      const state = await window.electronAPI.getSessionPermissionModeState(sessionId)
+      if (!state) return
+      applyPermissionModeState(sessionId, state, 'reconcile')
+    } catch (error) {
+      window.electronAPI.debugLog('[ModeSync] Failed to reconcile permission mode', {
+        sessionId,
+        error: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }, [applyPermissionModeState])
 
-  const selectSession = useCallback(async (id: string) => {
-    setActiveSessionId(id)
-    setActiveSession(await window.electronAPI.getSessionMessages(id))
-    await window.electronAPI.sessionCommand(id, { type: 'setActiveViewing', workspaceId })
-  }, [workspaceId])
+  // Event processor hook - handles all agent events through pure functions
+  const { processAgentEvent, clearStreamingState } = useEventProcessor()
 
-  const newSession = useCallback(async () => {
-    if (!workspaceId) return
-    const created = await window.electronAPI.createSession(workspaceId)
-    setSection('sessions')
-    await refreshSessions()
-    await selectSession(created.id)
-  }, [refreshSessions, selectSession, workspaceId])
+  const syncSessionOptionsFromSession = useCallback((session: Session) => {
+    setSessionOptions(prev => {
+      const next = new Map(prev)
+      const current = next.get(session.id)
+      const merged = {
+        ...defaultSessionOptions,
+        ...current,
+        permissionMode: session.permissionMode ?? defaultSessionOptions.permissionMode,
+        thinkingLevel: session.thinkingLevel ?? DEFAULT_THINKING_LEVEL,
+      }
 
-  const branchSession = useCallback(async (messageId: string, newPanel = false) => {
-    if (!workspaceId || !activeSessionId) return
-    const branch = await window.electronAPI.createSession(workspaceId, {
-      branchFromSessionId: activeSessionId,
-      branchFromMessageId: messageId,
-      parentSessionId: activeSessionId,
+      const hasNonDefaultMode = merged.permissionMode !== defaultSessionOptions.permissionMode
+      const hasNonDefaultThinking = merged.thinkingLevel !== DEFAULT_THINKING_LEVEL
+
+      if (!hasNonDefaultMode && !hasNonDefaultThinking && merged.permissionModeVersion == null) {
+        next.delete(session.id)
+      } else {
+        next.set(session.id, merged)
+      }
+
+      return next
     })
-    await refreshSessions()
-    if (newPanel) await window.electronAPI.openSessionInNewWindow(workspaceId, branch.id)
-    else await selectSession(branch.id)
-  }, [activeSessionId, refreshSessions, selectSession, workspaceId])
+  }, [])
 
-  useEffect(() => window.electronAPI.onDeepLinkNavigate((navigation: DeepLinkNavigation) => {
-    const route = navigation.view?.split('/') ?? []
-    if (route[0] === 'settings') {
-      setSection('settings')
-      if (SETTINGS_PAGES.includes(route[1] as SettingsPage)) setSettingsPage(route[1] as SettingsPage)
-    } else if (route[0] === 'skills') {
-      setSection('skills')
-    } else if (route[0]) {
-      setSection('sessions')
-      setSessionFilter(route[0] === 'flagged' ? 'flagged' : route[0] === 'archived' ? 'archived' : 'all')
-      const sessionIndex = route.indexOf('session')
-      if (sessionIndex >= 0 && route[sessionIndex + 1]) void selectSession(route[sessionIndex + 1])
+  const refreshSessionFromServer = useCallback(async (sessionId: string): Promise<'refreshed' | 'preserved_stale_messages' | 'failed'> => {
+    try {
+      const fresh = await window.electronAPI.getSessionMessages(sessionId)
+      if (!fresh) return 'failed'
+
+      const prevSession = store.get(sessionAtomFamily(sessionId))
+      const preservedStaleMessages = !!prevSession && prevSession.messages.length > 0 && (!fresh.messages || fresh.messages.length === 0)
+      const nextSession = preservedStaleMessages
+        ? { ...fresh, messages: prevSession.messages }
+        : fresh
+
+      clearStreamingState(sessionId)
+      replaceLoadedSession(nextSession)
+      syncSessionOptionsFromSession(nextSession)
+      void reconcilePermissionModeState(sessionId)
+      return preservedStaleMessages ? 'preserved_stale_messages' : 'refreshed'
+    } catch (err) {
+      console.error(`[App] Failed to refresh session ${sessionId}:`, err)
+      return 'failed'
+    }
+  }, [clearStreamingState, replaceLoadedSession, syncSessionOptionsFromSession, reconcilePermissionModeState, store])
+
+  const loadSessionsFromServer = useCallback(async () => {
+    setSessionLoadError(null)
+
+    try {
+      const loadedSessions = await window.electronAPI.getSessions()
+
+      // Initialize per-session atoms and metadata map
+      // NOTE: No sessionsAtom used - sessions are only in per-session atoms
+      initializeSessions(loadedSessions)
+
+      // Initialize unified sessionOptions from session data
+      const optionsMap = new Map<string, SessionOptions>()
+      for (const s of loadedSessions) {
+        const hasNonDefaultMode = s.permissionMode && s.permissionMode !== 'ask'
+        const hasNonDefaultThinking = s.thinkingLevel && s.thinkingLevel !== DEFAULT_THINKING_LEVEL
+        if (hasNonDefaultMode || hasNonDefaultThinking) {
+          optionsMap.set(s.id, {
+            permissionMode: s.permissionMode ?? 'ask',
+            thinkingLevel: s.thinkingLevel ?? DEFAULT_THINKING_LEVEL,
+          })
+        }
+      }
+      setSessionOptions(optionsMap)
+
+      await Promise.allSettled(
+        loadedSessions.map((s) => reconcilePermissionModeState(s.id))
+      )
+
+      setSessionsLoaded(true)
+
+      if (initialSessionId && windowWorkspaceId) {
+        const session = loadedSessions.find(s => s.id === initialSessionId)
+        if (session) {
+          navigate(routes.view.allSessions(session.id))
+        }
+      }
+    } catch (err) {
+      console.error('[App] Failed to load sessions:', err)
+      const transportState = await window.electronAPI.getTransportConnectionState().catch(() => null)
+
+      if (shouldTreatSessionLoadFailureAsTransportFallback(transportState)) {
+        console.error('[App] Treating session load failure as transport fallback:', transportState)
+        setSessionsLoaded(true)
+        setSessionLoadError(null)
+        return
+      }
+
+      setSessionLoadError(formatSessionLoadFailure(err))
+      setSessionsLoaded(true)
+    }
+  }, [initializeSessions, initialSessionId, reconcilePermissionModeState, windowWorkspaceId])
+
+  const refreshSessionListMetadataFromServer = useCallback(async (options: SessionListRefreshOptions = {}): Promise<Map<string, SessionMeta> | null> => {
+    const {
+      removeMissing = true,
+      reason = 'manual-or-authoritative',
+      selectedSessionId = null,
+    } = options
+    const beforeMetaMap = store.get(sessionMetaMapAtom)
+    const beforeIds = new Set(beforeMetaMap.keys())
+    const transportState = await window.electronAPI.getTransportConnectionState().catch(() => null)
+
+    try {
+      const sessions = await window.electronAPI.getSessions()
+      const returnedIds = new Set(sessions.map(s => s.id))
+      const missingIds = Array.from(beforeIds).filter(id => !returnedIds.has(id))
+      const addedIds = sessions.map(s => s.id).filter(id => !beforeIds.has(id))
+      const logPayload = {
+        reason,
+        removeMissing,
+        windowWorkspaceId,
+        windowRemoteWorkspaceId,
+        selectedSessionId,
+        beforeCount: beforeIds.size,
+        returnedCount: sessions.length,
+        beforeIds: summarizeIds(beforeIds),
+        returnedIds: summarizeIds(returnedIds),
+        missingIds: summarizeIds(missingIds),
+        addedIds: summarizeIds(addedIds),
+        beforeWorkspaceIds: workspaceDistribution(beforeMetaMap.values()),
+        returnedWorkspaceIds: workspaceDistribution(sessions),
+        transportState,
+      }
+
+      rendererLog.info('[App] Session list metadata refresh result', logPayload)
+      if (!removeMissing && missingIds.length > 0) {
+        rendererLog.warn('[App] Non-destructive refresh preserved sessions omitted by getSessions(); this indicates a partial backend response or workspace-context mismatch', logPayload)
+      }
+
+      const loadedSessionIds = store.get(loadedSessionsAtom)
+
+      // Single transactional atom write — all cross-atom mutations happen
+      // inside one Jotai write function so React subscribers see one
+      // consistent update instead of intermediate states.
+      const nextMetaMap = store.set(refreshSessionsMetadataAtom, { sessions, loadedSessionIds, removeMissing })
+
+      // Sync app-level state (React hooks / non-atom concerns) after the atom transaction
+      for (const session of sessions) {
+        syncSessionOptionsFromSession(session)
+      }
+      await Promise.allSettled(sessions.map(s => reconcilePermissionModeState(s.id)))
+
+      return nextMetaMap
+    } catch (err) {
+      rendererLog.error('[App] Failed to refresh session list metadata after reconnect:', {
+        reason,
+        removeMissing,
+        windowWorkspaceId,
+        windowRemoteWorkspaceId,
+        selectedSessionId,
+        beforeCount: beforeIds.size,
+        beforeIds: summarizeIds(beforeIds),
+        beforeWorkspaceIds: workspaceDistribution(beforeMetaMap.values()),
+        transportState,
+        error: err,
+      })
+      return null
+    }
+  }, [store, syncSessionOptionsFromSession, reconcilePermissionModeState, windowWorkspaceId, windowRemoteWorkspaceId])
+
+  // Stale session watchdog — catches stuck sessions that the reconnect protocol misses
+  const { trackSessionActivity } = useStaleSessionRecovery({
+    store,
+    refreshSessionFromServer,
+  })
+
+  const DRAFT_SAVE_DEBOUNCE_MS = 500
+
+  const resolveDefaultConnectionSlug = useCallback((connections: LlmConnectionWithStatus[]) => {
+    return connections.find(c => c.isDefault)?.slug ?? connections[0]?.slug
+  }, [])
+
+  // Refresh LLM connections from config (called on workspace change and after connection updates)
+  const refreshLlmConnections = useCallback(async () => {
+    const connections = await window.electronAPI.listLlmConnectionsWithStatus()
+    setLlmConnections(connections)
+    setDefaultLlmConnectionSlug(resolveDefaultConnectionSlug(connections))
+    // Also refresh workspace default
+    if (windowWorkspaceId) {
+      const settings = await window.electronAPI.getWorkspaceSettings(windowWorkspaceId)
+      setWorkspaceDefaultLlmConnection(settings?.defaultLlmConnection)
+    }
+  }, [resolveDefaultConnectionSlug, windowWorkspaceId])
+
+  // Handle onboarding completion
+  const handleOnboardingComplete = useCallback(async () => {
+    try {
+      // Reload workspaces after onboarding
+      const ws = await window.electronAPI.getWorkspaces()
+      if (ws.length > 0) {
+        // Switch to workspace in-place (no window close/reopen)
+        await window.electronAPI.switchWorkspace(ws[0].id)
+        setWindowWorkspaceId(ws[0].id)
+        setWorkspaces(ws)
+      } else {
+        setWorkspaces(ws)
+      }
+    } catch (error) {
+      console.error('[App] Failed to load workspaces after onboarding:', error)
+      // Still transition to ready — the app can recover via reconnect
+    }
+    setAppState('ready')
+  }, [])
+
+  // Onboarding hook — onConfigSaved fires immediately when billing is saved,
+  // ensuring connection state updates before the wizard closes.
+  const onboarding = useOnboarding({
+    onComplete: handleOnboardingComplete,
+    onConfigSaved: refreshLlmConnections,
+    initialSetupNeeds: setupNeeds || undefined,
+  })
+
+  // Reauth login handler - placeholder (reauth is not currently used)
+  const handleReauthLogin = useCallback(async () => {
+    // Re-check setup needs
+    const needs = await window.electronAPI.getSetupNeeds()
+    if (needs.isFullyConfigured) {
+      setAppState('ready')
+    } else {
+      setSetupNeeds(needs)
+      setAppState('onboarding')
+    }
+  }, [])
+
+  // Reauth reset handler - open reset confirmation dialog
+  const handleReauthReset = useCallback(() => {
+    setShowResetDialog(true)
+  }, [])
+
+  // Check auth state and get window's workspace ID on mount
+  useEffect(() => {
+    const initialize = async () => {
+      try {
+        // Get this window's workspace ID (passed via URL query param from main process)
+        const wsId = await window.electronAPI.getWindowWorkspace()
+        setWindowWorkspaceId(wsId)
+
+        const needs = await window.electronAPI.getSetupNeeds()
+        setSetupNeeds(needs)
+
+        if (needs.isFullyConfigured) {
+          // If no workspace is selected (thin client without CRAFT_WORKSPACE_ID),
+          // show workspace picker before entering the main app
+          if (!wsId) {
+            setAppState('workspace-picker')
+          } else {
+            setAppState('ready')
+          }
+        } else {
+          // New user or needs setup - show onboarding
+          setAppState('onboarding')
+        }
+      } catch (error) {
+        console.error('Failed to check auth state:', error)
+        // If check fails, show onboarding to be safe
+        setAppState('onboarding')
+      }
     }
 
-    const id = navigation.actionParams?.id
-    if (navigation.action === 'new-chat') void newSession()
-    else if (id && navigation.action === 'delete-session') void window.electronAPI.deleteSession(id).then(refreshSessions)
-    else if (id && navigation.action === 'flag-session') void window.electronAPI.sessionCommand(id, { type: 'flag' }).then(refreshSessions)
-    else if (id && navigation.action === 'unflag-session') void window.electronAPI.sessionCommand(id, { type: 'unflag' }).then(refreshSessions)
-  }), [newSession, refreshSessions, selectSession])
+    initialize()
+  }, [])
 
-  const selectSkill = async (skill: LoadedSkill) => {
-    setActiveSkill(skill)
-    setSkillFiles(await window.electronAPI.getSkillFiles(workspaceId, skill.slug))
-  }
+  // Session selection state
+  const [sessionSelection, setSession] = useSession()
 
-  const startSkillMiniChat = async (skill?: LoadedSkill) => {
-    if (!workspaceId) return
-    const created = await window.electronAPI.createSession(workspaceId, {
-      name: skill ? `Edit ${skill.metadata.name || skill.slug}` : 'Create Skill',
-      systemPromptPreset: 'mini',
-      hidden: true,
+  // Notification system - shows native OS notifications and badge count
+  const handleNavigateToSession = useCallback((sessionId: string) => {
+    // Navigate to the session via central routing (uses allSessions filter)
+    navigate(routes.view.allSessions(sessionId))
+  }, [])
+
+  const { isWindowFocused, showSessionNotification } = useNotifications({
+    workspaceId: windowWorkspaceId,
+    // NOTE: sessions removed - hook now uses sessionMetaMapAtom internally
+    // to prevent closures from retaining full message arrays
+    onNavigateToSession: handleNavigateToSession,
+    enabled: notificationsEnabled,
+  })
+
+  // Load workspaces, sessions, model, notifications setting, and drafts when app is ready
+  useEffect(() => {
+    if (appState !== 'ready') return
+
+    window.electronAPI.getWorkspaces().then(setWorkspaces)
+    window.electronAPI.getNotificationsEnabled().then(setNotificationsEnabled).catch(() => {})
+
+    // Show actionable toast for missing system dependencies (Windows only)
+    window.electronAPI.getSystemWarnings().then((warnings) => {
+      if (warnings.vcredistMissing) {
+        toast.warning(t('toast.vcRedistNotFound'), {
+          description: t('toast.vcRedistNotFoundDesc'),
+          duration: Infinity,
+          action: {
+            label: 'Install',
+            onClick: () => window.electronAPI.openUrl(warnings.downloadUrl ?? 'https://aka.ms/vs/17/release/vc_redist.x64.exe'),
+          },
+        })
+      }
+    }).catch(() => { /* non-fatal startup check */ })
+    void loadSessionsFromServer()
+    // Load LLM connections with authentication status
+    window.electronAPI.listLlmConnectionsWithStatus().then((connections) => {
+      setLlmConnections(connections)
+      setDefaultLlmConnectionSlug(resolveDefaultConnectionSlug(connections))
     })
-    setMiniSession(await window.electronAPI.getSessionMessages(created.id))
-    if (skill) {
-      await window.electronAPI.sendMessage(created.id, `Help me edit the Skill \`${skill.slug}\`. Review its existing SKILL.md, ask for the intended changes, then update it with the Skill tools.`)
-      setMiniSession(await window.electronAPI.getSessionMessages(created.id))
+    // Load persisted input drafts into ref (no re-render needed).
+    // Attachment files are not read here — hydration happens lazily when the session
+    // is opened so app startup isn't delayed by reading potentially large files.
+    window.electronAPI.getAllDrafts().then((drafts) => {
+      if (Object.keys(drafts).length > 0) {
+        sessionDraftsRef.current = new Map(Object.entries(drafts))
+      }
+    })
+    // Load app-level theme
+    window.electronAPI.getAppTheme().then(setAppTheme)
+  }, [appState, loadSessionsFromServer, resolveDefaultConnectionSlug])
+
+  // Subscribe to theme change events (live updates when theme.json changes)
+  useEffect(() => {
+    const cleanupApp = window.electronAPI.onAppThemeChange((theme) => {
+      setAppTheme(theme)
+    })
+    return () => {
+      cleanupApp()
     }
-  }
+  }, [])
 
-  const startPreferencesMiniChat = async (preferencesPath: string) => {
-    if (!workspaceId) return
-    const created = await window.electronAPI.createSession(workspaceId, {
-      name: 'Edit Preferences',
-      systemPromptPreset: 'mini',
-      hidden: true,
+  // Subscribe to LLM connections change events (live updates when models are fetched)
+  useEffect(() => {
+    const cleanup = window.electronAPI.onLlmConnectionsChanged(() => {
+      refreshLlmConnections()
     })
-    await window.electronAPI.sendMessage(created.id, `Help me edit my user preferences at \`${preferencesPath}\`. Review the file, ask what I want to change, and update it after I answer.`)
-    setMiniSession(await window.electronAPI.getSessionMessages(created.id))
-  }
+    return () => { cleanup() }
+  }, [refreshLlmConnections])
 
-  const importSessionFile = async (file: File | undefined) => {
-    if (!file || !workspaceId) return
-    const bundle = JSON.parse(await file.text())
-    const imported = await window.electronAPI.importSession(workspaceId, bundle, 'fork')
-    await refreshSessions()
-    await selectSession(imported.id)
-  }
+  // Refresh LLM connections and workspace default when workspace changes
+  useEffect(() => {
+    if (windowWorkspaceId) {
+      refreshLlmConnections()
+    }
+  }, [windowWorkspaceId, refreshLlmConnections])
 
-  const filteredSessions = useMemo(() => sessions.filter(session => {
-    if (session.hidden) return false
-    const haystack = `${session.name ?? ''} ${session.preview ?? ''}`.toLowerCase()
-    const matchesFilter = sessionFilter === 'all' ? !session.isArchived
-      : sessionFilter === 'unread' ? Boolean(session.hasUnread) && !session.isArchived
-        : sessionFilter === 'flagged' ? Boolean(session.isFlagged) && !session.isArchived
-          : sessionFilter === 'running' ? Boolean(session.isProcessing) && !session.isArchived
-            : Boolean(session.isArchived)
-    return matchesFilter && haystack.includes(query.toLowerCase())
-  }), [query, sessionFilter, sessions])
+  // Listen for session events - uses centralized event processor for consistent state transitions
+  //
+  // SOURCE OF TRUTH LOGIC:
+  // - During streaming (atom.isProcessing = true): Atom is source of truth
+  //   All events read from and write to atom. This preserves streaming data.
+  // - When not streaming: React state is source of truth
+  //   Events read/write React state, which syncs to atoms via useEffect.
+  // - Handoff events (complete, error, etc.): End streaming, sync atom → React state
+  //
+  // This is simpler and more robust than checking event types - we just ask
+  // "is this session currently streaming?" and route accordingly.
+  useEffect(() => {
+    // Handoff events signal end of streaming - need to sync back to React state
+    // Also includes todo_state_changed so status updates immediately reflect in sidebar
+    // async_operation included so shimmer effect on session titles updates in real-time
+    const handoffEventTypes = new Set(['complete', 'error', 'interrupted', 'typed_error', 'session_status_changed', 'session_metadata_changed', 'session_flagged', 'session_unflagged', 'name_changed', 'labels_changed', 'project_id_changed', 'title_generated', 'async_operation'])
 
-  const sectionTitle = section === 'sessions' ? t('sidebar.allSessions') : section === 'skills' ? t('sidebar.skills') : t('sidebar.settings')
-  const sidebarLinks: SidebarItem[] = [
-    {
-      id: 'nav:allSessions',
-      title: t('sidebar.allSessions'),
-      label: String(sessions.filter(session => !session.hidden).length),
-      icon: Inbox,
-      variant: section === 'sessions' && sessionFilter === 'all' ? 'default' : 'ghost',
-      onClick: () => { setSection('sessions'); setSessionFilter('all') },
-      expandable: true,
-      expanded: allSessionsExpanded,
-      onToggle: () => setAllSessionsExpanded(value => !value),
-      contextMenu: { type: 'allSessions', onMarkAllRead: () => { void window.electronAPI.markAllSessionsRead(workspaceId).then(refreshSessions) } },
-      items: [
-        { id: 'nav:running', title: t('sidebar.running'), label: String(sessions.filter(session => session.isProcessing).length), icon: Zap, variant: section === 'sessions' && sessionFilter === 'running' ? 'default' : 'ghost', onClick: () => { setSection('sessions'); setSessionFilter('running') } },
-        { id: 'separator:states-flagged', type: 'separator' },
-        { id: 'nav:flagged', title: t('sidebar.flagged'), label: String(sessions.filter(session => session.isFlagged && !session.isArchived).length), icon: Flag, variant: section === 'sessions' && sessionFilter === 'flagged' ? 'default' : 'ghost', onClick: () => { setSection('sessions'); setSessionFilter('flagged') } },
-        { id: 'nav:archived', title: t('sidebar.archived'), label: sessions.some(session => session.isArchived) ? String(sessions.filter(session => session.isArchived).length) : undefined, icon: Archive, variant: section === 'sessions' && sessionFilter === 'archived' ? 'default' : 'ghost', onClick: () => { setSection('sessions'); setSessionFilter('archived') } },
-      ],
+    // Helper to handle side effects (same logic for both paths)
+    const handleEffects = (effects: Effect[], sessionId: string, eventType: string) => {
+      for (const effect of effects) {
+        switch (effect.type) {
+          case 'permission_request': {
+            setPendingPermissions(prevPerms => {
+              const next = new Map(prevPerms)
+              const existingQueue = next.get(sessionId) || []
+              next.set(sessionId, [...existingQueue, effect.request])
+              return next
+            })
+
+            // Native notification for approval-required pauses (same gating as completion notifications)
+            const notifySession = store.get(sessionAtomFamily(sessionId))
+            if (notifySession && !notifySession.hidden) {
+              const isAdminPrompt = effect.request.type === 'admin_approval'
+              const promptBody = isAdminPrompt
+                ? `Admin approval required: ${effect.request.appName || effect.request.toolName}`
+                : `Permission required: ${effect.request.toolName}`
+              showSessionNotification(notifySession, promptBody)
+            }
+            break
+          }
+          case 'permission_mode_changed': {
+            if (typeof effect.modeVersion === 'number' && effect.changedAt && effect.changedBy) {
+              applyPermissionModeState(effect.sessionId, {
+                permissionMode: effect.permissionMode,
+                modeVersion: effect.modeVersion,
+                changedAt: effect.changedAt,
+                changedBy: effect.changedBy,
+              }, 'event')
+            } else {
+              // Backward compatibility: apply mode optimistically then reconcile authoritative state.
+              setSessionOptions(prevOpts => {
+                const next = new Map(prevOpts)
+                const current = next.get(effect.sessionId) ?? defaultSessionOptions
+                next.set(effect.sessionId, { ...current, permissionMode: effect.permissionMode })
+                return next
+              })
+              void reconcilePermissionModeState(effect.sessionId)
+            }
+            break
+          }
+          case 'credential_request': {
+            setPendingCredentials(prevCreds => {
+              const next = new Map(prevCreds)
+              const existingQueue = next.get(sessionId) || []
+              next.set(sessionId, [...existingQueue, effect.request])
+              return next
+            })
+            break
+          }
+          case 'restore_input': {
+            // Queued messages were removed from chat on abort — restore their text to the input field.
+            // Append to existing draft (user may have started typing) rather than overwrite.
+            const existingDraft = sessionDraftsRef.current.get(sessionId)
+            const existingText = coerceInputText(existingDraft?.text)
+            const restoredText = coerceInputText(effect.text)
+            const restored = existingText
+              ? `${existingText}\n\n${restoredText}`
+              : restoredText
+            handleInputChange(sessionId, restored)
+            // handleInputChange updates the ref but ChatPage has local state.
+            // Dispatch a custom event so ChatPage re-reads the draft.
+            window.dispatchEvent(new CustomEvent('craft:restore-input', {
+              detail: { sessionId, text: restored },
+            }))
+            break
+          }
+          case 'toast_error': {
+            toast.error(effect.message, { duration: 5000 })
+            break
+          }
+        }
+      }
+
+      // Clear pending permissions and credentials on complete
+      if (eventType === 'complete') {
+        setPendingPermissions(prevPerms => {
+          if (prevPerms.has(sessionId)) {
+            const next = new Map(prevPerms)
+            next.delete(sessionId)
+            return next
+          }
+          return prevPerms
+        })
+        setPendingCredentials(prevCreds => {
+          if (prevCreds.has(sessionId)) {
+            const next = new Map(prevCreds)
+            next.delete(sessionId)
+            return next
+          }
+          return prevCreds
+        })
+      }
+    }
+
+    const cleanup = window.electronAPI.onSessionEvent((event: SessionEvent) => {
+      if (!('sessionId' in event)) return
+
+      const sessionId = event.sessionId
+      const workspaceId = windowWorkspaceId ?? ''
+
+      // Session lifecycle events are handled explicitly (not by the agent event processor).
+      if (event.type === 'session_created') {
+        window.electronAPI.getSessionMessages(sessionId)
+          .then((createdSession: Session | null) => {
+            if (createdSession) {
+              const existingMeta = store.get(sessionMetaMapAtom).has(sessionId)
+              if (existingMeta) {
+                replaceLoadedSession(createdSession)
+              } else {
+                addSession(createdSession)
+              }
+              syncSessionOptionsFromSession(createdSession)
+              return
+            }
+            return window.electronAPI.getSessions().then(initializeSessions)
+          })
+          .catch((error: unknown) => console.error('Failed to handle session_created event:', error))
+        return
+      }
+
+      if (event.type === 'session_deleted') {
+        removeSession(sessionId)
+        return
+      }
+
+      const agentEvent = event as unknown as AgentEvent
+
+      // Track activity for stale session watchdog
+      trackSessionActivity(sessionId)
+
+      // Dispatch window event when compaction completes
+      // This allows FreeFormInput to sequence the plan execution message after compaction
+      // Note: markCompactionComplete is called on the backend (sessions.ts) to ensure
+      // it happens even if CMD+R occurs during compaction
+      if (event.type === 'info' && event.statusType === 'compaction_complete') {
+        window.dispatchEvent(new CustomEvent('craft:compaction-complete', {
+          detail: { sessionId }
+        }))
+      }
+
+      // Check if session is currently streaming (atom is source of truth)
+      const atomSession = store.get(sessionAtomFamily(sessionId))
+      const isStreaming = atomSession?.isProcessing === true
+      const isHandoff = handoffEventTypes.has(event.type)
+
+      // During streaming OR for handoff events: use atom as source of truth
+      // This ensures all events during streaming see the complete state
+      if (isStreaming || isHandoff) {
+        const currentSession = atomSession ?? null
+
+        // Process the event
+        const { session: updatedSession, effects } = processAgentEvent(
+          agentEvent,
+          currentSession,
+          workspaceId
+        )
+
+        // Update atom directly (UI sees update immediately)
+        updateSessionDirect(sessionId, () => updatedSession)
+
+        // Handle side effects
+        handleEffects(effects, sessionId, event.type)
+
+        // Handle background task events
+        handleBackgroundTaskEvent(store, sessionId, event, agentEvent)
+
+        // For handoff events, update metadata map for list display
+        // NOTE: No sessionsAtom to sync - atom and metadata are the source of truth
+        if (isHandoff) {
+          // Update metadata map
+          const metaMap = store.get(sessionMetaMapAtom)
+          const newMetaMap = new Map(metaMap)
+          newMetaMap.set(sessionId, extractSessionMeta(updatedSession))
+          store.set(sessionMetaMapAtom, newMetaMap)
+
+          // Show notification on complete (when window is not focused)
+          // Skip hidden sessions (mini-agent sessions) - they shouldn't trigger notifications
+          if (event.type === 'complete' && !updatedSession.hidden) {
+            // Get the last assistant/plan message as preview
+            const lastMessage = updatedSession.messages.findLast(
+              m => (m.role === 'assistant' || m.role === 'plan') && !m.isIntermediate
+            )
+            // Strip markdown so OS notifications display clean plain text
+            const rawPreview = lastMessage?.content?.substring(0, 200) || undefined
+            const preview = rawPreview ? stripMarkdown(rawPreview).substring(0, 100) || undefined : undefined
+            showSessionNotification(updatedSession, preview)
+
+            // In-app complement to the OS notification: when a *background*
+            // session (one not shown in any open panel) finishes, queue a chip
+            // above the chat. The OS notification above is suppressed while the
+            // window is focused, so the chip is the only completion signal then.
+            if (
+              store.get(showBackgroundFinishedChipAtom) &&
+              !store.get(visibleSessionIdsAtom).has(sessionId)
+            ) {
+              store.set(pushBackgroundFinishedAtom, {
+                sessionId,
+                title: getSessionTitle(updatedSession),
+                finishedAt: Date.now(),
+              })
+            }
+          }
+        }
+
+        return
+      }
+
+      // Not streaming: use per-session atoms directly (no sessionsAtom)
+      const currentSession = store.get(sessionAtomFamily(sessionId))
+
+      const { session: updatedSession, effects } = processAgentEvent(
+        agentEvent,
+        currentSession,
+        workspaceId
+      )
+
+      // Handle side effects
+      handleEffects(effects, sessionId, event.type)
+
+      // Handle background task events
+      handleBackgroundTaskEvent(store, sessionId, event, agentEvent)
+
+      // Update per-session atom
+      updateSessionDirect(sessionId, () => updatedSession)
+
+      // Update metadata map
+      const metaMap = store.get(sessionMetaMapAtom)
+      const newMetaMap = new Map(metaMap)
+      newMetaMap.set(sessionId, extractSessionMeta(updatedSession))
+      store.set(sessionMetaMapAtom, newMetaMap)
+    })
+
+    return cleanup
+  }, [
+    processAgentEvent,
+    trackSessionActivity,
+    windowWorkspaceId,
+    store,
+    updateSessionDirect,
+    replaceLoadedSession,
+    showSessionNotification,
+    initializeSessions,
+    addSession,
+    removeSession,
+    syncSessionOptionsFromSession,
+    applyPermissionModeState,
+    reconcilePermissionModeState,
+  ])
+
+  // Transport reconnect recovery — refresh session metadata plus active/processing
+  // session content after stale reconnects.
+  useEffect(() => {
+    const cleanup = window.electronAPI.onReconnected(async (isStale: boolean) => {
+      if (!isStale) {
+        // Server replayed buffered events — we're caught up, nothing to do
+        console.info('[App] Reconnected with event replay — no refresh needed')
+        return
+      }
+
+      console.warn('[App] Stale reconnect — refreshing session metadata and active/processing sessions')
+
+      const refreshedMetaMap = await refreshSessionListMetadataFromServer({
+        removeMissing: false,
+        reason: 'stale-reconnect',
+        selectedSessionId: sessionSelection.selected,
+      })
+      const metaMap = refreshedMetaMap ?? store.get(sessionMetaMapAtom)
+      const refreshIds = getSessionsToRefreshAfterStaleReconnect(metaMap, sessionSelection.selected)
+
+      console.info(`[App] Stale reconnect — refreshing ${refreshIds.length} session(s):`, refreshIds)
+
+      // Refresh full message content only for the active session plus any
+      // session still marked processing after the metadata refresh.
+      for (const sessionId of refreshIds) {
+        let refreshResult = await refreshSessionFromServer(sessionId)
+        if (refreshResult !== 'refreshed') {
+          // Server may need time to restart session subprocess after reconnect,
+          // or it may still be lazily loading session messages.
+          for (const delay of [2000, 4000]) {
+            console.warn(`[App] Retrying session refresh for ${sessionId} after ${delay}ms (${refreshResult})`)
+            await new Promise(r => setTimeout(r, delay))
+            refreshResult = await refreshSessionFromServer(sessionId)
+            if (refreshResult === 'refreshed') break
+          }
+        }
+      }
+
+      // Final fallback: if the active session is still empty, force a reload
+      // even when the session is already marked loaded.
+      if (sessionSelection.selected) {
+        const session = store.get(sessionAtomFamily(sessionSelection.selected))
+        if (session && (!session.messages || session.messages.length === 0)) {
+          console.warn('[App] Active session still has no messages after stale reconnect refresh — forcing message reload')
+          await store.set(forceSessionMessagesReloadAtom, sessionSelection.selected)
+        } else if (session) {
+          console.info(`[App] Stale reconnect recovery complete — active session has ${session.messages?.length ?? 0} messages`)
+        }
+      }
+
+    })
+
+    return cleanup
+  }, [store, sessionSelection.selected, refreshSessionFromServer, refreshSessionListMetadataFromServer])
+
+  // Listen for menu bar events
+  useEffect(() => {
+    const unsubNewChat = window.electronAPI.onMenuNewChat(() => {
+      setMenuNewChatTrigger(n => n + 1)
+    })
+    const unsubSettings = window.electronAPI.onMenuOpenSettings(() => {
+      handleOpenSettings()
+    })
+    const unsubShortcuts = window.electronAPI.onMenuKeyboardShortcuts(() => {
+      navigate(routes.view.settings('shortcuts'))
+    })
+    return () => {
+      unsubNewChat()
+      unsubSettings()
+      unsubShortcuts()
+    }
+  }, [])
+
+  const handleCreateSession = useCallback(async (workspaceId: string, options?: import('../shared/types').CreateSessionOptions): Promise<Session> => {
+    const session = await window.electronAPI.createSession(workspaceId, options)
+    // Add to per-session atom and metadata map (no sessionsAtom)
+    addSession(session)
+    syncSessionOptionsFromSession(session)
+
+    return session
+  }, [addSession, syncSessionOptionsFromSession])
+
+  // Deep link navigation is initialized later after handleInputChange is defined
+
+  const handleDeleteSession = useCallback(async (sessionId: string, skipConfirmation = false): Promise<boolean> => {
+    // Show confirmation dialog before deleting (unless skipped or session is empty)
+    if (!skipConfirmation) {
+      // Check if session has any messages using session metadata from Jotai store
+      // We use store.get() instead of closing over sessions to prevent memory leaks
+      // (closures would retain the full sessions array with all messages)
+      const metaMap = store.get(sessionMetaMapAtom)
+      const meta = metaMap.get(sessionId)
+      // Session is empty if it has no lastFinalMessageId (no assistant responses) and no name (set on first user message)
+      const isEmpty = !meta || (!meta.lastFinalMessageId && !meta.name)
+
+      if (!isEmpty) {
+        const confirmed = await window.electronAPI.showDeleteSessionConfirmation(meta?.name || 'Untitled')
+        if (!confirmed) return false
+      }
+    }
+
+    await window.electronAPI.deleteSession(sessionId)
+    // Remove from per-session atom and metadata map (no sessionsAtom)
+    removeSession(sessionId)
+    return true
+  }, [store, removeSession])
+
+  // Auto-delete handler for empty sessions (fire-and-forget, no confirmation)
+  const handleAutoDeleteEmptySession = useCallback((sessionId: string) => {
+    window.electronAPI.deleteSession(sessionId)
+    removeSession(sessionId)
+  }, [removeSession])
+
+  const handleFlagSession = useCallback((sessionId: string) => {
+    updateSessionById(sessionId, { isFlagged: true })
+    window.electronAPI.sessionCommand(sessionId, { type: 'flag' })
+  }, [updateSessionById])
+
+  const handleUnflagSession = useCallback((sessionId: string) => {
+    updateSessionById(sessionId, { isFlagged: false })
+    window.electronAPI.sessionCommand(sessionId, { type: 'unflag' })
+  }, [updateSessionById])
+
+  const handleArchiveSession = useCallback((sessionId: string) => {
+    updateSessionById(sessionId, { isArchived: true, archivedAt: Date.now() })
+    window.electronAPI.sessionCommand(sessionId, { type: 'archive' })
+  }, [updateSessionById])
+
+  const handleUnarchiveSession = useCallback((sessionId: string) => {
+    updateSessionById(sessionId, { isArchived: false, archivedAt: undefined })
+    window.electronAPI.sessionCommand(sessionId, { type: 'unarchive' })
+  }, [updateSessionById])
+
+  /**
+   * Set which session user is actively viewing (for unread state machine).
+   * Called when user navigates to a session. Main process uses this to determine
+   * whether to mark new assistant messages as unread.
+   */
+  const handleSetActiveViewingSession = useCallback((sessionId: string) => {
+    // Optimistic UI update: clear hasUnread immediately
+    updateSessionById(sessionId, { hasUnread: false })
+    // Tell main process user is viewing this session
+    window.electronAPI.sessionCommand(sessionId, { type: 'setActiveViewing', workspaceId: windowWorkspaceId ?? '' })
+  }, [updateSessionById, windowWorkspaceId])
+
+  const handleMarkSessionRead = useCallback((sessionId: string) => {
+    // Update hasUnread flag (primary source of truth for NEW badge)
+    // Also update lastReadMessageId for backwards compatibility
+    updateSessionById(sessionId, (s) => {
+      const lastFinalId = s.messages.findLast(
+        m => (m.role === 'assistant' || m.role === 'plan') && !m.isIntermediate
+      )?.id
+      return {
+        hasUnread: false,
+        ...(lastFinalId ? { lastReadMessageId: lastFinalId } : {}),
+      }
+    })
+    window.electronAPI.sessionCommand(sessionId, { type: 'markRead' })
+  }, [updateSessionById])
+
+  const handleMarkSessionUnread = useCallback((sessionId: string) => {
+    // Set hasUnread flag (primary source of truth for NEW badge)
+    updateSessionById(sessionId, { hasUnread: true, lastReadMessageId: undefined })
+    window.electronAPI.sessionCommand(sessionId, { type: 'markUnread' })
+  }, [updateSessionById])
+
+  const handleSessionStatusChange = useCallback((sessionId: string, state: SessionStatus) => {
+    updateSessionById(sessionId, { sessionStatus: state })
+    window.electronAPI.sessionCommand(sessionId, { type: 'setSessionStatus', state })
+  }, [updateSessionById])
+
+  const handleRenameSession = useCallback((sessionId: string, name: string) => {
+    updateSessionById(sessionId, { name })
+    window.electronAPI.sessionCommand(sessionId, { type: 'rename', name })
+  }, [updateSessionById])
+
+  const handleSendMessage = useCallback(async (sessionId: string, message: string, attachments?: FileAttachment[], skillSlugs?: string[], externalBadges?: ContentBadge[]) => {
+    try {
+      // Capture pre-send processing state so we can flag mid-stream sends
+      // for the queued badge (#616 follow-up — covers Pi steer path which
+      // returns status 'accepted', not 'queued').
+      const sendingMidStream = store.get(sessionAtomFamily(sessionId))?.isProcessing === true
+
+      // Step 1: Store attachments and get persistent metadata
+      let storedAttachments: StoredAttachment[] | undefined
+      let processedAttachments: FileAttachment[] | undefined
+
+      if (attachments?.length) {
+        // Store each attachment to disk (generates thumbnails, converts Office→markdown)
+        // Use allSettled so one failure doesn't kill all attachments
+        const storeResults = await Promise.allSettled(
+          attachments.map(a => window.electronAPI.storeAttachment(sessionId, a))
+        )
+
+        // Filter successful stores, warn about failures
+        storedAttachments = []
+        const successfulAttachments: FileAttachment[] = []
+        storeResults.forEach((result, i) => {
+          if (result.status === 'fulfilled') {
+            storedAttachments!.push(result.value)
+            successfulAttachments.push(attachments[i])
+          } else {
+            console.warn(`Failed to store attachment "${attachments[i].name}":`, result.reason)
+          }
+        })
+
+        // Notify user about failed attachments
+        const failedCount = storeResults.filter(r => r.status === 'rejected').length
+        if (failedCount > 0) {
+          console.warn(`${failedCount} attachment(s) failed to store`)
+          // Add warning message to session so user knows some attachments weren't included
+          const failedNames = attachments
+            .filter((_, i) => storeResults[i].status === 'rejected')
+            .map(a => a.name)
+            .join(', ')
+          updateSessionById(sessionId, (s) => ({
+            messages: [...s.messages, {
+              id: generateMessageId(),
+              role: 'warning' as const,
+              content: `⚠️ ${failedCount} attachment(s) could not be stored and will not be sent: ${failedNames}`,
+              timestamp: Date.now()
+            }]
+          }))
+        }
+
+        // Step 2: Create processed attachments for Claude
+        // - Office files: Convert to text with markdown content
+        // - Others: Use original FileAttachment
+        // - All: Include storedPath so agent knows where files are stored
+        // - Resized images: Use resizedBase64 instead of original large base64
+        processedAttachments = await Promise.all(
+          successfulAttachments.map(async (att, i) => {
+            const stored = storedAttachments?.[i]
+            if (!stored) {
+              console.error(`Missing stored attachment at index ${i}`)
+              return att // Fall back to original
+            }
+            // Include storedPath and markdownPath for all attachment types
+            // Agent will use Read tool to access text/office files via these paths
+            // If image was resized, use the resized base64 for Claude API
+            return {
+              ...att,
+              storedPath: stored.storedPath,
+              markdownPath: stored.markdownPath,
+              // Use resized base64 if available (for images that exceeded size limits)
+              base64: stored.resizedBase64 ?? att.base64,
+            }
+          })
+        )
+      }
+
+      // Step 3: Extract badges from mentions (sources/skills) with embedded icons
+      // Badges are self-contained for display in UserMessageBubble and viewer
+      // Merge with any externally provided badges (e.g., from EditPopover context badges)
+      // Use workspace slug (not UUID) for skill qualification - SDK expects "workspaceSlug:skillSlug"
+      const mentionBadges: ContentBadge[] = windowWorkspaceSlug
+        ? extractBadges(message, skills, sources, windowWorkspaceSlug)
+        : []
+      const badges: ContentBadge[] = [...(externalBadges || []), ...mentionBadges]
+
+      // Step 4.1: Detect SDK slash commands (e.g., /compact) and create command badges
+      // This makes /compact render as an inline badge rather than raw text
+      const commandMatch = message.match(/^\/([a-z]+)(\s|$)/i)
+      if (commandMatch && commandMatch[1].toLowerCase() === 'compact') {
+        const commandText = commandMatch[0].trimEnd() // "/compact" without trailing space
+        badges.unshift({
+          type: 'command',
+          label: 'Compact',
+          rawText: commandText,
+          start: 0,
+          end: commandText.length,
+        })
+      }
+
+      // Step 4.2: Detect plan execution messages and create file badges
+      // Pattern: "Read the plan at <path> and execute it."
+      // This is sent after compaction when accepting a plan, displays as clickable file badge
+      // Only the file path is replaced with a badge - surrounding text remains visible
+      const planExecuteMatch = message.match(/^(Read the plan at )(.+?)( and execute it\.?)$/i)
+      if (planExecuteMatch) {
+        const prefix = planExecuteMatch[1]      // "Read the plan at "
+        const filePath = planExecuteMatch[2]    // the actual path
+        const fileName = filePath.split('/').pop() || 'plan.md'
+        badges.push({
+          type: 'file',
+          label: fileName,
+          rawText: filePath,
+          filePath: filePath,
+          start: prefix.length,
+          end: prefix.length + filePath.length,
+        })
+      }
+
+      // Step 5: Create user message with StoredAttachments (for UI display)
+      // Mark as isPending for optimistic UI — will be confirmed by user_message
+      // event. Flag mid-stream sends as queued so the bubble renders with the
+      // dashed-draft treatment immediately. Applies to both backends:
+      // Pi steers (server emits status: 'accepted' but the renderer preserves
+      // isQueued through that update) and Claude queues (server emits 'queued'
+      // which confirms it). Cleared by 'processing' status or when the current
+      // turn ends.
+      const userMessage: Message = {
+        id: generateMessageId(),
+        role: 'user',
+        content: message,
+        timestamp: Date.now(),
+        attachments: storedAttachments,
+        badges: badges.length > 0 ? badges : undefined,
+        isPending: true,  // Optimistic - will be confirmed by backend
+        isQueued: sendingMidStream,
+      }
+
+      // Optimistic UI update - add user message and set processing state
+      updateSessionById(sessionId, (s) => ({
+        messages: [...s.messages, userMessage],
+        isProcessing: true,
+        lastMessageAt: Date.now()
+      }))
+
+      // Step 6: Send to Claude with processed attachments + stored attachments for persistence
+      await window.electronAPI.sendMessage(sessionId, message, processedAttachments, storedAttachments, {
+        skillSlugs,
+        badges: badges.length > 0 ? badges : undefined,
+        optimisticMessageId: userMessage.id,
+      })
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      updateSessionById(sessionId, (s) => ({
+        isProcessing: false,
+        messages: [
+          ...s.messages,
+          {
+            id: generateMessageId(),
+            role: 'error' as const,
+            content: `Failed to send message: ${error instanceof Error ? error.message : 'Unknown error'}`,
+            timestamp: Date.now()
+          }
+        ]
+      }))
+    }
+  }, [sessionOptions, updateSessionById, skills, sources, windowWorkspaceId])
+
+  /**
+   * Unified handler for all session option changes.
+   * Handles persistence and backend sync for each option type.
+   */
+  const handleSessionOptionsChange = useCallback((sessionId: string, updates: SessionOptionUpdates) => {
+    setSessionOptions(prev => {
+      const next = new Map(prev)
+      const current = next.get(sessionId) ?? defaultSessionOptions
+      next.set(sessionId, mergeSessionOptions(current, updates))
+      return next
+    })
+
+    // Handle persistence/backend for specific options
+    if (updates.permissionMode !== undefined) {
+      // Sync permission mode change with backend
+      window.electronAPI.sessionCommand(sessionId, { type: 'setPermissionMode', mode: updates.permissionMode })
+    }
+    if (updates.thinkingLevel !== undefined) {
+      // Sync thinking level change with backend (session-level, persisted)
+      window.electronAPI.sessionCommand(sessionId, { type: 'setThinkingLevel', level: updates.thinkingLevel })
+    }
+  }, [sessionOptions])
+
+  // Handle input draft changes per session with debounced persistence
+  const draftSaveTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())
+
+  // Cleanup draft save timers on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      draftSaveTimeoutRef.current.forEach(clearTimeout)
+      draftSaveTimeoutRef.current.clear()
+    }
+  }, [])
+
+  // Getter for draft text - reads from ref without triggering re-renders
+  const getDraft = useCallback((sessionId: string): string => {
+    const draft = sessionDraftsRef.current.get(sessionId) as unknown
+    const text = draft && typeof draft === 'object'
+      ? (draft as { text?: unknown }).text
+      : draft
+    return coerceInputText(text)
+  }, [])
+
+  // Getter for persisted attachment refs (path + name only — not hydrated files).
+  // Consumers that need FileAttachment objects should call hydrateDraftAttachments.
+  const getDraftAttachmentRefs = useCallback((sessionId: string): DraftAttachmentRef[] => {
+    const attachments = sessionDraftsRef.current.get(sessionId)?.attachments
+    return Array.isArray(attachments) ? attachments : []
+  }, [])
+
+  // Hydrate persisted attachment refs into full FileAttachment objects.
+  //  - Track C (ref.content set): reconstruct directly from the inlined bytes.
+  //  - Track P (path-only): re-read from disk via the readUserAttachment RPC.
+  // Missing/moved files on Track P are silently dropped with a console warn — same
+  // UX as any other editor draft restore when the backing file is gone.
+  const hydrateDraftAttachments = useCallback(async (sessionId: string): Promise<FileAttachment[]> => {
+    const attachments = sessionDraftsRef.current.get(sessionId)?.attachments
+    const refs = Array.isArray(attachments) ? attachments : []
+    if (refs.length === 0) return []
+    const results = await Promise.all(
+      refs.map(async (ref) => {
+        if (ref.content) {
+          return attachmentFromContentRef(ref)
+        }
+        try {
+          const attachment = await window.electronAPI.readUserAttachment(ref.path)
+          if (!attachment) {
+            console.warn('[drafts] Attachment missing on restore, dropping:', ref.path)
+            return null
+          }
+          return attachment
+        } catch (err) {
+          console.warn('[drafts] Failed to restore attachment, dropping:', ref.path, err)
+          return null
+        }
+      })
+    )
+    return results.filter((a): a is FileAttachment => a !== null)
+  }, [])
+
+  // Write a debounced snapshot of the current ref entry to disk.
+  const schedulePersistDraft = useCallback((sessionId: string) => {
+    const existingTimeout = draftSaveTimeoutRef.current.get(sessionId)
+    if (existingTimeout) {
+      clearTimeout(existingTimeout)
+    }
+    const timeout = setTimeout(() => {
+      const draft = sessionDraftsRef.current.get(sessionId) ?? { text: '' }
+      window.electronAPI.setDraft(sessionId, draft)
+      draftSaveTimeoutRef.current.delete(sessionId)
+    }, DRAFT_SAVE_DEBOUNCE_MS)
+    draftSaveTimeoutRef.current.set(sessionId, timeout)
+  }, [])
+
+  const handleInputChange = useCallback((sessionId: string, value: string) => {
+    const text = coerceInputText(value)
+    const existing = sessionDraftsRef.current.get(sessionId)
+    const existingAttachments = Array.isArray(existing?.attachments) ? existing.attachments : []
+    const nextDraft: SessionDraft = {
+      text,
+      ...(existingAttachments.length > 0
+        ? { attachments: existingAttachments }
+        : {}),
+    }
+    const isEmpty = !nextDraft.text && (!nextDraft.attachments || nextDraft.attachments.length === 0)
+    if (isEmpty) {
+      sessionDraftsRef.current.delete(sessionId)
+    } else {
+      sessionDraftsRef.current.set(sessionId, nextDraft)
+    }
+    schedulePersistDraft(sessionId)
+  }, [schedulePersistDraft])
+
+  const handleAttachmentsChange = useCallback((sessionId: string, attachments: FileAttachment[]) => {
+    const existing = sessionDraftsRef.current.get(sessionId)
+    const refs: DraftAttachmentRef[] = []
+    for (const a of attachments) {
+      const ref = toDraftRef(a)
+      if (ref) {
+        refs.push(ref)
+      } else {
+        console.warn('[drafts] attachment exceeds per-draft size cap, not persisted:', a.name, a.size)
+      }
+    }
+    const nextDraft: SessionDraft = {
+      text: coerceInputText(existing?.text),
+      ...(refs.length > 0 ? { attachments: refs } : {}),
+    }
+    const isEmpty = !nextDraft.text && (!nextDraft.attachments || nextDraft.attachments.length === 0)
+    if (isEmpty) {
+      sessionDraftsRef.current.delete(sessionId)
+    } else {
+      sessionDraftsRef.current.set(sessionId, nextDraft)
+    }
+    schedulePersistDraft(sessionId)
+  }, [schedulePersistDraft])
+
+  // Open new chat - creates session and selects it
+  // Used by components via AppShellContext and for programmatic navigation
+  const openNewChat = useCallback(async (params: NewChatActionParams = {}) => {
+    if (!windowWorkspaceId) {
+      console.warn('[App] Cannot open new chat: no workspace ID')
+      return
+    }
+
+    const session = await handleCreateSession(windowWorkspaceId)
+
+    if (params.name) {
+      await window.electronAPI.sessionCommand(session.id, { type: 'rename', name: params.name })
+    }
+
+    // Navigate to the chat view - this sets both selectedSession and activeView
+    navigate(routes.view.allSessions(session.id))
+
+    // Pre-fill input if provided (after a small delay to ensure component is mounted)
+    if (params.input) {
+      setTimeout(() => handleInputChange(session.id, params.input!), 100)
+    }
+  }, [windowWorkspaceId, handleCreateSession, handleInputChange])
+
+  const handleRespondToPermission = useCallback(async (
+    sessionId: string,
+    requestId: string,
+    allowed: boolean,
+    alwaysAllow: boolean,
+    options?: import('../shared/types').PermissionResponseOptions,
+  ) => {
+    const success = await window.electronAPI.respondToPermission(sessionId, requestId, allowed, alwaysAllow, options)
+
+    if (success) {
+      // Remove only the first permission from the queue (the one we just responded to)
+      setPendingPermissions(prev => {
+        const next = new Map(prev)
+        const queue = next.get(sessionId) || []
+        const remainingQueue = queue.slice(1) // Remove first item
+        if (remainingQueue.length === 0) {
+          next.delete(sessionId)
+        } else {
+          next.set(sessionId, remainingQueue)
+        }
+        return next
+      })
+      // Note: No need to force session refresh - per-session atoms update automatically
+    } else {
+      // Response failed (agent/session gone) - clear the permission anyway
+      // to avoid UI being stuck with stale permission
+      setPendingPermissions(prev => {
+        const next = new Map(prev)
+        const queue = next.get(sessionId) || []
+        const remainingQueue = queue.slice(1)
+        if (remainingQueue.length === 0) {
+          next.delete(sessionId)
+        } else {
+          next.set(sessionId, remainingQueue)
+        }
+        return next
+      })
+    }
+  }, [])
+
+  const handleRespondToCredential = useCallback(async (sessionId: string, requestId: string, response: CredentialResponse) => {
+    const success = await window.electronAPI.respondToCredential(sessionId, requestId, response)
+
+    if (success) {
+      // Remove only the first credential from the queue (the one we just responded to)
+      setPendingCredentials(prev => {
+        const next = new Map(prev)
+        const queue = next.get(sessionId) || []
+        const remainingQueue = queue.slice(1) // Remove first item
+        if (remainingQueue.length === 0) {
+          next.delete(sessionId)
+        } else {
+          next.set(sessionId, remainingQueue)
+        }
+        return next
+      })
+      // Note: No need to force session refresh - per-session atoms update automatically
+    } else {
+      // Response failed (agent/session gone) - clear the credential anyway
+      // to avoid UI being stuck with stale credential request
+      setPendingCredentials(prev => {
+        const next = new Map(prev)
+        const queue = next.get(sessionId) || []
+        const remainingQueue = queue.slice(1)
+        if (remainingQueue.length === 0) {
+          next.delete(sessionId)
+        } else {
+          next.set(sessionId, remainingQueue)
+        }
+        return next
+      })
+    }
+  }, [])
+
+  // Centralized link interceptor: classifies file types and decides whether to
+  // show an in-app preview overlay or open externally. Replaces the old
+  // handleOpenFile/handleOpenUrl that always opened in external apps.
+  const linkInterceptor = useLinkInterceptor({
+    openFileExternal: async (path) => {
+      try {
+        await window.electronAPI.openFile(path)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        console.error('Failed to open file:', error)
+        toast.error(t('toast.failedToOpenFile'), {
+          description: message,
+        })
+      }
     },
-    { id: 'separator:primary', type: 'separator' },
-    { id: 'nav:skills', title: t('sidebar.skills'), label: String(skills.length), icon: Zap, variant: section === 'skills' ? 'default' : 'ghost', onClick: () => setSection('skills'), contextMenu: { type: 'skills', onAddSkill: () => { void startSkillMiniChat() } } },
-    { id: 'separator:settings', type: 'separator' },
-    { id: 'nav:settings', title: t('sidebar.settings'), icon: Settings, variant: section === 'settings' ? 'default' : 'ghost', onClick: () => setSection('settings') },
-  ]
+    openUrl: async (url) => {
+      try {
+        await window.electronAPI.openUrl(url)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        console.error('Failed to open URL:', error)
+        // The blocked-URL classifier already explains WHY and (for file:)
+        // points the user at preview blocks. Don't append the generic
+        // "use Open File instead" hint when the message already carries
+        // that guidance.
+        const hasRichGuidance = /URL blocked/.test(message)
+        const tail = hasRichGuidance ? '' : '. If this is a local path, use Open File instead.'
+        toast.error(t('toast.failedToOpenLink'), {
+          description: `${message}${tail}`,
+        })
+      }
+    },
+    showInFolder: async (path) => {
+      try {
+        await window.electronAPI.showInFolder(path)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error'
+        console.error('Failed to show in folder:', error)
+        toast.error(t("toast.failedToReveal", { fileManager: getFileManagerName() }), {
+          description: message,
+        })
+      }
+    },
+    readFile: (path) => window.electronAPI.readFile(path),
+    readFileDataUrl: (path) => window.electronAPI.readFileDataUrl(path),
+    readFileBinary: (path) => window.electronAPI.readFileBinary(path),
+  })
 
-  return <ThemeProvider activeWorkspaceId={workspaceId || null}><TooltipProvider>
-    <div className="h-screen w-screen overflow-hidden bg-background pt-[var(--topbar-height)] text-foreground">
-      <TopBar
-        workspaces={workspaces}
-        activeWorkspaceId={workspaceId || null}
-        onSelectWorkspace={async id => { setWorkspaceId(id); await window.electronAPI.switchWorkspace(id) }}
-        onWorkspaceCreated={() => void refreshWorkspaces()}
-        onWorkspaceRemoved={() => void refreshWorkspaces()}
-        onNewChat={() => void newSession()}
-        onBack={() => void moveHistory(-1)}
-        onForward={() => void moveHistory(1)}
-        canGoBack={navigationIndex > 0}
-        canGoForward={navigationIndex >= 0 && navigationIndex < navigationHistory.length - 1}
-        onToggleSidebar={() => setSidebarVisible(value => !value)}
-        onAddBrowserPanel={() => { if (activeSessionId) void window.electronAPI.browserPane.create(activeSessionId) }}
-      />
-      <div className="flex h-full items-stretch gap-[6px] overflow-hidden pb-[6px] pr-[6px]">
-        {sidebarVisible && <aside className="h-full shrink-0 font-sans" style={{ width: panelWidths.navigation }}>
-          <div className="flex h-full flex-col select-none">
-            <div className="px-2 pb-2 shrink-0">
-              <Button variant="ghost" onClick={() => void newSession()} className="w-full justify-start gap-2 rounded-[6px] bg-background px-2 py-[7px] text-[13px] font-normal shadow-minimal">
-                <Plus className="h-3.5 w-3.5 shrink-0" />
-                {t('session.newSession')}
-              </Button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto pb-4"><LeftSidebar isCollapsed={false} links={sidebarLinks} /></div>
-          </div>
-        </aside>}
-        {sidebarVisible && <div className="relative z-panel -mx-[3px] w-0 cursor-col-resize" onPointerDown={() => { resizeRef.current = 'navigation' }} />}
+  const connectionState = useTransportConnectionState()
+  const showTransportConnectionBanner = shouldShowTransportConnectionBanner(connectionState)
 
-        <section className="relative z-panel flex h-full shrink-0 flex-col overflow-hidden rounded-[10px] bg-background shadow-middle" style={{ width: panelWidths.list }}>
-          <PanelHeader
-            title={sectionTitle}
-            actions={<div className="flex items-center gap-1">
-              {section === 'skills' && <HeaderIconButton icon={<Plus className="h-4 w-4" />} tooltip={t('skillsList.addSkill')} onClick={() => void startSkillMiniChat()} />}
-              {section === 'sessions' && <label className="titlebar-no-drag relative flex h-7 w-7 cursor-pointer items-center justify-center rounded-[6px] hover:bg-foreground/5"><Upload className="h-4 w-4" /><input className="absolute inset-0 cursor-pointer opacity-0" type="file" accept="application/json,.json" onChange={event => { void importSessionFile(event.target.files?.[0]); event.target.value = '' }} /></label>}
-              <HeaderIconButton icon={<MoreHorizontal className="h-4 w-4" />} tooltip={t('common.more')} />
-            </div>}
+  const handleReconnectTransport = useCallback(() => {
+    void window.electronAPI.reconnectTransport().catch((error) => {
+      const message = error instanceof Error ? error.message : 'Unknown error'
+      toast.error(t('toast.reconnectFailed'), { description: message })
+    })
+  }, [])
+
+  const handleOpenFile = linkInterceptor.handleOpenFile
+  const handleOpenUrl = linkInterceptor.handleOpenUrl
+
+  const handleOpenSettings = useCallback(() => {
+    navigate(routes.view.settings())
+  }, [])
+
+  const handleOpenKeyboardShortcuts = useCallback(() => {
+    navigate(routes.view.settings('shortcuts'))
+  }, [])
+
+  const handleOpenStoredUserPreferences = useCallback(() => {
+    navigate(routes.view.settings('preferences'))
+  }, [])
+
+  // Show reset confirmation dialog
+  const handleReset = useCallback(() => {
+    setShowResetDialog(true)
+  }, [])
+
+  // Execute reset after user confirms in dialog
+  const executeReset = useCallback(async () => {
+    try {
+      await window.electronAPI.logout()
+      // Reset all state
+      // Clear session atoms - initialize with empty array clears all per-session atoms
+      initializeSessions([])
+      setWorkspaces([])
+      setWindowWorkspaceId(null)
+      // Reset setupNeeds to force fresh onboarding start
+      setSetupNeeds({
+        needsBillingConfig: true,
+        needsCredentials: true,
+        isFullyConfigured: false,
+      })
+      // Reset onboarding hook state
+      onboarding.reset()
+      setAppState('onboarding')
+    } catch (error) {
+      console.error('Reset failed:', error)
+    } finally {
+      setShowResetDialog(false)
+    }
+  }, [onboarding, initializeSessions])
+
+  // Handle workspace selection
+  // - Default: switch workspace in same window (in-window switching)
+  // - With openInNewWindow=true: open in new window (or focus existing)
+  const handleSelectWorkspace = useCallback(async (workspaceId: string, openInNewWindow = false) => {
+    // If selecting current workspace, do nothing
+    if (workspaceId === windowWorkspaceId) return
+
+    if (openInNewWindow) {
+      // Open (or focus) the window for the selected workspace
+      window.electronAPI.openWorkspace(workspaceId)
+    } else {
+      // Switch workspace in current window
+      // 1. Update the main process's window-workspace mapping
+      await window.electronAPI.switchWorkspace(workspaceId)
+
+      // 2. Update React state to trigger re-renders
+      setWindowWorkspaceId(workspaceId)
+
+      // 3. Clear selected session - the old session belongs to the previous workspace
+      // and should not remain selected when switching to a new workspace.
+      // This prevents showing stale session data from the wrong workspace.
+      setSession({ selected: null })
+
+      // 4. Clear pending permissions/credentials (not relevant to new workspace)
+      setPendingPermissions(new Map())
+      setPendingCredentials(new Map())
+
+      // 5. Clear session options from previous workspace
+      // (session IDs are unique UUIDs, but clearing prevents unbounded memory growth
+      // and ensures no stale state from old workspace persists)
+      setSessionOptions(new Map())
+
+      // 6. Clear message drafts from previous workspace
+      // (prevents memory growth on repeated workspace switches)
+      sessionDraftsRef.current.clear()
+
+      // 7. Reset sources and skills atoms to empty
+      // (prevents stale data flash during workspace switch - AppShell will reload)
+      store.set(sourcesAtom, [])
+      store.set(skillsAtom, [])
+
+      // 8. Clear session atoms BEFORE workspace switch
+      // This prevents stale session data from the previous workspace being visible.
+      store.set(sessionMetaMapAtom, new Map())
+      store.set(sessionIdsAtom, [])
+
+      // Note: NavigationContext detects the workspaceId change and handles
+      // panel restoration from the stored workspace URL (or defaults to allSessions).
+      // Sessions and theme will reload automatically due to windowWorkspaceId dependency
+      // in useEffect hooks.
+    }
+  }, [windowWorkspaceId, setSession, store])
+
+  // Handle workspace switch by slug (called by NavigationContext on popstate when ?ws= changes)
+  const handleSwitchWorkspaceBySlug = useCallback((slug: string) => {
+    const target = workspaces.find(w => w.slug === slug)
+    if (target) {
+      handleSelectWorkspace(target.id)
+    }
+  }, [workspaces, handleSelectWorkspace])
+
+  // Handle workspace refresh (e.g., after icon upload)
+  const handleRefreshWorkspaces = useCallback(() => {
+    window.electronAPI.getWorkspaces().then(setWorkspaces)
+  }, [])
+
+  // Handle cancel during onboarding
+  const handleOnboardingCancel = useCallback(() => {
+    onboarding.handleCancel()
+  }, [onboarding])
+
+  // Build context value for AppShell component
+  // This is memoized to prevent unnecessary re-renders
+  // IMPORTANT: Must be before early returns to maintain consistent hook order
+  const appShellContextValue = useMemo<AppShellContextType>(() => ({
+    // Data
+    // NOTE: sessions is NOT included - use sessionMetaMapAtom for listing
+    // and useSession(id) hook for individual sessions. This prevents memory leaks.
+    workspaces,
+    activeWorkspaceId: windowWorkspaceId,
+    activeWorkspaceSlug: windowWorkspaceSlug,
+    llmConnections,
+    workspaceDefaultLlmConnection,
+    refreshLlmConnections,
+    pendingPermissions,
+    pendingCredentials,
+    getDraft,
+    getDraftAttachmentRefs,
+    hydrateDraftAttachments,
+    sessionOptions,
+    // Session callbacks
+    onCreateSession: handleCreateSession,
+    onSendMessage: handleSendMessage,
+    onRenameSession: handleRenameSession,
+    onFlagSession: handleFlagSession,
+    onUnflagSession: handleUnflagSession,
+    onArchiveSession: handleArchiveSession,
+    onUnarchiveSession: handleUnarchiveSession,
+    onMarkSessionRead: handleMarkSessionRead,
+    onMarkSessionUnread: handleMarkSessionUnread,
+    onSetActiveViewingSession: handleSetActiveViewingSession,
+    onSessionStatusChange: handleSessionStatusChange,
+    onDeleteSession: handleDeleteSession,
+    onRespondToPermission: handleRespondToPermission,
+    onRespondToCredential: handleRespondToCredential,
+    // File/URL handlers
+    onOpenFile: handleOpenFile,
+    onOpenUrl: handleOpenUrl,
+    // Workspace
+    onSelectWorkspace: handleSelectWorkspace,
+    onRefreshWorkspaces: handleRefreshWorkspaces,
+    // App actions
+    onOpenSettings: handleOpenSettings,
+    onOpenKeyboardShortcuts: handleOpenKeyboardShortcuts,
+    onOpenStoredUserPreferences: handleOpenStoredUserPreferences,
+    onReset: handleReset,
+    // Session options
+    onSessionOptionsChange: handleSessionOptionsChange,
+    onInputChange: handleInputChange,
+    onAttachmentsChange: handleAttachmentsChange,
+    // New chat (via deep link navigation)
+    openNewChat,
+  }), [
+    // NOTE: sessions removed to prevent memory leaks - components use atoms instead
+    workspaces,
+    windowWorkspaceId,
+    windowWorkspaceSlug,
+    llmConnections,
+    workspaceDefaultLlmConnection,
+    refreshLlmConnections,
+    pendingPermissions,
+    pendingCredentials,
+    getDraft,
+    getDraftAttachmentRefs,
+    hydrateDraftAttachments,
+    sessionOptions,
+    handleCreateSession,
+    handleSendMessage,
+    handleRenameSession,
+    handleFlagSession,
+    handleUnflagSession,
+    handleArchiveSession,
+    handleUnarchiveSession,
+    handleMarkSessionRead,
+    handleMarkSessionUnread,
+    handleSetActiveViewingSession,
+    handleSessionStatusChange,
+    handleDeleteSession,
+    handleRespondToPermission,
+    handleRespondToCredential,
+    handleOpenFile,
+    handleOpenUrl,
+    handleSelectWorkspace,
+    handleRefreshWorkspaces,
+    handleOpenSettings,
+    handleOpenKeyboardShortcuts,
+    handleOpenStoredUserPreferences,
+    handleReset,
+    handleSessionOptionsChange,
+    handleInputChange,
+    handleAttachmentsChange,
+    openNewChat,
+  ])
+
+  // Platform actions for @mkagent/ui components (overlays, etc.)
+  // Memoized to prevent re-renders when these callbacks don't change
+  // NOTE: Must be defined before early returns to maintain consistent hook order
+  const platformActions = useMemo(() => ({
+    onOpenFile: handleOpenFile,
+    onOpenUrl: handleOpenUrl,
+    // Bypass link interceptor — opens file directly in system editor.
+    // Used by overlay header badges (when already viewing a file, "Open" should launch editor).
+    onOpenFileExternal: linkInterceptor.openFileExternal,
+    // Read file contents as UTF-8 string (used by datatable/spreadsheet/html-preview src fields)
+    onReadFile: (path: string) => window.electronAPI.readFile(path),
+    // Read file as data URL (used by image-preview blocks)
+    onReadFileDataUrl: (path: string) => window.electronAPI.readFileDataUrl(path),
+    // Read file as binary Uint8Array (used by PDF preview blocks)
+    onReadFileBinary: (path: string) => window.electronAPI.readFileBinary(path),
+    // Reveal a file in the system file manager (Finder on macOS, Explorer on Windows, etc.)
+    onRevealInFinder: (path: string) => {
+      window.electronAPI.showInFolder(path).catch(() => {})
+    },
+    // Platform-specific file manager name for UI labels
+    fileManagerName: getFileManagerName(),
+    // Hide/show macOS traffic lights when fullscreen overlays are open
+    onSetTrafficLightsVisible: (visible: boolean) => {
+      window.electronAPI.setTrafficLightsVisible(visible)
+    },
+  }), [handleOpenFile, handleOpenUrl, linkInterceptor.openFileExternal])
+
+  // Loading state - show splash screen
+  if (appState === 'loading') {
+    return <SplashScreen isExiting={false} />
+  }
+
+  // Reauth state - session expired, need to re-login
+  // ModalProvider + WindowCloseHandler ensures X button works on Windows
+  if (appState === 'reauth') {
+    return (
+      <DismissibleLayerProvider>
+        <ModalProvider>
+          <WindowCloseHandler />
+          <ReauthScreen
+            onLogin={handleReauthLogin}
+            onReset={handleReauthReset}
           />
-          {section === 'sessions' && <div className="px-3 pb-2">
-            <label className="flex h-8 items-center gap-2 rounded-[8px] bg-foreground/3 px-2.5 text-muted-foreground focus-within:ring-1 focus-within:ring-ring">
-              <Search className="h-4 w-4" />
-              <input className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none" placeholder={t('sidebar.search')} value={query} onChange={event => setQuery(event.target.value)} />
-            </label>
-          </div>}
-          <div className="min-h-0 flex-1 overflow-y-auto" data-list-role={section}>
-            {section === 'sessions' && filteredSessions.length === 0 && <div className="flex h-full flex-col items-center justify-center px-8 text-center"><div className="mb-3 flex h-10 w-10 items-center justify-center rounded-[10px] bg-foreground/[0.04] text-muted-foreground"><Inbox className="h-5 w-5" /></div><div className="text-sm font-medium">{t('session.noSessionsYet')}</div><div className="mt-1 max-w-[240px] text-xs leading-relaxed text-muted-foreground">{t('session.noSessionsYetDesc')}</div><button onClick={() => void newSession()} className="mt-4 inline-flex h-7 items-center rounded-[8px] bg-background px-3 text-xs font-medium shadow-minimal transition-colors hover:bg-foreground/[0.03]">{t('session.newSession')}</button></div>}
-            {section === 'sessions' && filteredSessions.map((session, index) => <EntityRow
-              key={session.id}
-              className="session-item"
-              showSeparator={index > 0}
-              separatorClassName="pl-[38px] pr-4"
-              isSelected={activeSessionId === session.id}
-              onClick={() => void selectSession(session.id)}
-              menuContent={<SessionMenu session={session} onChanged={refreshSessions} onDeleted={() => { if (activeSessionId === session.id) { setActiveSessionId(''); setActiveSession(null) } void refreshSessions() }} />}
-              icon={<div className="flex items-center gap-1">{session.isProcessing ? <Zap className="h-3.5 w-3.5 text-info" /> : <span className="h-3.5 w-3.5 rounded-full border border-foreground/30" />}{session.hasUnread && <span className="h-2 w-2 rounded-full bg-accent" />}</div>}
-              title={session.name || t('session.newSession')}
-              titleClassName="text-[13px]"
-              subtitle={session.preview || t('chat.noMessages')}
-              titleTrailing={session.isFlagged ? <Flag className="h-3.5 w-3.5 text-info" /> : <span className="text-[11px] text-foreground/40">{formatRelativeTime(session.lastMessageAt)}</span>}
-            />)}
-            {section === 'skills' && skills.map((skill, index) => <EntityRow
-              key={skill.slug}
-              showSeparator={index > 0}
-              isSelected={activeSkill?.slug === skill.slug}
-              onClick={() => void selectSkill(skill)}
-              icon={<div className="flex h-5 w-5 items-center justify-center rounded-[4px] bg-accent/10 text-accent"><Zap className="h-3.5 w-3.5" /></div>}
-              title={skill.metadata.name || skill.slug}
-              badges={<span className="truncate">{skill.metadata.description}</span>}
-              menuContent={<SkillMenu skillSlug={skill.slug} skillName={skill.metadata.name || skill.slug} onOpenInNewWindow={() => void window.electronAPI.openUrl(`mkagent://skills/skill/${skill.slug}?window=focused`)} onShowInFinder={() => window.electronAPI.showInFolder(skill.path)} onDelete={skill.source === 'workspace' ? () => void window.electronAPI.deleteSkill(workspaceId, skill.slug).then(() => window.electronAPI.getSkills(workspaceId).then(setSkills)) : undefined} canDelete={skill.source === 'workspace'} />}
-            />)}
-            {section === 'settings' && <SettingsNavigator selectedSubpage={settingsPage} onSelectSubpage={page => setSettingsPage(page)} />}
-          </div>
-        </section>
-        <div className="relative z-panel -mx-[3px] w-0 cursor-col-resize" onPointerDown={() => { resizeRef.current = 'list' }} />
+          <ResetConfirmationDialog
+            open={showResetDialog}
+            onConfirm={executeReset}
+            onCancel={() => setShowResetDialog(false)}
+          />
+        </ModalProvider>
+      </DismissibleLayerProvider>
+    )
+  }
 
-        <main className="relative z-panel h-full min-w-[440px] flex-1 overflow-hidden rounded-[10px] bg-background shadow-middle">
-          {section === 'sessions' && (activeSession ? <ChatPanel session={activeSession} workspaceId={workspaceId} onChanged={refreshSessions} onDeleted={() => { setActiveSessionId(''); setActiveSession(null); void refreshSessions() }} onBranched={branchSession} /> : <EmptyState title={t('session.noSessionSelected')} detail={t('session.noSessionSelected')} />)}
-          {section === 'skills' && <SkillInfoPage skill={activeSkill} files={skillFiles} workspaceId={workspaceId} onChanged={() => window.electronAPI.getSkills(workspaceId).then(setSkills)} onAgentEdit={skill => void startSkillMiniChat(skill)} />}
-          {section === 'settings' && (settingsPage === 'preferences' ? <PreferencesPage onAgentEdit={path => void startPreferencesMiniChat(path)} /> : settingsPage === 'app' ? <AppSettingsPage /> : settingsPage === 'input' ? <InputSettingsPage /> : settingsPage === 'appearance' ? <AppearanceSettingsPage /> : settingsPage === 'workspace' ? <WorkspaceSettingsPage workspace={workspaces.find(workspace => workspace.id === workspaceId)} /> : settingsPage === 'permissions' ? <PermissionsSettingsPage workspaceId={workspaceId} /> : settingsPage === 'shortcuts' ? <ShortcutsPage /> : <AiSettingsPage workspaceId={workspaceId} />)}
-        </main>
-        {miniSession && <div className="fixed inset-0 z-modal grid place-items-center bg-black/45 p-8"><div className="h-[min(720px,92vh)] w-[min(880px,100%)] overflow-hidden rounded-2xl border border-border bg-background shadow-modal-small"><div className="flex min-h-12 items-center justify-between border-b border-border px-3 py-2"><strong>{miniSession.name}</strong><AppButton onClick={() => setMiniSession(null)}>Close</AppButton></div><div className="h-[calc(100%-48px)]"><ChatPanel session={miniSession} workspaceId={workspaceId} onChanged={() => window.electronAPI.getSessionMessages(miniSession.id).then(setMiniSession)} onDeleted={() => setMiniSession(null)} onBranched={() => {}} /></div></div></div>}
-      </div>
-    </div>
-  </TooltipProvider></ThemeProvider>
+  // Onboarding state
+  // ModalProvider + WindowCloseHandler ensures X button works on Windows
+  // (without this, the close IPC message has no listener and window stays open)
+  if (appState === 'onboarding') {
+    return (
+      <DismissibleLayerProvider>
+        <ModalProvider>
+          <WindowCloseHandler />
+          <OnboardingWizard
+            state={onboarding.state}
+            onContinue={onboarding.handleContinue}
+            onBack={onboarding.handleBack}
+            onSelectProvider={onboarding.handleSelectProvider}
+            onSkipSetup={onboarding.handleSkipSetup}
+            onSelectApiSetupMethod={onboarding.handleSelectApiSetupMethod}
+            onSubmitCredential={onboarding.handleSubmitCredential}
+            onSubmitLocalModel={onboarding.handleSubmitLocalModel}
+            onStartOAuth={onboarding.handleStartOAuth}
+            onFinish={onboarding.handleFinish}
+            isWaitingForCode={onboarding.isWaitingForCode}
+            onSubmitAuthCode={onboarding.handleSubmitAuthCode}
+            onCancelOAuth={onboarding.handleCancelOAuth}
+            copilotDeviceCode={onboarding.copilotDeviceCode}
+            onBrowseGitBash={onboarding.handleBrowseGitBash}
+            onUseGitBashPath={onboarding.handleUseGitBashPath}
+            onRecheckGitBash={onboarding.handleRecheckGitBash}
+            onClearError={onboarding.handleClearError}
+          />
+        </ModalProvider>
+      </DismissibleLayerProvider>
+    )
+  }
+
+  // Workspace picker — thin client with no workspace selected
+  if (appState === 'workspace-picker') {
+    return (
+      <DismissibleLayerProvider>
+        <ModalProvider>
+          <WindowCloseHandler />
+          <WorkspacePicker
+            onSelectWorkspace={async (id) => {
+              await window.electronAPI.switchWorkspace(id)
+              setWindowWorkspaceId(id)
+              setAppState('ready')
+            }}
+          />
+        </ModalProvider>
+      </DismissibleLayerProvider>
+    )
+  }
+
+  // Show splash until exit animation completes
+  const showSplash = !splashHidden
+
+  // Ready state - main app with splash overlay during data loading
+  return (
+    <PlatformProvider actions={platformActions}>
+    <ShikiThemeProvider shikiTheme={shikiTheme}>
+      <ActionRegistryProvider>
+      <FocusProvider>
+        <DismissibleLayerProvider>
+        <ModalProvider>
+        <TooltipProvider delayDuration={0}>
+        <NavigationProvider
+          workspaceId={windowWorkspaceId}
+          workspaceSlug={windowWorkspaceSlug}
+          onSwitchWorkspaceBySlug={handleSwitchWorkspaceBySlug}
+          onCreateSession={handleCreateSession}
+          onInputChange={handleInputChange}
+          getDraft={getDraft}
+          onAutoDeleteEmptySession={handleAutoDeleteEmptySession}
+          isReady={appState === 'ready'}
+          isSessionsReady={sessionsLoaded}
+          remoteWorkspaceId={windowRemoteWorkspaceId}
+        >
+          {/* Handle window close requests (X button, Cmd+W) - close modal first if open */}
+          <WindowCloseHandler />
+
+          {/* Splash screen overlay - fades out when fully ready */}
+          {showSplash && (
+            <SplashScreen
+              isExiting={splashExiting}
+              onExitComplete={handleSplashExitComplete}
+            />
+          )}
+
+          {/* Main UI - always rendered, splash fades away to reveal it */}
+          <div
+            className="h-full flex flex-col text-foreground"
+            style={{ paddingTop: 'var(--topbar-height)' }}
+          >
+            {showTransportConnectionBanner && connectionState && (
+              <TransportConnectionBanner
+                state={connectionState}
+                onRetry={handleReconnectTransport}
+              />
+            )}
+            <div className="flex-1 min-h-0">
+              {sessionLoadError ? (
+                <SessionLoadErrorScreen
+                  message={sessionLoadError}
+                  onRetry={() => { void loadSessionsFromServer() }}
+                />
+              ) : (
+                <AppShell
+                  contextValue={appShellContextValue}
+                  defaultLayout={[20, 32, 48]}
+                  menuNewChatTrigger={menuNewChatTrigger}
+                  isFocusedMode={isFocusedMode}
+                />
+              )}
+            </div>
+            <ResetConfirmationDialog
+              open={showResetDialog}
+              onConfirm={executeReset}
+              onCancel={() => setShowResetDialog(false)}
+            />
+          </div>
+
+          {/* File preview overlay — rendered by the link interceptor when a previewable file is clicked */}
+          {linkInterceptor.previewState && (
+            <FilePreviewRenderer
+              state={linkInterceptor.previewState}
+              onClose={linkInterceptor.closePreview}
+              loadDataUrl={linkInterceptor.readFileDataUrl}
+              loadPdfData={linkInterceptor.readFileBinary}
+              isDark={isDark}
+            />
+          )}
+        </NavigationProvider>
+        </TooltipProvider>
+        </ModalProvider>
+        </DismissibleLayerProvider>
+      </FocusProvider>
+      </ActionRegistryProvider>
+    </ShikiThemeProvider>
+    </PlatformProvider>
+  )
+}
+
+/**
+ * Component that handles window close requests.
+ * Must be inside ModalProvider to access the modal registry.
+ */
+function WindowCloseHandler() {
+  useWindowCloseHandler()
+  return null
+}
+
+/**
+ * FilePreviewRenderer - Routes file preview state to the correct overlay component.
+ *
+ * Handles all preview types from the link interceptor:
+ * - image → ImagePreviewOverlay (binary, loaded via data URL)
+ * - pdf → PDFPreviewOverlay (binary, embedded via Chromium viewer)
+ * - code/text → CodePreviewOverlay (syntax highlighted)
+ * - markdown → DocumentFormattedMarkdownOverlay
+ * - json → JSONPreviewOverlay
+ *
+ * File path badges with "Open" / "Reveal in {file manager}" menus are provided
+ * automatically by PlatformContext — no per-overlay callback props needed.
+ */
+function FilePreviewRenderer({
+  state,
+  onClose,
+  loadDataUrl,
+  loadPdfData,
+  isDark,
+}: {
+  state: FilePreviewState
+  onClose: () => void
+  loadDataUrl: (path: string) => Promise<string>
+  loadPdfData: (path: string) => Promise<Uint8Array>
+  isDark: boolean
+}) {
+  const theme = isDark ? 'dark' : 'light' as const
+
+  switch (state.type) {
+    case 'image':
+      return (
+        <ImagePreviewOverlay
+          isOpen
+          onClose={onClose}
+          filePath={state.filePath}
+          loadDataUrl={loadDataUrl}
+          theme={theme}
+        />
+      )
+
+    case 'pdf':
+      return (
+        <PDFPreviewOverlay
+          isOpen
+          onClose={onClose}
+          filePath={state.filePath}
+          loadPdfData={loadPdfData}
+          theme={theme}
+        />
+      )
+
+    case 'code':
+    case 'text':
+      return (
+        <CodePreviewOverlay
+          isOpen
+          onClose={onClose}
+          filePath={state.filePath}
+          content={state.content ?? ''}
+          language={state.type === 'code' ? state.language : 'plaintext'}
+          mode="read"
+          theme={theme}
+          error={state.error}
+        />
+      )
+
+    case 'markdown': {
+      // Show PLAN header for .md files in plans folder (handles both absolute and relative paths)
+      const isPlanFile =
+        (state.filePath.includes('/plans/') || state.filePath.startsWith('plans/')) &&
+        state.filePath.endsWith('.md')
+      return (
+        <DocumentFormattedMarkdownOverlay
+          isOpen
+          onClose={onClose}
+          content={state.content ?? ''}
+          filePath={state.filePath}
+          variant={isPlanFile ? 'plan' : 'response'}
+        />
+      )
+    }
+
+    case 'json': {
+      // JSONPreviewOverlay expects parsed data, not a raw string.
+      // @uiw/react-json-view crashes on null value, so guard against it.
+      let parsedData: unknown = null
+      try {
+        if (state.content) parsedData = JSON.parse(state.content)
+      } catch {
+        // If parsing fails, fall back to showing as code
+        return (
+          <CodePreviewOverlay
+            isOpen
+            onClose={onClose}
+            filePath={state.filePath}
+            content={state.content ?? ''}
+            language="json"
+            mode="read"
+            theme={theme}
+            error={state.error}
+          />
+        )
+      }
+      // If read failed and content is empty, show raw code overlay with the read error.
+      if ((!state.content || !state.content.trim()) && state.error) {
+        return (
+          <CodePreviewOverlay
+            isOpen
+            onClose={onClose}
+            filePath={state.filePath}
+            content={state.content ?? ''}
+            language="json"
+            mode="read"
+            theme={theme}
+            error={state.error}
+          />
+        )
+      }
+      return (
+        <JSONPreviewOverlay
+          isOpen
+          onClose={onClose}
+          filePath={state.filePath}
+          title={state.filePath.split('/').pop() ?? 'JSON'}
+          data={parsedData}
+          theme={theme}
+          error={state.error}
+        />
+      )
+    }
+
+    default:
+      return null
+  }
 }
