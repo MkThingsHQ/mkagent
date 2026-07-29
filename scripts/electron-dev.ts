@@ -189,6 +189,18 @@ function getElectronEnv(): Record<string, string> {
   };
 }
 
+function getElectronCommand(): string[] {
+  const configDir = process.env.MKAGENT_CONFIG_DIR;
+  const userDataArg = process.env.MKAGENT_INSTANCE_NUMBER && configDir
+    ? [`--user-data-dir=${join(configDir, "electron-user-data")}`]
+    : [];
+  const remoteDebuggingArg = process.env.MKAGENT_REMOTE_DEBUGGING_PORT
+    ? [`--remote-debugging-port=${process.env.MKAGENT_REMOTE_DEBUGGING_PORT}`]
+    : [];
+
+  return [ELECTRON_BIN, ...userDataArg, ...remoteDebuggingArg, "apps/electron"];
+}
+
 const MAIN_BUNDLE_EXTERNALS = ["electron", "@aws-sdk/client-s3"];
 
 // Run a one-shot esbuild using the JavaScript API
@@ -483,7 +495,7 @@ async function main(): Promise<void> {
   console.log("🚀 Starting Electron...\n");
 
   const electronProc = spawn({
-    cmd: [ELECTRON_BIN, "apps/electron"],
+    cmd: getElectronCommand(),
     cwd: ROOT_DIR,
     stdin: "ignore",
     stdout: "inherit",

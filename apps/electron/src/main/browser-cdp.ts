@@ -487,11 +487,11 @@ export class BrowserCDP {
 
     await this.send('Runtime.evaluate', {
       expression: `(() => {
-        const existing = document.getElementById('__craft_agent_screenshot_overlay__');
+        const existing = document.getElementById('__mkagent_screenshot_overlay__');
         if (existing) existing.remove();
 
         const root = document.createElement('div');
-        root.id = '__craft_agent_screenshot_overlay__';
+        root.id = '__mkagent_screenshot_overlay__';
         root.style.position = 'fixed';
         root.style.inset = '0';
         root.style.pointerEvents = 'none';
@@ -564,7 +564,7 @@ export class BrowserCDP {
   async clearTemporaryOverlay(): Promise<void> {
     await this.send('Runtime.evaluate', {
       expression: `(() => {
-        const existing = document.getElementById('__craft_agent_screenshot_overlay__');
+        const existing = document.getElementById('__mkagent_screenshot_overlay__');
         if (existing) existing.remove();
       })()`,
     })

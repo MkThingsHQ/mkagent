@@ -1,24 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import {
   Archive,
-  Box,
-  CheckCircle2,
-  ChevronDown,
-  CircleHelp,
   Flag,
-  FolderKanban,
-  MessageSquareText,
+  Inbox,
   MoreHorizontal,
-  Palette,
-  PanelLeft,
   Plus,
   Search,
   Settings,
-  ShieldCheck,
-  Sparkles,
   Upload,
-  UserRound,
-  Wifi,
   Zap,
 } from 'lucide-react'
 import type { AnnotationV1, StoredSession, Workspace } from '@mkagent/core/types'
@@ -26,27 +15,35 @@ import type { LlmConnectionWithStatus, NetworkProxySettings } from '@mkagent/sha
 import { i18n } from '@mkagent/shared/i18n'
 import type { LoadedSkill } from '@mkagent/shared/skills'
 import type { DeepLinkNavigation, FileAttachment, PermissionRequest, Session, SessionEvent, SkillFile, WorkspaceSettings } from '@mkagent/shared/protocol'
-import { Markdown, SessionViewer } from '@mkagent/ui'
+import { Markdown, SessionViewer, TooltipProvider } from '@mkagent/ui'
 import { useTranslation } from 'react-i18next'
 import { Button } from './components/ui/button'
 import { SettingsCard as CraftSettingsCard, SettingsCardContent } from './components/settings/SettingsCard'
+import { SettingsInput } from './components/settings/SettingsInput'
+import { SettingsRow } from './components/settings/SettingsRow'
+import { SettingsSection } from './components/settings/SettingsSection'
+import { SettingsSelect, SettingsSelectRow } from './components/settings/SettingsSelect'
+import { SettingsToggle } from './components/settings/SettingsToggle'
+import { HeaderIconButton } from './components/ui/HeaderIconButton'
+import { EntityRow } from './components/ui/entity-row'
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  StyledDropdownMenuContent,
+  StyledDropdownMenuItem,
+  StyledDropdownMenuSeparator,
+} from './components/ui/styled-dropdown'
+import { LeftSidebar, type SidebarItem } from './components/app-shell/LeftSidebar'
+import { PanelHeader } from './components/app-shell/PanelHeader'
+import { TopBar } from './components/app-shell/TopBar'
+import SettingsNavigator from './pages/settings/SettingsNavigator'
 import mkagentIcon from './assets/mkagent_app_icon.png'
 
 type Section = 'sessions' | 'skills' | 'settings'
-type SettingsPage = 'connections' | 'permissions' | 'proxy' | 'workspaces' | 'appearance' | 'language' | 'updates'
+type SettingsPage = 'app' | 'ai' | 'appearance' | 'input' | 'workspace' | 'permissions' | 'shortcuts' | 'preferences'
 type SessionFilter = 'all' | 'unread' | 'flagged' | 'running' | 'archived'
 
-const SETTINGS_PAGES: SettingsPage[] = ['connections', 'permissions', 'proxy', 'workspaces', 'appearance', 'language', 'updates']
-
-const SETTINGS_META: Record<SettingsPage, { titleKey: string; descriptionKey: string; icon: typeof Settings }> = {
-  connections: { titleKey: 'settings.ai.title', descriptionKey: 'settings.ai.description', icon: Sparkles },
-  permissions: { titleKey: 'settings.permissions.title', descriptionKey: 'settings.permissions.description', icon: ShieldCheck },
-  proxy: { titleKey: 'settings.app.title', descriptionKey: 'settings.app.description', icon: Wifi },
-  workspaces: { titleKey: 'settings.workspace.title', descriptionKey: 'settings.workspace.description', icon: FolderKanban },
-  appearance: { titleKey: 'settings.appearance.title', descriptionKey: 'settings.appearance.description', icon: Palette },
-  language: { titleKey: 'settings.preferences.title', descriptionKey: 'settings.preferences.description', icon: UserRound },
-  updates: { titleKey: 'settings.about.title', descriptionKey: 'settings.about.checkForUpdates', icon: Zap },
-}
+const SETTINGS_PAGES: SettingsPage[] = ['app', 'ai', 'appearance', 'input', 'workspace', 'permissions', 'shortcuts', 'preferences']
 
 function cx(...values: Array<string | false | null | undefined>) {
   return values.filter(Boolean).join(' ')
@@ -58,7 +55,7 @@ function formatTime(value: number) {
 
 function AppButton(props: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const primary = props.className?.split(' ').includes('primary')
-  return <Button {...props} variant={primary ? 'default' : 'outline'} size="sm" className={cx('mk-button', props.className)} />
+  return <Button {...props} variant={primary ? 'default' : 'outline'} size="sm" className={props.className} />
 }
 
 function ChatPanel({ session, workspaceId, onChanged, onDeleted, onBranched }: {
@@ -68,6 +65,7 @@ function ChatPanel({ session, workspaceId, onChanged, onDeleted, onBranched }: {
   onDeleted: () => void
   onBranched: (messageId: string, newPanel?: boolean) => void
 }) {
+  const { t } = useTranslation()
   const [draft, setDraft] = useState('')
   const [attachments, setAttachments] = useState<FileAttachment[]>([])
   const [permission, setPermission] = useState<PermissionRequest | null>(null)
@@ -146,16 +144,17 @@ function ChatPanel({ session, workspaceId, onChanged, onDeleted, onBranched }: {
   const modelOptions = (selectedConnection?.models ?? []).map(model => typeof model === 'string' ? { id: model, name: model } : model)
 
   const footer = (
-    <div className="mk-composer-wrap">
+    <div className="px-4 pb-4 pt-2">
       {permission && (
-        <div className="mk-permission">
-          <div><strong>{permission.toolName}</strong><span>{permission.description ?? permission.command}</span></div>
-          <div className="mk-row"><AppButton onClick={() => respond(false)}>Deny</AppButton><AppButton onClick={() => respond(true)}>Allow</AppButton><AppButton onClick={() => respond(true, true)}>Always allow</AppButton></div>
+        <div className="mb-2 rounded-[12px] border border-info/20 bg-info/5 p-3 text-sm">
+          <div className="flex flex-col gap-1"><strong>{permission.toolName}</strong><span className="text-muted-foreground">{permission.description ?? permission.command}</span></div>
+          <div className="flex items-center gap-2"><AppButton onClick={() => respond(false)}>Deny</AppButton><AppButton onClick={() => respond(true)}>Allow</AppButton><AppButton onClick={() => respond(true, true)}>Always allow</AppButton></div>
         </div>
       )}
-      {attachments.length > 0 && <div className="mk-chips">{attachments.map(item => <span key={item.path}>{item.name}</span>)}</div>}
-      <div className="mk-composer">
+      <div className="overflow-hidden rounded-[16px] bg-background shadow-middle">
+        {attachments.length > 0 && <div className="flex flex-wrap gap-1 px-3 pt-3">{attachments.map(item => <span className="rounded-[6px] bg-foreground/5 px-2 py-1 text-xs" key={item.path}>{item.name}</span>)}</div>}
         <textarea
+          className="min-h-[88px] w-full resize-none bg-transparent px-5 pb-3 pt-4 text-[14px] outline-none placeholder:text-muted-foreground/70"
           value={draft}
           onChange={event => setDraft(event.target.value)}
           onKeyDown={event => {
@@ -164,48 +163,52 @@ function ChatPanel({ session, workspaceId, onChanged, onDeleted, onBranched }: {
               void send()
             }
           }}
-          placeholder="Ask MkAgent…"
+          placeholder={t('chatInput.placeholder.newLine')}
         />
-        <div className="mk-row mk-composer-actions">
-          <AppButton onClick={addAttachment}>Attach</AppButton>
+        <div className="flex items-center gap-1 border-t border-border/50 px-2 py-2">
+          <button className="input-toolbar-btn inline-flex h-7 items-center gap-1 rounded-[6px] px-1.5 text-[13px] hover:bg-foreground/5" type="button" onClick={addAttachment}>{t('chat.attachFiles')}</button>
+          <select className="input-toolbar-btn h-7 min-w-0 max-w-[150px] rounded-[6px] bg-transparent px-1.5 text-[13px] hover:bg-foreground/5" value={session.permissionMode ?? 'safe'} onChange={event => window.electronAPI.sessionCommand(session.id, { type: 'setPermissionMode', mode: event.target.value as 'safe' | 'ask' | 'allow-all' }).then(onChanged)}>
+            <option value="safe">Safe</option><option value="ask">Ask</option><option value="allow-all">Allow all</option>
+          </select>
+          <div className="flex-1" />
+          <select className="input-toolbar-btn h-7 min-w-0 max-w-[170px] rounded-[6px] bg-transparent px-1.5 text-[13px] hover:bg-foreground/5" value={session.llmConnection ?? ''} onChange={event => window.electronAPI.sessionCommand(session.id, { type: 'setConnection', connectionSlug: event.target.value }).then(onChanged)}>
+            <option value="">Default connection</option>
+            {connections.map(connection => <option key={connection.slug} value={connection.slug}>{connection.name}</option>)}
+          </select>
+          <select className="input-toolbar-btn h-7 min-w-0 max-w-[170px] rounded-[6px] bg-transparent px-1.5 text-[13px] hover:bg-foreground/5" value={session.model ?? ''} onChange={event => window.electronAPI.setSessionModel(session.id, workspaceId, event.target.value || null, selectedConnection?.slug).then(onChanged)}>
+            <option value="">Default model</option>
+            {modelOptions.map(model => <option key={model.id} value={model.id}>{model.name || model.id}</option>)}
+          </select>
+          <select className="input-toolbar-btn h-7 rounded-[6px] bg-transparent px-1.5 text-[13px] hover:bg-foreground/5" value={session.thinkingLevel ?? 'medium'} onChange={event => window.electronAPI.sessionCommand(session.id, { type: 'setThinkingLevel', level: event.target.value as 'off' | 'low' | 'medium' | 'high' | 'xhigh' | 'max' }).then(onChanged)}>
+            <option value="off">Off</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="xhigh">Extra high</option><option value="max">Maximum</option>
+          </select>
           {session.isProcessing
-            ? <AppButton onClick={() => window.electronAPI.cancelProcessing(session.id).then(onChanged)}>Stop</AppButton>
-            : <AppButton className="primary" onClick={send}>Send</AppButton>}
+            ? <Button className="h-8 w-8 rounded-full p-0" type="button" variant="secondary" onClick={() => window.electronAPI.cancelProcessing(session.id).then(onChanged)}>■</Button>
+            : <Button className="h-8 w-8 rounded-full p-0" type="button" disabled={!draft.trim()} onClick={send}>↑</Button>}
         </div>
       </div>
     </div>
   )
 
   const header = (
-    <div className="mk-chat-header">
-      <div><strong>{session.name || 'New session'}</strong><span>{session.currentStatus?.message ?? (session.isProcessing ? 'Processing' : 'Idle')}</span></div>
-      <div className="mk-row mk-chat-actions">
-        <select
-          value={session.llmConnection ?? ''}
-          onChange={event => window.electronAPI.sessionCommand(session.id, { type: 'setConnection', connectionSlug: event.target.value }).then(onChanged)}
-        >
-          <option value="">Default connection</option>
-          {connections.map(connection => <option key={connection.slug} value={connection.slug}>{connection.name}</option>)}
-        </select>
-        <select value={session.model ?? ''} onChange={event => window.electronAPI.setSessionModel(session.id, workspaceId, event.target.value || null, selectedConnection?.slug).then(onChanged)}>
-          <option value="">Default model</option>
-          {modelOptions.map(model => <option key={model.id} value={model.id}>{model.name || model.id}</option>)}
-        </select>
-        <select value={session.permissionMode ?? 'safe'} onChange={event => window.electronAPI.sessionCommand(session.id, { type: 'setPermissionMode', mode: event.target.value as 'safe' | 'ask' | 'allow-all' }).then(onChanged)}>
-          <option value="safe">Safe</option><option value="ask">Ask</option><option value="allow-all">Allow all</option>
-        </select>
-        <select value={session.thinkingLevel ?? 'medium'} onChange={event => window.electronAPI.sessionCommand(session.id, { type: 'setThinkingLevel', level: event.target.value as 'off' | 'low' | 'medium' | 'high' | 'xhigh' | 'max' }).then(onChanged)}>
-          <option value="off">Thinking off</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="xhigh">Extra high</option><option value="max">Maximum</option>
-        </select>
-        <AppButton title="Open Browser" onClick={() => window.electronAPI.browserPane.create(session.id)}>Browser</AppButton>
-        <AppButton title="Flag" onClick={() => window.electronAPI.sessionCommand(session.id, { type: session.isFlagged ? 'unflag' : 'flag' }).then(onChanged)}>{session.isFlagged ? 'Unflag' : 'Flag'}</AppButton>
-        <AppButton title="Archive" onClick={() => window.electronAPI.sessionCommand(session.id, { type: session.isArchived ? 'unarchive' : 'archive' }).then(onChanged)}>{session.isArchived ? 'Restore' : 'Archive'}</AppButton>
-        <AppButton title="Open in new window" onClick={() => window.electronAPI.openSessionInNewWindow(workspaceId, session.id)}>Window</AppButton>
-        <AppButton title="Export" onClick={exportCurrentSession}>Export</AppButton>
-        <AppButton title="Rename" onClick={() => { const name = window.prompt('Session name', session.name ?? ''); if (name?.trim()) void window.electronAPI.sessionCommand(session.id, { type: 'rename', name: name.trim() }).then(onChanged) }}>Rename</AppButton>
-        <AppButton title="Delete" onClick={() => { if (window.confirm('Delete this session?')) void window.electronAPI.deleteSession(session.id).then(onDeleted) }}>Delete</AppButton>
-      </div>
-    </div>
+    <PanelHeader
+      title={session.name || t('session.newSession')}
+      actions={<div className="flex items-center gap-1">
+        <HeaderIconButton icon={<Zap className="h-4 w-4" />} tooltip={t('browser.newWindow')} onClick={() => void window.electronAPI.browserPane.create(session.id)} />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild><HeaderIconButton icon={<MoreHorizontal className="h-4 w-4" />} tooltip={t('common.more')} /></DropdownMenuTrigger>
+          <StyledDropdownMenuContent align="end">
+            <StyledDropdownMenuItem onClick={() => void window.electronAPI.sessionCommand(session.id, { type: session.isFlagged ? 'unflag' : 'flag' }).then(onChanged)}>{session.isFlagged ? 'Unflag' : 'Flag'}</StyledDropdownMenuItem>
+            <StyledDropdownMenuItem onClick={() => void window.electronAPI.sessionCommand(session.id, { type: session.isArchived ? 'unarchive' : 'archive' }).then(onChanged)}>{session.isArchived ? 'Restore' : 'Archive'}</StyledDropdownMenuItem>
+            <StyledDropdownMenuItem onClick={() => void window.electronAPI.openSessionInNewWindow(workspaceId, session.id)}>Open in new window</StyledDropdownMenuItem>
+            <StyledDropdownMenuItem onClick={() => void exportCurrentSession()}>Export</StyledDropdownMenuItem>
+            <StyledDropdownMenuItem onClick={() => { const name = window.prompt('Session name', session.name ?? ''); if (name?.trim()) void window.electronAPI.sessionCommand(session.id, { type: 'rename', name: name.trim() }).then(onChanged) }}>Rename</StyledDropdownMenuItem>
+            <StyledDropdownMenuSeparator />
+            <StyledDropdownMenuItem variant="destructive" onClick={() => { if (window.confirm('Delete this session?')) void window.electronAPI.deleteSession(session.id).then(onDeleted) }}>Delete</StyledDropdownMenuItem>
+          </StyledDropdownMenuContent>
+        </DropdownMenu>
+      </div>}
+    />
   )
 
   return (
@@ -242,10 +245,10 @@ function SkillsPanel({ skill, files, workspaceId, onChanged, onAgentEdit }: {
 }) {
   if (!skill) return <EmptyState title="Select a Skill" detail="Skills are discovered globally, per workspace, and from the current working directory." />
   return (
-    <div className="mk-document">
-      <div className="mk-document-header"><div><strong>{skill.metadata.name || skill.slug}</strong><span>{skill.source}</span></div><div className="mk-row"><AppButton onClick={() => onAgentEdit(skill)}>Edit with agent</AppButton><AppButton onClick={() => window.electronAPI.openSkillInEditor(workspaceId, skill.slug)}>Editor</AppButton><AppButton onClick={() => window.electronAPI.openSkillInFinder(workspaceId, skill.slug)}>Folder</AppButton><AppButton onClick={() => { if (window.confirm(`Delete ${skill.slug}?`)) void window.electronAPI.deleteSkill(workspaceId, skill.slug).then(onChanged) }}>Delete</AppButton></div></div>
+    <div className="flex h-full flex-col gap-6 overflow-y-auto px-[clamp(28px,7vw,88px)] py-12">
+      <div className="flex items-center justify-between gap-4 border-b border-border pb-4"><div className="flex min-w-0 flex-col gap-1"><strong>{skill.metadata.name || skill.slug}</strong><span className="text-xs text-muted-foreground">{skill.source}</span></div><div className="flex items-center gap-2"><AppButton onClick={() => onAgentEdit(skill)}>Edit with agent</AppButton><AppButton onClick={() => window.electronAPI.openSkillInEditor(workspaceId, skill.slug)}>Editor</AppButton><AppButton onClick={() => window.electronAPI.openSkillInFinder(workspaceId, skill.slug)}>Folder</AppButton><AppButton onClick={() => { if (window.confirm(`Delete ${skill.slug}?`)) void window.electronAPI.deleteSkill(workspaceId, skill.slug).then(onChanged) }}>Delete</AppButton></div></div>
       <Markdown>{skill.content}</Markdown>
-      {files.length > 0 && <div className="mk-files"><strong>Files</strong>{files.map(file => <span key={file.name}>{file.name}</span>)}</div>}
+      {files.length > 0 && <div className="flex flex-wrap gap-2"><strong className="w-full">Files</strong>{files.map(file => <span className="rounded-[7px] bg-foreground/5 px-2 py-1 text-xs" key={file.name}>{file.name}</span>)}</div>}
     </div>
   )
 }
@@ -261,12 +264,12 @@ function SettingsPanel({ page, workspaces, workspaceId, onWorkspacesChanged }: {
   const reloadConnections = useCallback(() => window.electronAPI.listLlmConnectionsWithStatus().then(setConnections), [])
 
   useEffect(() => {
-    if (page === 'connections') void reloadConnections()
-    if (page === 'proxy') void window.electronAPI.getNetworkProxySettings().then(setProxy)
+    if (page === 'ai') void reloadConnections()
+    if (page === 'app') void window.electronAPI.getNetworkProxySettings().then(settings => setProxy(settings ?? { enabled: false }))
     if (page === 'permissions' && workspaceId) void window.electronAPI.getWorkspaceSettings(workspaceId).then(settings => setWorkspaceSettings(settings ?? {}))
   }, [page, reloadConnections, workspaceId])
 
-  if (page === 'connections') {
+  if (page === 'ai') {
     const save = async () => {
       const custom = Boolean(form.baseUrl)
       const slug = (form.name || form.provider).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '')
@@ -283,65 +286,96 @@ function SettingsPanel({ page, workspaces, workspaceId, onWorkspacesChanged }: {
       if (result.success) void reloadConnections()
     }
     return <SettingsCard title={t('settings.ai.title')} detail={t('settings.ai.connectionsDesc')}>
-      <div className="mk-stack">{connections.map(connection => <div className="mk-setting-row" key={connection.slug}><div><strong>{connection.name}</strong><span>{connection.defaultModel ?? connection.piAuthProvider ?? connection.baseUrl}</span></div><div className="mk-row"><span className={connection.isAuthenticated || connection.authType === 'none' ? 'mk-ok' : 'mk-warn'}>{connection.isDefault ? 'Default' : connection.isAuthenticated ? 'Ready' : 'Needs key'}</span><AppButton onClick={() => window.electronAPI.setDefaultLlmConnection(connection.slug).then(reloadConnections)}>Use</AppButton><AppButton onClick={() => window.electronAPI.deleteLlmConnection(connection.slug).then(reloadConnections)}>Delete</AppButton></div></div>)}</div>
-      <div className="mk-form-grid">
-        <input placeholder="Connection name" value={form.name} onChange={event => setForm({ ...form, name: event.target.value })} />
-        <input placeholder="Provider preset (openai, google…)" value={form.provider} onChange={event => setForm({ ...form, provider: event.target.value })} />
-        <input type="password" placeholder="API key (optional for Ollama)" value={form.apiKey} onChange={event => setForm({ ...form, apiKey: event.target.value })} />
-        <input placeholder="Base URL (e.g. http://localhost:11434/v1)" value={form.baseUrl} onChange={event => setForm({ ...form, baseUrl: event.target.value })} />
-        <input placeholder="Default model" value={form.model} onChange={event => setForm({ ...form, model: event.target.value })} />
-        <select value={form.protocol} onChange={event => setForm({ ...form, protocol: event.target.value as typeof form.protocol })}><option value="openai-completions">OpenAI Completions</option><option value="anthropic-messages">Anthropic Messages</option></select>
-      </div>
-      <div className="mk-row"><AppButton className="primary" onClick={save}>Save connection</AppButton><span>{message}</span></div>
+      <SettingsSection title={t('settings.ai.connections')} description={t('settings.ai.connectionsDesc')}>
+        <CraftSettingsCard>
+          {connections.map(connection => <SettingsRow
+            key={connection.slug}
+            label={connection.name}
+            description={connection.defaultModel ?? connection.piAuthProvider ?? connection.baseUrl}
+          >
+            <span className="text-xs text-muted-foreground">{connection.isDefault ? 'Default' : connection.isAuthenticated ? 'Ready' : 'Needs key'}</span>
+            <Button size="sm" variant="ghost" onClick={() => void window.electronAPI.setDefaultLlmConnection(connection.slug).then(reloadConnections)}>Use</Button>
+            <Button size="sm" variant="ghost" onClick={() => void window.electronAPI.deleteLlmConnection(connection.slug).then(reloadConnections)}>Delete</Button>
+          </SettingsRow>)}
+        </CraftSettingsCard>
+      </SettingsSection>
+      <SettingsSection title="Add connection">
+        <CraftSettingsCard divided={false}>
+          <SettingsCardContent className="grid gap-4">
+            <div className="grid grid-cols-2 gap-3">
+              <SettingsInput label="Connection name" value={form.name} onChange={name => setForm({ ...form, name })} />
+              <SettingsInput label="Provider preset" value={form.provider} onChange={provider => setForm({ ...form, provider })} placeholder="openai, google, ollama…" />
+              <SettingsInput label="API key" type="password" value={form.apiKey} onChange={apiKey => setForm({ ...form, apiKey })} />
+              <SettingsInput label="Base URL" type="url" value={form.baseUrl} onChange={baseUrl => setForm({ ...form, baseUrl })} placeholder="http://localhost:11434/v1" />
+              <SettingsInput label="Default model" value={form.model} onChange={model => setForm({ ...form, model })} />
+              <SettingsSelect label="Protocol" value={form.protocol} onValueChange={protocol => setForm({ ...form, protocol: protocol as typeof form.protocol })} options={[{ value: 'openai-completions', label: 'OpenAI Completions' }, { value: 'anthropic-messages', label: 'Anthropic Messages' }]} />
+            </div>
+            <div className="flex items-center gap-3"><Button onClick={() => void save()}>Save connection</Button><span className="text-sm text-muted-foreground">{message}</span></div>
+          </SettingsCardContent>
+        </CraftSettingsCard>
+      </SettingsSection>
     </SettingsCard>
   }
 
-  if (page === 'proxy') return <SettingsCard title={t('settings.network.title')} detail={t('settings.app.description')}>
-    <label className="mk-row"><input type="checkbox" checked={proxy.enabled} onChange={event => setProxy({ ...proxy, enabled: event.target.checked })} /> Custom proxy</label>
-    {proxy.enabled && <><input placeholder="HTTP proxy" value={proxy.httpProxy ?? ''} onChange={event => setProxy({ ...proxy, httpProxy: event.target.value })} /><input placeholder="HTTPS proxy" value={proxy.httpsProxy ?? ''} onChange={event => setProxy({ ...proxy, httpsProxy: event.target.value })} /><input placeholder="No proxy (comma separated)" value={proxy.noProxy ?? ''} onChange={event => setProxy({ ...proxy, noProxy: event.target.value })} /></>}
-    <AppButton className="primary" onClick={() => window.electronAPI.setNetworkProxySettings(proxy).then(() => setMessage('Saved.'))}>Save</AppButton><span>{message}</span>
+  if (page === 'app') return <SettingsCard title={t('settings.app.title')} detail={t('settings.app.description')}>
+    <SettingsSection title={t('settings.network.title')} description={t('settings.app.description')}>
+      <CraftSettingsCard>
+        <SettingsToggle label="Custom proxy" description="Use an HTTP(S) proxy for model and web requests." checked={proxy.enabled} onCheckedChange={enabled => setProxy({ ...proxy, enabled })} />
+        {proxy.enabled && <>
+          <SettingsInput label="HTTP proxy" value={proxy.httpProxy ?? ''} onChange={httpProxy => setProxy({ ...proxy, httpProxy })} inCard />
+          <SettingsInput label="HTTPS proxy" value={proxy.httpsProxy ?? ''} onChange={httpsProxy => setProxy({ ...proxy, httpsProxy })} inCard />
+          <SettingsInput label="No proxy" description="Comma-separated hosts" value={proxy.noProxy ?? ''} onChange={noProxy => setProxy({ ...proxy, noProxy })} inCard />
+        </>}
+      </CraftSettingsCard>
+    </SettingsSection>
+    <div className="flex items-center gap-3"><Button onClick={() => void window.electronAPI.setNetworkProxySettings(proxy).then(() => setMessage('Saved.'))}>Save</Button><span className="text-sm text-muted-foreground">{message}</span></div>
   </SettingsCard>
 
-  if (page === 'workspaces') return <SettingsCard title={t('settings.workspace.title')} detail={t('settings.workspace.description')}>
-    {workspaces.map(workspace => <div className="mk-setting-row" key={workspace.id}><div><strong>{workspace.name}</strong><span>{workspace.slug}</span></div><code>{workspace.rootPath}</code></div>)}
-    <div className="mk-row"><input placeholder="Workspace name" value={workspaceName} onChange={event => setWorkspaceName(event.target.value)} /><AppButton className="primary" onClick={async () => {
-      const folder = await window.electronAPI.openFolderDialog()
-      if (!folder || !workspaceName.trim()) return
-      await window.electronAPI.createWorkspace(folder, workspaceName.trim())
-      setWorkspaceName('')
-      onWorkspacesChanged()
-    }}>Create from folder</AppButton></div>
+  if (page === 'workspace') return <SettingsCard title={t('settings.workspace.title')} detail={t('settings.workspace.description')}>
+    <SettingsSection title="Workspaces">
+      <CraftSettingsCard>{workspaces.map(workspace => <SettingsRow key={workspace.id} label={workspace.name} description={workspace.rootPath}><code className="text-xs text-muted-foreground">{workspace.slug}</code></SettingsRow>)}</CraftSettingsCard>
+    </SettingsSection>
+    <SettingsSection title="Add workspace">
+      <CraftSettingsCard divided={false}><SettingsCardContent className="flex items-end gap-3"><SettingsInput className="flex-1" label="Workspace name" value={workspaceName} onChange={setWorkspaceName} /><Button onClick={async () => {
+        const folder = await window.electronAPI.openFolderDialog()
+        if (!folder || !workspaceName.trim()) return
+        await window.electronAPI.createWorkspace(folder, workspaceName.trim())
+        setWorkspaceName('')
+        onWorkspacesChanged()
+      }}>Create from folder</Button></SettingsCardContent></CraftSettingsCard>
+    </SettingsSection>
   </SettingsCard>
-  if (page === 'appearance') return <SettingsCard title={t('settings.appearance.title')} detail={t('settings.appearance.description')}><div className="mk-row">{['light', 'dark', 'system'].map(theme => <AppButton key={theme} onClick={() => { document.documentElement.classList.toggle('dark', theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)); void window.electronAPI.setColorTheme(theme) }}>{t(`settings.appearance.${theme}`)}</AppButton>)}</div></SettingsCard>
-  if (page === 'language') return <SettingsCard title={t('settings.appearance.language')} detail={t('settings.preferences.description')}><div className="mk-row"><AppButton onClick={() => i18n.changeLanguage('en')}>English</AppButton><AppButton onClick={() => i18n.changeLanguage('zh-Hans')}>简体中文</AppButton></div></SettingsCard>
-  if (page === 'updates') return <SettingsCard title={t('settings.about.title')} detail="open-fox/mkagent-public"><AppButton onClick={async () => { const info = await window.electronAPI.checkForUpdates(); setMessage(info.available ? `Version ${info.latestVersion} is available.` : `MkAgent ${info.currentVersion} is up to date.`) }}>{t('settings.about.checkForUpdates')}</AppButton><span>{message}</span></SettingsCard>
+  if (page === 'appearance') return <SettingsCard title={t('settings.appearance.title')} detail={t('settings.appearance.description')}><SettingsSection title="Theme"><CraftSettingsCard><SettingsSelectRow label="Color mode" value={document.documentElement.classList.contains('dark') ? 'dark' : 'light'} onValueChange={theme => { document.documentElement.classList.toggle('dark', theme === 'dark' || (theme === 'system' && matchMedia('(prefers-color-scheme: dark)').matches)); void window.electronAPI.setColorTheme(theme) }} options={['light', 'dark', 'system'].map(theme => ({ value: theme, label: t(`settings.appearance.${theme}`) }))} /></CraftSettingsCard></SettingsSection></SettingsCard>
+  if (page === 'preferences') return <SettingsCard title={t('settings.preferences.title')} detail={t('settings.preferences.description')}><SettingsSection title={t('settings.appearance.language')}><CraftSettingsCard><SettingsSelectRow label={t('settings.appearance.language')} value={i18n.language} onValueChange={language => void i18n.changeLanguage(language)} options={[{ value: 'en', label: 'English' }, { value: 'zh-Hans', label: '简体中文' }]} /></CraftSettingsCard></SettingsSection></SettingsCard>
+  if (page === 'input') return <SettingsCard title={t('settings.input.title')} detail={t('settings.input.description')}><p className="text-sm text-muted-foreground">{t('chatInput.placeholder.newLine')}</p></SettingsCard>
+  if (page === 'shortcuts') return <SettingsCard title={t('settings.shortcuts.title')} detail={t('settings.shortcuts.description')}><div className="grid grid-cols-[1fr_auto] gap-x-6 gap-y-3 text-sm"><span>{t('session.newSession')}</span><kbd className="rounded-md bg-foreground/5 px-2 py-1">⌘N</kbd><span>{t('sidebar.search')}</span><kbd className="rounded-md bg-foreground/5 px-2 py-1">⌘K</kbd></div></SettingsCard>
   return <SettingsCard title={t('settings.permissions.title')} detail={t('settings.permissions.description')}>
-    <label className="mk-stack"><span>Default permission mode</span><select value={workspaceSettings.permissionMode ?? 'safe'} onChange={async event => {
-      const permissionMode = event.target.value as NonNullable<WorkspaceSettings['permissionMode']>
+    <SettingsSection title="Workspace defaults"><CraftSettingsCard><SettingsSelectRow label="Default permission mode" description="Controls how MkAgent asks before using tools." value={workspaceSettings.permissionMode ?? 'safe'} onValueChange={async value => {
+      const permissionMode = value as NonNullable<WorkspaceSettings['permissionMode']>
       setWorkspaceSettings(current => ({ ...current, permissionMode }))
       await window.electronAPI.updateWorkspaceSetting(workspaceId, 'permissionMode', permissionMode)
-    }}><option value="safe">Safe</option><option value="ask">Ask</option><option value="allow-all">Allow all</option></select></label>
-    <p>Safe, ask, and allow-all modes use the shared command, path, Browser, and network policy.</p>
+    }} options={[{ value: 'safe', label: 'Safe' }, { value: 'ask', label: 'Ask' }, { value: 'allow-all', label: 'Allow all' }]} /></CraftSettingsCard></SettingsSection>
   </SettingsCard>
 }
 
 function SettingsCard({ title, detail, children }: { title: string; detail: string; children?: React.ReactNode }) {
-  return <div className="mk-settings-page">
-    <div className="mk-settings-title"><h1>{title}</h1><p>{detail}</p></div>
-    <CraftSettingsCard divided={false}>
-      <SettingsCardContent className="mk-stack">{children}</SettingsCardContent>
-    </CraftSettingsCard>
+  return <div className="h-full overflow-y-auto">
+    <PanelHeader title={title} />
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-8 pb-12 pt-6">
+      <div><h1 className="text-2xl font-semibold tracking-tight">{title}</h1><p className="mt-1 text-sm text-muted-foreground">{detail}</p></div>
+      {children}
+    </div>
   </div>
 }
 
 function EmptyState({ title, detail }: { title: string; detail: string }) {
-  return <div className="mk-empty"><img src={mkagentIcon} alt="" /><strong>{title}</strong><span>{detail}</span></div>
+  return <div className="flex h-full flex-col items-center justify-center gap-2 text-muted-foreground"><img className="h-14 w-14 rounded-[13px]" src={mkagentIcon} alt="" /><strong className="text-base text-foreground">{title}</strong><span>{detail}</span></div>
 }
 
 export default function App() {
   const { t } = useTranslation()
   const [section, setSection] = useState<Section>('sessions')
-  const [settingsPage, setSettingsPage] = useState<SettingsPage>('connections')
+  const [settingsPage, setSettingsPage] = useState<SettingsPage>('app')
   const [workspaces, setWorkspaces] = useState<Workspace[]>([])
   const [workspaceId, setWorkspaceId] = useState('')
   const [sessions, setSessions] = useState<Session[]>([])
@@ -352,7 +386,8 @@ export default function App() {
   const [skillFiles, setSkillFiles] = useState<SkillFile[]>([])
   const [query, setQuery] = useState('')
   const [sessionFilter, setSessionFilter] = useState<SessionFilter>('all')
-  const [panelWidths, setPanelWidths] = useState({ navigation: 188, list: 300 })
+  const [panelWidths, setPanelWidths] = useState({ navigation: 300, list: 420 })
+  const [sidebarVisible, setSidebarVisible] = useState(true)
   const [miniSession, setMiniSession] = useState<Session | null>(null)
   const refreshRef = useRef(0)
   const resizeRef = useRef<'navigation' | 'list' | null>(null)
@@ -396,9 +431,9 @@ export default function App() {
   useEffect(() => {
     const move = (event: PointerEvent) => {
       if (resizeRef.current === 'navigation') {
-        setPanelWidths(current => ({ ...current, navigation: Math.min(280, Math.max(148, event.clientX)) }))
+        setPanelWidths(current => ({ ...current, navigation: Math.min(360, Math.max(220, event.clientX)) }))
       } else if (resizeRef.current === 'list') {
-        setPanelWidths(current => ({ ...current, list: Math.min(520, Math.max(220, event.clientX - current.navigation)) }))
+        setPanelWidths(current => ({ ...current, list: Math.min(560, Math.max(300, event.clientX - current.navigation)) }))
       }
     }
     const stop = () => {
@@ -517,73 +552,109 @@ export default function App() {
     return matchesFilter && haystack.includes(query.toLowerCase())
   }), [query, sessionFilter, sessions])
 
-  const navItems: Array<{ id: Section; label: string; icon: typeof Settings }> = [
-    { id: 'sessions', label: t('sidebar.allSessions'), icon: MessageSquareText },
-    { id: 'skills', label: t('sidebar.skills'), icon: Sparkles },
-    { id: 'settings', label: t('sidebar.settings'), icon: Settings },
-  ]
   const sectionTitle = section === 'sessions' ? t('sidebar.allSessions') : section === 'skills' ? t('sidebar.skills') : t('sidebar.settings')
+  const sidebarLinks: SidebarItem[] = [
+    {
+      id: 'nav:allSessions',
+      title: t('sidebar.allSessions'),
+      label: String(sessions.filter(session => !session.hidden).length),
+      icon: Inbox,
+      variant: section === 'sessions' && sessionFilter === 'all' ? 'default' : 'ghost',
+      onClick: () => { setSection('sessions'); setSessionFilter('all') },
+      expandable: true,
+      expanded: true,
+      items: [
+        { id: 'nav:unread', title: t('sidebar.unread'), label: String(sessions.filter(session => session.hasUnread && !session.isArchived).length), icon: Inbox, variant: section === 'sessions' && sessionFilter === 'unread' ? 'default' : 'ghost', onClick: () => { setSection('sessions'); setSessionFilter('unread') } },
+        { id: 'nav:running', title: t('sidebar.running'), label: String(sessions.filter(session => session.isProcessing).length), icon: Zap, variant: section === 'sessions' && sessionFilter === 'running' ? 'default' : 'ghost', onClick: () => { setSection('sessions'); setSessionFilter('running') } },
+        { id: 'nav:flagged', title: t('sidebar.flagged'), label: String(sessions.filter(session => session.isFlagged && !session.isArchived).length), icon: Flag, variant: section === 'sessions' && sessionFilter === 'flagged' ? 'default' : 'ghost', onClick: () => { setSection('sessions'); setSessionFilter('flagged') } },
+        { id: 'nav:archived', title: t('sidebar.archived'), label: String(sessions.filter(session => session.isArchived).length), icon: Archive, variant: section === 'sessions' && sessionFilter === 'archived' ? 'default' : 'ghost', onClick: () => { setSection('sessions'); setSessionFilter('archived') } },
+      ],
+    },
+    { id: 'separator:primary', type: 'separator' },
+    { id: 'nav:skills', title: t('sidebar.skills'), label: String(skills.length), icon: Zap, variant: section === 'skills' ? 'default' : 'ghost', onClick: () => setSection('skills') },
+    { id: 'separator:settings', type: 'separator' },
+    { id: 'nav:settings', title: t('sidebar.settings'), icon: Settings, variant: section === 'settings' ? 'default' : 'ghost', onClick: () => setSection('settings') },
+  ]
 
-  return <div className="mk-app-frame">
-    <header className="mk-topbar">
-      <div className="mk-topbar-brand">
-        <img src={mkagentIcon} alt="MkAgent" />
-        <button className="mk-topbar-workspace">
-          <span>{workspaces.find(item => item.id === workspaceId)?.name ?? 'default'}</span>
-          <ChevronDown />
-        </button>
-      </div>
-      <div className="mk-topbar-actions">
-        <button title="Toggle sidebar"><PanelLeft /></button>
-        <button title="Help"><CircleHelp /></button>
-      </div>
-    </header>
-    <div className="mk-shell">
-      <aside className="mk-panel mk-nav" style={{ width: panelWidths.navigation }}>
-        <div className="mk-nav-content">
-          <button className="mk-new" onClick={newSession}><Plus /><span>{t('sidebar.newSession')}</span></button>
-          <nav>{navItems.map(item => {
-            const Icon = item.icon
-            return <button key={item.id} className={section === item.id ? 'active' : ''} onClick={() => setSection(item.id)}><Icon /><span>{item.label}</span>{item.id === 'sessions' && sessions.filter(value => value.hasUnread).length > 0 && <small>{sessions.filter(value => value.hasUnread).length}</small>}</button>
-          })}</nav>
-        </div>
-        <div className="mk-nav-footer">
-          <label>{t('settings.workspace.title')}</label>
-          <select value={workspaceId} onChange={async event => { setWorkspaceId(event.target.value); await window.electronAPI.switchWorkspace(event.target.value) }}>{workspaces.map(workspace => <option key={workspace.id} value={workspace.id}>{workspace.name}</option>)}</select>
-        </div>
-      </aside>
-      <div className="mk-resizer" onPointerDown={() => { resizeRef.current = 'navigation' }} />
-      <section className="mk-panel mk-list-pane" style={{ width: panelWidths.list }}>
-        <div className="mk-panel-header">
-          <strong>{sectionTitle}</strong>
-          <div className="mk-row">
-            {section === 'skills' && <button className="mk-icon-button" title="Create Skill with agent" onClick={() => startSkillMiniChat()}><Plus /></button>}
-            {section === 'sessions' && <label className="mk-icon-button mk-file-button" title="Import session"><Upload /><input type="file" accept="application/json,.json" onChange={event => { void importSessionFile(event.target.files?.[0]); event.target.value = '' }} /></label>}
-            <button className="mk-icon-button" title="More"><MoreHorizontal /></button>
+  return <TooltipProvider>
+    <div className="h-screen w-screen overflow-hidden bg-foreground/3 pt-[var(--topbar-height)] text-foreground">
+      <TopBar
+        workspaces={workspaces}
+        activeWorkspaceId={workspaceId || null}
+        onSelectWorkspace={async id => { setWorkspaceId(id); await window.electronAPI.switchWorkspace(id) }}
+        onNewChat={() => void newSession()}
+        onBack={() => {}}
+        onForward={() => {}}
+        canGoBack={false}
+        canGoForward={false}
+        onToggleSidebar={() => setSidebarVisible(value => !value)}
+        onAddBrowserPanel={() => { if (activeSessionId) void window.electronAPI.browserPane.create(activeSessionId) }}
+      />
+      <div className="flex h-full items-stretch gap-[6px] overflow-hidden pb-[6px] pr-[6px]">
+        {sidebarVisible && <aside className="h-full shrink-0 font-sans" style={{ width: panelWidths.navigation }}>
+          <div className="flex h-full flex-col select-none">
+            <div className="px-2 pb-2 shrink-0">
+              <Button variant="ghost" onClick={() => void newSession()} className="w-full justify-start gap-2 rounded-[6px] bg-background px-2 py-[7px] text-[13px] font-normal shadow-minimal">
+                <Plus className="h-3.5 w-3.5 shrink-0" />
+                {t('session.newSession')}
+              </Button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto pb-4"><LeftSidebar isCollapsed={false} links={sidebarLinks} /></div>
           </div>
-        </div>
-        {section === 'sessions' && <div className="mk-list-tools">
-          <label className="mk-search"><Search /><input placeholder={t('sidebar.search')} value={query} onChange={event => setQuery(event.target.value)} /></label>
-          <div className="mk-filters">{(['all', 'unread', 'flagged', 'running', 'archived'] as SessionFilter[]).map(filter => <button key={filter} className={sessionFilter === filter ? 'active' : ''} title={filter} onClick={() => setSessionFilter(filter)}>{filter === 'all' ? <Box /> : filter === 'unread' ? <MessageSquareText /> : filter === 'flagged' ? <Flag /> : filter === 'running' ? <CheckCircle2 /> : <Archive />}</button>)}</div>
-        </div>}
-        <div className="mk-list">
-          {section === 'sessions' && <div className="mk-list-group-title">{sessionFilter === 'archived' ? 'Archived' : 'Recent'}</div>}
-          {section === 'sessions' && filteredSessions.map(session => <button key={session.id} className={activeSessionId === session.id ? 'active' : ''} onClick={() => selectSession(session.id)}><div className="mk-list-row-title"><strong>{session.name || 'New session'}</strong>{session.isFlagged && <Flag />}{session.hasUnread && <i />}</div><span>{session.preview || 'No messages yet'}</span><small>{session.isProcessing ? 'Running · ' : session.isArchived ? 'Archived · ' : ''}{formatTime(session.lastMessageAt)}</small></button>)}
-          {section === 'skills' && skills.map(skill => <button key={skill.slug} className={activeSkill?.slug === skill.slug ? 'active' : ''} onClick={() => selectSkill(skill)}><div className="mk-skill-icon"><Sparkles /></div><div><strong>{skill.metadata.name || skill.slug}</strong><span>{skill.metadata.description}</span><small>{skill.source}</small></div></button>)}
-          {section === 'settings' && SETTINGS_PAGES.map(page => {
-            const meta = SETTINGS_META[page]
-            const Icon = meta.icon
-            return <button key={page} className={settingsPage === page ? 'active' : ''} onClick={() => setSettingsPage(page)}><div className="mk-settings-row-icon"><Icon /></div><div><strong>{t(meta.titleKey)}</strong><span>{t(meta.descriptionKey)}</span></div></button>
-          })}
-        </div>
-      </section>
-      <div className="mk-resizer" onPointerDown={() => { resizeRef.current = 'list' }} />
-      <main className="mk-panel mk-main">
-        {section === 'sessions' && (activeSession ? <ChatPanel session={activeSession} workspaceId={workspaceId} onChanged={refreshSessions} onDeleted={() => { setActiveSessionId(''); setActiveSession(null); void refreshSessions() }} onBranched={branchSession} /> : <EmptyState title="Start a session" detail="Choose a session or create a new one." />)}
-        {section === 'skills' && <SkillsPanel skill={activeSkill} files={skillFiles} workspaceId={workspaceId} onChanged={() => window.electronAPI.getSkills(workspaceId).then(setSkills)} onAgentEdit={skill => void startSkillMiniChat(skill)} />}
-        {section === 'settings' && <SettingsPanel page={settingsPage} workspaces={workspaces} workspaceId={workspaceId} onWorkspacesChanged={() => void refreshWorkspaces()} />}
-      </main>
-      {miniSession && <div className="mk-modal-backdrop"><div className="mk-mini-chat"><div className="mk-modal-header"><strong>{miniSession.name}</strong><AppButton onClick={() => setMiniSession(null)}>Close</AppButton></div><ChatPanel session={miniSession} workspaceId={workspaceId} onChanged={() => window.electronAPI.getSessionMessages(miniSession.id).then(setMiniSession)} onDeleted={() => setMiniSession(null)} onBranched={() => {}} /></div></div>}
+        </aside>}
+        {sidebarVisible && <div className="relative z-panel -mx-[3px] w-0 cursor-col-resize" onPointerDown={() => { resizeRef.current = 'navigation' }} />}
+
+        <section className="relative z-panel flex h-full shrink-0 flex-col overflow-hidden rounded-[10px] bg-background shadow-middle" style={{ width: panelWidths.list }}>
+          <PanelHeader
+            title={sectionTitle}
+            actions={<div className="flex items-center gap-1">
+              {section === 'skills' && <HeaderIconButton icon={<Plus className="h-4 w-4" />} tooltip={t('skillsList.addSkill')} onClick={() => void startSkillMiniChat()} />}
+              {section === 'sessions' && <label className="titlebar-no-drag relative flex h-7 w-7 cursor-pointer items-center justify-center rounded-[6px] hover:bg-foreground/5"><Upload className="h-4 w-4" /><input className="absolute inset-0 cursor-pointer opacity-0" type="file" accept="application/json,.json" onChange={event => { void importSessionFile(event.target.files?.[0]); event.target.value = '' }} /></label>}
+              <HeaderIconButton icon={<MoreHorizontal className="h-4 w-4" />} tooltip={t('common.more')} />
+            </div>}
+          />
+          {section === 'sessions' && <div className="px-3 pb-2">
+            <label className="flex h-8 items-center gap-2 rounded-[8px] bg-foreground/3 px-2.5 text-muted-foreground focus-within:ring-1 focus-within:ring-ring">
+              <Search className="h-4 w-4" />
+              <input className="min-w-0 flex-1 bg-transparent text-[13px] text-foreground outline-none" placeholder={t('sidebar.search')} value={query} onChange={event => setQuery(event.target.value)} />
+            </label>
+          </div>}
+          <div className="min-h-0 flex-1 overflow-y-auto" data-list-role={section}>
+            {section === 'sessions' && filteredSessions.map((session, index) => <EntityRow
+              key={session.id}
+              className="session-item"
+              showSeparator={index > 0}
+              separatorClassName="pl-[38px] pr-4"
+              isSelected={activeSessionId === session.id}
+              onClick={() => void selectSession(session.id)}
+              icon={<div className="flex items-center gap-1">{session.isProcessing ? <Zap className="h-3.5 w-3.5 text-info" /> : <span className="h-3.5 w-3.5 rounded-full border border-foreground/30" />}{session.hasUnread && <span className="h-2 w-2 rounded-full bg-accent" />}</div>}
+              title={session.name || t('session.newSession')}
+              titleClassName="text-[13px]"
+              subtitle={session.preview || t('chat.noMessages')}
+              titleTrailing={session.isFlagged ? <Flag className="h-3.5 w-3.5 text-info" /> : <span className="text-[11px] text-foreground/40">{formatTime(session.lastMessageAt)}</span>}
+            />)}
+            {section === 'skills' && skills.map((skill, index) => <EntityRow
+              key={skill.slug}
+              showSeparator={index > 0}
+              isSelected={activeSkill?.slug === skill.slug}
+              onClick={() => void selectSkill(skill)}
+              icon={<Zap className="h-4 w-4 text-info" />}
+              title={skill.metadata.name || skill.slug}
+              subtitle={skill.metadata.description}
+              trailing={<span className="text-[11px] text-foreground/40">{skill.source}</span>}
+            />)}
+            {section === 'settings' && <SettingsNavigator selectedSubpage={settingsPage} onSelectSubpage={page => setSettingsPage(page)} />}
+          </div>
+        </section>
+        <div className="relative z-panel -mx-[3px] w-0 cursor-col-resize" onPointerDown={() => { resizeRef.current = 'list' }} />
+
+        <main className="relative z-panel h-full min-w-[440px] flex-1 overflow-hidden rounded-[10px] bg-background shadow-middle">
+          {section === 'sessions' && (activeSession ? <ChatPanel session={activeSession} workspaceId={workspaceId} onChanged={refreshSessions} onDeleted={() => { setActiveSessionId(''); setActiveSession(null); void refreshSessions() }} onBranched={branchSession} /> : <EmptyState title={t('session.newSession')} detail="Choose a session or create a new one." />)}
+          {section === 'skills' && <SkillsPanel skill={activeSkill} files={skillFiles} workspaceId={workspaceId} onChanged={() => window.electronAPI.getSkills(workspaceId).then(setSkills)} onAgentEdit={skill => void startSkillMiniChat(skill)} />}
+          {section === 'settings' && <SettingsPanel page={settingsPage} workspaces={workspaces} workspaceId={workspaceId} onWorkspacesChanged={() => void refreshWorkspaces()} />}
+        </main>
+        {miniSession && <div className="fixed inset-0 z-modal grid place-items-center bg-black/45 p-8"><div className="h-[min(720px,92vh)] w-[min(880px,100%)] overflow-hidden rounded-2xl border border-border bg-background shadow-modal-small"><div className="flex min-h-12 items-center justify-between border-b border-border px-3 py-2"><strong>{miniSession.name}</strong><AppButton onClick={() => setMiniSession(null)}>Close</AppButton></div><div className="h-[calc(100%-48px)]"><ChatPanel session={miniSession} workspaceId={workspaceId} onChanged={() => window.electronAPI.getSessionMessages(miniSession.id).then(setMiniSession)} onDeleted={() => setMiniSession(null)} onBranched={() => {}} /></div></div></div>}
+      </div>
     </div>
-  </div>
+  </TooltipProvider>
 }

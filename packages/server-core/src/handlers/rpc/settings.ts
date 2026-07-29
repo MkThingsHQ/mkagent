@@ -360,6 +360,6 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
   // Get network proxy settings
   server.handle(RPC_CHANNELS.settings.GET_NETWORK_PROXY, async () => {
     const { getNetworkProxySettings } = await import('@mkagent/shared/config/storage')
-    return getNetworkProxySettings()
+    return getNetworkProxySettings() ?? { enabled: false }
   })
 }

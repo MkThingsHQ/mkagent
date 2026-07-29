@@ -76,6 +76,7 @@ export const CHANNEL_MAP = {
   'browserPane.list': invoke(RPC_CHANNELS.browserPane.LIST),
   'browserPane.navigate': invoke(RPC_CHANNELS.browserPane.NAVIGATE),
   'browserPane.focus': invoke(RPC_CHANNELS.browserPane.FOCUS),
+  'browserPane.emptyStateLaunch': invoke(RPC_CHANNELS.browserPane.LAUNCH),
   'browserPane.onStateChanged': listener(RPC_CHANNELS.browserPane.STATE_CHANGED),
   'browserPane.onRemoved': listener(RPC_CHANNELS.browserPane.REMOVED),
 } satisfies ChannelMap

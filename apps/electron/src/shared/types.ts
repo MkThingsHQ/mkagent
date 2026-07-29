@@ -1,4 +1,5 @@
 export * from '@mkagent/shared/protocol'
+export type { SettingsSubpage } from './settings-registry'
 
 import type { StoredAttachment, Workspace } from '@mkagent/core/types'
 import type { LlmConnection, LlmConnectionWithStatus, NetworkProxySettings } from '@mkagent/shared/config'
@@ -138,3 +139,5 @@ declare global {
     electronAPI: ElectronAPI
   }
 }
+
+export type { Workspace, LoadedSkill }
