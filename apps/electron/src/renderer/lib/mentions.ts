@@ -137,7 +137,7 @@ export function hasMentions(
   text: string,
   availableSkillSlugs: string[],
 ): boolean {
-  const mentions = parseMentions(text, availableSkillSlugs, [])
+  const mentions = parseMentions(text, availableSkillSlugs)
   return mentions.skills.length > 0 || mentions.files.length > 0 || mentions.folders.length > 0
 }
 
@@ -151,7 +151,7 @@ export function hasMentions(
  * @deprecated Use parseMentions() instead
  */
 export function parseSkillMentions(text: string, availableSlugs: string[]): string[] {
-  return parseMentions(text, availableSlugs, []).skills
+  return parseMentions(text, availableSlugs).skills
 }
 
 /**

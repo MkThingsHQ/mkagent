@@ -20,76 +20,76 @@ describe('parseMentions - skill pattern with workspace IDs', () => {
 
   describe('simple skill mentions [skill:slug]', () => {
     it('parses skill with hyphen in slug', () => {
-      const result = parseMentions('[skill:review-pr]', availableSkills, [])
+      const result = parseMentions('[skill:review-pr]', availableSkills)
       expect(result.skills).toEqual(['review-pr'])
     })
 
     it('parses skill with underscore in slug', () => {
-      const result = parseMentions('[skill:my_skill]', availableSkills, [])
+      const result = parseMentions('[skill:my_skill]', availableSkills)
       expect(result.skills).toEqual(['my_skill'])
     })
 
     it('parses multiple skills', () => {
-      const result = parseMentions('[skill:commit] and [skill:review-pr]', availableSkills, [])
+      const result = parseMentions('[skill:commit] and [skill:review-pr]', availableSkills)
       expect(result.skills).toEqual(['commit', 'review-pr'])
     })
   })
 
   describe('skill mentions with workspace ID [skill:workspaceId:slug]', () => {
     it('parses skill with simple workspace ID', () => {
-      const result = parseMentions('[skill:MyWorkspace:commit]', availableSkills, [])
+      const result = parseMentions('[skill:MyWorkspace:commit]', availableSkills)
       expect(result.skills).toEqual(['commit'])
     })
 
     it('parses skill with workspace ID containing space', () => {
-      const result = parseMentions('[skill:My Workspace:commit]', availableSkills, [])
+      const result = parseMentions('[skill:My Workspace:commit]', availableSkills)
       expect(result.skills).toEqual(['commit'])
     })
 
     it('parses skill with workspace ID containing multiple spaces', () => {
-      const result = parseMentions('[skill:My Cool Workspace:commit]', availableSkills, [])
+      const result = parseMentions('[skill:My Cool Workspace:commit]', availableSkills)
       expect(result.skills).toEqual(['commit'])
     })
 
     it('parses skill with workspace ID containing hyphen', () => {
-      const result = parseMentions('[skill:my-workspace:commit]', availableSkills, [])
+      const result = parseMentions('[skill:my-workspace:commit]', availableSkills)
       expect(result.skills).toEqual(['commit'])
     })
 
     it('parses skill with workspace ID containing underscore', () => {
-      const result = parseMentions('[skill:my_workspace:commit]', availableSkills, [])
+      const result = parseMentions('[skill:my_workspace:commit]', availableSkills)
       expect(result.skills).toEqual(['commit'])
     })
 
     it('parses skill with workspace ID containing dot', () => {
-      const result = parseMentions('[skill:my.workspace:commit]', availableSkills, [])
+      const result = parseMentions('[skill:my.workspace:commit]', availableSkills)
       expect(result.skills).toEqual(['commit'])
     })
 
     it('parses skill with workspace ID containing mixed special chars', () => {
-      const result = parseMentions('[skill:My-Cool_Workspace:commit]', availableSkills, [])
+      const result = parseMentions('[skill:My-Cool_Workspace:commit]', availableSkills)
       expect(result.skills).toEqual(['commit'])
     })
 
     it('parses skill with workspace ID containing spaces and hyphens', () => {
-      const result = parseMentions('[skill:My Cool-Workspace:review-pr]', availableSkills, [])
+      const result = parseMentions('[skill:My Cool-Workspace:review-pr]', availableSkills)
       expect(result.skills).toEqual(['review-pr'])
     })
   })
 
   describe('edge cases', () => {
     it('returns empty array for non-existent skill', () => {
-      const result = parseMentions('[skill:nonexistent]', availableSkills, [])
+      const result = parseMentions('[skill:nonexistent]', availableSkills)
       expect(result.skills).toEqual([])
     })
 
     it('does not duplicate skills when mentioned multiple times', () => {
-      const result = parseMentions('[skill:commit] [skill:commit]', availableSkills, [])
+      const result = parseMentions('[skill:commit] [skill:commit]', availableSkills)
       expect(result.skills).toEqual(['commit'])
     })
 
     it('parses skills in text with other content', () => {
-      const result = parseMentions('Please run [skill:commit] after fixing the bug', availableSkills, [])
+      const result = parseMentions('Please run [skill:commit] after fixing the bug', availableSkills)
       expect(result.skills).toEqual(['commit'])
     })
   })

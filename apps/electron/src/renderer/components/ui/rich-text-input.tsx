@@ -742,7 +742,7 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
 
     // Check if value contains any mentions (badges) to adjust line height
     const hasMentions = React.useMemo(() => {
-      const mentions = parseMentions(safeValue, skillSlugs, [])
+      const mentions = parseMentions(safeValue, skillSlugs)
       return mentions.skills.length > 0 || mentions.files.length > 0 || mentions.folders.length > 0
     }, [safeValue, skillSlugs])
 

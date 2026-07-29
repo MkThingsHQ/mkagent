@@ -1135,7 +1135,7 @@ export function FreeFormInput({
     if (disableSend) return false
 
     // Parse retained Skill mentions.
-    const mentions = parseMentions(input, skills.map(s => s.slug), [])
+    const mentions = parseMentions(input, skills.map(s => s.slug))
     const attachmentSnapshot = attachments
 
     onSubmit(

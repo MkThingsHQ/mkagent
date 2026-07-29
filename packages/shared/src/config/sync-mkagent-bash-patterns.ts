@@ -15,22 +15,22 @@ interface PermissionsConfig {
   [key: string]: unknown
 }
 
-function isCraftAgentPattern(entry: AllowedBashEntry): boolean {
+function isMkAgentPattern(entry: AllowedBashEntry): boolean {
   return typeof entry.pattern === 'string' && entry.pattern.startsWith('^mkagent\\s')
 }
 
-function syncCraftAgentPatterns(config: PermissionsConfig): PermissionsConfig {
+function syncMkAgentPatterns(config: PermissionsConfig): PermissionsConfig {
   const patterns = config.allowedBashPatterns ?? []
-  const firstCraftIndex = patterns.findIndex(isCraftAgentPattern)
+  const firstIndex = patterns.findIndex(isMkAgentPattern)
 
-  const withoutCraft = patterns.filter(entry => !isCraftAgentPattern(entry))
+  const without = patterns.filter(entry => !isMkAgentPattern(entry))
   const generated = getMkAgentReadOnlyBashPatterns()
 
-  const insertAt = firstCraftIndex >= 0 ? firstCraftIndex : withoutCraft.length
+  const insertAt = firstIndex >= 0 ? firstIndex : without.length
   const nextAllowedBashPatterns = [
-    ...withoutCraft.slice(0, insertAt),
+    ...without.slice(0, insertAt),
     ...generated,
-    ...withoutCraft.slice(insertAt),
+    ...without.slice(insertAt),
   ]
 
   return {
@@ -45,7 +45,7 @@ function main() {
     : resolve(process.cwd(), 'apps/electron/resources/permissions/default.json')
 
   const config = JSON.parse(readFileSync(targetPath, 'utf-8')) as PermissionsConfig
-  const nextConfig = syncCraftAgentPatterns(config)
+  const nextConfig = syncMkAgentPatterns(config)
 
   writeFileSync(targetPath, `${JSON.stringify(nextConfig, null, 2)}\n`, 'utf-8')
   process.stdout.write(`Synced mkagent bash patterns in ${targetPath}\n`)
