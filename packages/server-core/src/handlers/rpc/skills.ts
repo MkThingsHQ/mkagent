@@ -41,10 +41,13 @@ export function registerSkillsHandlers(server: RpcServer, deps: HandlerDeps): vo
       return []
     }
 
-    const { getWorkspaceSkillsPath } = await import('@mkagent/shared/workspaces')
-
-    const skillsDir = getWorkspaceSkillsPath(workspace.rootPath)
-    const skillDir = join(skillsDir, skillSlug)
+    const { loadAllSkills } = await import('@mkagent/shared/skills')
+    const skill = loadAllSkills(workspace.rootPath).find(candidate => candidate.slug === skillSlug)
+    if (!skill) {
+      deps.platform.logger?.warn(`SKILLS_GET_FILES: Skill not found: ${skillSlug}`)
+      return []
+    }
+    const skillDir = skill.path
 
     function scanDirectory(dirPath: string): SkillFile[] {
       try {

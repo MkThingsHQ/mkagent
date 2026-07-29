@@ -9,9 +9,9 @@ import { useTranslation } from 'react-i18next'
 import * as Icons from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@mkagent/ui'
 import { PanelLeftRounded } from '../icons/PanelLeftRounded'
-import { MkAgentAppIcon } from '../icons/MkAgentAppIcon'
 import { SquarePenRounded } from '../icons/SquarePenRounded'
 import { TopBarButton } from '../ui/TopBarButton'
+import { WorkspaceSwitcher } from './WorkspaceSwitcher'
 import { isMac, isWebUI } from '@/lib/platform'
 import {
   DropdownMenu,
@@ -25,6 +25,8 @@ export interface TopBarProps {
   workspaces: Workspace[]
   activeWorkspaceId: string | null
   onSelectWorkspace: (workspaceId: string) => void | Promise<void>
+  onWorkspaceCreated?: (workspace: Workspace) => void
+  onWorkspaceRemoved?: () => void
   onNewChat: () => void
   onBack: () => void
   onForward: () => void
@@ -39,6 +41,8 @@ export function TopBar({
   workspaces,
   activeWorkspaceId,
   onSelectWorkspace,
+  onWorkspaceCreated,
+  onWorkspaceRemoved,
   onNewChat,
   onBack,
   onForward,
@@ -72,11 +76,7 @@ export function TopBar({
             </Tooltip>
           )}
 
-          <div className="titlebar-no-drag mx-1 flex h-7 w-7 items-center justify-center">
-            <MkAgentAppIcon size={20} className="rounded-[5px]" />
-          </div>
-
-          <div className="ml-1 flex min-w-0 items-center gap-1">
+          <div className="ml-1 flex min-w-0 flex-1 items-center gap-1">
             {!isCompact && (
               <>
                 <Tooltip>
@@ -98,22 +98,7 @@ export function TopBar({
               </>
             )}
 
-            <label className="titlebar-no-drag flex h-8 max-w-[240px] items-center rounded-[9px] bg-background px-2.5 shadow-minimal">
-              <span className="mr-1.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/15 text-[10px] font-semibold text-success">
-                {(workspaces.find(workspace => workspace.id === activeWorkspaceId)?.name ?? 'D').slice(0, 1).toUpperCase()}
-              </span>
-              <select
-                aria-label={t('settings.workspace.title')}
-                className="min-w-0 flex-1 appearance-none truncate bg-transparent pr-4 text-[13px] font-medium outline-none"
-                value={activeWorkspaceId ?? ''}
-                onChange={event => void onSelectWorkspace(event.target.value)}
-              >
-                {workspaces.map(workspace => (
-                  <option key={workspace.id} value={workspace.id}>{workspace.name}</option>
-                ))}
-              </select>
-              <Icons.ChevronDown className="-ml-3 h-3 w-3 shrink-0 text-muted-foreground" />
-            </label>
+            <div className="min-w-0 w-[clamp(220px,42vw,640px)]"><WorkspaceSwitcher workspaces={workspaces} activeWorkspaceId={activeWorkspaceId} onSelect={(id, openInNewWindow) => openInNewWindow ? window.electronAPI.openWorkspace(id) : onSelectWorkspace(id)} onWorkspaceCreated={onWorkspaceCreated} onWorkspaceRemoved={onWorkspaceRemoved} /></div>
           </div>
         </div>
 

@@ -46,6 +46,7 @@ export const RPC_CHANNELS = {
     GET: 'workspaces:get',
     CREATE: 'workspaces:create',
     CHECK_SLUG: 'workspaces:checkSlug',
+    REMOVE: 'workspaces:remove',
   },
   window: {
     GET_WORKSPACE: 'window:getWorkspace',

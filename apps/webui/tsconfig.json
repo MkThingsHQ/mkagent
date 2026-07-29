@@ -13,6 +13,7 @@
     "noEmit": true,
     "allowImportingTsExtensions": true,
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["vite/client", "bun"],
     "paths": {
       "@/*": ["../electron/src/renderer/*"],
       "@webui/*": ["./src/*"],

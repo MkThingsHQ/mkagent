@@ -4,7 +4,16 @@ import { AnimatePresence, motion, type Variants } from "motion/react"
 import { ChevronRight } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import { ContextMenu, ContextMenuTrigger, StyledContextMenuContent } from '@/components/ui/styled-context-menu'
+import { ContextMenuProvider } from '@/components/ui/menu-context'
+import { SidebarMenu, type SidebarMenuType } from './SidebarMenu'
 import { SortableList, type SortableItemData } from '@/components/ui/sortable-list'
+
+export interface SidebarContextMenuConfig {
+  type: SidebarMenuType
+  onMarkAllRead?: () => void
+  onAddSkill?: () => void
+}
 
 /**
  * Sortable configuration for expandable sidebar items.
@@ -34,6 +43,7 @@ export interface LinkItem {
   compact?: boolean
   // Tutorial system
   dataTutorial?: string // data-tutorial attribute for tutorial targeting
+  contextMenu?: SidebarContextMenuConfig
   // Drag-and-drop: flat list reorder (e.g., statuses)
   sortable?: SortableConfig
   // Optional element rendered after the title (e.g., label type icon), revealed on hover
@@ -179,7 +189,7 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
 
           const content = (
             <div className="group/section">
-              {buttonElement}
+              {link.contextMenu ? <ContextMenu modal={true}><ContextMenuTrigger asChild>{buttonElement}</ContextMenuTrigger><StyledContextMenuContent><ContextMenuProvider><SidebarMenu type={link.contextMenu.type} onMarkAllRead={link.contextMenu.onMarkAllRead} onAddSkill={link.contextMenu.onAddSkill} /></ContextMenuProvider></StyledContextMenuContent></ContextMenu> : buttonElement}
               {/* Expandable subitems — outside context menu scope so only the
                 * clicked button gets data-state="open", not nested children */}
               {link.expandable && link.items && (

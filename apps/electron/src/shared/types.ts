@@ -3,6 +3,8 @@ export type { SettingsSubpage } from './settings-registry'
 
 import type { StoredAttachment, Workspace } from '@mkagent/core/types'
 import type { LlmConnection, LlmConnectionWithStatus, NetworkProxySettings } from '@mkagent/shared/config'
+import type { ThinkingLevel } from '@mkagent/shared/agent/thinking-levels'
+import type { PresetTheme } from '@mkagent/shared/config/theme'
 import type { LoadedSkill } from '@mkagent/shared/skills'
 import type {
   BrowserInstanceInfo,
@@ -61,11 +63,14 @@ export interface ElectronAPI {
   sessionCommand(sessionId: string, command: SessionCommand): Promise<unknown>
   exportSession(sessionId: string): Promise<unknown>
   importSession(workspaceId: string, bundle: unknown, mode: 'move' | 'fork'): Promise<Session>
+  markAllSessionsRead(workspaceId: string): Promise<void>
   respondToPermission(sessionId: string, requestId: string, allowed: boolean, alwaysAllow: boolean, options?: PermissionResponseOptions): Promise<boolean>
   onSessionEvent(callback: (event: SessionEvent) => void): () => void
 
   getWorkspaces(): Promise<Workspace[]>
   createWorkspace(folderPath: string, name: string): Promise<Workspace>
+  checkWorkspaceSlug(slug: string): Promise<{ exists: boolean; path: string }>
+  removeWorkspace(workspaceId: string): Promise<boolean>
   getWindowWorkspace(): Promise<string | null>
   switchWorkspace(workspaceId: string): Promise<void>
   openWorkspace(workspaceId: string): Promise<void>
@@ -85,6 +90,8 @@ export interface ElectronAPI {
   testLlmConnectionSetup(params: TestLlmConnectionParams): Promise<TestLlmConnectionResult>
   deleteLlmConnection(slug: string): Promise<{ success: boolean; error?: string }>
   setDefaultLlmConnection(slug: string): Promise<void>
+  getDefaultThinkingLevel(): Promise<ThinkingLevel>
+  setDefaultThinkingLevel(level: ThinkingLevel): Promise<void>
   onLlmConnectionsChanged(callback: () => void): () => void
   getPiApiKeyProviders(): Promise<Array<{ key: string; label: string; placeholder: string }>>
   getPiProviderModels(provider: string): Promise<{ models: Array<{ id: string; name: string }>; totalCount: number }>
@@ -95,11 +102,34 @@ export interface ElectronAPI {
   updateWorkspaceSetting<K extends keyof WorkspaceSettings>(workspaceId: string, key: K, value: WorkspaceSettings[K]): Promise<void>
   getNetworkProxySettings(): Promise<NetworkProxySettings>
   setNetworkProxySettings(settings: NetworkProxySettings): Promise<void>
+  getNotificationsEnabled(): Promise<boolean>
+  setNotificationsEnabled(enabled: boolean): Promise<void>
+  getKeepAwakeWhileRunning(): Promise<boolean>
+  setKeepAwakeWhileRunning(enabled: boolean): Promise<void>
+  getBrowserToolEnabled(): Promise<boolean>
+  setBrowserToolEnabled(enabled: boolean): Promise<void>
+  getAutoCapitalisation(): Promise<boolean>
+  setAutoCapitalisation(enabled: boolean): Promise<void>
+  getSpellCheck(): Promise<boolean>
+  setSpellCheck(enabled: boolean): Promise<void>
+  getSendMessageKey(): Promise<'enter' | 'cmd-enter'>
+  setSendMessageKey(key: 'enter' | 'cmd-enter'): Promise<void>
 
   getSystemTheme(): Promise<boolean>
+  getHomeDir(): Promise<string>
+  readWorkspaceImage(workspaceId: string, relativePath: string): Promise<string | null>
   onSystemThemeChange(callback: (isDark: boolean) => void): () => void
   getColorTheme(): Promise<string>
   setColorTheme(themeId: string): Promise<void>
+  loadPresetThemes(): Promise<PresetTheme[]>
+  loadPresetTheme(themeId: string): Promise<PresetTheme | null>
+  getWorkspaceColorTheme(workspaceId: string): Promise<string | null>
+  setWorkspaceColorTheme(workspaceId: string, themeId: string | null): Promise<void>
+  getAllWorkspaceThemes(): Promise<Record<string, string | undefined>>
+  broadcastThemePreferences(preferences: { mode: string; colorTheme: string; font: string }): Promise<void>
+  onThemePreferencesChange(callback: (preferences: { mode: string; colorTheme: string; font: string }) => void): () => void
+  broadcastWorkspaceThemeChange(workspaceId: string, themeId: string | null): Promise<void>
+  onWorkspaceThemeChange(callback: (data: { workspaceId: string; themeId: string | null }) => void): () => void
   readPreferences(): Promise<{ content: string; exists: boolean; path: string }>
   writePreferences(content: string): Promise<{ success: boolean; error?: string }>
   changeLanguage?(language: string): Promise<void>

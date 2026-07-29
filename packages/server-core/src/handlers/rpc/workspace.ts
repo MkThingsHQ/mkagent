@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs'
 import { join } from 'path'
 import { homedir } from 'os'
 import { RPC_CHANNELS } from '@mkagent/shared/protocol'
-import { getWorkspaceByNameOrId, addWorkspace, setActiveWorkspace } from '@mkagent/shared/config'
+import { getWorkspaceByNameOrId, addWorkspace, removeWorkspace, setActiveWorkspace } from '@mkagent/shared/config'
 import { perf } from '@mkagent/shared/utils'
 import { pushTyped, type RpcServer } from '@mkagent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
@@ -12,6 +12,7 @@ export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.workspaces.GET,
   RPC_CHANNELS.workspaces.CREATE,
   RPC_CHANNELS.workspaces.CHECK_SLUG,
+  RPC_CHANNELS.workspaces.REMOVE,
   RPC_CHANNELS.window.GET_WORKSPACE,
   RPC_CHANNELS.window.GET_MODE,
   RPC_CHANNELS.window.SWITCH_WORKSPACE,
@@ -63,6 +64,10 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
     const workspacePath = join(defaultWorkspacesDir, slug)
     const exists = existsSync(workspacePath)
     return { exists, path: workspacePath }
+  })
+
+  server.handle(RPC_CHANNELS.workspaces.REMOVE, async (_ctx, workspaceId: string) => {
+    return removeWorkspace(workspaceId)
   })
 
   // Get workspace ID for the calling window
