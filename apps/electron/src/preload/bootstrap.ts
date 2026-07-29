@@ -46,7 +46,7 @@ api.reconnectTransport = () => {
   client.reconnectNow()
   return Promise.resolve()
 }
-api.onReconnected = callback => {
+api.onReconnected = (callback: (isStale: boolean) => void) => {
   let wasDisconnected = client.getConnectionState().status !== 'connected'
   return client.onConnectionStateChanged(state => {
     if (state.status === 'connected' && wasDisconnected) {

@@ -20,15 +20,17 @@ export const HANDLED_CHANNELS = [
 export function registerOnboardingHandlers(server: RpcServer, deps: HandlerDeps): void {
   const log = deps.platform.logger
 
-  // Get current auth state
+  // Get current setup needs. MkAgent Lite has no Claude billing/OAuth —
+  // the renderer only needs to know whether at least one LLM connection is
+  // configured so the onboarding wizard can decide whether to show.
   server.handle(RPC_CHANNELS.onboarding.GET_AUTH_STATE, async () => {
     const connections = getLlmConnections()
     const hasConnection = connections.length > 0
     return {
-      authState: {
-        hasCredentials: hasConnection,
+      setupNeeds: {
+        isFullyConfigured: hasConnection,
+        needsBillingConfig: !hasConnection,
       },
-      setupNeeds: hasConnection ? [] : ['llmConnection'],
     }
   })
 

@@ -42,7 +42,7 @@ import {
 } from "@mkagent/ui"
 import { useFocusZone } from "@/hooks/keyboard"
 import { useTheme } from "@/hooks/useTheme"
-import type { Session, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, LoadedSkill } from "../../../shared/types"
+import type { Session, Message, FileAttachment, StoredAttachment, PermissionRequest, LoadedSkill } from "../../../shared/types"
 import type { PermissionMode } from "@mkagent/shared/agent/modes"
 import type { ThinkingLevel } from "@mkagent/shared/agent/thinking-levels"
 import {
@@ -61,7 +61,6 @@ import {
   type AssistantTurn,
   type UserTurn,
   type SystemTurn,
-  type AuthRequestTurn,
 } from "@mkagent/ui"
 import { ChatInputZone, type StructuredInputState, type StructuredResponse, type PermissionResponse, type AdminApprovalResponse } from "./input"
 import type { RichTextInputHandle } from "@/components/ui/rich-text-input"
@@ -124,7 +123,6 @@ function isStackedActivityTool(activity: ActivityItem): boolean {
 function getTurnKey(turn: Turn): string {
   if (turn.type === 'user') return `user-${turn.message.id}`
   if (turn.type === 'system') return `system-${turn.message.id}`
-  if (turn.type === 'auth-request') return `auth-${turn.message.id}`
   return `turn-${turn.turnId}-${turn.timestamp}`
 }
 
@@ -153,10 +151,6 @@ interface ChatDisplayProps {
     alwaysAllow: boolean,
     options?: import('../../../shared/types').PermissionResponseOptions
   ) => void
-  /** Pending credential request for this session */
-  pendingCredential?: CredentialRequest
-  /** Callback to respond to credential request */
-  onRespondToCredential?: (sessionId: string, requestId: string, response: CredentialResponse) => void
   // Thinking level (session-level setting)
   /** Current thinking level ('off', 'think', 'max') */
   thinkingLevel?: ThinkingLevel
@@ -431,8 +425,6 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   disabled = false,
   pendingPermission,
   onRespondToPermission,
-  pendingCredential,
-  onRespondToCredential,
   // Thinking level
   thinkingLevel = 'medium',
   onThinkingLevelChange,
@@ -1324,13 +1316,6 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         false,
         { rememberForMinutes: adminResponse.rememberForMinutes }
       )
-    } else if (response.type === 'credential' && pendingCredential && onRespondToCredential) {
-      const credResponse = response as CredentialResponse
-      onRespondToCredential(
-        pendingCredential.sessionId,
-        pendingCredential.requestId,
-        credResponse
-      )
     }
   }
 
@@ -1352,11 +1337,8 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       }
       return { type: 'permission', data: pendingPermission }
     }
-    if (pendingCredential) {
-      return { type: 'credential', data: pendingCredential }
-    }
     return undefined
-  }, [pendingPermission, pendingCredential])
+  }, [pendingPermission])
 
   // Memoize turn grouping - avoids O(n) iteration on every render/keystroke
   const allTurns = React.useMemo(() => {
@@ -1639,13 +1621,6 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
                           />
                         </div>
                       )
-                    }
-
-                    // Source/MCP authentication is not part of MkAgent Lite.
-                    // Ignore legacy auth-request messages from imported Craft
-                    // sessions instead of exposing a non-functional flow.
-                    if (turn.type === 'auth-request') {
-                      return null
                     }
 
                     // Check if this is the last response (for Accept Plan button visibility)

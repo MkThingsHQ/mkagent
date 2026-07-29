@@ -18,7 +18,7 @@ import { Button } from './button'
 import { cn } from '@/lib/utils'
 import { usePlatform } from '@mkagent/ui'
 import type { ContentBadge, Session, CreateSessionOptions } from '../../../shared/types'
-import { useActiveWorkspace, useAppShellContext, useSession, usePendingPermission, usePendingCredential } from '@/context/AppShellContext'
+import { useActiveWorkspace, useAppShellContext, useSession, usePendingPermission } from '@/context/AppShellContext'
 import { useEscapeInterrupt } from '@/context/EscapeInterruptContext'
 import { ChatDisplay } from '../app-shell/ChatDisplay'
 
@@ -456,7 +456,7 @@ export function EditPopover({
   }
 
   // Use App context for session management (same code path as main chat)
-  const { onCreateSession, onSendMessage, onRespondToPermission, onRespondToCredential } = useAppShellContext()
+  const { onCreateSession, onSendMessage, onRespondToPermission } = useAppShellContext()
 
   // Session ID for inline execution (created on first message)
   const [inlineSessionId, setInlineSessionId] = useState<string | null>(null)
@@ -465,9 +465,8 @@ export function EditPopover({
   // Pass empty string when no session yet - atom returns null for unknown IDs
   const inlineSession = useSession(inlineSessionId || '')
 
-  // Pending permission/credential requests for inline session (same flow as main chat)
+  // Pending permission requests for inline session (same flow as main chat)
   const pendingPermission = usePendingPermission(inlineSessionId || '')
-  const pendingCredential = usePendingCredential(inlineSessionId || '')
 
   // Model state for ChatDisplay (starts with prop value, can be changed by user)
   const [currentModel, setCurrentModel] = useState(model || 'haiku')
@@ -756,8 +755,6 @@ export function EditPopover({
                   onModelChange={setCurrentModel}
                   pendingPermission={pendingPermission}
                   onRespondToPermission={onRespondToPermission}
-                  pendingCredential={pendingCredential}
-                  onRespondToCredential={onRespondToCredential}
                   compactMode={true}
                   placeholder={placeholder}
                   emptyStateLabel={displayLabel || context.label}

@@ -22,6 +22,7 @@ const deletedFeaturePatterns: Array<{ pattern: RegExp; reason: string }> = [
   { pattern: /^apps\/electron\/src\/renderer\/components\/app-shell\/(?:__tests__\/transfer-targets|kanban\/)/, reason: 'transfer/projects/kanban removed' },
   { pattern: /^apps\/electron\/src\/renderer\/components\/automations\//, reason: 'product automations removed' },
   { pattern: /^apps\/electron\/src\/renderer\/components\/ui\/__tests__\/(?:label-menu|status-icon)/, reason: 'labels and user status removed' },
+  { pattern: /^apps\/electron\/src\/renderer\/utils\/__tests__\/auth-validation/, reason: 'Sources OAuth credential UI removed' },
   { pattern: /^apps\/electron\/src\/renderer\/config\/__tests__\/session-status-config/, reason: 'user status removed' },
   { pattern: /^apps\/electron\/src\/renderer\/playground\//, reason: 'playground removed' },
   { pattern: /^apps\/electron\/src\/shared\/__tests__\/route-parser-(?:automations|label-filter)/, reason: 'removed routes' },

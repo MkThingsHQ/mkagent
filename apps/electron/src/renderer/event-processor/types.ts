@@ -5,7 +5,7 @@
  * All agent events flow through a single pure function for consistent state transitions.
  */
 
-import type { Session, Message, PermissionRequest, CredentialRequest, TypedError, PermissionMode, SessionStatus, ToolDisplayMeta } from '../../shared/types'
+import type { Session, Message, PermissionRequest, TypedError, PermissionMode, ToolDisplayMeta } from '../../shared/types'
 
 /**
  * Streaming state for a session - replaces streamingTextRef
@@ -303,15 +303,6 @@ export interface LLMConnectionChangedEvent {
 }
 
 /**
- * Credential request event - prompts user for credentials
- */
-export interface CredentialRequestEvent {
-  type: 'credential_request'
-  sessionId: string
-  request: CredentialRequest
-}
-
-/**
  * Task backgrounded event - background agent started
  */
 export interface TaskBackgroundedEvent {
@@ -425,7 +416,6 @@ export type AgentEvent =
   | ErrorEvent
   | TypedErrorEvent
   | PermissionRequestEvent
-  | CredentialRequestEvent
   | SessionFlaggedEvent
   | SessionUnflaggedEvent
   | SessionArchivedEvent
@@ -457,7 +447,6 @@ export type AgentEvent =
  */
 export type Effect =
   | { type: 'permission_request'; request: PermissionRequest }
-  | { type: 'credential_request'; request: CredentialRequest }
   | { type: 'generate_title'; sessionId: string; userMessage: string }
   | { type: 'permission_mode_changed'; sessionId: string; permissionMode: PermissionMode; previousPermissionMode?: PermissionMode; transitionDisplay?: string; modeVersion?: number; changedAt?: string; changedBy?: 'user' | 'system' | 'restore' | 'unknown' }
   | { type: 'restore_input'; text: string }

@@ -17,7 +17,7 @@ import { SessionInfoPopover } from '@/components/app-shell/SessionInfoPopover'
 import { RenameDialog } from '@/components/ui/rename-dialog'
 import { toast } from 'sonner'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
-import { useAppShellContext, usePendingPermission, usePendingCredential, useSessionOptionsFor, useSession as useSessionData } from '@/context/AppShellContext'
+import { useAppShellContext, usePendingPermission, useSessionOptionsFor, useSession as useSessionData } from '@/context/AppShellContext'
 import { rendererPerf } from '@/lib/perf'
 import { routes } from '@/lib/navigate'
 import { coerceInputText } from '@/lib/input-text'
@@ -47,7 +47,6 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     onOpenUrl,
     workspaces,
     onRespondToPermission,
-    onRespondToCredential,
     onMarkSessionRead,
     onMarkSessionUnread,
     onSetActiveViewingSession,
@@ -195,9 +194,8 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session?.id, isWindowFocused, isFocusedPanel, onSetActiveViewingSession])
 
-  // Get pending permission and credential for this session
+  // Get pending permission for this session
   const pendingPermission = usePendingPermission(sessionId)
-  const pendingCredential = usePendingCredential(sessionId)
 
   // Track draft value for this session
   const [inputValue, setInputValue] = React.useState(() => coerceInputText(getDraft(sessionId)))
@@ -566,8 +564,6 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
                 onConnectionChange={handleConnectionChange}
                 pendingPermission={undefined}
                 onRespondToPermission={onRespondToPermission}
-                pendingCredential={undefined}
-                onRespondToCredential={onRespondToCredential}
                 thinkingLevel={sessionOpts.thinkingLevel}
                 onThinkingLevelChange={(level) => setOption('thinkingLevel', level)}
                 permissionMode={sessionOpts.permissionMode}
@@ -639,8 +635,6 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
             onConnectionChange={handleConnectionChange}
             pendingPermission={pendingPermission}
             onRespondToPermission={onRespondToPermission}
-            pendingCredential={pendingCredential}
-            onRespondToCredential={onRespondToCredential}
             thinkingLevel={sessionOpts.thinkingLevel}
             onThinkingLevelChange={(level) => setOption('thinkingLevel', level)}
             permissionMode={sessionOpts.permissionMode}

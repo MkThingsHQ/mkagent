@@ -38,7 +38,7 @@ function createFullMessage(): Message {
     isBackground: true,
     isError: false,
     attachments: [{ id: 'att-1', type: 'text', name: 'file.txt', mimeType: 'text/plain', size: 100, storedPath: '/path' }],
-    badges: [{ type: 'source', label: 'Linear', rawText: '@linear', start: 0, end: 7 }],
+    badges: [{ type: 'skill', label: 'Linear', rawText: '@linear', start: 0, end: 7 }],
     annotations: [{
       id: 'ann-1',
       schemaVersion: 1,
@@ -65,22 +65,6 @@ function createFullMessage(): Message {
     errorOriginal: 'ENOTFOUND',
     errorCanRetry: true,
     planPath: '/plans/plan.md',
-    authRequestId: 'auth-req-1',
-    authRequestType: 'credential',
-    authSourceSlug: 'linear',
-    authSourceName: 'Linear',
-    authStatus: 'pending',
-    authCredentialMode: 'bearer',
-    authHeaderName: 'Authorization',
-    authHeaderNames: ['DD-API-KEY', 'DD-APP-KEY'],
-    authLabels: { credential: 'API Token' },
-    authDescription: 'Enter your Linear API key',
-    authHint: 'Found in Settings > API',
-    authSourceUrl: 'https://linear.app',
-    authPasswordRequired: false,
-    authError: 'Invalid token',
-    authEmail: 'user@test.com',
-    authWorkspace: 'test-workspace',
     isQueued: false,
   }
 }
@@ -122,10 +106,6 @@ describe('messageToStored/storedToMessage round-trip', () => {
       'isIntermediate', 'turnId', 'infoLevel',
       'errorCode', 'errorTitle', 'errorDetails', 'errorOriginal', 'errorCanRetry',
       'planPath',
-      'authRequestId', 'authRequestType', 'authSourceSlug', 'authSourceName',
-      'authStatus', 'authCredentialMode', 'authHeaderName', 'authHeaderNames',
-      'authLabels', 'authDescription', 'authHint', 'authSourceUrl',
-      'authPasswordRequired', 'authError', 'authEmail', 'authWorkspace',
       'isQueued',
     ].sort()
 
@@ -170,27 +150,11 @@ describe('messageToStored/storedToMessage round-trip', () => {
     expect(restored.errorOriginal).toBe(original.errorOriginal)
     expect(restored.errorCanRetry).toBe(original.errorCanRetry)
     expect(restored.planPath).toBe(original.planPath)
-    expect(restored.authRequestId).toBe(original.authRequestId)
-    expect(restored.authRequestType).toBe(original.authRequestType)
-    expect(restored.authSourceSlug).toBe(original.authSourceSlug)
-    expect(restored.authSourceName).toBe(original.authSourceName)
-    expect(restored.authStatus).toBe(original.authStatus)
-    expect(restored.authCredentialMode).toBe(original.authCredentialMode)
-    expect(restored.authHeaderName).toBe(original.authHeaderName)
-    expect(restored.authHeaderNames).toEqual(original.authHeaderNames)
-    expect(restored.authLabels).toEqual(original.authLabels)
-    expect(restored.authDescription).toBe(original.authDescription)
-    expect(restored.authHint).toBe(original.authHint)
-    expect(restored.authSourceUrl).toBe(original.authSourceUrl)
-    expect(restored.authPasswordRequired).toBe(original.authPasswordRequired)
-    expect(restored.authError).toBe(original.authError)
-    expect(restored.authEmail).toBe(original.authEmail)
-    expect(restored.authWorkspace).toBe(original.authWorkspace)
     expect(restored.isQueued).toBe(original.isQueued)
   })
 
   it('role ↔ type mapping works for each MessageRole', () => {
-    const roles: MessageRole[] = ['user', 'assistant', 'tool', 'error', 'info', 'warning', 'plan', 'auth-request']
+    const roles: MessageRole[] = ['user', 'assistant', 'tool', 'error', 'info', 'warning', 'plan']
 
     for (const role of roles) {
       const msg = createMinimalMessage(role)
@@ -304,13 +268,12 @@ describe('persistence pipeline filtering', () => {
       createMessageWithRole('info'),
       createMessageWithRole('error'),
       createMessageWithRole('plan'),
-      createMessageWithRole('auth-request'),
     ]
 
     // Mirror: persistSession filter
     const filtered = messages.filter(m => m.role !== 'status')
 
-    expect(filtered).toHaveLength(7)
+    expect(filtered).toHaveLength(6)
     expect(filtered.map(m => m.role)).not.toContain('status')
     expect(filtered.map(m => m.role)).toContain('user')
     expect(filtered.map(m => m.role)).toContain('assistant')
@@ -318,7 +281,6 @@ describe('persistence pipeline filtering', () => {
     expect(filtered.map(m => m.role)).toContain('info')
     expect(filtered.map(m => m.role)).toContain('error')
     expect(filtered.map(m => m.role)).toContain('plan')
-    expect(filtered.map(m => m.role)).toContain('auth-request')
   })
 
   it('intermediate messages are filtered at write time', () => {

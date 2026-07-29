@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/useTheme'
 import type { ThemeOverrides } from '@config/theme'
 import { useSetAtom, useStore, useAtomValue, useAtom } from 'jotai'
-import type { Session, Workspace, SessionEvent, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, SetupNeeds, NewChatActionParams, ContentBadge, LlmConnectionWithStatus, PermissionModeState } from '../shared/types'
+import type { Session, Workspace, SessionEvent, Message, FileAttachment, StoredAttachment, PermissionRequest, SetupNeeds, NewChatActionParams, ContentBadge, LlmConnectionWithStatus, PermissionModeState } from '../shared/types'
 import type { SessionDraft, DraftAttachmentRef } from '@mkagent/shared/config'
 import type { SessionOptions, SessionOptionUpdates } from './hooks/useSessionOptions'
 import { defaultSessionOptions, mergeSessionOptions } from './hooks/useSessionOptions'
@@ -349,8 +349,6 @@ export default function App() {
   const [menuNewChatTrigger, setMenuNewChatTrigger] = useState(0)
   // Permission requests per session (queue to handle multiple concurrent requests)
   const [pendingPermissions, setPendingPermissions] = useState<Map<string, PermissionRequest[]>>(new Map())
-  // Credential requests per session (queue to handle multiple concurrent requests)
-  const [pendingCredentials, setPendingCredentials] = useState<Map<string, CredentialRequest[]>>(new Map())
   // Draft composer state per session (text + attachment refs), preserved across mode
   // switches, conversation changes, and app restarts. Using a ref avoids re-renders
   // during typing; attachments are stored as lightweight refs (path + name) and
@@ -877,15 +875,6 @@ export default function App() {
             }
             break
           }
-          case 'credential_request': {
-            setPendingCredentials(prevCreds => {
-              const next = new Map(prevCreds)
-              const existingQueue = next.get(sessionId) || []
-              next.set(sessionId, [...existingQueue, effect.request])
-              return next
-            })
-            break
-          }
           case 'restore_input': {
             // Queued messages were removed from chat on abort — restore their text to the input field.
             // Append to existing draft (user may have started typing) rather than overwrite.
@@ -919,14 +908,6 @@ export default function App() {
             return next
           }
           return prevPerms
-        })
-        setPendingCredentials(prevCreds => {
-          if (prevCreds.has(sessionId)) {
-            const next = new Map(prevCreds)
-            next.delete(sessionId)
-            return next
-          }
-          return prevCreds
         })
       }
     }
@@ -1623,40 +1604,6 @@ export default function App() {
     }
   }, [])
 
-  const handleRespondToCredential = useCallback(async (sessionId: string, requestId: string, response: CredentialResponse) => {
-    const success = await window.electronAPI.respondToCredential(sessionId, requestId, response)
-
-    if (success) {
-      // Remove only the first credential from the queue (the one we just responded to)
-      setPendingCredentials(prev => {
-        const next = new Map(prev)
-        const queue = next.get(sessionId) || []
-        const remainingQueue = queue.slice(1) // Remove first item
-        if (remainingQueue.length === 0) {
-          next.delete(sessionId)
-        } else {
-          next.set(sessionId, remainingQueue)
-        }
-        return next
-      })
-      // Note: No need to force session refresh - per-session atoms update automatically
-    } else {
-      // Response failed (agent/session gone) - clear the credential anyway
-      // to avoid UI being stuck with stale credential request
-      setPendingCredentials(prev => {
-        const next = new Map(prev)
-        const queue = next.get(sessionId) || []
-        const remainingQueue = queue.slice(1)
-        if (remainingQueue.length === 0) {
-          next.delete(sessionId)
-        } else {
-          next.set(sessionId, remainingQueue)
-        }
-        return next
-      })
-    }
-  }, [])
-
   // Centralized link interceptor: classifies file types and decides whether to
   // show an in-app preview overlay or open externally. Replaces the old
   // handleOpenFile/handleOpenUrl that always opened in external apps.
@@ -1738,7 +1685,6 @@ export default function App() {
   // Execute reset after user confirms in dialog
   const executeReset = useCallback(async () => {
     try {
-      await window.electronAPI.logout()
       // Reset all state
       // Clear session atoms - initialize with empty array clears all per-session atoms
       initializeSessions([])
@@ -1747,7 +1693,6 @@ export default function App() {
       // Reset setupNeeds to force fresh onboarding start
       setSetupNeeds({
         needsBillingConfig: true,
-        needsCredentials: true,
         isFullyConfigured: false,
       })
       // Reset onboarding hook state
@@ -1783,9 +1728,8 @@ export default function App() {
       // This prevents showing stale session data from the wrong workspace.
       setSession({ selected: null })
 
-      // 4. Clear pending permissions/credentials (not relevant to new workspace)
+      // 4. Clear pending permissions (not relevant to new workspace)
       setPendingPermissions(new Map())
-      setPendingCredentials(new Map())
 
       // 5. Clear session options from previous workspace
       // (session IDs are unique UUIDs, but clearing prevents unbounded memory growth
@@ -1843,7 +1787,6 @@ export default function App() {
     workspaceDefaultLlmConnection,
     refreshLlmConnections,
     pendingPermissions,
-    pendingCredentials,
     getDraft,
     getDraftAttachmentRefs,
     hydrateDraftAttachments,
@@ -1861,7 +1804,6 @@ export default function App() {
     onSetActiveViewingSession: handleSetActiveViewingSession,
     onDeleteSession: handleDeleteSession,
     onRespondToPermission: handleRespondToPermission,
-    onRespondToCredential: handleRespondToCredential,
     // File/URL handlers
     onOpenFile: handleOpenFile,
     onOpenUrl: handleOpenUrl,
@@ -1888,7 +1830,6 @@ export default function App() {
     workspaceDefaultLlmConnection,
     refreshLlmConnections,
     pendingPermissions,
-    pendingCredentials,
     getDraft,
     getDraftAttachmentRefs,
     hydrateDraftAttachments,
@@ -1905,7 +1846,6 @@ export default function App() {
     handleSetActiveViewingSession,
     handleDeleteSession,
     handleRespondToPermission,
-    handleRespondToCredential,
     handleOpenFile,
     handleOpenUrl,
     handleSelectWorkspace,

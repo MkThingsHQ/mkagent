@@ -191,15 +191,42 @@ export const CHANNEL_MAP = {
   'browserPane.reload': invoke(RPC_CHANNELS.browserPane.RELOAD),
   'browserPane.stop': invoke(RPC_CHANNELS.browserPane.STOP),
   'browserPane.focus': invoke(RPC_CHANNELS.browserPane.FOCUS),
-  'browserPane.snapshot': invoke(RPC_CHANNELS.browserPane.SNAPSHOT),
-  'browserPane.click': invoke(RPC_CHANNELS.browserPane.CLICK),
-  'browserPane.fill': invoke(RPC_CHANNELS.browserPane.FILL),
-  'browserPane.select': invoke(RPC_CHANNELS.browserPane.SELECT),
-  'browserPane.screenshot': invoke(RPC_CHANNELS.browserPane.SCREENSHOT),
-  'browserPane.evaluate': invoke(RPC_CHANNELS.browserPane.EVALUATE),
-  'browserPane.scroll': invoke(RPC_CHANNELS.browserPane.SCROLL),
   'browserPane.emptyStateLaunch': invoke(RPC_CHANNELS.browserPane.LAUNCH),
   'browserPane.onStateChanged': listener(RPC_CHANNELS.browserPane.STATE_CHANGED),
   'browserPane.onRemoved': listener(RPC_CHANNELS.browserPane.REMOVED),
   'browserPane.onInteracted': listener(RPC_CHANNELS.browserPane.INTERACTED),
+
+  // Menu-driven main-process actions (renderer → main).
+  menuCopy: invoke(RPC_CHANNELS.menu.COPY),
+  menuCut: invoke(RPC_CHANNELS.menu.CUT),
+  menuMaximize: invoke(RPC_CHANNELS.menu.MAXIMIZE),
+  menuMinimize: invoke(RPC_CHANNELS.menu.MINIMIZE),
+  menuNewWindow: invoke(RPC_CHANNELS.menu.NEW_WINDOW),
+  menuPaste: invoke(RPC_CHANNELS.menu.PASTE),
+  menuQuit: invoke(RPC_CHANNELS.menu.QUIT),
+  menuRedo: invoke(RPC_CHANNELS.menu.REDO),
+  menuSelectAll: invoke(RPC_CHANNELS.menu.SELECT_ALL),
+  menuToggleDevTools: invoke(RPC_CHANNELS.menu.TOGGLE_DEV_TOOLS),
+  menuUndo: invoke(RPC_CHANNELS.menu.UNDO),
+  menuZoomIn: invoke(RPC_CHANNELS.menu.ZOOM_IN),
+  menuZoomOut: invoke(RPC_CHANNELS.menu.ZOOM_OUT),
+  menuZoomReset: invoke(RPC_CHANNELS.menu.ZOOM_RESET),
+
+  // LLM connection CRUD.
+  getLlmConnection: invoke(RPC_CHANNELS.llmConnections.GET),
+  getLlmConnectionApiKey: invoke(RPC_CHANNELS.llmConnections.GET_API_KEY),
+  saveLlmConnection: invoke(RPC_CHANNELS.llmConnections.SAVE),
+  testLlmConnection: invoke(RPC_CHANNELS.llmConnections.TEST),
+  setWorkspaceDefaultLlmConnection: invoke(RPC_CHANNELS.llmConnections.SET_WORKSPACE_DEFAULT),
+
+  // Server / system / filesystem info.
+  getServerHomeDir: invoke(RPC_CHANNELS.server.HOME_DIR),
+  getVersions: invoke(RPC_CHANNELS.system.VERSIONS),
+  listServerDirectory: invoke(RPC_CHANNELS.fs.LIST_DIRECTORY),
+
+  // Git.
+  getGitBranch: invoke(RPC_CHANNELS.git.GET_BRANCH),
+
+  // Transport reconnect notifier (preload-local channel).
+  onReconnected: listener('__transport:reconnected'),
 } satisfies ChannelMap

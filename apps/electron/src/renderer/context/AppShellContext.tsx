@@ -15,8 +15,6 @@ import type {
   Workspace,
   FileAttachment,
   PermissionRequest,
-  CredentialRequest,
-  CredentialResponse,
   PermissionMode,
   LoadedSkill,
   NewChatActionParams,
@@ -42,7 +40,6 @@ export interface AppShellContextType {
   /** Refresh LLM connections from config */
   refreshLlmConnections: () => Promise<void>
   pendingPermissions: Map<string, PermissionRequest[]>
-  pendingCredentials: Map<string, CredentialRequest[]>
   /** Get draft input text for a session - reads from ref without triggering re-renders */
   getDraft: (sessionId: string) => string
   /** Get persisted attachment refs (path + name) for a session's draft - no file IO */
@@ -81,13 +78,6 @@ export interface AppShellContextType {
     allowed: boolean,
     alwaysAllow: boolean,
     options?: import('../../shared/types').PermissionResponseOptions
-  ) => void
-
-  // Credential handling
-  onRespondToCredential?: (
-    sessionId: string,
-    requestId: string,
-    response: CredentialResponse
   ) => void
 
   // File/URL handlers - these can open in tabs or external apps
@@ -192,14 +182,6 @@ export function useActiveWorkspace(): Workspace | null {
 export function usePendingPermission(sessionId: string): PermissionRequest | undefined {
   const { pendingPermissions } = useAppShellContext()
   return pendingPermissions.get(sessionId)?.[0]
-}
-
-/**
- * Get pending credential request for a session (first in queue)
- */
-export function usePendingCredential(sessionId: string): CredentialRequest | undefined {
-  const { pendingCredentials } = useAppShellContext()
-  return pendingCredentials.get(sessionId)?.[0]
 }
 
 /**

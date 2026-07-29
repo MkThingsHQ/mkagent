@@ -46,10 +46,15 @@ export type {
   AnnotationV1,
 };
 
-// Auth types for onboarding
-import type { AuthState, SetupNeeds } from '@mkagent/shared/auth/types';
-import type { AuthType } from '@mkagent/shared/config/types';
-export type { AuthState, SetupNeeds, AuthType };
+// Onboarding: minimal setup-needs shape driven by MkAgent's Lite Pi-only backend.
+// The full Craft AuthState/AuthType (Claude billing/OAuth) is not applicable here —
+// MkAgent only checks whether at least one LLM connection is configured.
+export interface SetupNeeds {
+  /** True when the user has at least one configured LLM connection. */
+  isFullyConfigured: boolean;
+  /** True when no LLM connection is configured yet (drives onboarding wizard). */
+  needsBillingConfig: boolean;
+}
 
 // Credential health types
 import type { CredentialHealthStatus, CredentialHealthIssue, CredentialHealthIssueType } from '@mkagent/shared/credentials/types';
@@ -179,7 +184,6 @@ import type {
   SendMessageOptions,
   SessionEvent,
   PermissionResponseOptions,
-  CredentialResponse,
   SessionCommand,
   RefreshTitleResult,
   FileSearchResult,
@@ -212,7 +216,6 @@ export interface ElectronAPI {
   killShell(sessionId: string, shellId: string): Promise<{ success: boolean; error?: string }>
 
   respondToPermission(sessionId: string, requestId: string, allowed: boolean, alwaysAllow: boolean, options?: PermissionResponseOptions): Promise<boolean>
-  respondToCredential(sessionId: string, requestId: string, response: CredentialResponse): Promise<boolean>
 
   // Consolidated session command handler
   sessionCommand(sessionId: string, command: SessionCommand): Promise<void | RefreshTitleResult | { count: number }>
@@ -336,16 +339,13 @@ export interface ElectronAPI {
   // Deep link navigation listener (for external mkagent:// URLs)
   onDeepLinkNavigate(callback: (nav: DeepLinkNavigation) => void): () => void
 
-  // Auth
-  showLogoutConfirmation(): Promise<boolean>
+  // Confirmation dialogs (native OS dialogs — main-process only)
   showDeleteSessionConfirmation(name: string): Promise<boolean>
-  logout(): Promise<void>
 
   // Credential health check (startup validation)
   getCredentialHealth(): Promise<CredentialHealthStatus>
 
   // Onboarding
-  getAuthState(): Promise<AuthState>
   getSetupNeeds(): Promise<SetupNeeds>
   deferSetup(): Promise<{ success: boolean }>
   /** Unified LLM connection setup */

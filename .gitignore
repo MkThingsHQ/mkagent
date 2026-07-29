@@ -11,3 +11,4 @@ coverage/
 .cache/
 tmp/
 *.tsbuildinfo
+apps/electron/resources/scripts/tests/__pycache__/

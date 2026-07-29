@@ -12,6 +12,12 @@ describe('WebUI Client API contract', () => {
 
   it('contains only channels that exist in the shared protocol', () => {
     const channels = new Set<string>(Object.values(RPC_CHANNELS).flatMap(group => Object.values(group)))
-    for (const entry of Object.values(CHANNEL_MAP)) expect(channels.has(entry.channel)).toBe(true)
+    for (const entry of Object.values(CHANNEL_MAP)) {
+      // Preload-local pseudo-channels (prefixed with `__`) are dispatched inside
+      // the preload script and never cross the RPC boundary, so they do not — and
+      // should not — appear in the shared protocol.
+      if (entry.channel.startsWith('__')) continue
+      expect(channels.has(entry.channel)).toBe(true)
+    }
   })
 })

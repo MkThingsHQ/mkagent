@@ -212,11 +212,11 @@ function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, 
 
   // Load Pi provider base URL via IPC (Pi SDK can't run in renderer)
   useEffect(() => {
-    const provider = connection.providerType || connection.type
+    const provider = connection.providerType
     if (provider === 'pi' && connection.piAuthProvider && !connection.baseUrl) {
       window.electronAPI.getPiProviderBaseUrl(connection.piAuthProvider).then(url => setPiBaseUrl(url))
     }
-  }, [connection.providerType, connection.type, connection.piAuthProvider, connection.baseUrl])
+  }, [connection.providerType, connection.piAuthProvider, connection.baseUrl])
 
   // Build description with provider, default indicator, auth status, and validation state
   const getDescription = () => {
@@ -227,8 +227,8 @@ function ConnectionRow({ connection, isLastConnection, onRenameClick, onDelete, 
 
     const parts: string[] = []
 
-    // Provider type (fall back to legacy 'type' field if providerType missing)
-    const provider = connection.providerType || connection.type
+    // Provider type
+    const provider = connection.providerType
     switch (provider) {
       case 'pi': {
         // Show upstream provider name for API key connections (e.g. "Google AI Studio")

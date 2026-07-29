@@ -17,7 +17,6 @@ import type {
   SessionUnarchivedEvent,
   NameChangedEvent,
   PermissionRequestEvent,
-  CredentialRequestEvent,
   PlanSubmittedEvent,
   StatusEvent,
   InfoEvent,
@@ -705,22 +704,6 @@ export function handlePermissionRequest(
     state,
     effects: [{
       type: 'permission_request',
-      request: event.request,
-    }]
-  }
-}
-
-/**
- * Handle credential_request - return effect for parent to handle
- */
-export function handleCredentialRequest(
-  state: SessionState,
-  event: CredentialRequestEvent
-): ProcessResult {
-  return {
-    state,
-    effects: [{
-      type: 'credential_request',
       request: event.request,
     }]
   }
