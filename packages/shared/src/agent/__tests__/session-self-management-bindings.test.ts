@@ -1,0 +1,63 @@
+import { afterEach, describe, expect, it } from 'bun:test'
+import { createPiContext } from '../pi-context.ts'
+import { attachSessionSelfManagementBindings } from '../session-self-management-bindings.ts'
+import {
+  mergeSessionScopedToolCallbacks,
+  registerSessionScopedToolCallbacks,
+  unregisterSessionScopedToolCallbacks,
+} from '../session-scoped-tool-callback-registry.ts'
+
+const sessionId = 'binding-session'
+
+afterEach(() => unregisterSessionScopedToolCallbacks(sessionId))
+
+function makeContext() {
+  const context = createPiContext({
+    sessionId,
+    workspacePath: '/tmp/mkagent-bindings',
+    onPlanSubmitted: () => {},
+  })
+  attachSessionSelfManagementBindings(context, sessionId)
+  return context
+}
+
+describe('Pi session self-management bindings', () => {
+  it('exposes only callbacks registered for the retained session tools', async () => {
+    registerSessionScopedToolCallbacks(sessionId, {
+      getSessionInfoFn: id => ({
+        id: id ?? sessionId,
+        name: 'Bound Session',
+        permissionMode: 'ask',
+        createdAt: 1,
+        isActive: true,
+      }),
+      listSessionsFn: () => ({ total: 1, returned: 1, sessions: [{ id: sessionId, name: 'Bound Session', createdAt: 1 }] }),
+      listBackgroundTasksFn: () => [{ taskId: 'task-1', status: 'running', startTime: 1, elapsedSeconds: 2 }],
+      sendAgentMessageFn: async () => ({ delivery: 'delivered', targetBusy: false }),
+    })
+    const context = makeContext()
+
+    expect(context.getSessionInfo?.()?.name).toBe('Bound Session')
+    expect(context.listSessions?.().total).toBe(1)
+    expect(context.listBackgroundTasks?.()[0]?.taskId).toBe('task-1')
+    expect((await context.sendAgentMessage?.('other', 'hello'))?.delivery).toBe('delivered')
+  })
+
+  it('observes callbacks merged after context creation', () => {
+    registerSessionScopedToolCallbacks(sessionId, {})
+    const context = makeContext()
+    expect(context.getSessionInfo).toBeUndefined()
+
+    mergeSessionScopedToolCallbacks(sessionId, {
+      getSessionInfoFn: () => ({
+        id: sessionId,
+        name: 'Late Binding',
+        permissionMode: 'safe',
+        createdAt: 1,
+        isActive: true,
+      }),
+    })
+
+    expect(context.getSessionInfo?.()?.name).toBe('Late Binding')
+  })
+})

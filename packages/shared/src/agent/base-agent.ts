@@ -336,7 +336,7 @@ export abstract class BaseAgent implements AgentBackend {
       model: input.model as string | undefined,
       permissionMode: input.permissionMode as PermissionMode | undefined,
       thinkingLevel: input.thinkingLevel as ThinkingLevel | undefined,
-      workingDirectory: typeof input.workingDirectory === 'string'
+      workingDirectory: typeof input.workingDirectory === 'string' && input.workingDirectory
         ? expandPath(input.workingDirectory)
         : undefined,
       attachments: input.attachments as SpawnSessionRequest['attachments'],

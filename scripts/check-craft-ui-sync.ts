@@ -31,10 +31,13 @@ const intentionalOverridePrefixes = [
   `${rendererRoot}/lib/mentions`,
   `${rendererRoot}/lib/nav-helpers`,
   `${rendererRoot}/lib/navigation-registry`,
+  `${rendererRoot}/lib/icon-cache.ts`,
+  `${rendererRoot}/lib/local-storage.ts`,
 ]
 
 const intentionalOverrideFiles = new Set([
   `${rendererRoot}/index.html`,
+  `${rendererRoot}/index.css`,
   `${rendererRoot}/components/SplashScreen.tsx`,
   `${rendererRoot}/components/ServerDirectoryBrowser.tsx`,
   `${rendererRoot}/components/browser/BrowserTabStrip.tsx`,
@@ -82,6 +85,9 @@ const forbiddenSourcePatterns: Array<[RegExp, string]> = [
   [/\bremoteServer\b/, 'remote workspace binding'],
   [/\b(?:sources_changed|labels_changed|project_id_changed|session_status_changed|session_shared|source_activated)\b/, 'excluded session metadata event'],
   [/@mkagent\/shared\/(?:labels|projects|sources|statuses|views)/, 'excluded shared feature module'],
+  [/\b(?:onAddAutomation|onAddSource|onAddProject|onConfigureStatuses|onConfigureLabels|automationSelection|sourceSelection|sourceSlug)\b/, 'excluded product callback or state'],
+  [/getDocUrl\(['"](?:sources|statuses|automations|messaging)['"]\)/, 'excluded product documentation link'],
+  [/\b(?:loadSourceIcon|getSourceIconSync|sourceIconCache)\b/, 'excluded Source icon runtime'],
 ]
 
 const normalizeUpstream = (source: string) => source
@@ -128,7 +134,7 @@ for (const file of mkFiles) {
   }
 
   if (!craftFileSet.has(file)) {
-    if (!allowedMkOnlyPrefixes.some(prefix => file.startsWith(prefix))) {
+    if (!isOverride && !allowedMkOnlyPrefixes.some(prefix => file.startsWith(prefix))) {
       errors.push(`unregistered MkAgent-only renderer file: ${file}`)
     }
     continue

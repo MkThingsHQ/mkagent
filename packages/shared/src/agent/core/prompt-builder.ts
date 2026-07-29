@@ -2,7 +2,7 @@
  * PromptBuilder - System Prompt and Context Building
  *
  * Provides utilities for building system prompts and context blocks that both
- * ClaudeAgent and PiAgent can use. Handles workspace capabilities, recovery
+ * PiAgent can use. Handles workspace capabilities, recovery
  * context, and user preferences formatting.
  *
  * Key responsibilities:
@@ -59,24 +59,19 @@ export class PromptBuilder {
    * stable blocks). Returns an array of strings that should be prepended to the
    * user message.
    *
-   * This is the Claude path: it composes {@link buildVolatileContextParts} and
-   * {@link buildStableContextParts} so the output is byte-identical to the
-   * pre-split version (same 5 blocks, same order) AND the one-shot mode-change
+   * It composes {@link buildVolatileContextParts} and
+   * {@link buildStableContextParts} while ensuring the one-shot mode-change
    * signal is consumed exactly once per turn (only the volatile builder consumes
    * it). Callers that place volatile vs stable context in different locations
    * (e.g. the Pi adapter, to preserve prompt caching — issue #862) should call
    * the two halves directly instead of this method.
    *
    * @param options - Context building options
-   * @param sourceStateBlock - Pre-formatted source state (from SourceManager)
    * @returns Array of context strings
    */
-  buildContextParts(
-    options: ContextBlockOptions,
-    sourceStateBlock?: string
-  ): string[] {
+  buildContextParts(options: ContextBlockOptions): string[] {
     return [
-      ...this.buildVolatileContextParts(options, sourceStateBlock),
+      ...this.buildVolatileContextParts(options),
       ...this.buildStableContextParts(),
     ];
   }
@@ -92,19 +87,14 @@ export class PromptBuilder {
    *  2. session_state (permission mode + plans/data paths; carries
    *     modeChangedAt/modeVersion and **consumes** the one-shot mode-change user
    *     signal — see {@link formatSessionState})
-   *  3. source state (auth/connection status), when provided
    *
    * MUST be called exactly once per turn, because it consumes one-shot mode
    * state. Never call it a second time to compute a cache-debug hash — hash the
    * already-produced string instead.
    *
    * @param options - Context building options
-   * @param sourceStateBlock - Pre-formatted source state (from SourceManager)
    */
-  buildVolatileContextParts(
-    options: ContextBlockOptions,
-    sourceStateBlock?: string
-  ): string[] {
+  buildVolatileContextParts(options: ContextBlockOptions): string[] {
     const parts: string[] = [];
 
     // Date/time first (kept on the user tail to preserve prompt caching)
@@ -122,11 +112,6 @@ export class PromptBuilder {
       dataFolderPath,
       consumeModeChangeUserSignal: true,
     }));
-
-    // Source state if provided
-    if (sourceStateBlock) {
-      parts.push(sourceStateBlock);
-    }
 
     return parts;
   }

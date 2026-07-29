@@ -1,21 +1,13 @@
 /**
- * Unified Icon Cache
+ * Skill Icon Cache
  *
- * Single cache for source, skill, and status icons.
- * Used by EntityIcon, SourceAvatar, SkillAvatar, StatusIcon, and RichTextInput.
+ * Craft's shared icon loader, reduced to the retained Skill surface.
  *
  * Icons are stored as data URLs for consistent usage across:
  * - React components (img src)
  * - HTML string generation (inline badges)
  *
- * Cache key format uses type prefixes to avoid collisions:
- * - source:{workspaceId}:{slug}
- * - skill:{workspaceId}:{slug}
- * - status:{workspaceId}:{relativePath}
- *
- * Note: Labels do NOT use icons — they are color-only (colored circles).
- *
- * The useEntityIcon() hook is the single entry point for loading any entity's icon.
+ * The useEntityIcon() hook is the entry point for loading Skill icons.
  * It handles cache lookup, IPC file loading, SVG theming, and emoji detection.
  */
 
@@ -26,20 +18,6 @@ import type { ResolvedEntityIcon } from '@mkagent/shared/icons'
 // ============================================================================
 // Types
 // ============================================================================
-
-interface SourceConfig {
-  slug: string
-  name: string
-  type: string
-  icon?: string  // Emoji or URL (local icon files are auto-discovered separately)
-  provider?: string
-  mcp?: {
-    url?: string
-  }
-  api?: {
-    baseUrl?: string
-  }
-}
 
 interface SkillConfig {
   slug: string
@@ -52,45 +30,11 @@ interface SkillConfig {
 // ============================================================================
 
 /**
- * Single unified cache for all icon types.
- * Key format: `{type}:{workspaceId}:{identifier}`
- * - source:wsId:slug
- * - skill:wsId:slug
- * - status:wsId:relativePath
+ * Cache key format: `skill:{workspaceId}:{slug}`.
  */
 export const iconCache = new Map<string, string>()
 
-/**
- * Cache for resolved logo URLs (from service URL resolution).
- * Kept separate because it caches URL resolution, not icon data,
- * and uses a different key format: `{serviceUrl}:{provider}`
- */
-export const logoUrlCache = new Map<string, string | null>()
-
-// ============================================================================
-// Legacy exports (for backward compatibility during migration)
-// These are views into the unified cache, not separate maps.
-// ============================================================================
-
-// Proxy objects that redirect to the unified cache with appropriate prefixes
-// This allows consumers to continue using the old API while we migrate them
-
-/** @deprecated Use iconCache directly with 'source:' prefix */
-export const sourceIconCache = {
-  get: (key: string) => iconCache.get(`source:${key}`),
-  set: (key: string, value: string) => iconCache.set(`source:${key}`, value),
-  has: (key: string) => iconCache.has(`source:${key}`),
-  delete: (key: string) => iconCache.delete(`source:${key}`),
-  clear: () => {
-    // Clear only source entries
-    for (const key of iconCache.keys()) {
-      if (key.startsWith('source:')) iconCache.delete(key)
-    }
-  },
-}
-
-/** @deprecated Use iconCache directly with 'skill:' prefix */
-export const skillIconCache = {
+const skillIconCache = {
   get: (key: string) => iconCache.get(`skill:${key}`),
   set: (key: string, value: string) => iconCache.set(`skill:${key}`, value),
   has: (key: string) => iconCache.has(`skill:${key}`),
@@ -103,155 +47,8 @@ export const skillIconCache = {
   },
 }
 
-// ============================================================================
-// Cache Management
-// ============================================================================
-
-/**
- * Clear all icon caches (all entity types)
- */
-export function clearIconCaches(): void {
-  iconCache.clear()
-  logoUrlCache.clear()
-  colorableCache.clear()
-  rawSvgCache.clear()
-}
-
-/**
- * Clear source icon caches only.
- * @deprecated Will be removed once rich-text-input.tsx is migrated to useEntityIcon.
- */
-export function clearSourceIconCaches(): void {
-  sourceIconCache.clear()
-  logoUrlCache.clear()
-  // Also clear from colorable/rawSvg caches
-  for (const key of colorableCache) {
-    if (key.startsWith('source:')) colorableCache.delete(key)
-  }
-  for (const key of rawSvgCache.keys()) {
-    if (key.startsWith('source:')) rawSvgCache.delete(key)
-  }
-}
-
-/**
- * Clear skill icon caches only.
- * @deprecated Will be removed once rich-text-input.tsx is migrated to useEntityIcon.
- */
-export function clearSkillIconCaches(): void {
-  skillIconCache.clear()
-  for (const key of colorableCache) {
-    if (key.startsWith('skill:')) colorableCache.delete(key)
-  }
-  for (const key of rawSvgCache.keys()) {
-    if (key.startsWith('skill:')) rawSvgCache.delete(key)
-  }
-}
-
-// ============================================================================
-// Source Icon Loading
-// ============================================================================
-
 // Special prefix for emoji icons in cache - callers check for this to render emoji
 export const EMOJI_ICON_PREFIX = 'emoji:'
-
-/**
- * Load a source icon into the cache.
- *
- * Resolution priority (config.icon is the source of truth):
- * 1. Emoji in config.icon → Return emoji marker for caller to render as text
- * 2. Local path in config.icon (./icon.svg) → Load from sources/{slug}/icon.svg
- * 3. URL in config.icon → Return URL directly for browser to load
- * 4. config.icon undefined → Auto-discover sources/{slug}/icon.{svg,png}
- * 5. Fallback → Resolve favicon from service URL
- *
- * Config takes precedence over auto-discovered local files. If config.icon is set
- * (emoji, local path, or URL), auto-discovery is skipped.
- *
- * @returns Promise resolving to icon URL, emoji marker (emoji:{emoji}), or null
- */
-export async function loadSourceIcon(
-  source: { config: SourceConfig; workspaceId: string },
-): Promise<string | null> {
-  const { config, workspaceId } = source
-  const cacheKey = `${workspaceId}:${config.slug}`
-
-  // Check cache first
-  const cached = sourceIconCache.get(cacheKey)
-  if (cached) return cached
-
-  const icon = config.icon
-
-  // Priority 1: Emoji icon - return marker for caller to render as text
-  if (icon && isEmoji(icon)) {
-    const emojiMarker = `${EMOJI_ICON_PREFIX}${icon}`
-    sourceIconCache.set(cacheKey, emojiMarker)
-    return emojiMarker
-  }
-
-  // Priority 2: Explicit local path in config.icon (e.g., "./icon.svg")
-  if (icon?.startsWith('./')) {
-    const iconFilename = icon.slice(2) // Remove './'
-    const relativePath = `sources/${config.slug}/${iconFilename}`
-    const loaded = await loadWorkspaceIcon(workspaceId, relativePath)
-    if (loaded) {
-      sourceIconCache.set(cacheKey, loaded)
-      return loaded
-    }
-  }
-
-  // Priority 3: URL in config.icon - return URL directly
-  // Config URL takes precedence over auto-discovered local files
-  if (icon && (icon.startsWith('http://') || icon.startsWith('https://'))) {
-    sourceIconCache.set(cacheKey, icon)
-    return icon
-  }
-
-  // Priority 4: Auto-discover local icon files (only when config.icon is undefined)
-  // This preserves backward compatibility for sources without explicit config.icon
-  if (!icon) {
-    const localIconSvg = await loadWorkspaceIcon(workspaceId, `sources/${config.slug}/icon.svg`)
-    if (localIconSvg) {
-      sourceIconCache.set(cacheKey, localIconSvg)
-      return localIconSvg
-    }
-
-    const localIconPng = await loadWorkspaceIcon(workspaceId, `sources/${config.slug}/icon.png`)
-    if (localIconPng) {
-      sourceIconCache.set(cacheKey, localIconPng)
-      return localIconPng
-    }
-  }
-
-  // Priority 5: Resolve favicon from service URL
-  const serviceUrl = deriveServiceUrl(config)
-  if (!serviceUrl) return null
-
-  // Use slug for favicon resolution - it's more specific than generic provider names
-  const provider = config.slug ?? config.provider
-  const logoCacheKey = `${serviceUrl}:${provider ?? ''}`
-
-  // Check logo URL cache
-  const cachedLogoUrl = logoUrlCache.get(logoCacheKey)
-  if (cachedLogoUrl !== undefined) {
-    if (cachedLogoUrl) {
-      sourceIconCache.set(cacheKey, cachedLogoUrl)
-    }
-    return cachedLogoUrl
-  }
-
-  try {
-    const logoUrl = await window.electronAPI.getLogoUrl(serviceUrl, provider)
-    logoUrlCache.set(logoCacheKey, logoUrl)
-    if (logoUrl) {
-      sourceIconCache.set(cacheKey, logoUrl)
-    }
-    return logoUrl
-  } catch (error) {
-    console.error(`[IconCache] Failed to resolve logo URL:`, error)
-    logoUrlCache.set(logoCacheKey, null)
-    return null
-  }
-}
 
 /**
  * Helper to load a workspace image via IPC.
@@ -276,15 +73,6 @@ async function loadWorkspaceIcon(workspaceId: string, relativePath: string): Pro
   }
 }
 
-/**
- * Get a source icon synchronously from cache.
- * Returns null if not cached (use loadSourceIcon to populate).
- */
-export function getSourceIconSync(workspaceId: string, slug: string): string | null {
-  const cacheKey = `${workspaceId}:${slug}`
-  return sourceIconCache.get(cacheKey) ?? null
-}
-
 // ============================================================================
 // Skill Icon Loading
 // ============================================================================
@@ -292,7 +80,7 @@ export function getSourceIconSync(workspaceId: string, slug: string): string | n
 /**
  * Load a skill icon into the cache.
  *
- * Resolution priority (mirrors loadSourceIcon):
+ * Resolution priority:
  * 1. Emoji in metadata.icon → Return emoji marker
  * 2. URL in metadata.icon → Return URL directly
  * 3. Known iconPath → Load from file
@@ -437,27 +225,6 @@ export function svgToThemedDataUrl(svgContent: string, foregroundColor?: string)
 }
 
 // ============================================================================
-// Helpers
-// ============================================================================
-
-/**
- * Derive service URL from source config (for favicon resolution)
- */
-function deriveServiceUrl(config: SourceConfig): string | null {
-  // MCP sources - use mcp.url
-  if (config.type === 'mcp' && config.mcp?.url) {
-    return config.mcp.url
-  }
-
-  // API sources - use api.baseUrl
-  if (config.type === 'api' && config.api?.baseUrl) {
-    return config.api.baseUrl
-  }
-
-  return null
-}
-
-// ============================================================================
 // Unified Entity Icon Hook
 // ============================================================================
 
@@ -466,10 +233,9 @@ const ICON_FILE_EXTENSIONS = ['.svg', '.png', '.jpg', '.jpeg']
 
 /**
  * Pre-compiled regex for extracting workspace-relative icon paths from absolute paths.
- * Matches any known entity directory prefix (skills/, sources/, statuses/)
- * followed by the rest of the path.
+ * Matches a Skill directory prefix followed by the rest of the path.
  */
-const ICON_PATH_PATTERN = /(?:skills|sources|statuses)\/.+$/
+const ICON_PATH_PATTERN = /skills\/.+$/
 
 /**
  * Options for the useEntityIcon hook.
@@ -477,7 +243,7 @@ const ICON_PATH_PATTERN = /(?:skills|sources|statuses)\/.+$/
 export interface UseEntityIconOptions {
   /** Workspace context for IPC calls */
   workspaceId: string
-  /** Cache namespace (e.g. 'source', 'skill', 'status', 'label') */
+  /** Cache namespace (`skill` for the retained surface). */
   entityType: string
   /** Unique identifier within the entity type (slug, statusId, etc.) */
   identifier: string
@@ -489,7 +255,7 @@ export interface UseEntityIconOptions {
   iconPath?: string
   /**
    * Directory to auto-discover icon files in (relative to workspace).
-   * e.g. 'sources/linear' → tries sources/linear/icon.svg, icon.png, etc.
+   * e.g. 'skills/reviewer' → tries skills/reviewer/icon.svg, icon.png, etc.
    * Ignored if iconPath is provided.
    */
   iconDir?: string
@@ -502,8 +268,6 @@ export interface UseEntityIconOptions {
   iconValue?: string
   /**
    * Override the filename used for auto-discovery (default: 'icon').
-   * e.g. for statuses, set to the statusId so it discovers '{statusId}.svg'
-   * instead of 'icon.svg'.
    */
   iconFileName?: string
 }
@@ -720,8 +484,7 @@ function sanitizeSvgForInline(svg: string): string {
  * Auto-discover an icon file in a workspace directory.
  * Probes all extensions (.svg, .png, .jpg, .jpeg) in parallel via IPC,
  * then returns the first successful result by priority order.
- * Default fileName is 'icon' (e.g. icon.svg). Override for entities
- * that use identifier-based naming (e.g. statuses use '{statusId}.svg').
+ * Default fileName is 'icon' (e.g. icon.svg).
  */
 async function discoverIconFile(
   workspaceId: string,

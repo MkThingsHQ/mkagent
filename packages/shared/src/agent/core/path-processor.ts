@@ -1,7 +1,7 @@
 /**
  * PathProcessor - Path Expansion and Normalization
  *
- * Provides path utilities that both ClaudeAgent and PiAgent can use.
+ * Provides path utilities used by PiAgent.
  * Wraps the existing path utilities with a consistent interface for agent
  * tool processing.
  *
@@ -31,7 +31,7 @@ export { expandPath, normalizePath, pathStartsWith, toPortablePath };
  */
 const CONFIG_FILE_PATTERNS = [
   // MkAgent configs
-  /\.mkagent\/.*\/(config|permissions|theme|guide|labels|statuses)\.json$/,
+  /\.mkagent\/.*\/(config|permissions|theme|guide)\.json$/,
   /\.mkagent\/config\.json$/,
   /\.mkagent\/preferences\.json$/,
   /\.mkagent\/.*\/SKILL\.md$/,

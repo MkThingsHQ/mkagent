@@ -79,20 +79,20 @@ CLI ──────────────┘                │
 
 | 指标 | 数量 | 比例/解释 |
 |---|---:|---|
-| MkAgent tracked source | 1,138 | 报告与生成物不计入 |
-| 与 Craft 同相对路径 | 1,098 | 96.5% |
-| 归一化后逐字一致 | 706 | 占 MkAgent 源码 62.0% |
-| Craft 派生但有修改 | 392 | 主要是 Lite 裁剪、品牌、Pi-only 适配 |
-| MkAgent 独有源码 | 40 | CI、文档、品牌、Pi 元数据与审计脚本 |
-| Craft 有而 MkAgent 无 | 624 | 主要是被裁掉的完整产品功能 |
+| MkAgent tracked source | 1,163 | 报告与生成物不计入 |
+| 与 Craft 同相对路径 | 1,116 | 96.0% |
+| 归一化后逐字一致 | 686 | 占 MkAgent 源码 59.0% |
+| Craft 派生但有修改 | 430 | 主要是 Lite 裁剪、品牌、Pi-only 适配和恢复的 Craft 测试 |
+| MkAgent 独有源码 | 47 | CI、文档、品牌、Pi 元数据、集成测试与审计脚本 |
+| Craft 有而 MkAgent 无 | 606 | 主要是被裁掉的完整产品功能 |
 
-这组数据支持“基于 Craft 做减法”的定位：96.5% 的 MkAgent 源码沿用 Craft 的文件结构；62.0% 在最小归一化后完全相同。392 个修改文件不等于重写，其中大量改动是删除 import、union 分支和 UI 节点；本轮 diff 为 305 个文件、增加 1,121 行、删除 54,390 行。
+这组数据支持“基于 Craft 做减法”的定位：96.0% 的 MkAgent 源码沿用 Craft 的文件结构；59.0% 在最小归一化后完全相同。430 个修改文件不等于重写，其中大量改动是删除 import/union 分支、恢复上游测试，以及为 Pi-only 会话运行时接入 Craft 的回调；从 UI 对齐基线起累计变更 389 个文件、增加 6,315 行、删除 56,761 行，整体仍是明确的源码减法。
 
 Renderer 另有更严格的边界检查：
 
 - 386 个现存 renderer 文件。
-- 174 个文件必须与 Craft 归一化后完全一致。
-- 207 个文件位于显式登记的 Lite 裁剪缝。
+- 170 个文件必须与 Craft 归一化后完全一致。
+- 211 个文件位于显式登记的 Lite 裁剪缝。
 - 5 个 MkAgent-only 文件是图标/品牌资产。
 - 排除功能路径、OAuth/远程工作区/产品元数据事件关键调用会直接让 lint 失败。
 
@@ -125,6 +125,7 @@ Renderer 另有更严格的边界检查：
 - Plan Review、权限模式、thinking/model selection、annotations。
 - Browser Pane、web search/fetch、文件附件与 PDF/Office/代码富预览。
 - Desktop/WebUI/CLI 共用 WebSocket RPC、代理、更新、主题、i18n。
+- Pi 会话从连接/模型请求、SSE 事件、session tool 执行、工具结果回传到 renderer 最终展示的完整链路。
 
 ## Distinctive Decisions
 
@@ -152,6 +153,8 @@ WebUI 通过远程 WebSocket transport 连接 server 是保留架构；Craft 的
 | `bun run test` | 通过 | 全仓 Bun tests 与 isolated tests |
 | `bun run validate:ci` | 通过 | 类型、共享配置测试、19 个文档工具 smoke、i18n |
 | `bun run lint` | 通过 | 0 errors；70 个 Craft 同源 React Hook warnings |
+| Craft retained-test coverage | 通过 | Craft 373 个测试：246 同路径、6 个裁剪替代、121 个随删除功能排除，0 个无解释缺失 |
+| Pi conversation integration | 通过 | 实际启动 Pi 子进程，经本地 OpenAI-compatible SSE 端点完成模型 → session tool → 工具结果 → 最终文本 |
 | Craft Lite boundary | 通过 | 严格复用区、定制缝、排除面扫描 |
 | Electron build | 通过 | main/preload/renderer/resources/assets |
 | WebUI build | 通过 | Vite production build |
@@ -164,7 +167,7 @@ WebUI 通过远程 WebSocket transport 连接 server 是保留架构；Craft 的
 
 ### Medium: Lite customization seam remains broad
 
-AppShell、导航、onboarding 和输入组件是结构性减法集中区，206 个 renderer 文件被登记为 override。它们仍来自 Craft，但不能用逐字一致自动判定。后续应按功能切片继续缩小 override prefix，逐步提升严格复用文件数量。
+AppShell、导航、onboarding 和输入组件是结构性减法集中区，211 个 renderer 文件被登记为 override。它们仍来自 Craft，但不能用逐字一致自动判定。后续应按功能切片继续缩小 override prefix，逐步提升严格复用文件数量。
 
 ### Medium: Upstream sync requires semantic review
 
@@ -174,9 +177,9 @@ Craft 新增功能可能落进现有共享模块，也可能修改 Lite 裁剪�
 
 当前 lint 没有 error，但有 70 个 React Hook dependency warnings。它们不是本轮删除导致的阻塞项，但对长期维护和并发状态正确性有价值，适合单独修复，避免与本次大规模删除混在一个变更中。
 
-### Low: No packaged-app interactive smoke in this run
+### Low: No packaged-app manual interactive smoke in this run
 
-生产构建全部成功，类型/单测/RPC parity 通过，但本轮没有在打包后的 Electron GUI 中手工完成首次启动、创建会话、发送消息、打开 Skill、导入导出等点击链路。它是发布前最后一层验证，不影响当前源码边界结论。
+生产构建、类型/单测/RPC parity 与确定性的真实 Pi 子进程会话链路均已通过，但本轮没有在打包后的 Electron GUI 中用真实外部 provider 凭证手工完成首次启动、创建会话、发送消息、打开 Skill、导入导出等点击链路。它仍是发布前最后一层验证。
 
 ## Commercial Use and Reuse
 
@@ -184,7 +187,7 @@ Craft 新增功能可能落进现有共享模块，也可能修改 Lite 裁剪�
 
 ## Unknowns Worth Verifying
 
-1. 发布签名前应在全新用户目录执行一次 Electron onboarding 与真实 Pi API 调用。
+1. 发布签名前应在全新用户目录执行一次 Electron onboarding 与真实外部 Pi provider API 调用；自动化已覆盖本地兼容端点，不等同于验证第三方账户/配额。
 2. WebUI 应在独立 server 上验证文件选择、Browser Pane 与重连，而不只是 production build。
 3. 若未来吸收新的 Craft 版本，应记录上游 SHA，并通过 `audit:craft-reuse` 比较复用率变化。
 4. 当前上游 checkout 的 `bun.lock` 是既有 dirty 状态；升级依赖时应先用干净上游基线重跑审计。

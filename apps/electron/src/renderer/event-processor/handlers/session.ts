@@ -176,7 +176,6 @@ export function handleTypedError(
       label: a.label,
       action: a.action,
       url: a.url,
-      sourceSlug: a.sourceSlug,
     })),
   }
 

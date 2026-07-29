@@ -40,7 +40,7 @@ export interface SessionMeta {
   permissionMode?: string
   /** Role/type of the last message (for badge display without loading messages) */
   lastMessageRole?: 'user' | 'assistant' | 'plan' | 'tool' | 'error'
-  /** Whether an async operation is ongoing (sharing, updating share, revoking, title regeneration) */
+  /** Whether an async operation is ongoing (currently title regeneration). */
   isAsyncOperationOngoing?: boolean
   /** @deprecated Use isAsyncOperationOngoing instead */
   isRegeneratingTitle?: boolean

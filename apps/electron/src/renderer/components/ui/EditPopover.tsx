@@ -114,7 +114,7 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
         'The user is on the Settings Screen and pressed the edit button on Workspace Permission settings. ' +
         'Their intent is likely to update the setting immediately unless otherwise specified. ' +
         'The permissions.json file configures Explore mode rules. It can contain: allowedBashPatterns, ' +
-        'allowedMcpPatterns, allowedApiEndpoints, blockedTools, and allowedWritePaths. ' +
+        'blockedTools, blockedCommandHints, and allowedWritePaths. ' +
         'After editing, call config_validate with target "permissions" to verify the changes. ' +
         'Confirm clearly when done.',
     },
@@ -133,7 +133,7 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
       context:
         'The user is editing app-level default permissions (~/.mkagent/permissions/default.json). ' +
         'This file configures Explore mode rules that apply to ALL workspaces. ' +
-        'It can contain: allowedBashPatterns, allowedMcpPatterns, allowedApiEndpoints, blockedTools, and allowedWritePaths. ' +
+        'It can contain: allowedBashPatterns, blockedTools, blockedCommandHints, and allowedWritePaths. ' +
         'Each pattern can be a string or an object with pattern and comment fields. ' +
         'Be careful - these are app-wide defaults. ' +
         'After editing, call config_validate with target "permissions" to verify the changes. ' +
@@ -187,7 +187,7 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
     inlineExecution: true,
   }),
 
-  // Source editing contexts
+  // Preferences editing context
   'preferences-notes': (location) => ({
     context: {
       label: 'Preferences Notes',
@@ -207,7 +207,7 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
     inlineExecution: true,
   }),
 
-  // Add new source/skill contexts - use overridePlaceholder for inspiring, contextual prompts
+  // Add Skill context - use overridePlaceholder for an inspiring prompt
   'add-skill': (location) => ({
     context: {
       label: 'Add Skill',
@@ -227,7 +227,7 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
     overridePlaceholderKey: 'editPopover.placeholder.addSkill',
   }),
 
-  // Status configuration context
+  // Tool-icon configuration context
   'edit-tool-icons': (location) => ({
     context: {
       label: 'Tool Icons',
@@ -337,8 +337,7 @@ export interface EditPopoverProps {
   modal?: boolean
   /**
    * Default value to pre-fill the input with.
-   * Useful when the user types something (e.g., "#Test") and clicks "Add new label" -
-   * the input can be pre-filled with "Add new label Test".
+   * Useful when a caller wants to seed an editing instruction.
    */
   defaultValue?: string
   /**
@@ -432,7 +431,7 @@ export function EditPopover({
   const workspace = useActiveWorkspace()
 
   // Build placeholder: for inline execution use rotating array, otherwise build descriptive string
-  // overridePlaceholder allows contexts like add-source/add-skill to say "add" instead of "change"
+  // overridePlaceholder lets add-skill say "add" instead of "change".
   const placeholder = inlineExecution
     ? COMPACT_PLACEHOLDER_KEYS.map(key => t(key))
     : (() => {

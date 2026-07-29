@@ -76,7 +76,7 @@ export function PanelStackContainer({
 
   // Compact mode: drill-in is "detail focused", not just "session selected".
   // For sessions: a session is selected. For settings: a subpage is selected.
-  // For sources/skills/automations: a detail entity is selected.
+  // For Skills: a detail entity is selected.
   const focusedNavState = focusedRoute ? parseRouteToNavigationState(focusedRoute) : null
   const isDetailFocused = isDetailNavState(focusedNavState)
   const hasSelectedContent = isCompact && isDetailFocused

@@ -143,7 +143,7 @@ function mapBrowserToolErrorCode(code: string): string | null {
  * Backend implementation using the Pi coding agent SDK via subprocess.
  *
  * Spawns a pi-agent-server subprocess and communicates via JSONL protocol.
- * Extends BaseAgent for common functionality (permission mode, source management,
+ * Extends BaseAgent for common functionality (permission mode,
  * planning heuristics, config watching, usage tracking).
  */
 export class PiAgent extends BaseAgent {
@@ -278,6 +278,7 @@ export class PiAgent extends BaseAgent {
 
   // Cached session tool context (lazy-created on first session tool call)
   private _sessionToolContext: SessionToolContext | null = null;
+  private backgroundEventSink: ((event: AgentEvent) => void) | null = null;
 
   // RPC request counter for unique IDs
   private rpcIdCounter: number = 0;
@@ -501,7 +502,7 @@ export class PiAgent extends BaseAgent {
     }
 
     // Register session-scoped tools as proxy tools in the subprocess.
-    // These tools (SubmitPlan, config_validate, source auth, call_llm, etc.)
+    // These tools (SubmitPlan, config_validate, call_llm, etc.)
     // are executed in the main process when the LLM calls them.
     this.assertBackendSessionToolParity();
     let sessionToolDefs = getSessionToolProxyDefs();
@@ -831,7 +832,16 @@ export class PiAgent extends BaseAgent {
     // The event adapter expects typed PiAgentEvent/AgentSessionEvent objects,
     // but since we're receiving plain JSON, we cast through unknown.
     for (const agentEvent of this.adapter.adaptEvent(adaptedEvent as any)) {
-      this.eventQueue.enqueue(agentEvent);
+      if (!this._isProcessing && this.backgroundEventSink && (
+        agentEvent.type === 'task_backgrounded' ||
+        agentEvent.type === 'task_progress' ||
+        agentEvent.type === 'task_completed' ||
+        agentEvent.type === 'workflow_agent_completed'
+      )) {
+        this.backgroundEventSink(agentEvent);
+      } else {
+        this.eventQueue.enqueue(agentEvent);
+      }
     }
 
     // Turn-completion is now adapter-driven so overflow recovery can hold the
@@ -843,6 +853,10 @@ export class PiAgent extends BaseAgent {
     if (this.adapter.shouldCompleteQueue(eventType === 'agent_end')) {
       this.eventQueue.complete();
     }
+  }
+
+  setBackgroundEventSink(sink: ((event: AgentEvent) => void) | null): void {
+    this.backgroundEventSink = sink;
   }
 
   /**

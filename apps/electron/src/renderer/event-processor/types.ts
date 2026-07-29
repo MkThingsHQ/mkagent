@@ -97,7 +97,7 @@ export interface CompleteEvent {
   hasUnread?: boolean
   /**
    * WS2 keep-alive: true when the session's persistent query stays open across
-   * turns (`CRAFT_KEEP_BG_AGENTS_ALIVE`). When set, the turn ending does NOT tear
+   * turns (`MKAGENT_KEEP_BG_AGENTS_ALIVE`). When set, the turn ending does NOT tear
    * down background sub-agents — so the chip orphan-backstop must NOT fire on this
    * `complete`; a real `task_completed` will arrive when the agent actually finishes.
    */
@@ -280,7 +280,7 @@ export interface PermissionModeChangedEvent {
   transitionDisplay?: string
   modeVersion?: number
   changedAt?: string
-  changedBy?: 'user' | 'system' | 'restore' | 'automation' | 'unknown'
+  changedBy?: 'user' | 'system' | 'restore' | 'unknown'
 }
 
 /**
@@ -459,7 +459,7 @@ export type Effect =
   | { type: 'permission_request'; request: PermissionRequest }
   | { type: 'credential_request'; request: CredentialRequest }
   | { type: 'generate_title'; sessionId: string; userMessage: string }
-  | { type: 'permission_mode_changed'; sessionId: string; permissionMode: PermissionMode; previousPermissionMode?: PermissionMode; transitionDisplay?: string; modeVersion?: number; changedAt?: string; changedBy?: 'user' | 'system' | 'restore' | 'automation' | 'unknown' }
+  | { type: 'permission_mode_changed'; sessionId: string; permissionMode: PermissionMode; previousPermissionMode?: PermissionMode; transitionDisplay?: string; modeVersion?: number; changedAt?: string; changedBy?: 'user' | 'system' | 'restore' | 'unknown' }
   | { type: 'restore_input'; text: string }
   | { type: 'toast_error'; message: string }
 

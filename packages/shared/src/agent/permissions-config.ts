@@ -9,9 +9,7 @@ import { getBundledAssetsDir } from '../utils/paths.ts';
 import {
   PermissionsConfigSchema,
   SAFE_MODE_CONFIG,
-  type ApiEndpointRule,
   type BlockedCommandHintRule,
-  type CompiledApiEndpointRule,
   type CompiledBashPattern,
   type CompiledBlockedCommandHint,
   type PermissionPaths,
@@ -20,8 +18,6 @@ import {
 
 export {
   PermissionsConfigSchema,
-  type ApiEndpointRule,
-  type CompiledApiEndpointRule,
   type CompiledBashPattern,
   type PermissionPaths,
   type PermissionsConfigFile,
@@ -34,7 +30,6 @@ export interface PatternWithComment {
 
 export interface PermissionsCustomConfig {
   allowedBashPatterns: PatternWithComment[];
-  allowedApiEndpoints: ApiEndpointRule[];
   allowedWritePaths: string[];
   blockedCommandHints: BlockedCommandHintRule[];
 }
@@ -43,8 +38,6 @@ export interface MergedPermissionsConfig {
   blockedTools: Set<string>;
   readOnlyBashPatterns: CompiledBashPattern[];
   blockedCommandHints: CompiledBlockedCommandHint[];
-  readOnlyMcpPatterns: RegExp[];
-  allowedApiEndpoints: CompiledApiEndpointRule[];
   allowedWritePaths: string[];
   displayName: string;
   shortcutHint: string;
@@ -87,7 +80,6 @@ export function ensureDefaultPermissions(): void {
   };
   const patternKey = (value: string | { pattern: string }): string =>
     typeof value === 'string' ? value : value.pattern;
-  const apiKey = (value: ApiEndpointRule): string => `${value.method.toUpperCase()}:${value.path}`;
   const hintKey = (value: BlockedCommandHintRule): string =>
     `${value.command}:${value.whenNotMatching ?? ''}:${value.reason}`;
 
@@ -100,11 +92,6 @@ export function ensureDefaultPermissions(): void {
         installed.data.allowedBashPatterns,
         bundled.data.allowedBashPatterns,
         patternKey
-      ),
-      allowedApiEndpoints: mergeByKey(
-        installed.data.allowedApiEndpoints,
-        bundled.data.allowedApiEndpoints,
-        apiKey
       ),
       allowedWritePaths: mergeByKey(
         installed.data.allowedWritePaths,
@@ -124,7 +111,6 @@ export function ensureDefaultPermissions(): void {
 function emptyConfig(): PermissionsCustomConfig {
   return {
     allowedBashPatterns: [],
-    allowedApiEndpoints: [],
     allowedWritePaths: [],
     blockedCommandHints: [],
   };
@@ -140,7 +126,6 @@ export function parsePermissionsJson(content: string): PermissionsCustomConfig {
       typeof value === 'string' ? value : value.pattern;
     return {
       allowedBashPatterns: (result.data.allowedBashPatterns ?? []).map(normalize),
-      allowedApiEndpoints: result.data.allowedApiEndpoints ?? [],
       allowedWritePaths: (result.data.allowedWritePaths ?? []).map(normalizePath),
       blockedCommandHints: result.data.blockedCommandHints ?? [],
     };
@@ -220,26 +205,11 @@ function applyConfig(target: MergedPermissionsConfig, config: PermissionsCustomC
     const regex = compileRegex(entry.pattern);
     if (regex) target.readOnlyBashPatterns.push({ regex, source: entry.pattern, comment: entry.comment });
   }
-  for (const rule of config.allowedApiEndpoints) {
-    const pathPattern = compileRegex(rule.path);
-    if (pathPattern) target.allowedApiEndpoints.push({ method: rule.method, pathPattern });
-  }
   target.allowedWritePaths.push(...config.allowedWritePaths);
   for (const hint of config.blockedCommandHints) {
     const compiled = compileHint(hint);
     if (compiled) target.blockedCommandHints.push(compiled);
   }
-}
-
-export function isApiEndpointAllowed(
-  method: string,
-  path: string | undefined,
-  config: MergedPermissionsConfig
-): boolean {
-  if (!path) return false;
-  return config.allowedApiEndpoints.some(
-    rule => rule.method.toUpperCase() === method.toUpperCase() && rule.pathPattern.test(path)
-  );
 }
 
 class PermissionsConfigCache {
@@ -252,8 +222,6 @@ class PermissionsConfigCache {
       blockedTools: new Set(SAFE_MODE_CONFIG.blockedTools),
       readOnlyBashPatterns: [...SAFE_MODE_CONFIG.readOnlyBashPatterns],
       blockedCommandHints: [...(SAFE_MODE_CONFIG.blockedCommandHints ?? [])],
-      readOnlyMcpPatterns: [],
-      allowedApiEndpoints: [],
       allowedWritePaths: [],
       displayName: SAFE_MODE_CONFIG.displayName,
       shortcutHint: SAFE_MODE_CONFIG.shortcutHint,

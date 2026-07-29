@@ -3,7 +3,7 @@
  *
  * Extracted to its own module so the directory probe, ENOENT detection,
  * and SDK wrapper-string regex can be unit-tested without spinning up a
- * full ClaudeAgent.
+ * full PiAgent.
  */
 
 import { lstatSync } from 'node:fs';

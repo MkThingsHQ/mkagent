@@ -64,18 +64,6 @@ function buildDefaultPermissionsData(config: PermissionsConfigFile | null): Perm
     rows.push({ access: 'allowed', type: 'bash', pattern, comment })
   })
 
-  // Allowed MCP patterns
-  config.allowedMcpPatterns?.forEach((item) => {
-    const { pattern, comment } = extractPatternInfo(item)
-    rows.push({ access: 'allowed', type: 'mcp', pattern, comment })
-  })
-
-  // API endpoints
-  config.allowedApiEndpoints?.forEach((item) => {
-    const pattern = `${item.method} ${item.path}`
-    rows.push({ access: 'allowed', type: 'api', pattern, comment: item.comment || null })
-  })
-
   // Write paths
   config.allowedWritePaths?.forEach((item) => {
     const { pattern, comment } = extractPatternInfo(item)
@@ -89,7 +77,7 @@ function buildDefaultPermissionsData(config: PermissionsConfigFile | null): Perm
  * Build custom permissions data from workspace permissions.json.
  * These are user-added patterns that extend the defaults.
  */
-function buildCustomPermissionsData(config: PermissionsConfigFile, fallbackLabels: { blockedTool: string; bashPattern: string; mcpPattern: string; apiEndpoint: string; writePath: string }): PermissionRow[] {
+function buildCustomPermissionsData(config: PermissionsConfigFile, fallbackLabels: { blockedTool: string; bashPattern: string; writePath: string }): PermissionRow[] {
   const rows: PermissionRow[] = []
 
   // Additional blocked tools
@@ -104,19 +92,6 @@ function buildCustomPermissionsData(config: PermissionsConfigFile, fallbackLabel
     const pattern = typeof item === 'string' ? item : item.pattern
     const comment = typeof item === 'string' ? fallbackLabels.bashPattern : (item.comment || fallbackLabels.bashPattern)
     rows.push({ access: 'allowed', type: 'bash', pattern, comment })
-  })
-
-  // Additional MCP patterns
-  config.allowedMcpPatterns?.forEach((item) => {
-    const pattern = typeof item === 'string' ? item : item.pattern
-    const comment = typeof item === 'string' ? fallbackLabels.mcpPattern : (item.comment || fallbackLabels.mcpPattern)
-    rows.push({ access: 'allowed', type: 'mcp', pattern, comment })
-  })
-
-  // API endpoints
-  config.allowedApiEndpoints?.forEach((item) => {
-    const pattern = `${item.method} ${item.path}`
-    rows.push({ access: 'allowed', type: 'api', pattern, comment: item.comment || fallbackLabels.apiEndpoint })
   })
 
   // Write paths are shown as allowed paths
@@ -148,8 +123,6 @@ export default function PermissionsSettingsPage() {
   const permissionFallbackLabels = useMemo(() => ({
     blockedTool: t("settings.permissions.customBlockedTool"),
     bashPattern: t("settings.permissions.customBashPattern"),
-    mcpPattern: t("settings.permissions.customMcpPattern"),
-    apiEndpoint: t("settings.permissions.customApiEndpoint"),
     writePath: t("settings.permissions.allowedWritePath"),
   }), [t])
 

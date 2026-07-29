@@ -2,8 +2,7 @@
  * Base Event Adapter
  *
  * Abstract base class for provider-specific event adapters. Provides shared
- * state management (Maps, lifecycle) used by ClaudeEventAdapter and
- * PiEventAdapter.
+ * state management (Maps, lifecycle) used by PiEventAdapter.
  *
  * Subclasses implement provider-specific event dispatch (adapt*() methods)
  * while inheriting:
@@ -17,8 +16,6 @@
 import type { AgentEvent } from '@mkagent/core/types';
 import { parseReadCommand, type ReadCommandInfo } from './read-patterns.ts';
 import { createLogger } from '../../utils/debug.ts';
-/** MCP server name used by the pool server */
-const POOL_SERVER_MCP_NAME = 'sources';
 
 export { type ReadCommandInfo } from './read-patterns.ts';
 
@@ -149,26 +146,6 @@ export abstract class BaseEventAdapter {
       this.commandOutput.delete(id);
     }
     return output;
-  }
-
-  // ============================================================
-  // MCP Tool Name Helpers
-  // ============================================================
-
-  /**
-   * Build the canonical proxy tool name for an MCP tool call.
-   *
-   * Pool server tools already include the server slug in their name
-   * (e.g., "docs__search") because the pool strips the `mcp__` prefix.
-   * We just need to re-add `mcp__` to produce "mcp__docs__search".
-   * Without this, an extra pool-server segment would be introduced and tool
-   * metadata lookup would fail.
-   */
-  protected buildMcpToolName(serverName: string, toolName: string): string {
-    if (serverName === POOL_SERVER_MCP_NAME && toolName.includes('__')) {
-      return `mcp__${toolName}`;
-    }
-    return `mcp__${serverName}__${toolName}`;
   }
 
   // ============================================================

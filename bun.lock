@@ -5,8 +5,6 @@
     "": {
       "name": "mkagent",
       "dependencies": {
-        "@dnd-kit/dom": "^0.4.0-beta-20260227032529",
-        "@dnd-kit/helpers": "^0.4.0-beta-20260227032529",
         "@earendil-works/pi-ai": "0.80.6",
         "@earendil-works/pi-coding-agent": "0.80.6",
         "@radix-ui/react-avatar": "^1.1.11",
@@ -129,9 +127,6 @@
       "name": "@mkagent/electron",
       "version": "0.1.0",
       "devDependencies": {
-        "@dnd-kit/core": "^6.3.1",
-        "@dnd-kit/sortable": "^10.0.0",
-        "@dnd-kit/utilities": "^3.2.2",
         "@mkagent/core": "workspace:*",
         "@mkagent/server-core": "workspace:*",
         "@mkagent/shared": "workspace:*",
@@ -480,26 +475,6 @@
     "@date-fns/tz": ["@date-fns/tz@1.4.1", "https://repo.huaweicloud.com/repository/npm/@date-fns/tz/-/tz-1.4.1.tgz", {}, "sha512-P5LUNhtbj6YfI3iJjw5EL9eUAG6OitD0W3fWQcpQjDRc/QIsL0tRNuO1PcDvPccWL1fSTXXdE1ds+l95DV/OFA=="],
 
     "@develar/schema-utils": ["@develar/schema-utils@2.6.5", "https://repo.huaweicloud.com/repository/npm/@develar/schema-utils/-/schema-utils-2.6.5.tgz", { "dependencies": { "ajv": "^6.12.0", "ajv-keywords": "^3.4.1" } }, "sha512-0cp4PsWQ/9avqTVMCtZ+GirikIA36ikvjtHweU4/j8yLtgObI0+JUPhYFScgwlteveGB1rt3Cm8UhN04XayDig=="],
-
-    "@dnd-kit/abstract": ["@dnd-kit/abstract@0.4.0-beta-20260227032529", "https://repo.huaweicloud.com/repository/npm/@dnd-kit/abstract/-/abstract-0.4.0-beta-20260227032529.tgz", { "dependencies": { "@dnd-kit/geometry": "0.4.0-beta-20260227032529", "@dnd-kit/state": "0.4.0-beta-20260227032529", "tslib": "^2.6.2" } }, "sha512-COWK951vQlFbWrq8WWEddkyx3JV9zvIjc4qxtKy6vC1PIEGNAMujUflVxlnGU2jBs4n3IwzPzkrEF1GDgQ5Y7g=="],
-
-    "@dnd-kit/accessibility": ["@dnd-kit/accessibility@3.1.1", "https://repo.huaweicloud.com/repository/npm/@dnd-kit/accessibility/-/accessibility-3.1.1.tgz", { "dependencies": { "tslib": "^2.0.0" }, "peerDependencies": { "react": ">=16.8.0" } }, "sha512-2P+YgaXF+gRsIihwwY1gCsQSYnu9Zyj2py8kY5fFvUM1qm2WA2u639R6YNVfU4GWr+ZM5mqEsfHZZLoRONbemw=="],
-
-    "@dnd-kit/collision": ["@dnd-kit/collision@0.4.0-beta-20260227032529", "https://repo.huaweicloud.com/repository/npm/@dnd-kit/collision/-/collision-0.4.0-beta-20260227032529.tgz", { "dependencies": { "@dnd-kit/abstract": "0.4.0-beta-20260227032529", "@dnd-kit/geometry": "0.4.0-beta-20260227032529", "tslib": "^2.6.2" } }, "sha512-qXb2/rGq9MjaYf3BEvsYAxEWnHX6sVpdbwu60AAfkYoO82NSUdQBSR4Dh8RPyjKmTCt3uPO3+83ZcgeCBddFiw=="],
-
-    "@dnd-kit/core": ["@dnd-kit/core@6.3.1", "https://repo.huaweicloud.com/repository/npm/@dnd-kit/core/-/core-6.3.1.tgz", { "dependencies": { "@dnd-kit/accessibility": "^3.1.1", "@dnd-kit/utilities": "^3.2.2", "tslib": "^2.0.0" }, "peerDependencies": { "react": ">=16.8.0", "react-dom": ">=16.8.0" } }, "sha512-xkGBRQQab4RLwgXxoqETICr6S5JlogafbhNsidmrkVv2YRs5MLwpjoF2qpiGjQt8S9AoxtIV603s0GIUpY5eYQ=="],
-
-    "@dnd-kit/dom": ["@dnd-kit/dom@0.4.0-beta-20260227032529", "https://repo.huaweicloud.com/repository/npm/@dnd-kit/dom/-/dom-0.4.0-beta-20260227032529.tgz", { "dependencies": { "@dnd-kit/abstract": "0.4.0-beta-20260227032529", "@dnd-kit/collision": "0.4.0-beta-20260227032529", "@dnd-kit/geometry": "0.4.0-beta-20260227032529", "@dnd-kit/state": "0.4.0-beta-20260227032529", "tslib": "^2.6.2" } }, "sha512-FiBuEN4hCglPJ4lTvzglq+EMiZ3DdcsD9dUvqsxR32Ql8ayh7HoiAJ6RSx77+UgH66FgpC3AudTF8oRG776CFQ=="],
-
-    "@dnd-kit/geometry": ["@dnd-kit/geometry@0.4.0-beta-20260227032529", "https://repo.huaweicloud.com/repository/npm/@dnd-kit/geometry/-/geometry-0.4.0-beta-20260227032529.tgz", { "dependencies": { "@dnd-kit/state": "0.4.0-beta-20260227032529", "tslib": "^2.6.2" } }, "sha512-0iAEmqE8KOcIqQCR1y+i3dI3AayUU4kqRhZfB2PmZF0E7md9TZbbFf491tGHQyjvT1RImFShRCB55wJLObTCsg=="],
-
-    "@dnd-kit/helpers": ["@dnd-kit/helpers@0.4.0-beta-20260227032529", "https://repo.huaweicloud.com/repository/npm/@dnd-kit/helpers/-/helpers-0.4.0-beta-20260227032529.tgz", { "dependencies": { "@dnd-kit/abstract": "0.4.0-beta-20260227032529", "tslib": "^2.6.2" } }, "sha512-JeZBAw6fx9SgBisKNtcSoQUbE3CvxkNiLHYWBk111xNMEWK9h9vot/HENvVxhmmPhwL34aW58kkOLlQbbJf3Hw=="],
-
-    "@dnd-kit/sortable": ["@dnd-kit/sortable@10.0.0", "https://repo.huaweicloud.com/repository/npm/@dnd-kit/sortable/-/sortable-10.0.0.tgz", { "dependencies": { "@dnd-kit/utilities": "^3.2.2", "tslib": "^2.0.0" }, "peerDependencies": { "@dnd-kit/core": "^6.3.0", "react": ">=16.8.0" } }, "sha512-+xqhmIIzvAYMGfBYYnbKuNicfSsk4RksY2XdmJhT+HAC01nix6fHCztU68jooFiMUB01Ky3F0FyOvhG/BZrWkg=="],
-
-    "@dnd-kit/state": ["@dnd-kit/state@0.4.0-beta-20260227032529", "https://repo.huaweicloud.com/repository/npm/@dnd-kit/state/-/state-0.4.0-beta-20260227032529.tgz", { "dependencies": { "@preact/signals-core": "^1.10.0", "tslib": "^2.6.2" } }, "sha512-Vrpjb7fHTDepweOAe1uBlBmtLDpaocuocmOgAAM2DgOalEqG5HEpLufMcdDGEFDJNc8I2TaJcyJlOrticu1rBA=="],
-
-    "@dnd-kit/utilities": ["@dnd-kit/utilities@3.2.2", "https://repo.huaweicloud.com/repository/npm/@dnd-kit/utilities/-/utilities-3.2.2.tgz", { "dependencies": { "tslib": "^2.0.0" }, "peerDependencies": { "react": ">=16.8.0" } }, "sha512-+MKAJEOfaBe5SmV6t34p80MMKhjvUz0vRrvVJbPT0WElzaOJ/1xs+D+KDv+tD/NE5ujfrChEcshd4fLn0wpiqg=="],
 
     "@earendil-works/pi-agent-core": ["@earendil-works/pi-agent-core@0.80.6", "https://repo.huaweicloud.com/repository/npm/@earendil-works/pi-agent-core/-/pi-agent-core-0.80.6.tgz", { "dependencies": { "@earendil-works/pi-ai": "^0.80.6", "ignore": "7.0.5", "typebox": "1.1.38", "yaml": "2.9.0" } }, "sha512-Lvn89ko42h5ETUb6Z0Ku6ldskEqXaTdQBYvSa0+7bdG9V6rUEpXptv5e0OVZ1HDcvi8s6/2lGCQWsxKX+DFHNw=="],
 
@@ -856,8 +831,6 @@
     "@pierre/diffs": ["@pierre/diffs@1.0.5", "https://repo.huaweicloud.com/repository/npm/@pierre/diffs/-/diffs-1.0.5.tgz", { "dependencies": { "@shikijs/core": "^3.0.0", "@shikijs/engine-javascript": "^3.0.0", "@shikijs/transformers": "^3.0.0", "diff": "8.0.2", "hast-util-to-html": "9.0.5", "lru_map": "0.4.1", "shiki": "^3.0.0" }, "peerDependencies": { "react": "^18.3.1 || ^19.0.0", "react-dom": "^18.3.1 || ^19.0.0" } }, "sha512-QcFhO6BW1Zz3BP+WFuH1tO2DjFJY5Sb6NmRjmEoVeEu1AVOd3HoUEFTnztxgxn+2c2ZFyFZP+6T4X/g8LDuZLw=="],
 
     "@pkgjs/parseargs": ["@pkgjs/parseargs@0.11.0", "https://repo.huaweicloud.com/repository/npm/@pkgjs/parseargs/-/parseargs-0.11.0.tgz", {}, "sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg=="],
-
-    "@preact/signals-core": ["@preact/signals-core@1.13.0", "https://repo.huaweicloud.com/repository/npm/@preact/signals-core/-/signals-core-1.13.0.tgz", {}, "sha512-slT6XeTCAbdql61GVLlGU4x7XHI7kCZV5Um5uhE4zLX4ApgiiXc0UYFvVOKq06xcovzp7p+61l68oPi563ARKg=="],
 
     "@prisma/instrumentation": ["@prisma/instrumentation@7.2.0", "https://repo.huaweicloud.com/repository/npm/@prisma/instrumentation/-/instrumentation-7.2.0.tgz", { "dependencies": { "@opentelemetry/instrumentation": "^0.207.0" }, "peerDependencies": { "@opentelemetry/api": "^1.8" } }, "sha512-Rh9Z4x5kEj1OdARd7U18AtVrnL6rmLSI0qYShaB4W7Wx5BKbgzndWF+QnuzMb7GLfVdlT5aYCXoPQVYuYtVu0g=="],
 

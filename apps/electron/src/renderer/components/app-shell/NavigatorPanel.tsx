@@ -21,7 +21,7 @@ import { PanelHeader } from './PanelHeader'
 import { cn } from '@/lib/utils'
 
 export interface NavigatorPanelProps {
-  /** Panel title (e.g., "Conversations", "Sources") */
+  /** Panel title (e.g., "Conversations", "Skills") */
   title: string
   /** Panel width in pixels */
   width: number

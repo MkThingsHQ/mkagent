@@ -2,7 +2,7 @@
  * ConfigValidator - Pre-Write Configuration Validation
  *
  * Provides validation utilities for configuration files before writing.
- * Both ClaudeAgent and PiAgent can use this to validate Write/Edit tool
+ * PiAgent uses this to validate Write/Edit tool
  * inputs before they modify config files.
  *
  * Key responsibilities:
@@ -34,17 +34,11 @@ const MKAGENT_AGENT_CONFIG_PATTERNS = [
   /\.mkagent\/config\.json$/,
   // Preferences
   /\.mkagent\/preferences\.json$/,
-  // Source configs
-  /\.mkagent\/workspaces\/[^/]+\/sources\/[^/]+\/config\.json$/,
   // Permissions
   /\.mkagent\/workspaces\/[^/]+\/permissions\.json$/,
   /\.mkagent\/permissions\/[^/]+\.json$/,
   // Theme
   /\.mkagent\/workspaces\/[^/]+\/theme\.json$/,
-  // Statuses
-  /\.mkagent\/workspaces\/[^/]+\/statuses\/config\.json$/,
-  // Labels
-  /\.mkagent\/workspaces\/[^/]+\/labels\.json$/,
   // Tool icons
   /\.mkagent\/tool-icons\/tool-icons\.json$/,
 ];

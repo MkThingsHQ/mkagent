@@ -117,8 +117,6 @@ function piAuthProviderToIcon(piAuthProvider: string): ProviderIconKey | null {
       return 'minimax'
     case 'mistral':
       return 'mistral'
-    case 'amazon-bedrock':
-      return 'aws'
     case 'azure-openai-responses':
       return 'azure'
     case 'huggingface':

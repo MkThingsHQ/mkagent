@@ -14,7 +14,6 @@ import type { SessionConfig } from '../../sessions/storage.ts';
 export type {
   PermissionMode,
   ModeConfig,
-  CompiledApiEndpointRule,
   CompiledBashPattern,
   MismatchAnalysis,
   PermissionPaths,

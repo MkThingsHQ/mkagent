@@ -376,7 +376,7 @@ export default function App() {
   // Notifications enabled state (from app settings)
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
 
-  // Sources and skills for badge extraction
+  // Skills used for badge extraction
   const skills = useAtomValue(skillsAtom)
 
   // Compute if app is fully ready (all data loaded)

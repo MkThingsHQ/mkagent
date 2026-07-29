@@ -32,7 +32,7 @@ interface ProviderSelectStepProps {
 /**
  * ProviderSelectStep — First screen after install.
  *
- * Welcomes the user and asks them to pick their subscription / auth method.
+ * Welcomes the user and asks them to pick a model provider.
  * Selecting a card immediately advances to the next step.
  */
 export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps) {
@@ -42,7 +42,7 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
     {
       id: 'api_key',
       name: t("onboarding.providerSelect.otherProvider"),
-      description: 'Anthropic, AWS Bedrock, OpenRouter, Google or any compatible provider.',
+      description: 'Anthropic, OpenAI, OpenRouter, Google or any compatible provider.',
       icon: PROVIDER_ICONS.api_key,
     },
     {

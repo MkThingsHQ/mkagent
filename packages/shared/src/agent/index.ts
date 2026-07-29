@@ -65,7 +65,6 @@ export {
   validatePermissionsConfig,
 } from './permissions-config.ts';
 export type {
-  CompiledApiEndpointRule,
   MergedPermissionsConfig,
   PermissionsConfigFile,
   PermissionsContext,

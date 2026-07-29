@@ -83,17 +83,6 @@ export function parsePermissionMode(mode: string): PermissionMode | null {
 // ============================================================
 
 /**
- * API endpoint rule - method + path pattern
- */
-const ApiEndpointRuleSchema = z.object({
-  method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS']),
-  path: z.string().describe('Regex pattern for API path'),
-  comment: z.string().optional(),
-});
-
-export type ApiEndpointRule = z.infer<typeof ApiEndpointRuleSchema>;
-
-/**
  * Pattern with optional comment
  */
 const PatternSchema = z.union([
@@ -136,10 +125,6 @@ export const PermissionsConfigSchema = z.object({
   version: z.string().optional(),
   /** Bash command patterns to allow (regex strings) */
   allowedBashPatterns: z.array(PatternSchema).optional(),
-  /** MCP tool patterns to allow (regex strings) */
-  allowedMcpPatterns: z.array(PatternSchema).optional(),
-  /** API endpoint rules - method + path pattern */
-  allowedApiEndpoints: z.array(ApiEndpointRuleSchema).optional(),
   /** File paths to allow writes in Explore mode (glob patterns) */
   allowedWritePaths: z.array(PatternSchema).optional(),
   /** Additional tools to block (extends the hardcoded defaults) */
@@ -153,14 +138,6 @@ export type PermissionsConfigFile = z.infer<typeof PermissionsConfigSchema>;
 // ============================================================
 // Mode Config Types
 // ============================================================
-
-/**
- * Compiled API endpoint rule for runtime checking
- */
-export interface CompiledApiEndpointRule {
-  method: string;
-  pathPattern: RegExp;
-}
 
 /**
  * Compiled bash pattern with metadata for error messages.
@@ -235,10 +212,6 @@ export interface ModeConfig {
   readOnlyBashPatterns: CompiledBashPattern[];
   /** Command-specific hints shown when blocked Bash commands are rejected */
   blockedCommandHints?: CompiledBlockedCommandHint[];
-  /** Read-only MCP patterns (tools matching these are allowed) */
-  readOnlyMcpPatterns: RegExp[];
-  /** Fine-grained API endpoint rules (method + path pattern) */
-  allowedApiEndpoints: CompiledApiEndpointRule[];
   /** File paths allowed for writes in Explore mode (glob patterns) */
   allowedWritePaths?: string[];
   /** User-friendly name */
@@ -276,8 +249,6 @@ export const SAFE_MODE_CONFIG: ModeConfig = {
   // If default.json is missing, no bash commands will be auto-allowed in Explore mode
   readOnlyBashPatterns: [],
   blockedCommandHints: [],
-  readOnlyMcpPatterns: [],
-  allowedApiEndpoints: [],
   displayName: 'Explore',
   shortcutHint: 'SHIFT+TAB',
 };

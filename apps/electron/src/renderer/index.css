@@ -128,7 +128,7 @@
     rgba(0, 0, 0, calc(var(--shadow-blur-opacity) * 0.33)) 0px 24px 24px 0px;
 
   /* Drag-lift elevation — a card genuinely peeled off the surface. Shared by the
-     Planner's in-place sortable (`--sortable-shadow-active`) and the Kanban's
+     Planner's in-place sortable (`--sortable-shadow-active`) and other
      DragOverlay clone (`.shadow-dragging`). Keeps the two leading transparent
      layers so it matches `--shadow-minimal`'s 5-layer count and the Planner's
      selected→grabbed `box-shadow` transition stays interpolatable. The ring uses
@@ -1419,7 +1419,7 @@ html.dark[data-scenic] .fullscreen-overlay-background {
   /* Bottom safe area for iOS home indicator + FAB clearance.
      Sessions list keeps a 72px buffer (FAB is ~56px + bottom inset 16px)
      so the last row never sits underneath the floating action button.
-     Other list roles (sources/skills/automations) only need the iOS
+     Other list roles (such as Skills) only need the iOS
      safe-area inset since they don't have a FAB. */
   [data-list-role] {
     padding-bottom: env(safe-area-inset-bottom, 0px);

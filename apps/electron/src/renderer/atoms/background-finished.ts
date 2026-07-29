@@ -7,7 +7,7 @@
  * fires when the whole app is unfocused. This atom gates whether that chip is shown.
  *
  * It's an appearance *preference*, so it persists to localStorage via
- * `atomWithStorage` (same pattern as `kanbanLivePulseAtom` in `./kanban`) —
+ * `atomWithStorage` —
  * reactive, multi-window, no RPC/disk-config. The value is read reactively in two
  * places (the App-level completion detector and the chat-view render gate), which
  * is exactly what a persisted atom is for. Per-machine, not workspace-synced.

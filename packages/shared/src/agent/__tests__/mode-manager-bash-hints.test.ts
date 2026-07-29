@@ -37,8 +37,6 @@ function buildConfig(overrides?: Partial<ModeConfig>): ModeConfig {
         whenNotMatchingRegex: /^sed\s+-n\b/,
       },
     ],
-    readOnlyMcpPatterns: [],
-    allowedApiEndpoints: [],
     displayName: 'Explore',
     shortcutHint: 'SHIFT+TAB',
     ...overrides,

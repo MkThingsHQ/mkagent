@@ -2,13 +2,12 @@
  * PermissionManager - Centralized Tool Permission Evaluation
  *
  * Provides a unified interface for checking tool permissions that both
- * ClaudeAgent and PiAgent can use. Delegates to the existing mode-manager
+ * PiAgent uses. Delegates to the existing mode-manager
  * implementation to ensure consistent behavior.
  *
  * Key responsibilities:
  * - Evaluate tool calls against permission mode (explore/ask/execute)
  * - Check bash commands against read-only patterns
- * - Validate API endpoints against allowlists
  * - Provide detailed rejection reasons for blocked operations
  */
 
@@ -18,7 +17,6 @@ import {
   setPermissionMode,
   cyclePermissionMode,
   shouldAllowToolInMode,
-  isApiEndpointAllowed,
   getBashRejectionReason,
   formatBashRejectionMessage,
   type ToolCheckResult,
@@ -229,22 +227,6 @@ export class PermissionManager {
     // In ask mode, check if command is dangerous
     const baseCommand = this.getBaseCommand(command);
     return this.isDangerousCommand(baseCommand);
-  }
-
-  // ============================================================
-  // API Endpoint Checking
-  // ============================================================
-
-  /**
-   * Check if an API endpoint is allowed based on method and path.
-   * GET requests are always allowed. Other methods check against allowlist.
-   *
-   * @param method - HTTP method (GET, POST, etc.)
-   * @param path - API endpoint path
-   * @returns true if the endpoint is allowed
-   */
-  isApiEndpointAllowed(method: string, path?: string): boolean {
-    return isApiEndpointAllowed(method, path, this.permissionsContext);
   }
 
   // ============================================================

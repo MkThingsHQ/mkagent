@@ -33,6 +33,11 @@ import {
   resolveBackendContext,
   type AgentBackend,
 } from '@mkagent/shared/agent/backend'
+import {
+  mergeSessionScopedToolCallbacks,
+  unregisterSessionScopedToolCallbacks,
+  type BrowserPaneFns,
+} from '@mkagent/shared/agent'
 import { getMiniModel, getWorkspaces } from '@mkagent/shared/config'
 import { loadWorkspaceConfig } from '@mkagent/shared/workspaces'
 import {
@@ -57,6 +62,8 @@ import {
   type StoredSession,
 } from '@mkagent/shared/sessions'
 import { restoreFiles } from '@mkagent/shared/utils/bundle-files'
+import { readFileAttachment } from '@mkagent/shared/utils'
+import { getWorkspaceAllowedDirs, validateFilePath } from '@mkagent/server-core/handlers'
 import { normalizeThinkingLevel, type ThinkingLevel } from '@mkagent/shared/agent/thinking-levels'
 import type { PermissionMode } from '@mkagent/shared/agent/mode-types'
 import { buildBackendRuntimeSignature, buildRestartRequiredSignature } from './runtime-config'
@@ -154,6 +161,9 @@ const EMPTY_USAGE: SessionTokenUsage = {
   costUsd: 0,
 }
 
+const MAX_ANNOTATIONS_PER_MESSAGE = 200
+const MAX_ANNOTATION_JSON_BYTES = 32 * 1024
+
 interface QueuedMessage {
   message: string
   messageId: string
@@ -161,6 +171,22 @@ interface QueuedMessage {
   attachments?: FileAttachment[]
   storedAttachments?: StoredAttachment[]
   options?: SendMessageOptions
+}
+
+type BackgroundTaskStatus = 'running' | 'completed' | 'failed' | 'stopped' | 'orphaned'
+
+interface RunningBackgroundTask {
+  taskId: string
+  toolUseId?: string
+  intent?: string
+  startTime: number
+  lastProgressAt?: number
+  elapsedSeconds?: number
+  status: BackgroundTaskStatus
+  completedAt?: number
+  turnId?: string
+  workflowId?: string
+  agentsCompleted?: number
 }
 
 interface ManagedSession extends SessionConfig {
@@ -171,6 +197,7 @@ interface ManagedSession extends SessionConfig {
   isProcessing: boolean
   agent: AgentBackend | null
   messageQueue: QueuedMessage[]
+  backgroundTaskRegistry: Map<string, RunningBackgroundTask>
   backendRuntimeSignature?: string
   backendRestartSignature?: string
   runtimeRefreshPromise?: Promise<void>
@@ -221,6 +248,7 @@ export function createManagedSession(
     isProcessing: false,
     agent: null,
     messageQueue: [],
+    backgroundTaskRegistry: new Map(),
   }
 }
 
@@ -298,6 +326,12 @@ export class SessionManager implements ISessionManager {
     )
   }
 
+  /** Craft-compatible event helper retained for isolated domain testing. */
+  private sendEvent(event: SessionEvent, workspaceId?: string): void {
+    if (!workspaceId || !this.eventSink) return
+    this.eventSink(RPC_CHANNELS.sessions.EVENT, { to: 'workspace', workspaceId }, event)
+  }
+
   notifySessionCreated(workspaceId: string, sessionId: string): void {
     this.emit(workspaceId, { type: 'session_created', sessionId })
   }
@@ -315,6 +349,7 @@ export class SessionManager implements ISessionManager {
   private toStored(managed: ManagedSession): StoredSession {
     const { workspace: _workspace, agent: _agent, messageQueue: _queue,
       messagesLoaded: _loaded, isProcessing: _processing,
+      backgroundTaskRegistry: _backgroundTaskRegistry,
       runtimeRefreshPromise: _refresh, backendRuntimeSignature: _runtimeSignature,
       backendRestartSignature: _restartSignature, currentStatus: _status,
       lastFinalMessageId: _lastFinalMessageId, lastMessageRole: _lastMessageRole,
@@ -490,6 +525,7 @@ export class SessionManager implements ISessionManager {
     if (!managed) return
     await this.cancelProcessing(sessionId, true)
     managed.agent?.destroy()
+    unregisterSessionScopedToolCallbacks(sessionId)
     deleteStoredSession(managed.workspace.rootPath, sessionId)
     this.sessions.delete(sessionId)
     this.emit(managed.workspace.id, { type: 'session_deleted', sessionId })
@@ -683,17 +719,61 @@ export class SessionManager implements ISessionManager {
         this.emit(managed.workspace.id, { type: 'usage_update', sessionId, tokenUsage: event.usage })
         break
       case 'task_backgrounded':
+        managed.backgroundTaskRegistry.set(event.taskId, {
+          taskId: event.taskId,
+          toolUseId: event.toolUseId,
+          intent: event.intent,
+          startTime: Date.now(),
+          status: 'running',
+          turnId: event.turnId,
+          ...(event.workflowId ? { workflowId: event.workflowId } : {}),
+          ...(event.kind === 'workflow' ? { agentsCompleted: 0 } : {}),
+        })
         this.emit(managed.workspace.id, { type: 'task_backgrounded', sessionId, toolUseId: event.toolUseId, taskId: event.taskId, intent: event.intent, turnId: event.turnId })
         break
       case 'shell_backgrounded':
         this.emit(managed.workspace.id, { type: 'shell_backgrounded', sessionId, toolUseId: event.toolUseId, shellId: event.shellId, intent: event.intent, command: event.command, turnId: event.turnId })
         break
       case 'task_progress':
+        for (const task of managed.backgroundTaskRegistry.values()) {
+          if (task.toolUseId === event.toolUseId) {
+            task.elapsedSeconds = event.elapsedSeconds
+            task.lastProgressAt = Date.now()
+            break
+          }
+        }
         this.emit(managed.workspace.id, { type: 'task_progress', sessionId, toolUseId: event.toolUseId, elapsedSeconds: event.elapsedSeconds, turnId: event.turnId })
         break
-      case 'task_completed':
+      case 'task_completed': {
+        const task = managed.backgroundTaskRegistry.get(event.taskId)
+          ?? [...managed.backgroundTaskRegistry.values()].find(item => item.workflowId === event.taskId)
+        const wasAlreadyTerminal = task ? task.status !== 'running' : false
+        if (task) {
+          task.status = event.status
+          task.completedAt = Date.now()
+        } else {
+          managed.backgroundTaskRegistry.set(event.taskId, {
+            taskId: event.taskId,
+            startTime: Date.now(),
+            status: event.status,
+            completedAt: Date.now(),
+          })
+        }
         this.emit(managed.workspace.id, { type: 'task_completed', sessionId, taskId: event.taskId, status: event.status, outputFile: event.outputFile, summary: event.summary, turnId: event.turnId })
+        if (!managed.isProcessing && !wasAlreadyTerminal) {
+          const label = task?.intent ? `"${task.intent}"` : `task ${event.taskId}`
+          const nudge = event.status === 'completed'
+            ? [
+                `[background-task-completed] The background agent you launched (${label}) has finished.`,
+                event.outputFile ? `Its full output is saved at: ${event.outputFile}` : '',
+                'Read that output file and present the results to the user now. Do NOT spawn another background agent — just read the file and summarize the findings inline.',
+              ].filter(Boolean).join('\n')
+            : `[background-task-${event.status}] The background agent you launched (${label}) did not complete successfully. Do NOT spawn another background agent.`
+          void this.sendMessage(sessionId, nudge, undefined, undefined, { hidden: true })
+            .catch(error => log.error('Failed to surface background task result', event.taskId, error))
+        }
         break
+      }
       case 'shell_killed':
         this.emit(managed.workspace.id, { type: 'shell_killed', sessionId, shellId: event.shellId })
         break
@@ -708,10 +788,92 @@ export class SessionManager implements ISessionManager {
         ).catch(error => log.warn('Failed to persist Pi turn anchor', sessionId, error))
         break
       case 'workflow_agent_completed':
+        for (const task of managed.backgroundTaskRegistry.values()) {
+          if (task.workflowId === event.workflowId) {
+            task.agentsCompleted = (task.agentsCompleted ?? 0) + 1
+            break
+          }
+        }
+        break
       case 'steer_undelivered':
         break
     }
     this.persistSession(managed)
+  }
+
+  /** Craft-compatible async entry point for events arriving outside a live turn. */
+  private async processEvent(managed: ManagedSession, event: AgentEvent): Promise<void> {
+    this.handleAgentEvent(managed, event)
+    await this.flushSession(managed.id)
+  }
+
+  /** Craft browser-tool bridge, scoped to the current local session. */
+  private createBrowserPaneFns(managed: ManagedSession): BrowserPaneFns | undefined {
+    const browser = this.browserPaneManager
+    if (!browser) return undefined
+    const workspaceId = managed.workspace.id
+    const getInstanceId = () => browser.getOrCreateForSessionAsync(managed.id, { workspaceId })
+    const lifecycleTarget = async (requested?: string) => requested ?? await getInstanceId()
+
+    return {
+      openPanel: async options => ({
+        instanceId: options?.background
+          ? await browser.createForSessionAsync(managed.id, { show: false, workspaceId })
+          : await browser.focusBoundForSessionAsync(managed.id, { workspaceId }),
+      }),
+      navigate: async url => browser.navigate(await getInstanceId(), url),
+      snapshot: async () => browser.getAccessibilitySnapshot(await getInstanceId()),
+      click: async (ref, options) => browser.clickElement(await getInstanceId(), ref, options),
+      clickAt: async (x, y) => browser.clickAtCoordinates(await getInstanceId(), x, y),
+      drag: async (x1, y1, x2, y2) => browser.drag(await getInstanceId(), x1, y1, x2, y2),
+      fill: async (ref, value) => browser.fillElement(await getInstanceId(), ref, value),
+      type: async text => browser.typeText(await getInstanceId(), text),
+      select: async (ref, value) => browser.selectOption(await getInstanceId(), ref, value),
+      setClipboard: async text => browser.setClipboard(await getInstanceId(), text),
+      getClipboard: async () => browser.getClipboard(await getInstanceId()),
+      screenshot: async args => browser.screenshot(await getInstanceId(), args),
+      screenshotRegion: async args => browser.screenshotRegion(await getInstanceId(), args),
+      getConsoleLogs: async args => browser.getConsoleLogs(await getInstanceId(), args),
+      windowResize: async args => browser.windowResize(await getInstanceId(), args.width, args.height),
+      getNetworkLogs: async args => browser.getNetworkLogs(await getInstanceId(), args),
+      waitFor: async args => browser.waitFor(await getInstanceId(), args),
+      sendKey: async args => browser.sendKey(await getInstanceId(), args),
+      getDownloads: async args => browser.getDownloads(await getInstanceId(), args),
+      upload: async (ref, paths) => { await browser.uploadFile(await getInstanceId(), ref, paths) },
+      scroll: async (direction, amount) => browser.scroll(await getInstanceId(), direction, amount),
+      goBack: async () => browser.goBack(await getInstanceId()),
+      goForward: async () => browser.goForward(await getInstanceId()),
+      evaluate: async expression => browser.evaluate(await getInstanceId(), expression),
+      focusWindow: async requested => {
+        const instanceId = await lifecycleTarget(requested)
+        browser.focus(instanceId)
+        const info = await browser.getInstanceAsync(instanceId)
+        return { instanceId, title: info?.title ?? '', url: info?.currentUrl ?? '' }
+      },
+      releaseControl: async requested => {
+        const instanceId = await lifecycleTarget(requested)
+        const result = browser.clearAgentControlForInstance(instanceId, managed.id)
+        return {
+          action: result.released ? 'released' : 'noop',
+          requestedInstanceId: requested,
+          resolvedInstanceId: instanceId,
+          affectedIds: result.released ? [instanceId] : [],
+          reason: result.reason,
+        }
+      },
+      closeWindow: async requested => {
+        const instanceId = await lifecycleTarget(requested)
+        browser.destroyInstance(instanceId)
+        return { action: 'closed', requestedInstanceId: requested, resolvedInstanceId: instanceId, affectedIds: [instanceId] }
+      },
+      hideWindow: async requested => {
+        const instanceId = await lifecycleTarget(requested)
+        browser.hide(instanceId)
+        return { action: 'hidden', requestedInstanceId: requested, resolvedInstanceId: instanceId, affectedIds: [instanceId] }
+      },
+      listWindows: async () => browser.listInstancesAsync(),
+      detectChallenge: async () => browser.detectSecurityChallenge(await getInstanceId()),
+    }
   }
 
   private async getOrCreateAgent(managed: ManagedSession): Promise<AgentBackend> {
@@ -761,6 +923,118 @@ export class SessionManager implements ISessionManager {
       managed.permissionMode = mode
       this.emit(managed.workspace.id, { type: 'permission_mode_changed', sessionId: managed.id, permissionMode: mode, previousPermissionMode: managed.previousPermissionMode, changedBy: 'system', changedAt: new Date().toISOString() })
     }
+    // Craft's session self-management wiring, reduced to the Lite session surface.
+    agent.onSpawnSession = async request => {
+      const session = await this.createSession(managed.workspace.id, {
+        name: request.name,
+        llmConnection: request.llmConnection ?? managed.llmConnection,
+        model: request.model ?? managed.model,
+        permissionMode: request.permissionMode ?? managed.permissionMode,
+        thinkingLevel: request.thinkingLevel ?? managed.thinkingLevel,
+        workingDirectory: request.workingDirectory,
+        parentSessionId: managed.id,
+      })
+      let fileAttachments: FileAttachment[] | undefined
+      if (request.attachments?.length) {
+        const attachments: FileAttachment[] = []
+        for (const item of request.attachments) {
+          try {
+            const allowedDirs = getWorkspaceAllowedDirs(managed.workspace.id)
+            if (request.workingDirectory) allowedDirs.push(request.workingDirectory)
+            const attachment = readFileAttachment(await validateFilePath(item.path, allowedDirs))
+            if (attachment) {
+              if (item.name) attachment.name = item.name
+              attachments.push(attachment)
+            }
+          } catch (error) {
+            log.warn('Spawn session attachment rejected', item.path, error)
+          }
+        }
+        if (attachments.length) fileAttachments = attachments
+      }
+      void this.sendMessage(session.id, request.prompt, fileAttachments)
+        .catch(error => log.error('Failed to start spawned session', session.id, error))
+      return {
+        sessionId: session.id,
+        name: session.name ?? request.name ?? session.id,
+        status: 'started',
+        connection: session.llmConnection,
+        model: session.model,
+      }
+    }
+    const browserPaneFns = this.createBrowserPaneFns(managed)
+    mergeSessionScopedToolCallbacks(managed.id, {
+      ...(browserPaneFns ? { browserPaneFns } : {}),
+      getSessionInfoFn: (sessionId = managed.id) => {
+        const session = this.sessions.get(sessionId)
+        if (!session) return null
+        return {
+          id: session.id,
+          name: session.name ?? session.id,
+          permissionMode: session.permissionMode ?? 'ask',
+          createdAt: session.createdAt,
+          updatedAt: session.lastUsedAt,
+          workingDirectory: session.workingDirectory,
+          llmConnection: session.llmConnection,
+          model: session.model,
+          isActive: session.agent != null,
+          isArchived: session.isArchived,
+          isFlagged: session.isFlagged,
+          hasUnread: session.hasUnread,
+        }
+      },
+      listSessionsFn: options => {
+        const limit = Math.min(options?.limit ?? 20, 100)
+        const offset = options?.offset ?? 0
+        let sessions = this.getSessions(managed.workspace.id)
+        if (options?.archived !== undefined) {
+          sessions = sessions.filter(item => Boolean(item.isArchived) === options.archived)
+        }
+        if (options?.search) {
+          const query = options.search.toLowerCase()
+          sessions = sessions.filter(item => item.name?.toLowerCase().includes(query))
+        }
+        sessions.sort(options?.sortBy === 'name'
+          ? (a, b) => (a.name ?? '').localeCompare(b.name ?? '')
+          : (a, b) => b.lastMessageAt - a.lastMessageAt)
+        const page = sessions.slice(offset, offset + limit)
+        return {
+          total: sessions.length,
+          returned: page.length,
+          sessions: page.map(item => ({
+            id: item.id,
+            name: item.name ?? item.id,
+            createdAt: item.createdAt ?? 0,
+            lastUsedAt: item.lastMessageAt,
+            isArchived: item.isArchived,
+            isFlagged: item.isFlagged,
+            hasUnread: item.hasUnread,
+            isProcessing: item.isProcessing,
+          })),
+        }
+      },
+      listBackgroundTasksFn: (sessionId = managed.id) => this.listBackgroundTasks(sessionId),
+      sendAgentMessageFn: async (sessionId, message, attachments) => {
+        let fileAttachments: FileAttachment[] | undefined
+        if (attachments?.length) {
+          const resolved: FileAttachment[] = []
+          for (const item of attachments) {
+            const attachment = readFileAttachment(
+              await validateFilePath(item.path, getWorkspaceAllowedDirs(managed.workspace.id)),
+            )
+            if (attachment) {
+              if (item.name) attachment.name = item.name
+              resolved.push(attachment)
+            }
+          }
+          if (resolved.length) fileAttachments = resolved
+        }
+        const targetBusy = this.sessions.get(sessionId)?.isProcessing === true
+        await this.sendMessage(sessionId, message, fileAttachments)
+        return { delivery: targetBusy ? 'queued' : 'delivered', targetBusy }
+      },
+    })
+    agent.setBackgroundEventSink?.(event => { void this.processEvent(managed, event) })
     const result = await agent.postInit()
     if (result.authWarning) log.warn(result.authWarning)
     managed.agent = agent
@@ -848,6 +1122,25 @@ export class SessionManager implements ISessionManager {
 
   async killShell(_sessionId: string, _shellId: string): Promise<{ success: boolean; error?: string }> {
     return { success: false, error: 'Shell process not found' }
+  }
+
+  listBackgroundTasks(sessionId: string) {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) return []
+    const now = Date.now()
+    return [...managed.backgroundTaskRegistry.values()].map(task => {
+      const end = task.status === 'running' ? now : (task.completedAt ?? now)
+      return {
+        taskId: task.taskId,
+        intent: task.intent,
+        status: task.status,
+        startTime: task.startTime,
+        elapsedSeconds: task.elapsedSeconds ?? Math.max(0, Math.round((end - task.startTime) / 1000)),
+        completedAt: task.completedAt,
+        workflowId: task.workflowId,
+        agentsCompleted: task.agentsCompleted,
+      }
+    })
   }
 
   respondToPermission(
@@ -957,24 +1250,156 @@ export class SessionManager implements ISessionManager {
   }
 
   addMessageAnnotation(sessionId: string, messageId: string, annotation: AnnotationV1): void {
-    this.mutateAnnotations(sessionId, messageId, annotations => [...annotations, annotation])
+    const managed = this.sessions.get(sessionId)
+    if (!managed) {
+      log.warn(`Cannot add annotation: session ${sessionId} not found`)
+      return
+    }
+
+    const message = managed.messages.find(item => item.id === messageId)
+    if (!message) {
+      log.warn(`Cannot add annotation: message ${messageId} not found in session ${sessionId}`)
+      return
+    }
+
+    if (!annotation?.id || !annotation?.target?.selectors?.length) {
+      log.warn(`Cannot add annotation: invalid annotation payload for message ${messageId}`)
+      return
+    }
+
+    if (annotation.target.source.messageId !== messageId) {
+      log.warn(`Cannot add annotation: target source.messageId mismatch (${annotation.target.source.messageId} !== ${messageId})`)
+      return
+    }
+
+    const safeAnnotation: AnnotationV1 = {
+      ...annotation,
+      schemaVersion: 1,
+      target: {
+        ...annotation.target,
+        source: {
+          ...annotation.target.source,
+          sessionId,
+          messageId,
+        },
+      },
+    }
+
+    const annotationBytes = Buffer.byteLength(JSON.stringify(safeAnnotation), 'utf8')
+    if (annotationBytes > MAX_ANNOTATION_JSON_BYTES) {
+      log.warn(`Cannot add annotation: payload too large (${annotationBytes} bytes > ${MAX_ANNOTATION_JSON_BYTES}) on message ${messageId}`)
+      return
+    }
+
+    const existing = message.annotations ?? []
+    if (existing.some(item => item.id === safeAnnotation.id)) {
+      log.warn(`Cannot add annotation: duplicate annotation id ${safeAnnotation.id} on message ${messageId}`)
+      return
+    }
+
+    if (existing.length >= MAX_ANNOTATIONS_PER_MESSAGE) {
+      log.warn(`Cannot add annotation: per-message limit reached (${MAX_ANNOTATIONS_PER_MESSAGE}) on message ${messageId}`)
+      return
+    }
+
+    message.annotations = [...existing, safeAnnotation]
+    this.persistSession(managed)
+    this.sendEvent({ type: 'message_annotations_updated', sessionId, messageId, annotations: message.annotations }, managed.workspace.id)
   }
 
   removeMessageAnnotation(sessionId: string, messageId: string, annotationId: string): void {
-    this.mutateAnnotations(sessionId, messageId, annotations => annotations.filter(item => item.id !== annotationId))
+    const managed = this.sessions.get(sessionId)
+    if (!managed) {
+      log.warn(`Cannot remove annotation: session ${sessionId} not found`)
+      return
+    }
+
+    const message = managed.messages.find(item => item.id === messageId)
+    if (!message) {
+      log.warn(`Cannot remove annotation: message ${messageId} not found in session ${sessionId}`)
+      return
+    }
+
+    const existing = message.annotations ?? []
+    if (!existing.some(item => item.id === annotationId)) {
+      log.warn(`Cannot remove annotation: annotation ${annotationId} not found on message ${messageId}`)
+      return
+    }
+
+    message.annotations = existing.filter(item => item.id !== annotationId)
+    this.persistSession(managed)
+    this.sendEvent({ type: 'message_annotations_updated', sessionId, messageId, annotations: message.annotations }, managed.workspace.id)
   }
 
   updateMessageAnnotation(sessionId: string, messageId: string, annotationId: string, patch: Partial<AnnotationV1>): void {
-    this.mutateAnnotations(sessionId, messageId, annotations => annotations.map(item => item.id === annotationId ? { ...item, ...patch } : item))
-  }
-
-  private mutateAnnotations(sessionId: string, messageId: string, mutate: (annotations: AnnotationV1[]) => AnnotationV1[]): void {
     const managed = this.sessions.get(sessionId)
-    const message = managed?.messages.find(item => item.id === messageId)
-    if (!managed || !message) return
-    message.annotations = mutate(message.annotations ?? [])
+    if (!managed) {
+      log.warn(`Cannot update annotation: session ${sessionId} not found`)
+      return
+    }
+
+    const message = managed.messages.find(item => item.id === messageId)
+    if (!message) {
+      log.warn(`Cannot update annotation: message ${messageId} not found in session ${sessionId}`)
+      return
+    }
+
+    const existing = message.annotations ?? []
+    const index = existing.findIndex(item => item.id === annotationId)
+    if (index === -1) {
+      log.warn(`Cannot update annotation: annotation ${annotationId} not found on message ${messageId}`)
+      return
+    }
+
+    if (patch.target?.source?.messageId && patch.target.source.messageId !== messageId) {
+      log.warn(`Cannot update annotation: target source.messageId mismatch in patch (${patch.target.source.messageId} !== ${messageId})`)
+      return
+    }
+
+    if (patch.target?.selectors && patch.target.selectors.length === 0) {
+      log.warn(`Cannot update annotation: empty selectors patch for annotation ${annotationId} on message ${messageId}`)
+      return
+    }
+
+    const current = existing[index]!
+    const updated: AnnotationV1 = {
+      ...current,
+      ...patch,
+      id: current.id,
+      schemaVersion: current.schemaVersion,
+      target: patch.target
+        ? {
+            ...current.target,
+            ...patch.target,
+            source: {
+              ...current.target.source,
+              ...(patch.target.source ?? {}),
+              sessionId,
+              messageId,
+            },
+          }
+        : {
+            ...current.target,
+            source: {
+              ...current.target.source,
+              sessionId,
+              messageId,
+            },
+          },
+      updatedAt: Date.now(),
+    }
+
+    const updatedBytes = Buffer.byteLength(JSON.stringify(updated), 'utf8')
+    if (updatedBytes > MAX_ANNOTATION_JSON_BYTES) {
+      log.warn(`Cannot update annotation: payload too large (${updatedBytes} bytes > ${MAX_ANNOTATION_JSON_BYTES}) for annotation ${annotationId} on message ${messageId}`)
+      return
+    }
+
+    const next = [...existing]
+    next[index] = updated
+    message.annotations = next
     this.persistSession(managed)
-    this.emit(managed.workspace.id, { type: 'message_annotations_updated', sessionId, messageId, annotations: message.annotations })
+    this.sendEvent({ type: 'message_annotations_updated', sessionId, messageId, annotations: message.annotations }, managed.workspace.id)
   }
 
   setPendingPlanExecution(sessionId: string, planPath: string, draftInputSnapshot?: string): Promise<void> {
@@ -1104,7 +1529,10 @@ export class SessionManager implements ISessionManager {
   }
 
   cleanup(): void {
-    for (const managed of this.sessions.values()) managed.agent?.destroy()
+    for (const managed of this.sessions.values()) {
+      managed.agent?.destroy()
+      unregisterSessionScopedToolCallbacks(managed.id)
+    }
     this.sessions.clear()
     this.browserHostPins.clear()
     this.rpcServer = null

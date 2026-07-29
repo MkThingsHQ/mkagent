@@ -3,7 +3,7 @@
  *
  * Bridges async event handlers (.on() listeners) with AsyncGenerator<AgentEvent>.
  * Used by PiAgent where events arrive asynchronously from a subprocess JSONL
- * stream, unlike ClaudeAgent's synchronous for-await loop over SDK messages.
+ * stream while preserving event order.
  *
  * Pattern:
  *   handler calls enqueue(event) → pushes to queue, wakes waiters

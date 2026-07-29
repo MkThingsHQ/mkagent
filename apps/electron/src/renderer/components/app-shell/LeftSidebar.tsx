@@ -11,51 +11,12 @@ import {
 } from '@/components/ui/styled-context-menu'
 import { ContextMenuProvider } from '@/components/ui/menu-context'
 import { SidebarMenu, type SidebarMenuType } from './SidebarMenu'
-import { SortableList, type SortableItemData } from '@/components/ui/sortable-list'
 
 /** Context menu configuration for sidebar items */
 export interface SidebarContextMenuConfig {
-  /** Type of sidebar item (determines available menu items) */
   type: SidebarMenuType
-  /** Status ID for status items (e.g., 'todo', 'done') - not currently used but kept for future */
-  statusId?: string
-  /** Label ID — when set, this is an individual label (enables Delete Label) */
-  labelId?: string
-  /** Handler for "Configure Statuses" action - for allSessions/status/flagged types */
-  onConfigureStatuses?: () => void
-  /** Handler for "Mark All Read" action - for allSessions type */
   onMarkAllRead?: () => void
-  /** Handler for "Configure Labels" action - receives labelId when triggered from a specific label */
-  onConfigureLabels?: (labelId?: string) => void
-  /** Handler for "Add New Label" action - creates a label (parentId passed from labelId) */
-  onAddLabel?: (parentId?: string) => void
-  /** Handler for "Delete Label" action - deletes the label by labelId */
-  onDeleteLabel?: (labelId: string) => void
-  /** Handler for "Add Source" action - for sources type */
-  onAddSource?: () => void
-  /** Handler for "Add Skill" action - for skills type */
   onAddSkill?: () => void
-  /** Handler for "Add Automation" action - for automations type */
-  onAddAutomation?: () => void
-  /** Handler for "Add Project" action - for projects type */
-  onAddProject?: () => void
-  /** Source type filter for "Learn More" link - determines which docs page to open */
-  sourceType?: 'api' | 'mcp' | 'local'
-  /** Handler for "Edit Views" action - for views type */
-  onConfigureViews?: () => void
-  /** View ID — when set, this is an individual view (enables Delete) */
-  viewId?: string
-  /** Handler for "Delete View" action */
-  onDeleteView?: (id: string) => void
-}
-
-/**
- * Sortable configuration for expandable sidebar items.
- * When present on an expandable LinkItem, its children become drag-sortable.
- */
-export interface SortableConfig {
-  /** Flat list reorder: called with new ordered array of item IDs after a drag-drop */
-  onReorder: (orderedIds: string[]) => void
 }
 
 export interface LinkItem {
@@ -79,8 +40,6 @@ export interface LinkItem {
   dataTutorial?: string // data-tutorial attribute for tutorial targeting
   // Context menu configuration (optional - if provided, right-click shows context menu)
   contextMenu?: SidebarContextMenuConfig
-  // Drag-and-drop: flat list reorder (e.g., statuses)
-  sortable?: SortableConfig
   // Optional element rendered after the title (e.g., label type icon), revealed on hover
   afterTitle?: React.ReactNode
 }
@@ -162,10 +121,6 @@ const itemVariants: Variants = {
  * - Children are rendered with animated expand/collapse
  * - Nested items have left indentation with vertical line
  *
- * Drag-and-drop:
- * - Expandable items can opt-in to sortable (flat) or sortableTree (hierarchical) DnD
- * - Uses @dnd-kit with DragOverlay portaled to document.body (no clipping)
- * - Two-phase drop animation: overlay fades out, ghost fades in
  */
 export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, isNested }: LeftSidebarProps) {
   // For nested sidebars, wrap in motion container for stagger effect
@@ -236,21 +191,8 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
                     <ContextMenuProvider>
                       <SidebarMenu
                         type={link.contextMenu.type}
-                        statusId={link.contextMenu.statusId}
-                        labelId={link.contextMenu.labelId}
-                        onConfigureStatuses={link.contextMenu.onConfigureStatuses}
                         onMarkAllRead={link.contextMenu.onMarkAllRead}
-                        onConfigureLabels={link.contextMenu.onConfigureLabels}
-                        onAddLabel={link.contextMenu.onAddLabel}
-                        onDeleteLabel={link.contextMenu.onDeleteLabel}
-                        onAddSource={link.contextMenu.onAddSource}
                         onAddSkill={link.contextMenu.onAddSkill}
-                        onAddAutomation={link.contextMenu.onAddAutomation}
-                        onAddProject={link.contextMenu.onAddProject}
-                        sourceType={link.contextMenu.sourceType}
-                        onConfigureViews={link.contextMenu.onConfigureViews}
-                        viewId={link.contextMenu.viewId}
-                        onDeleteView={link.contextMenu.onDeleteView}
                       />
                     </ContextMenuProvider>
                   </StyledContextMenuContent>
@@ -296,7 +238,7 @@ export function LeftSidebar({ links, isCollapsed, getItemProps, focusedItemId, i
 
 // ============================================================
 // Expanded Content Renderer
-// Chooses between sortable, sortableTree, or regular nested sidebar
+// Renders regular nested sidebar content.
 // ============================================================
 
 function renderExpandedContent(
@@ -305,27 +247,6 @@ function renderExpandedContent(
   focusedItemId: string | null | undefined,
   isNested: boolean | undefined
 ): React.ReactNode {
-  // Flat sortable (e.g., statuses): wrap items in SortableList
-  if (link.sortable && link.items) {
-    // Split at first separator: items before are sortable, items after are trailing (non-sortable)
-    const separatorIndex = link.items.findIndex(isSeparatorItem)
-    const sortableItems = separatorIndex >= 0 ? link.items.slice(0, separatorIndex) : link.items
-    const trailingItems = separatorIndex >= 0
-      ? link.items.slice(separatorIndex + 1).filter((item): item is LinkItem => !isSeparatorItem(item))
-      : []
-
-    return (
-      <SortableStatusList
-        items={sortableItems}
-        onReorder={link.sortable.onReorder}
-        getItemProps={getItemProps}
-        focusedItemId={focusedItemId}
-        trailingItems={trailingItems.length > 0 ? trailingItems : undefined}
-      />
-    )
-  }
-
-  // Default: regular nested sidebar (no DnD)
   return (
     <LeftSidebar
       isCollapsed={false}
@@ -338,122 +259,7 @@ function renderExpandedContent(
 }
 
 // ============================================================
-// SortableStatusList — flat sortable wrapper for status items
-// ============================================================
-
-interface SortableStatusListProps {
-  items: SidebarItem[]
-  onReorder: (orderedIds: string[]) => void
-  getItemProps: LeftSidebarProps['getItemProps']
-  focusedItemId: string | null | undefined
-  /** Non-sortable items rendered after the sortable list (e.g., Flagged, Archived) */
-  trailingItems?: LinkItem[]
-}
-
-function SortableStatusList({ items, onReorder, getItemProps, focusedItemId, trailingItems }: SortableStatusListProps) {
-  // Filter to LinkItems only (separators don't participate in DnD)
-  const linkItems = items.filter((item): item is LinkItem => !isSeparatorItem(item))
-
-  // Map to SortableItemData format (needs `id` field)
-  const sortableItems: (LinkItem & SortableItemData)[] = linkItems.map(item => ({
-    ...item,
-    id: item.id,
-  }))
-
-  const handleReorder = React.useCallback((newItems: (LinkItem & SortableItemData)[]) => {
-    // Extract the raw IDs (strip 'nav:state:' prefix) for the IPC call
-    const orderedIds = newItems.map(item => {
-      // Strip navigation prefix to get the actual status/label ID
-      const parts = item.id.split(':')
-      return parts[parts.length - 1]
-    })
-    onReorder(orderedIds)
-  }, [onReorder])
-
-  return (
-    <div className="flex flex-col select-none">
-      <div className="pl-5 pr-0 relative">
-        {/* Vertical line for nested items */}
-        <div
-          className="absolute left-[13px] top-1 bottom-1 w-px bg-foreground/10"
-          aria-hidden="true"
-        />
-        <SortableList
-          items={sortableItems}
-          onReorder={handleReorder}
-          className="grid gap-0.5"
-          renderItem={(item) => (
-            <div className="group/section">
-              {item.contextMenu ? (
-                <ContextMenu modal={true}>
-                  <ContextMenuTrigger asChild>
-                    <SidebarButton
-                      link={item}
-                      itemProps={getItemProps?.(item.id)}
-                    />
-                  </ContextMenuTrigger>
-                  <StyledContextMenuContent>
-                    <ContextMenuProvider>
-                      <SidebarMenu
-                        type={item.contextMenu.type}
-                        statusId={item.contextMenu.statusId}
-                        labelId={item.contextMenu.labelId}
-                        onConfigureStatuses={item.contextMenu.onConfigureStatuses}
-                        onMarkAllRead={item.contextMenu.onMarkAllRead}
-                        onConfigureLabels={item.contextMenu.onConfigureLabels}
-                        onAddLabel={item.contextMenu.onAddLabel}
-                        onDeleteLabel={item.contextMenu.onDeleteLabel}
-                        onAddSource={item.contextMenu.onAddSource}
-                        onAddSkill={item.contextMenu.onAddSkill}
-                        onAddAutomation={item.contextMenu.onAddAutomation}
-                        sourceType={item.contextMenu.sourceType}
-                        onConfigureViews={item.contextMenu.onConfigureViews}
-                        viewId={item.contextMenu.viewId}
-                        onDeleteView={item.contextMenu.onDeleteView}
-                      />
-                    </ContextMenuProvider>
-                  </StyledContextMenuContent>
-                </ContextMenu>
-              ) : (
-                <SidebarButton
-                  link={item}
-                  itemProps={getItemProps?.(item.id)}
-                />
-              )}
-            </div>
-          )}
-          renderOverlay={(item) => (
-            <SidebarButton
-              link={item}
-              isOverlay={true}
-            />
-          )}
-        />
-        {/* Non-sortable trailing items (e.g., Flagged, Archived) */}
-        {trailingItems && trailingItems.length > 0 && (
-          <>
-            <div className="my-1 ml-2" aria-hidden="true">
-              <div className="h-px bg-foreground/5" />
-            </div>
-            <div className="grid gap-0.5">
-              {trailingItems.map(item => (
-                <div key={item.id} className="group/section">
-                  <SidebarButton
-                    link={item}
-                    itemProps={getItemProps?.(item.id)}
-                  />
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ============================================================
-// SidebarButton - Extracted button component for reuse in sortable contexts
+// SidebarButton - Extracted button component
 // ============================================================
 
 interface SidebarButtonProps {

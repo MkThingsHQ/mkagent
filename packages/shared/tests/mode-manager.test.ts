@@ -207,12 +207,6 @@ const TEST_MODE_CONFIG = {
     { regex: /--help\b/, source: '--help\\b', comment: 'Display command help' },
     { regex: /-h\b$/, source: '-h\\b$', comment: 'Display command help (short)' },
   ] as CompiledBashPattern[],
-  readOnlyMcpPatterns: [
-    /blocks_read/, /blocks_list/, /blocks_get/,
-    /document_get/, /document_list/, /spaces_list/, /folders_list/,
-    /search/, /list/, /get/, /read/, /view/, /query/, /fetch/, /describe/, /info/,
-  ],
-  allowedApiEndpoints: [],
   allowedWritePaths: [],
   displayName: 'Test Safe Mode',
   shortcutHint: 'SHIFT+TAB',
@@ -652,7 +646,6 @@ describe('SAFE_MODE_CONFIG', () => {
     // They're loaded from default.json by PermissionsConfigCache at runtime
     // This design allows hot-reloading of patterns without rebuilding
     expect(SAFE_MODE_CONFIG.readOnlyBashPatterns.length).toBe(0);
-    expect(SAFE_MODE_CONFIG.readOnlyMcpPatterns.length).toBe(0);
   });
 
   it('should have display properties', () => {
@@ -668,9 +661,6 @@ describe('TEST_MODE_CONFIG', () => {
     expect(TEST_MODE_CONFIG.readOnlyBashPatterns.length).toBeGreaterThan(0);
   });
 
-  it('should have read-only MCP patterns defined', () => {
-    expect(TEST_MODE_CONFIG.readOnlyMcpPatterns.length).toBeGreaterThan(0);
-  });
 });
 
 describe('command execution via interpreters', () => {
@@ -985,8 +975,6 @@ describe('rejection reason types for compound commands', () => {
       { regex: /^git\s+(status|log|diff)\b/, source: '^git\\s+(status|log|diff)\\b', comment: 'Git read ops' },
       { regex: /^pwd\b/, source: '^pwd\\b', comment: 'Print directory' },
     ] as CompiledBashPattern[],
-    readOnlyMcpPatterns: [],
-    allowedApiEndpoints: [],
     allowedWritePaths: [],
     displayName: 'Test',
     shortcutHint: 'SHIFT+TAB',
@@ -1056,8 +1044,6 @@ describe('grep with regex patterns containing shell metacharacters', () => {
       { regex: /^grep\b/, source: '^grep\\b', comment: 'Search file contents' },
       { regex: /^ls\b/, source: '^ls\\b', comment: 'List files' },
     ] as CompiledBashPattern[],
-    readOnlyMcpPatterns: [],
-    allowedApiEndpoints: [],
     allowedWritePaths: [],
     displayName: 'Test',
     shortcutHint: 'SHIFT+TAB',
@@ -1141,8 +1127,6 @@ describe('getBashRejectionReason with pattern metadata', () => {
   const testConfig = {
     blockedTools: new Set(['Write', 'Edit']),
     readOnlyBashPatterns: testPatterns,
-    readOnlyMcpPatterns: [],
-    allowedApiEndpoints: [],
     allowedWritePaths: [],
     displayName: 'Test Mode',
     shortcutHint: 'SHIFT+TAB',
@@ -2247,8 +2231,6 @@ describe('Windows path handling through getBashRejectionReason', () => {
       { regex: /^pwd\b/, source: '^pwd\\b', comment: 'Print working directory' },
       { regex: /^wc\b/, source: '^wc\\b', comment: 'Count lines, words, bytes' },
     ] as CompiledBashPattern[],
-    readOnlyMcpPatterns: [],
-    allowedApiEndpoints: [],
     allowedWritePaths: [],
     displayName: 'Test',
     shortcutHint: 'SHIFT+TAB',

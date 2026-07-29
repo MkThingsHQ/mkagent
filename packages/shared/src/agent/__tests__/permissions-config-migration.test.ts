@@ -27,7 +27,6 @@ describe('ensureDefaultPermissions migration', () => {
           { pattern: '^rg\\b', comment: 'Ripgrep search' },
           { pattern: '^bun\\s+run\\s+typecheck\\b$', comment: 'Typecheck' },
         ],
-        allowedApiEndpoints: [],
         allowedWritePaths: [],
         blockedCommandHints: [
           { command: 'printf', reason: 'printf blocked by default' },
@@ -45,7 +44,6 @@ describe('ensureDefaultPermissions migration', () => {
           { pattern: '^rg\\b', comment: 'User existing pattern' },
           { pattern: '^custom-review\\b', comment: 'User customization' },
         ],
-        allowedApiEndpoints: [],
         allowedWritePaths: [],
         blockedCommandHints: [
           { command: 'sed', reason: 'sed print-only policy', whenNotMatching: '^sed\\s+-n\\b' },

@@ -2,19 +2,13 @@
  * Shared PreToolUse utilities and centralized PreToolUse pipeline.
  *
  * Individual utility functions (path expansion, skill qualification, etc.)
- * are used by the centralized `runPreToolUseChecks()` pipeline, which both
- * agent backends (Claude and Pi) call with normalized input and then translate
- * the result to their SDK-specific format. Pi hosts non-Anthropic model
- * providers under a single Pi backend,
- * so they inherit this pipeline transparently.
+ * are used by the centralized `runPreToolUseChecks()` Pi pipeline.
  *
  * Pipeline steps:
  * 1. Permission mode check: Block tools disallowed by current mode
- * 2. Source blocking: Block tools from inactive MCP sources
- * 3. Prerequisite check: Block source tools until guide.md is read
- * 4. call_llm detection: Intercept mcp__session__call_llm
- * 5. Input transforms: Path expansion, config validation, skill qualification, metadata stripping
- * 6. Ask-mode prompt decision: Determine if user approval is needed
+ * 2. call_llm/spawn interception
+ * 3. Input transforms: Path expansion, config validation, skill qualification, metadata stripping
+ * 4. Ask-mode prompt decision
  */
 
 import { existsSync, readFileSync } from 'node:fs';
@@ -39,7 +33,6 @@ import { AGENTS_PLUGIN_NAME } from '../../skills/types.ts';
 import { GLOBAL_AGENT_SKILLS_DIR, PROJECT_AGENT_SKILLS_DIR } from '../../skills/storage.ts';
 import {
   shouldAllowToolInMode,
-  isApiEndpointAllowed,
   isReadOnlyBashCommandWithConfig,
   getPermissionModeDiagnostics,
   PERMISSION_MODE_CONFIG,
@@ -129,10 +122,6 @@ export const FILE_PATH_TOOLS = new Set([
 
 /** Tools that can write config files */
 export const CONFIG_WRITE_TOOLS = new Set(['Write', 'Edit']);
-
-/** File tools blocked for labels domain. */
-export const LABELS_BLOCKED_FILE_TOOLS = new Set(['Read', 'Write', 'Edit']);
-
 
 // ============================================================
 // PATH EXPANSION
@@ -321,11 +310,6 @@ export function stripToolMetadata(
   };
 }
 
-/**
- * @deprecated Use stripToolMetadata instead. This alias is kept for backwards compatibility.
- */
-export const stripMcpMetadata = stripToolMetadata;
-
 // ============================================================
 // CONFIG FILE VALIDATION
 // ============================================================
@@ -338,9 +322,7 @@ export const stripMcpMetadata = stripToolMetadata;
  * invalid configs from ever reaching disk.
  *
  * Validates:
- * - sources/{slug}/config.json
  * - skills/{slug}/SKILL.md
- * - statuses/config.json
  * - permissions.json
  * - theme.json
  * - tool-icons/tool-icons.json
@@ -609,16 +591,13 @@ const FILE_WRITE_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit'])
 /**
  * Centralized PreToolUse pipeline.
  *
- * Synchronous except for the final result — all async work (source activation,
- * user prompting) is handled by the calling agent based on the result type.
+ * Synchronous; user prompting is handled by the calling agent based on the result type.
  *
  * Pipeline:
  * 1. Permission mode check (shouldAllowToolInMode)
- * 2. Source blocking (inactive MCP sources)
- * 3. Prerequisite check (guide.md before source tools)
- * 4. call_llm interception
- * 5. Input transforms (paths, config validation, skills, metadata)
- * 6. Ask-mode prompt decision
+ * 2. call_llm/spawn interception
+ * 3. Input transforms (paths, config validation, skills, metadata)
+ * 4. Ask-mode prompt decision
  *
  * @returns A discriminated union that the agent translates to its SDK format
  */
@@ -1002,34 +981,6 @@ export function shouldPromptInAskMode(
     }
     // Read-only MCP tool — no prompt needed
     return null;
-  }
-
-  // --- API mutations ---
-  if (toolName.startsWith('api_')) {
-    const method = ((input?.method as string) || 'GET').toUpperCase();
-    const path = input?.path as string | undefined;
-
-    if (method !== 'GET') {
-      const apiDescription = `${method} ${path || ''}`;
-
-      // Check permissions.json whitelist
-      if (isApiEndpointAllowed(method, path, permissionsContext)) {
-        onDebug?.(`Auto-allowing API "${apiDescription}" (whitelisted in permissions.json)`);
-        return null;
-      }
-
-      // Check session whitelist
-      if (permissionManager.isCommandWhitelisted(apiDescription)) {
-        onDebug?.(`Auto-allowing API "${apiDescription}" (previously approved)`);
-        return null;
-      }
-
-      return {
-        promptType: 'network',
-        description: `API: ${apiDescription}`,
-        command: apiDescription,
-      };
-    }
   }
 
   return null;

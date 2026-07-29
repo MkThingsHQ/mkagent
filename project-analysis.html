@@ -25,8 +25,8 @@
   </header>
 
   <div class="stats">
-    <div class="stat"><b>96.5%</b><span>与 Craft 同路径</span></div>
-    <div class="stat"><b>62.0%</b><span>归一化逐字一致</span></div>
+    <div class="stat"><b>96.0%</b><span>与 Craft 同路径</span></div>
+    <div class="stat"><b>59.0%</b><span>归一化逐字一致</span></div>
     <div class="stat"><b>203</b><span>物理删除文件</span></div>
     <div class="stat"><b>0</b><span>验证失败项</span></div>
   </div>
@@ -58,15 +58,15 @@ CLI ──────────────┘                               
 
   <section id="lineage"><h2>Craft 源码复用</h2>
     <div class="table"><table><thead><tr><th>指标</th><th>数量</th><th>解释</th></tr></thead><tbody>
-      <tr><td>MkAgent tracked source</td><td>1,138</td><td>不含报告和生成物</td></tr>
-      <tr><td>与 Craft 同路径</td><td>1,098</td><td><span class="tag ok">96.5%</span></td></tr>
-      <tr><td>归一化逐字一致</td><td>706</td><td><span class="tag ok">62.0%</span></td></tr>
-      <tr><td>Craft 派生且修改</td><td>392</td><td>主要是删除分支、品牌与 Pi-only 适配</td></tr>
-      <tr><td>MkAgent-only</td><td>40</td><td>CI、文档、品牌、Pi 元数据和审计脚本</td></tr>
-      <tr><td>Craft-only</td><td>624</td><td>主要是完整产品功能</td></tr>
+      <tr><td>MkAgent tracked source</td><td>1,163</td><td>不含报告和生成物</td></tr>
+      <tr><td>与 Craft 同路径</td><td>1,116</td><td><span class="tag ok">96.0%</span></td></tr>
+      <tr><td>归一化逐字一致</td><td>686</td><td><span class="tag ok">59.0%</span></td></tr>
+      <tr><td>Craft 派生且修改</td><td>430</td><td>Lite 裁剪、品牌、Pi-only 适配和恢复的 Craft 测试</td></tr>
+      <tr><td>MkAgent-only</td><td>47</td><td>CI、文档、品牌、Pi 元数据、集成测试和审计脚本</td></tr>
+      <tr><td>Craft-only</td><td>606</td><td>主要是完整产品功能</td></tr>
     </tbody></table></div>
-    <p>同路径率比“相同代码率”更能回答是否重写：96.5% 文件沿用 Craft 的模块位置。逐字一致率则给出最严格下界。当前变更 305 个文件，增加 1,121 行、删除 54,390 行，形态是明确的减法。</p>
-    <div class="card"><strong>Renderer 强约束：</strong>386 个文件中，174 个必须与 Craft 归一化完全一致，207 个登记为 Lite 裁剪缝，5 个是 MkAgent 品牌资产。排除功能路径和关键调用重新出现会让 lint 失败。</div>
+    <p>同路径率比“相同代码率”更能回答是否重写：96.0% 文件沿用 Craft 的模块位置。逐字一致率则给出最严格下界。从 UI 对齐基线起累计变更 389 个文件，增加 6,315 行、删除 56,761 行，形态仍是明确的源码减法。</p>
+    <div class="card"><strong>Renderer 强约束：</strong>386 个文件中，170 个必须与 Craft 归一化完全一致，211 个登记为 Lite 裁剪缝，5 个是 MkAgent 品牌资产。排除功能路径和关键调用重新出现会让 lint 失败。</div>
   </section>
 
   <section id="removed"><h2>物理裁剪</h2>
@@ -84,7 +84,7 @@ CLI ──────────────┘                               
   </section>
 
   <section id="retained"><h2>保留的 Lite 能力</h2>
-    <ul><li>Pi API key、多上游 provider、Ollama 与自定义兼容端点。</li><li>本地多工作区、会话创建/删除/归档/标记/未读、导入/导出/分支、多面板/多窗口。</li><li>Skills 列表、详情和 mini-agent 编辑；文件、目录、Skill mentions。</li><li>Plan Review、权限模式、thinking/model、annotations。</li><li>Browser Pane、web search/fetch、附件与 PDF/Office/代码预览。</li><li>Desktop/WebUI/CLI 的共享 WebSocket RPC、代理、更新、主题和 i18n。</li></ul>
+    <ul><li>Pi API key、多上游 provider、Ollama 与自定义兼容端点。</li><li>本地多工作区、会话创建/删除/归档/标记/未读、导入/导出/分支、多面板/多窗口。</li><li>Skills 列表、详情和 mini-agent 编辑；文件、目录、Skill mentions。</li><li>Plan Review、权限模式、thinking/model、annotations。</li><li>Browser Pane、web search/fetch、附件与 PDF/Office/代码预览。</li><li>Desktop/WebUI/CLI 的共享 WebSocket RPC、代理、更新、主题和 i18n。</li><li>Pi 会话从模型请求、session tool、工具结果回传到 renderer 展示的完整链路。</li></ul>
     <div class="decision"><strong>重要区分：</strong>Pi background Agent/Shell task 是运行能力，保留；Projects/Kanban/Tasks Conductor 是产品组织层，删除。</div>
     <div class="decision"><strong>重要区分：</strong>WebUI 的远程 WebSocket transport 是共享架构，保留；remote workspace picker/binding 是产品功能，删除。</div>
   </section>
@@ -95,6 +95,8 @@ CLI ──────────────┘                               
       <tr><td><code>bun run test</code></td><td><span class="tag ok">通过</span></td><td>全仓 Bun tests 与 isolated tests</td></tr>
       <tr><td><code>validate:ci</code></td><td><span class="tag ok">通过</span></td><td>类型、配置、19 个文档工具 smoke、i18n</td></tr>
       <tr><td><code>bun run lint</code></td><td><span class="tag ok">0 errors</span></td><td>70 个 Craft 同源 Hook warnings</td></tr>
+      <tr><td>Craft retained tests</td><td><span class="tag ok">通过</span></td><td>373 个 Craft 测试：246 同路径、6 个替代、121 个删除功能排除，0 缺失</td></tr>
+      <tr><td>Pi conversation integration</td><td><span class="tag ok">通过</span></td><td>真实 Pi 子进程完成模型 → session tool → 工具结果 → renderer 展示</td></tr>
       <tr><td>Electron build</td><td><span class="tag ok">通过</span></td><td>main/preload/renderer/resources/assets</td></tr>
       <tr><td>WebUI / CLI / Pi build</td><td><span class="tag ok">通过</span></td><td>三条 production build</td></tr>
     </tbody></table></div>
@@ -102,10 +104,10 @@ CLI ──────────────┘                               
   </section>
 
   <section id="risks"><h2>风险与待验证项</h2>
-    <div class="risk"><strong><span class="tag warn">MEDIUM</span> Lite 定制缝仍较宽</strong><p>206 个 renderer 文件登记为 override。后续可逐步把精确文件从 broad prefix 中拆出，提升严格逐字复用覆盖。</p></div>
+    <div class="risk"><strong><span class="tag warn">MEDIUM</span> Lite 定制缝仍较宽</strong><p>211 个 renderer 文件登记为 override。后续可逐步把精确文件从 broad prefix 中拆出，提升严格逐字复用覆盖。</p></div>
     <div class="risk"><strong><span class="tag warn">MEDIUM</span> 上游同步必须做语义审查</strong><p>不能再全量复制 Craft renderer。先运行边界检查，再判断 retained capability 是否需要吸收。</p></div>
     <div class="risk low"><strong><span class="tag ok">LOW</span> React Hook warnings</strong><p>lint 无 error，但保留 70 个 Craft 同源 warning，适合后续独立治理。</p></div>
-    <div class="risk low"><strong><span class="tag ok">LOW</span> GUI 手工 smoke 尚未执行</strong><p>生产构建和自动验证已通过；发布前仍建议在全新用户目录完成 onboarding、真实 Pi 消息、Skill、导入导出和 WebUI 重连点击链路。</p></div>
+    <div class="risk low"><strong><span class="tag ok">LOW</span> GUI 手工 smoke 尚未执行</strong><p>生产构建与本地 OpenAI-compatible 端点上的真实 Pi 子进程会话已通过；发布前仍建议在全新用户目录用真实外部 provider 凭证完成 onboarding、消息、Skill、导入导出和 WebUI 重连点击链路。</p></div>
     <h3>商业使用与二次开发</h3><div class="card">仓库声明 Apache-2.0，通常允许商业使用、修改、再分发和闭源组合，但需保留许可证/声明并遵守专利条款。发布时仍应核对 Craft 上游和第三方依赖许可证；本报告不是法律意见。</div>
     <h3>复现命令</h3><div class="diagram" style="text-align:left">bun run audit:craft-reuse
 bun run lint:craft-ui-sync

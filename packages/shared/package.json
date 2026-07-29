@@ -32,7 +32,6 @@
     "./utils/service-url": "./src/utils/service-url.ts",
     "./utils/icon": "./src/utils/icon.ts",
     "./icons": "./src/icons/index.ts",
-    "./colors": "./src/colors/index.ts",
     "./utils/icon-constants": "./src/utils/icon-constants.ts",
     "./utils/url-safety": "./src/utils/url-safety.ts",
     "./utils/workspace": "./src/utils/workspace.ts",

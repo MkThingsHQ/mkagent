@@ -16,12 +16,9 @@ export const KEYS = {
   sessionListWidth: 'session-list-width',
   sidebarMode: 'sidebar-mode',
   listFilter: 'list-filter',
-  labelFilter: 'label-filter',
-  viewFilters: 'view-filters', // Per-view filter map: { [viewKey]: { statuses, labels } }
   expandedFolders: 'expanded-folders',
   collapsedSidebarItems: 'collapsed-sidebar-items',
-  chatGroupingMode: 'chat-grouping-mode', // How to group chats: 'date' | 'status'
-  collapsedSessionGroups: 'collapsed-session-groups', // Collapsed group keys in session list
+  collapsedSessionGroups: 'collapsed-session-groups',
 
   // Focus mode
   focusModeEnabled: 'focus-mode-enabled',

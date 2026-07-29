@@ -144,11 +144,6 @@ function validateRegexes(config: z.infer<typeof PermissionsConfigSchema>, file: 
       errors.push(issue(file, `Invalid regular expression: ${error instanceof Error ? error.message : String(error)}`, String(index)));
     }
   }
-  for (const [index, rule] of (config.allowedApiEndpoints ?? []).entries()) {
-    try { new RegExp(rule.path); } catch (error) {
-      errors.push(issue(file, `Invalid endpoint path expression: ${error instanceof Error ? error.message : String(error)}`, `allowedApiEndpoints.${index}.path`));
-    }
-  }
   return errors;
 }
 
