@@ -2,7 +2,7 @@
 
 ## 1. 总体方案
 
-- 在当前仅有 `plan.md`、尚未初始化 Git 的目录中建立全新项目。
+- 在当前仅有 `migration-mvp.md`、尚未初始化 Git 的目录中建立全新项目。
 - 固定以 `craft-agents-oss` `v0.11.2` / `a60ebc1a5a7c` 为代码基线；echo 和 xagent 只作为改造案例，参考仓库始终只读。
 - 采用“按 package allowlist 迁移并立即裁剪”的方式，不先提交完整 craft 仓库，也不通过 feature flag 隐藏废弃功能。
 - 技术栈和运行架构与 craft 对齐：Bun monorepo、Electron、React/Vite/Tailwind、WebSocket RPC、共享 renderer、headless server、CLI、Pi 子进程、JSONL 会话、`electron-builder`。
