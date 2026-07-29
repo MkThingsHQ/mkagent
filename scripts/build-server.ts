@@ -78,8 +78,9 @@ if (process.platform === 'win32') {
     'set "MKAGENT_RESOURCES_PATH=%ROOT%resources"',
     'set "MKAGENT_WEBUI_DIR=%ROOT%webui"',
     'set "MKAGENT_IS_PACKAGED=true"',
-    'set "MKAGENT_UV=%ROOT%resources\\bin\\win32-x64\\uv.exe"',
+    `set "MKAGENT_UV=%ROOT%resources\\bin\\${hostPlatform}-${hostArch}\\uv.exe"`,
     'set "MKAGENT_SCRIPTS=%ROOT%resources\\scripts"',
+    `set "PATH=%ROOT%resources\\bin;%ROOT%resources\\bin\\${hostPlatform}-${hostArch};%ROOT%vendor\\bun;%PATH%"`,
     '"%ROOT%vendor\\bun\\bun.exe" "%ROOT%server.js" %*',
     '',
   ].join('\r\n'))

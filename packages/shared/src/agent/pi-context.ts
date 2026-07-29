@@ -4,6 +4,14 @@ import {
   createNodeFileSystem,
   type SessionToolContext,
 } from '@mkagent/session-tools-core';
+import {
+  validateAll,
+  validateAllPermissions,
+  validateConfig,
+  validatePreferences,
+  validateSkill,
+  validateToolIcons,
+} from '../config/validators.ts';
 import { updatePreferences } from '../config/preferences.ts';
 import { getSessionDataPath, getSessionPath, getSessionPlansPath } from '../sessions/storage.ts';
 
@@ -25,6 +33,14 @@ export function createPiContext(options: {
     workingDirectory: options.workingDirectory,
     callbacks: { onPlanSubmitted: options.onPlanSubmitted },
     fs: createNodeFileSystem(),
+    validators: {
+      validateConfig,
+      validatePreferences,
+      validatePermissions: validateAllPermissions,
+      validateToolIcons,
+      validateAll: workspaceRootPath => validateAll(undefined, workspaceRootPath),
+      validateSkill,
+    },
     updatePreferences: updates => updatePreferences(updates),
     submitFeedback: feedback => {
       const feedbackPath = join(options.workspacePath, 'feedback');

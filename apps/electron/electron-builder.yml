@@ -72,6 +72,11 @@ win:
     - target: nsis
       arch: [x64]
   artifactName: MkAgent-${version}-${arch}.${ext}
+  files:
+    - "!vendor/bun/**/*"
+  extraResources:
+    - from: vendor/bun/bun.exe
+      to: vendor/bun/bun.exe
   protocols:
     - name: MkAgent
       schemes: [mkagent]

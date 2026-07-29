@@ -43,6 +43,7 @@ import {
   registerPiModelResolver,
 } from '@mkagent/shared/config'
 import { initializeReleaseNotes } from '@mkagent/shared/release-notes'
+import { RPC_CHANNELS } from '@mkagent/shared/protocol'
 import { ensureDefaultWorkspace, getDefaultWorkspacesDir } from '@mkagent/shared/workspaces'
 
 // --generate-token: print a crypto-random token and exit
@@ -218,7 +219,17 @@ const instance = await (async () => {
       },
       bindRpcServer: (sm, server) => sm.setRpcServer(server),
       createHandlerDeps: ({ sessionManager, platform }) => ({ sessionManager, platform }),
-      registerAllRpcHandlers: registerCoreRpcHandlers,
+      registerAllRpcHandlers: (server, deps, serverCtx) => {
+        registerCoreRpcHandlers(server, deps, serverCtx)
+        server.handle(RPC_CHANNELS.notification.GET_ENABLED, async () => {
+          const { getNotificationsEnabled } = await import('@mkagent/shared/config/storage')
+          return getNotificationsEnabled()
+        })
+        server.handle(RPC_CHANNELS.notification.SET_ENABLED, async (_ctx, enabled: boolean) => {
+          const { setNotificationsEnabled } = await import('@mkagent/shared/config/storage')
+          setNotificationsEnabled(enabled)
+        })
+      },
       setSessionEventSink: (sessionManager, sink) => sessionManager.setEventSink(sink),
       initializeSessionManager: async (sessionManager) => {
         await sessionManager.initialize()

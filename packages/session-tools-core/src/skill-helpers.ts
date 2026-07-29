@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { closeSync, existsSync, openSync, readSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 
 export function getSkillPath(workspacePath: string, slug: string): string {
@@ -31,14 +31,20 @@ export function resolveSessionWorkingDirectory(
   workspacePath: string,
   sessionId: string
 ): string | undefined {
-  const sessionPath = join(workspacePath, 'sessions', sessionId, 'session.jsonl');
-  if (!existsSync(sessionPath)) return undefined;
-
   try {
-    const firstLine = readFileSync(sessionPath, 'utf-8').split('\n', 1)[0];
-    if (!firstLine) return undefined;
-    const header = JSON.parse(firstLine) as { workingDirectory?: unknown };
-    return typeof header.workingDirectory === 'string' ? header.workingDirectory : undefined;
+    const sessionPath = join(workspacePath, 'sessions', sessionId, 'session.jsonl');
+    if (!existsSync(sessionPath)) return undefined;
+    const fd = openSync(sessionPath, 'r');
+    try {
+      const buffer = Buffer.alloc(8192);
+      const bytesRead = readSync(fd, buffer, 0, buffer.length, 0);
+      const firstLine = buffer.toString('utf-8', 0, bytesRead).split('\n')[0] ?? '';
+      if (!firstLine) return undefined;
+      const header = JSON.parse(firstLine) as { workingDirectory?: unknown };
+      return typeof header.workingDirectory === 'string' ? header.workingDirectory : undefined;
+    } finally {
+      closeSync(fd);
+    }
   } catch {
     return undefined;
   }

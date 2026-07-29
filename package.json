@@ -24,9 +24,9 @@
     "test": "bun test && for f in $(find . -name '*.isolated.ts' -not -path './node_modules/*'); do bun test \"$f\" || exit 1; done",
     "typecheck": "bun run typecheck:shared",
     "typecheck:shared": "cd packages/shared && bun run tsc --noEmit",
-    "typecheck:all": "cd packages/core && bun run tsc --noEmit && cd ../shared && bun run tsc --noEmit && cd ../server-core && bun run tsc --noEmit && cd ../server && bun run tsc --noEmit && cd ../session-tools-core && bun run tsc --noEmit && cd ../pi-agent-server && bun run typecheck && cd ../../apps/electron && bun run typecheck && cd ../../packages/ui && bun run tsc --noEmit",
+    "typecheck:all": "cd packages/core && bun run tsc --noEmit && cd ../shared && bun run tsc --noEmit && cd ../server-core && bun run tsc --noEmit && cd ../server && bun run tsc --noEmit && cd ../session-tools-core && bun run tsc --noEmit && cd ../pi-agent-server && bun run typecheck && cd ../../apps/electron && bun run typecheck && cd ../webui && bun run typecheck && cd ../cli && bun run typecheck && cd ../../packages/ui && bun run tsc --noEmit",
     "server:start": "bun run packages/server/src/index.ts",
-    "server:dev": "bun run server:build:subprocess && MKAGENT_DEBUG=true MKAGENT_BUNDLED_ASSETS_ROOT=$PWD/apps/electron bun run packages/server/src/index.ts",
+    "server:dev": "bun run server:build:subprocess && MKAGENT_SERVER_TOKEN=${MKAGENT_SERVER_TOKEN:-mkagent-local-dev-token} MKAGENT_DEBUG=true MKAGENT_BUNDLED_ASSETS_ROOT=$PWD/apps/electron bun run packages/server/src/index.ts",
     "server:build": "bun run scripts/build-server.ts",
     "server:build:linux-x64": "bun run scripts/build-server.ts --platform=linux --arch=x64 --compress",
     "server:build:linux-arm64": "bun run scripts/build-server.ts --platform=linux --arch=arm64 --compress",
@@ -58,7 +58,7 @@
     "electron:build:renderer": "bun run scripts/electron-build-renderer.ts",
     "electron:build:resources": "bun run scripts/electron-build-resources.ts",
     "electron:build:assets": "cd apps/electron && bun scripts/copy-assets.ts",
-    "electron:build": "bun run electron:build:main && bun run electron:build:preload && bun run electron:build:renderer && bun run electron:build:resources && bun run electron:build:assets",
+    "electron:build": "bun run electron:build:main && bun run electron:build:preload && bun run electron:build:renderer && bun run electron:build:resources",
     "electron:start": "bun run electron:build && electron apps/electron",
     "electron:dev": "bun run scripts/electron-dev.ts",
     "electron:dev:terminal": "bun run scripts/electron-dev.ts --terminal",
@@ -81,7 +81,7 @@
     "cli:build": "cd apps/cli && bun run build",
     "server:build:subprocess": "cd packages/pi-agent-server && bun run build",
     "server:prod": "bun run server:build:subprocess && bun run webui:build && MKAGENT_WEBUI_DIR=apps/webui/dist MKAGENT_BUNDLED_ASSETS_ROOT=$PWD/apps/electron bun run packages/server/src/index.ts",
-    "server:dev:webui": "bun run server:build:subprocess && bun run webui:build && MKAGENT_WEBUI_DIR=apps/webui/dist MKAGENT_WEBUI_PORT=3100 bun run server:dev"
+    "server:dev:webui": "bun run webui:build && MKAGENT_RPC_PORT=3100 MKAGENT_WEBUI_DIR=apps/webui/dist bun run server:dev"
   },
   "devDependencies": {
     "@electron/packager": "^19.0.1",

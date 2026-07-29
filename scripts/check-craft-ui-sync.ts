@@ -9,58 +9,23 @@
  */
 
 import { readFile, readdir } from 'node:fs/promises'
+import { existsSync } from 'node:fs'
+import { createHash } from 'node:crypto'
 import { resolve } from 'node:path'
 
 const repoRoot = resolve(import.meta.dir, '..')
-const craftRoot = process.env.CRAFT_AGENT_SOURCE ?? resolve(repoRoot, '..', 'craft-agents-oss')
+const craftRoot = process.env.CRAFT_AGENT_SOURCE
+  ?? [
+    resolve(repoRoot, '..', 'craft-agents-oss'),
+    resolve(repoRoot, '..', '..', 'agents', 'craft-agents-oss'),
+  ].find(candidate => existsSync(candidate))
+  ?? resolve(repoRoot, '..', 'craft-agents-oss')
 const rendererRoot = 'apps/electron/src/renderer'
-
-const intentionalOverridePrefixes = [
-  `${rendererRoot}/App.tsx`,
-  `${rendererRoot}/atoms/`,
-  `${rendererRoot}/context/`,
-  `${rendererRoot}/contexts/`,
-  `${rendererRoot}/event-processor/`,
-  `${rendererRoot}/components/app-menu/`,
-  `${rendererRoot}/components/app-shell/`,
-  `${rendererRoot}/components/onboarding/`,
-  `${rendererRoot}/components/workspace/`,
-  `${rendererRoot}/hooks/`,
-  `${rendererRoot}/pages/`,
-  `${rendererRoot}/utils/session`,
-  `${rendererRoot}/lib/mentions`,
-  `${rendererRoot}/lib/nav-helpers`,
-  `${rendererRoot}/lib/navigation-registry`,
-  `${rendererRoot}/lib/icon-cache.ts`,
-  `${rendererRoot}/lib/local-storage.ts`,
-]
-
-const intentionalOverrideFiles = new Set([
-  `${rendererRoot}/index.html`,
-  `${rendererRoot}/index.css`,
-  `${rendererRoot}/components/SplashScreen.tsx`,
-  `${rendererRoot}/components/ServerDirectoryBrowser.tsx`,
-  `${rendererRoot}/components/browser/BrowserTabStrip.tsx`,
-  `${rendererRoot}/components/apisetup/index.ts`,
-  `${rendererRoot}/components/apisetup/ApiKeyInput.tsx`,
-  `${rendererRoot}/components/chat/EmptyStateHint.tsx`,
-  `${rendererRoot}/components/icons/SettingsIcons.tsx`,
-  `${rendererRoot}/components/info/index.ts`,
-  `${rendererRoot}/components/ui/EditPopover.tsx`,
-  `${rendererRoot}/components/ui/mention-badge.tsx`,
-  `${rendererRoot}/components/ui/mention-menu.tsx`,
-  `${rendererRoot}/components/ui/rich-text-input.tsx`,
-  `${rendererRoot}/lib/__tests__/mentions.test.ts`,
-  `${rendererRoot}/lib/provider-icons.ts`,
-  `${rendererRoot}/utils/__tests__/session-list-collapse.test.ts`,
-  `${rendererRoot}/utils/auth-validation.ts`,
-  `${rendererRoot}/utils/__tests__/auth-validation.test.ts`,
-])
-
-const allowedMkOnlyPrefixes = [
-  `${rendererRoot}/assets/mkagent_`,
-  `${rendererRoot}/components/icons/MkAgentAppIcon.tsx`,
-]
+const manifest = JSON.parse(
+  await readFile(resolve(import.meta.dir, 'craft-ui-overrides.json'), 'utf8'),
+) as { version: number; files: Record<string, { sha256: string; reason: string }> }
+if (manifest.version !== 2) throw new Error(`Unsupported Craft UI override manifest version: ${manifest.version}`)
+const intentionalOverrideFiles = new Set(Object.keys(manifest.files))
 
 const excludedPathFragments = [
   '/automations/',
@@ -112,6 +77,7 @@ const [mkFiles, craftFiles] = await Promise.all([
 ])
 const craftFileSet = new Set(craftFiles)
 const errors: string[] = []
+const seenOverrides = new Set<string>()
 let verifiedReuse = 0
 let intentionalOverrides = 0
 
@@ -122,8 +88,15 @@ for (const file of mkFiles) {
   }
 
   const isOverride = intentionalOverrideFiles.has(file)
-    || intentionalOverridePrefixes.some(prefix => file === prefix || file.startsWith(prefix))
-  if (isOverride) intentionalOverrides += 1
+  if (isOverride) {
+    intentionalOverrides += 1
+    seenOverrides.add(file)
+    const bytes = await readFile(resolve(repoRoot, file))
+    const hash = createHash('sha256').update(bytes).digest('hex')
+    const review = manifest.files[file]
+    if (!review?.reason.trim()) errors.push(`reviewed UI override has no reason: ${file}`)
+    if (hash !== review?.sha256) errors.push(`reviewed UI override changed without manifest update: ${file}`)
+  }
 
   let source: string | null = null
   if (/\.(?:ts|tsx|js|jsx|html)$/.test(file)) {
@@ -134,7 +107,7 @@ for (const file of mkFiles) {
   }
 
   if (!craftFileSet.has(file)) {
-    if (!isOverride && !allowedMkOnlyPrefixes.some(prefix => file.startsWith(prefix))) {
+    if (!isOverride) {
       errors.push(`unregistered MkAgent-only renderer file: ${file}`)
     }
     continue
@@ -148,6 +121,10 @@ for (const file of mkFiles) {
   } else {
     verifiedReuse += 1
   }
+}
+
+for (const file of intentionalOverrideFiles) {
+  if (!seenOverrides.has(file)) errors.push(`stale or missing reviewed UI override: ${file}`)
 }
 
 if (errors.length > 0) {

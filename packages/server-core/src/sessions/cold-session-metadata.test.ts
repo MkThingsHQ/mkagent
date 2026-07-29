@@ -48,4 +48,28 @@ describe('cold-session metadata persistence', () => {
     expect(lines[0].isFlagged).toBe(true)
     expect(lines.slice(1).map(line => line.id)).toEqual(['m1'])
   })
+
+  it('returns header-derived sidebar metadata before messages are loaded', () => {
+    const workspace = { id: 'ws', name: 'Workspace', slug: 'workspace', rootPath: root, createdAt: 1 }
+    const managed = createManagedSession({
+      id: 'cold-list',
+      workspaceRootPath: root,
+      createdAt: 1,
+      lastUsedAt: 2,
+      lastMessageAt: 3,
+      preview: 'first user request',
+      messageCount: 7,
+      lastMessageRole: 'assistant',
+      lastFinalMessageId: 'assistant-3',
+      tokenUsage: { inputTokens: 1, outputTokens: 2, totalTokens: 3, contextTokens: 1, costUsd: 0 },
+    }, workspace as never, { messagesLoaded: false })
+    ;(manager as unknown as { sessions: Map<string, unknown> }).sessions.set(managed.id, managed)
+
+    expect(manager.getSessions('ws')[0]).toMatchObject({
+      preview: 'first user request',
+      messageCount: 7,
+      lastMessageRole: 'assistant',
+      lastFinalMessageId: 'assistant-3',
+    })
+  })
 })

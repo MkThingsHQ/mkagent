@@ -29,6 +29,7 @@ The project is built from a new Git history using selected architecture and code
 - [Workspaces](./docs/workspaces.md), [sessions](./docs/sessions.md), and [Skills](./docs/skills.md)
 - [Permissions](./docs/permissions.md), [network proxy](./docs/network-proxy.md), [Browser](./docs/browser.md), and [attachments](./docs/attachments.md)
 - [Document tools](./docs/document-tools.md), [updates/releases](./docs/releases.md), [data directory](./docs/data-directory.md), and [testing](./docs/testing.md)
+- [CLI reference](./docs/cli.md)
 - [Feature matrix](./docs/feature-matrix.md) and [upstream synchronization](./docs/upstream-sync.md)
 
 ## License

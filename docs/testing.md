@@ -6,7 +6,7 @@ Local validation follows the same boundaries as CI:
 bun run typecheck:all
 bun run lint
 bun run validate:ci
-bun test
+bun run test
 bun run test:doc-tools
 bun run electron:build
 ```

@@ -5,10 +5,49 @@ import { dirname, join } from 'node:path'
 
 export default log
 
-export const isDebugMode = process.argv.includes('--debug') || process.defaultApp || process.env.MKAGENT_IS_PACKAGED === 'false'
+function resolveDebugMode(): boolean {
+  if (process.argv.includes('--debug')) return true
+
+  const packagedEnv = process.env.MKAGENT_IS_PACKAGED
+  if (packagedEnv === 'true') return false
+  if (packagedEnv === 'false') return true
+
+  const isElectronRuntime = typeof process.versions?.electron === 'string'
+  if (isElectronRuntime) {
+    if (process.defaultApp) return true
+    return false
+  }
+
+  return true
+}
+
+export const isDebugMode = resolveDebugMode()
 log.initialize()
-log.transports.file.maxSize = 5 * 1024 * 1024
-log.transports.console.level = isDebugMode ? 'debug' : false
+
+if (isDebugMode) {
+  log.transports.file.format = ({ message }) => [
+    JSON.stringify({
+      timestamp: message.date.toISOString(),
+      level: message.level,
+      scope: message.scope,
+      message: message.data,
+    }),
+  ]
+
+  log.transports.file.maxSize = 5 * 1024 * 1024
+  log.transports.console.format = ({ message }) => {
+    const scope = message.scope ? `[${message.scope}]` : ''
+    const level = message.level.toUpperCase().padEnd(5)
+    const data = message.data
+      .map((value: unknown) => (typeof value === 'object' ? JSON.stringify(value) : String(value)))
+      .join(' ')
+    return [`${message.date.toISOString()} ${level} ${scope} ${data}`]
+  }
+  log.transports.console.level = 'debug'
+} else {
+  log.transports.file.level = false
+  log.transports.console.level = false
+}
 
 export const mainLog = log.scope('main')
 export const sessionLog = log.scope('session')
@@ -39,5 +78,6 @@ export const autoUpdateLog = {
 }
 
 export function getLogFilePath(): string | undefined {
-  return log.transports.file.getFile().path
+  if (!isDebugMode) return undefined
+  return log.transports.file.getFile()?.path
 }

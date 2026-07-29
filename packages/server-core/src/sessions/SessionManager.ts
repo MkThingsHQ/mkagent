@@ -38,7 +38,13 @@ import {
   unregisterSessionScopedToolCallbacks,
   type BrowserPaneFns,
 } from '@mkagent/shared/agent'
-import { getMiniModel, getWorkspaces } from '@mkagent/shared/config'
+import {
+  ConfigWatcher,
+  getMiniModel,
+  getWorkspaces,
+  type ConfigWatcherCallbacks,
+} from '@mkagent/shared/config'
+import type { LoadedSkill } from '@mkagent/shared/skills'
 import { loadWorkspaceConfig } from '@mkagent/shared/workspaces'
 import {
   clearPendingPlanExecution as clearStoredPendingPlanExecution,
@@ -51,12 +57,14 @@ import {
   markCompactionComplete as markStoredCompactionComplete,
   markPendingPlanExecutionDispatched as markStoredPendingPlanExecutionDispatched,
   saveSession as saveStoredSession,
+  sessionPersistenceQueue,
   serializeSession,
   setPendingPlanExecution as setStoredPendingPlanExecution,
   validateBundle,
   type DispatchMode,
   type SessionBundle,
   type SessionConfig,
+  type SessionHeader,
   type SessionMetadata,
   type SessionTokenUsage,
   type StoredSession,
@@ -67,6 +75,7 @@ import { getWorkspaceAllowedDirs, validateFilePath } from '@mkagent/server-core/
 import { normalizeThinkingLevel, type ThinkingLevel } from '@mkagent/shared/agent/thinking-levels'
 import type { PermissionMode } from '@mkagent/shared/agent/mode-types'
 import { buildBackendRuntimeSignature, buildRestartRequiredSignature } from './runtime-config'
+import { rollbackFailedBranchCreation } from '@mkagent/server-core/domain'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -197,17 +206,21 @@ interface ManagedSession extends SessionConfig {
   isProcessing: boolean
   agent: AgentBackend | null
   messageQueue: QueuedMessage[]
+  backgroundShellCommands: Map<string, string>
   backgroundTaskRegistry: Map<string, RunningBackgroundTask>
   backendRuntimeSignature?: string
   backendRestartSignature?: string
   runtimeRefreshPromise?: Promise<void>
   currentStatus?: Session['currentStatus']
+  preview?: string
+  messageCount?: number
   lastFinalMessageId?: string
   lastMessageRole?: Session['lastMessageRole']
+  pendingExternalHeader?: SessionHeader
 }
 
 export function createManagedSession(
-  session: Partial<StoredSession> & Pick<SessionConfig, 'id'>,
+  session: Partial<StoredSession & SessionMetadata> & Pick<SessionConfig, 'id'>,
   workspace: Workspace,
   options: { messagesLoaded?: boolean } = {},
 ): ManagedSession {
@@ -242,12 +255,17 @@ export function createManagedSession(
     branchFromSdkCwd: session.branchFromSdkCwd,
     branchFromSdkTurnId: session.branchFromSdkTurnId,
     parentSessionId: session.parentSessionId,
+    preview: session.preview,
+    messageCount: session.messageCount ?? session.messages?.length ?? 0,
+    lastMessageRole: session.lastMessageRole,
+    lastFinalMessageId: session.lastFinalMessageId,
     messages: (session.messages ?? []).map(storedToMessage),
     tokenUsage: session.tokenUsage ?? { ...EMPTY_USAGE },
     messagesLoaded: options.messagesLoaded ?? Boolean(session.messages),
     isProcessing: false,
     agent: null,
     messageQueue: [],
+    backgroundShellCommands: new Map(),
     backgroundTaskRegistry: new Map(),
   }
 }
@@ -274,6 +292,7 @@ export function resolveMidStreamDeliveryOutcome(
 
 export class SessionManager implements ISessionManager {
   private sessions = new Map<string, ManagedSession>()
+  private configWatchers = new Map<string, ConfigWatcher>()
   private eventSink: EventSink = () => {}
   private initPromise: Promise<void> | null = null
   private activeViewingByWorkspace = new Map<string, string>()
@@ -291,6 +310,7 @@ export class SessionManager implements ISessionManager {
     if (this.initPromise) return this.initPromise
     this.initPromise = Promise.resolve().then(() => {
       for (const workspace of getWorkspaces()) {
+        this.setupConfigWatcher(workspace.rootPath, workspace.id)
         for (const metadata of listStoredSessions(workspace.rootPath)) {
           this.sessions.set(metadata.id, createManagedSession(metadata, workspace))
         }
@@ -349,27 +369,33 @@ export class SessionManager implements ISessionManager {
   private toStored(managed: ManagedSession): StoredSession {
     const { workspace: _workspace, agent: _agent, messageQueue: _queue,
       messagesLoaded: _loaded, isProcessing: _processing,
+      backgroundShellCommands: _backgroundShellCommands,
       backgroundTaskRegistry: _backgroundTaskRegistry,
       runtimeRefreshPromise: _refresh, backendRuntimeSignature: _runtimeSignature,
       backendRestartSignature: _restartSignature, currentStatus: _status,
+      preview: _preview, messageCount: _messageCount,
       lastFinalMessageId: _lastFinalMessageId, lastMessageRole: _lastMessageRole,
+      pendingExternalHeader: _pendingExternalHeader,
       messages, tokenUsage, ...config } = managed
     return { ...config, messages: messages.map(messageToStored), tokenUsage }
   }
 
   private persistSession(managed: ManagedSession): void {
-    void saveStoredSession(this.toStored(managed)).catch(error => {
-      log.error('Failed to persist session', managed.id, error)
-    })
+    this.ensureMessagesLoaded(managed)
+    sessionPersistenceQueue.enqueue(this.toStored(managed))
   }
 
   async flushSession(sessionId: string): Promise<void> {
     const managed = this.sessions.get(sessionId)
-    if (managed) await saveStoredSession(this.toStored(managed))
+    if (!managed) return
+    this.ensureMessagesLoaded(managed)
+    sessionPersistenceQueue.enqueue(this.toStored(managed))
+    await sessionPersistenceQueue.flush(sessionId)
   }
 
   async flushAllSessions(): Promise<void> {
-    await Promise.all([...this.sessions.keys()].map(id => this.flushSession(id)))
+    for (const managed of this.sessions.values()) this.persistSession(managed)
+    await sessionPersistenceQueue.flushAll()
   }
 
   getSessions(workspaceId?: string): Session[] {
@@ -388,13 +414,12 @@ export class SessionManager implements ISessionManager {
 
   private toSession(managed: ManagedSession, includeMessages: boolean): Session {
     const messages = includeMessages ? managed.messages : []
-    const last = managed.messages.at(-1)
     return {
       id: managed.id,
       workspaceId: managed.workspace.id,
       workspaceName: managed.workspace.name,
       name: managed.name,
-      preview: last?.content?.slice(0, 200),
+      preview: managed.preview,
       lastMessageAt: managed.lastMessageAt ?? managed.lastUsedAt,
       messages,
       isProcessing: managed.isProcessing,
@@ -411,7 +436,7 @@ export class SessionManager implements ISessionManager {
       lastFinalMessageId: managed.lastFinalMessageId,
       currentStatus: managed.currentStatus,
       createdAt: managed.createdAt,
-      messageCount: managed.messages.length,
+      messageCount: managed.messageCount ?? managed.messages.length,
       tokenUsage: managed.tokenUsage,
       hidden: managed.hidden,
       isArchived: managed.isArchived,
@@ -505,6 +530,22 @@ export class SessionManager implements ISessionManager {
 
     const managed = createManagedSession(stored, workspace, { messagesLoaded: true })
     managed.thinkingLevel = normalizeThinkingLevel(options.thinkingLevel ?? workspaceConfig?.defaults?.thinkingLevel)
+    if (branchSource) {
+      try {
+        const agent = await this.getOrCreateAgent(managed)
+        await agent.ensureBranchReady()
+      } catch (error) {
+        await rollbackFailedBranchCreation({
+          managed,
+          workspaceRootPath: workspace.rootPath,
+          sessionId: stored.id,
+          deleteFromRuntimeSessions: id => this.sessions.delete(id),
+          deleteStoredSession,
+        })
+        throw new Error(`Could not create branch: ${error instanceof Error ? error.message : String(error)}`)
+      }
+    }
+
     this.sessions.set(managed.id, managed)
     await this.flushSession(managed.id)
     if (internal.emitCreatedEvent !== false) this.notifySessionCreated(workspace.id, managed.id)
@@ -526,6 +567,7 @@ export class SessionManager implements ISessionManager {
     await this.cancelProcessing(sessionId, true)
     managed.agent?.destroy()
     unregisterSessionScopedToolCallbacks(sessionId)
+    sessionPersistenceQueue.cancel(sessionId)
     deleteStoredSession(managed.workspace.rootPath, sessionId)
     this.sessions.delete(sessionId)
     this.emit(managed.workspace.id, { type: 'session_deleted', sessionId })
@@ -577,17 +619,25 @@ export class SessionManager implements ISessionManager {
     const managed = this.sessions.get(sessionId)
     if (!managed) throw new Error(`Session not found: ${sessionId}`)
     this.ensureMessagesLoaded(managed)
-    const messageId = existingMessageId ?? generateMessageId()
     const now = this.nextTimestamp()
-    const userMessage: Message = {
-      id: messageId,
-      role: 'user',
-      content: message,
-      timestamp: now,
-      attachments: storedAttachments,
-      badges: options?.badges,
+    let userMessage: Message
+    if (existingMessageId) {
+      const existing = managed.messages.find(item => item.id === existingMessageId)
+      if (!existing) throw new Error(`Existing message ${existingMessageId} not found`)
+      userMessage = existing
+    } else {
+      userMessage = {
+        id: generateMessageId(),
+        role: 'user',
+        content: message,
+        timestamp: now,
+        attachments: storedAttachments,
+        badges: options?.badges,
+        ...(options?.hidden ? { hidden: true } : {}),
+      }
+      managed.messages.push(userMessage)
+      if (!options?.hidden) managed.lastMessageRole = 'user'
     }
-    managed.messages.push(userMessage)
     managed.lastMessageAt = now
     managed.lastUsedAt = now
     managed.connectionLocked = true
@@ -598,7 +648,7 @@ export class SessionManager implements ISessionManager {
         userMessage.isQueued = true
         managed.messageQueue.push({
           message,
-          messageId,
+          messageId: userMessage.id,
           optimisticMessageId: options?.optimisticMessageId,
           attachments,
           storedAttachments,
@@ -606,7 +656,7 @@ export class SessionManager implements ISessionManager {
         })
       }
       await this.flushSession(sessionId)
-      onAck?.(messageId)
+      onAck?.(userMessage.id)
       this.emit(managed.workspace.id, {
         type: 'user_message',
         sessionId,
@@ -618,14 +668,16 @@ export class SessionManager implements ISessionManager {
     }
 
     await this.flushSession(sessionId)
-    onAck?.(messageId)
-    this.emit(managed.workspace.id, {
-      type: 'user_message',
-      sessionId,
-      message: userMessage,
-      status: 'accepted',
-      optimisticMessageId: options?.optimisticMessageId,
-    })
+    if (!existingMessageId) {
+      onAck?.(userMessage.id)
+      this.emit(managed.workspace.id, {
+        type: 'user_message',
+        sessionId,
+        message: userMessage,
+        status: 'accepted',
+        optimisticMessageId: options?.optimisticMessageId,
+      })
+    }
     await this.runTurn(managed, message, attachments)
   }
 
@@ -640,7 +692,7 @@ export class SessionManager implements ISessionManager {
     try {
       const agent = await this.getOrCreateAgent(managed)
       for await (const event of agent.chat(message, attachments)) {
-        this.handleAgentEvent(managed, event)
+        if (this.handleAgentEvent(managed, event)) stopReason = 'error'
       }
     } catch (error) {
       stopReason = 'error'
@@ -657,6 +709,10 @@ export class SessionManager implements ISessionManager {
     } finally {
       managed.isProcessing = false
       managed.currentStatus = undefined
+      if (managed.pendingExternalHeader) {
+        this.applyExternalSessionMetadata(managed, managed.pendingExternalHeader)
+        managed.pendingExternalHeader = undefined
+      }
       await this.flushSession(managed.id)
       runtimeHooks.onSessionStopped()
       for (const listener of this.completionListeners) listener({ sessionId: managed.id, stopReason })
@@ -664,8 +720,9 @@ export class SessionManager implements ISessionManager {
     }
   }
 
-  private handleAgentEvent(managed: ManagedSession, event: AgentEvent): void {
+  private handleAgentEvent(managed: ManagedSession, event: AgentEvent): boolean {
     const sessionId = managed.id
+    let isTurnError = false
     switch (event.type) {
       case 'text_complete': {
         const message: Message = {
@@ -697,12 +754,48 @@ export class SessionManager implements ISessionManager {
       case 'info':
         this.emit(managed.workspace.id, { type: 'info', sessionId, message: event.message })
         break
-      case 'error':
-        this.emit(managed.workspace.id, { type: 'error', sessionId, error: event.message })
+      case 'error': {
+        if (!managed.isProcessing || event.message.includes('aborted') || event.message.includes('AbortError')) break
+        const message: Message = {
+          id: generateMessageId(),
+          role: 'error',
+          content: event.message,
+          timestamp: this.nextTimestamp(),
+        }
+        managed.messages.push(message)
+        this.emit(managed.workspace.id, {
+          type: 'error',
+          sessionId,
+          error: event.message,
+          timestamp: message.timestamp,
+        })
+        isTurnError = true
         break
-      case 'typed_error':
-        this.emit(managed.workspace.id, { type: 'typed_error', sessionId, error: event.error })
+      }
+      case 'typed_error': {
+        const errorText = event.error.message || event.error.title || ''
+        if (!managed.isProcessing || errorText.includes('aborted') || errorText.includes('AbortError')) break
+        const message: Message = {
+          id: generateMessageId(),
+          role: 'error',
+          content: [event.error.title, event.error.message].filter(Boolean).join(': ') || 'An error occurred',
+          timestamp: this.nextTimestamp(),
+          errorCode: event.error.code,
+          errorTitle: event.error.title,
+          errorDetails: event.error.details,
+          errorOriginal: event.error.originalError,
+          errorCanRetry: event.error.canRetry,
+        }
+        managed.messages.push(message)
+        this.emit(managed.workspace.id, {
+          type: 'typed_error',
+          sessionId,
+          error: event.error,
+          timestamp: message.timestamp,
+        })
+        isTurnError = true
         break
+      }
       case 'working_directory_changed':
         managed.workingDirectory = event.workingDirectory
         this.emit(managed.workspace.id, { type: 'working_directory_changed', sessionId, workingDirectory: event.workingDirectory })
@@ -729,9 +822,10 @@ export class SessionManager implements ISessionManager {
           ...(event.workflowId ? { workflowId: event.workflowId } : {}),
           ...(event.kind === 'workflow' ? { agentsCompleted: 0 } : {}),
         })
-        this.emit(managed.workspace.id, { type: 'task_backgrounded', sessionId, toolUseId: event.toolUseId, taskId: event.taskId, intent: event.intent, turnId: event.turnId })
+        this.emit(managed.workspace.id, { ...event, sessionId })
         break
       case 'shell_backgrounded':
+        if (event.command) managed.backgroundShellCommands.set(event.shellId, event.command)
         this.emit(managed.workspace.id, { type: 'shell_backgrounded', sessionId, toolUseId: event.toolUseId, shellId: event.shellId, intent: event.intent, command: event.command, turnId: event.turnId })
         break
       case 'task_progress':
@@ -794,11 +888,13 @@ export class SessionManager implements ISessionManager {
             break
           }
         }
+        this.emit(managed.workspace.id, { ...event, sessionId })
         break
       case 'steer_undelivered':
         break
     }
     this.persistSession(managed)
+    return isTurnError
   }
 
   /** Craft-compatible async entry point for events arriving outside a live turn. */
@@ -1120,8 +1216,38 @@ export class SessionManager implements ISessionManager {
     if (!silent) this.emit(managed.workspace.id, { type: 'interrupted', sessionId })
   }
 
-  async killShell(_sessionId: string, _shellId: string): Promise<{ success: boolean; error?: string }> {
-    return { success: false, error: 'Shell process not found' }
+  async killShell(sessionId: string, shellId: string): Promise<{ success: boolean; error?: string }> {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) return { success: false, error: 'Session not found' }
+
+    const command = managed.backgroundShellCommands.get(shellId)
+    if (command) {
+      try {
+        const { execFile } = await import('node:child_process')
+        const pattern = command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        const stdout = await new Promise<string>((resolve, reject) => {
+          execFile('pgrep', ['-f', pattern], { encoding: 'utf8' }, (error, result) => {
+            if (error) reject(error)
+            else resolve(result)
+          })
+        }).catch(() => '')
+
+        for (const value of stdout.split('\n')) {
+          const pid = Number(value.trim())
+          if (!Number.isInteger(pid) || pid <= 0 || pid === process.pid) continue
+          try {
+            process.kill(pid, 'SIGTERM')
+          } catch {
+            // The process may have exited between discovery and termination.
+          }
+        }
+      } finally {
+        managed.backgroundShellCommands.delete(shellId)
+      }
+    }
+
+    this.emit(managed.workspace.id, { type: 'shell_killed', sessionId, shellId })
+    return { success: true }
   }
 
   listBackgroundTasks(sessionId: string) {
@@ -1472,8 +1598,68 @@ export class SessionManager implements ISessionManager {
     return getWorkspaces().map(({ rootPath: _rootPath, createdAt: _createdAt, ...info }) => info)
   }
 
-  setupConfigWatcher(_workspaceRootPath: string, _workspaceId: string): void {}
-  notifyConfigFileChange(_workspaceRootPath: string, _relativePath: string): void {}
+  setupConfigWatcher(workspaceRootPath: string, workspaceId: string): void {
+    if (this.configWatchers.has(workspaceRootPath)) return
+
+    const callbacks: ConfigWatcherCallbacks = {
+      onLlmConnectionsChange: () => {
+        this.eventSink(RPC_CHANNELS.llmConnections.CHANGED, { to: 'all' })
+      },
+      onAppThemeChange: theme => {
+        this.eventSink(RPC_CHANNELS.theme.APP_CHANGED, { to: 'all' }, theme)
+      },
+      onDefaultPermissionsChange: () => {
+        this.eventSink(RPC_CHANNELS.permissions.DEFAULTS_CHANGED, { to: 'all' }, null)
+      },
+      onSkillsListChange: skills => {
+        this.broadcastSkillsChanged(workspaceId, skills)
+      },
+      onSkillChange: async () => {
+        const { loadAllSkills } = await import('@mkagent/shared/skills')
+        this.broadcastSkillsChanged(workspaceId, loadAllSkills(workspaceRootPath))
+      },
+      onSessionMetadataChange: (sessionId, header) => {
+        const managed = this.sessions.get(sessionId)
+        if (!managed) return
+        if (managed.isProcessing) managed.pendingExternalHeader = header
+        else this.applyExternalSessionMetadata(managed, header)
+      },
+    }
+
+    const watcher = new ConfigWatcher(workspaceRootPath, callbacks)
+    watcher.start()
+    this.configWatchers.set(workspaceRootPath, watcher)
+  }
+
+  notifyConfigFileChange(workspaceRootPath: string, relativePath: string): void {
+    this.configWatchers.get(workspaceRootPath)?.notifyFileChange(relativePath)
+  }
+
+  private broadcastSkillsChanged(workspaceId: string, skills: LoadedSkill[]): void {
+    this.eventSink(RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId }, workspaceId, skills)
+  }
+
+  private applyExternalSessionMetadata(managed: ManagedSession, header: SessionHeader): void {
+    if ((managed.isFlagged ?? false) !== (header.isFlagged ?? false)) {
+      managed.isFlagged = header.isFlagged ?? false
+      this.sendEvent({
+        type: managed.isFlagged ? 'session_flagged' : 'session_unflagged',
+        sessionId: managed.id,
+      }, managed.workspace.id)
+    }
+    if ((managed.isArchived ?? false) !== (header.isArchived ?? false)) {
+      managed.isArchived = header.isArchived ?? false
+      managed.archivedAt = header.archivedAt
+      this.sendEvent({
+        type: managed.isArchived ? 'session_archived' : 'session_unarchived',
+        sessionId: managed.id,
+      }, managed.workspace.id)
+    }
+    if (managed.name !== header.name) {
+      managed.name = header.name
+      this.sendEvent({ type: 'name_changed', sessionId: managed.id, name: header.name }, managed.workspace.id)
+    }
+  }
 
   getActiveSessionCount(workspaceId?: string): number {
     return [...this.sessions.values()].filter(managed => managed.isProcessing && (!workspaceId || managed.workspace.id === workspaceId)).length
@@ -1529,6 +1715,8 @@ export class SessionManager implements ISessionManager {
   }
 
   cleanup(): void {
+    for (const watcher of this.configWatchers.values()) watcher.stop()
+    this.configWatchers.clear()
     for (const managed of this.sessions.values()) {
       managed.agent?.destroy()
       unregisterSessionScopedToolCallbacks(managed.id)

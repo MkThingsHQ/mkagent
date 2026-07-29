@@ -20,12 +20,23 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Checkout pinned Craft baseline
+        run: |
+          git clone --filter=blob:none https://github.com/craft-ai-agents/craft-agents-oss.git "$RUNNER_TEMP/craft-agents-oss"
+          git -C "$RUNNER_TEMP/craft-agents-oss" checkout --detach a60ebc1a5a7cb0a6af7a77d5eed0512c5fc07658
       - run: bun install --frozen-lockfile
       - run: bun run typecheck:all
       - run: bun run lint
+        env:
+          CRAFT_AGENT_SOURCE: ${{ runner.temp }}/craft-agents-oss
+      - run: bun run audit:craft-reuse
+        env:
+          CRAFT_AGENT_SOURCE: ${{ runner.temp }}/craft-agents-oss
       - run: bun run validate:ci
-      - run: bun test
+      - run: bun run test
+      - run: bun run webui:build
       - run: bun run cli:build
+      - run: git diff --check
 
   build-smoke:
     strategy:

@@ -10,7 +10,7 @@ bun run server:dev:webui
 bun run apps/cli/src/index.ts --help
 bun run typecheck:all
 bun run lint
-bun test
+bun run test
 ```
 
 Use the existing package boundaries and naming before adding an abstraction. Keep reference checkouts read-only. A module change should include its tests and documentation and pass `git diff --check` before commit.

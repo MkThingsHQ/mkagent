@@ -125,8 +125,6 @@ function parseInternalMkAgentDeepLink(parsed: URL): ParsedInternalDeepLink | nul
   return null
 }
 
-function assertLocalWorkspace(_ctx: { workspaceId: string | null }, _action: string): void {}
-
 export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps): void {
   const windowManager = deps.windowManager
 
@@ -311,7 +309,6 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
   })
 
   server.handle(RPC_CHANNELS.shell.OPEN_FILE, async (ctx, path: string) => {
-    assertLocalWorkspace(ctx, 'Open file')
     try {
       // Expand ~ before resolve() — resolve() treats ~ as a literal path component
       const expanded = path.startsWith('~') ? path.replace(/^~/, homedir()) : path
@@ -327,7 +324,6 @@ export function registerSystemCoreHandlers(server: RpcServer, deps: HandlerDeps)
   })
 
   server.handle(RPC_CHANNELS.shell.SHOW_IN_FOLDER, async (ctx, path: string) => {
-    assertLocalWorkspace(ctx, 'Show in folder')
     try {
       const expanded = path.startsWith('~') ? path.replace(/^~/, homedir()) : path
       const absolutePath = resolve(expanded)

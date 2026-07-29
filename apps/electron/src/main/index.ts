@@ -12,7 +12,15 @@ import { cleanupSessionFileWatchForClient } from '@mkagent/server-core/handlers/
 import { initModelRefreshService, setFetcherPlatform } from '@mkagent/server-core/model-fetchers'
 import { setImageProcessor, setSearchPlatform } from '@mkagent/server-core/services'
 import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@mkagent/server-core/sessions'
-import { addWorkspace, ensurePresetThemes, ensureToolIcons, getWorkspaces, registerPiModelResolver } from '@mkagent/shared/config'
+import {
+  addWorkspace,
+  ensurePresetThemes,
+  ensureToolIcons,
+  getPersistedUiLanguage,
+  getWorkspaces,
+  registerPiModelResolver,
+  setPersistedUiLanguage,
+} from '@mkagent/shared/config'
 import { getCredentialManager } from '@mkagent/shared/credentials'
 import { initializeDocs } from '@mkagent/shared/docs'
 import { setupI18n, i18n, SUPPORTED_LANGUAGE_CODES, type LanguageCode } from '@mkagent/shared/i18n'
@@ -30,8 +38,12 @@ import { createElectronPlatform } from './platform'
 import { WindowManager } from './window-manager'
 import { checkForUpdatesOnLaunch, setAutoUpdateEventSink } from './auto-update'
 import { handleDeepLink } from './deep-link'
+import { createApplicationMenu, rebuildMenu, setMenuEventSink } from './menu'
+import { registerThumbnailHandler, registerThumbnailScheme } from './thumbnail-protocol'
 
 setupI18n()
+const persistedUiLanguage = getPersistedUiLanguage()
+if (persistedUiLanguage) void i18n.changeLanguage(persistedUiLanguage)
 app.setName(process.env.MKAGENT_APP_NAME || 'MkAgent')
 
 Sentry.init({
@@ -54,6 +66,7 @@ Sentry.init({
   },
 })
 Sentry.setUser({ id: createHash('sha256').update(hostname() + homedir()).digest('hex').slice(0, 16) })
+registerThumbnailScheme()
 
 let stopServer: (() => Promise<void>) | null = null
 let windowManager: WindowManager | null = null
@@ -117,6 +130,7 @@ function ensureLocalWorkspace() {
 }
 
 async function start() {
+  registerThumbnailHandler()
   configureBundledTools()
   initializeDocs()
   initializeReleaseNotes()
@@ -126,6 +140,7 @@ async function start() {
   registerPiModelResolver(provider => provider ? getPiModelsForAuthProvider(provider) : getAllPiModels())
 
   windowManager = new WindowManager()
+  createApplicationMenu(windowManager)
   browserPaneManager = new BrowserPaneManager()
   browserPaneManager.setWindowManager(windowManager)
   browserPaneManager.registerToolbarIpc()
@@ -193,6 +208,7 @@ async function start() {
   eventSink = sink
   resolveClientId = id => clients.get(id)
   windowManager.setRpcEventSink(sink, id => clients.get(id))
+  setMenuEventSink(sink, id => clients.get(id))
   browserPaneManager.onStateChange(info => sink('browser-pane:state-changed', { to: 'all' }, info))
   browserPaneManager.onRemoved(id => sink('browser-pane:removed', { to: 'all' }, id))
   browserPaneManager.setSessionPathResolver(id => instance.sessionManager.getSessionPath(id))
@@ -205,7 +221,11 @@ async function start() {
   ipcMain.handle('__dialog:showMessageBox', (event, options) => dialog.showMessageBox(BrowserWindow.fromWebContents(event.sender)!, options))
   ipcMain.handle('__dialog:showOpenDialog', (event, options) => dialog.showOpenDialog(BrowserWindow.fromWebContents(event.sender)!, options).then(result => result.filePaths))
   ipcMain.handle('__i18n:changeLanguage', async (_event, language: unknown) => {
-    if (typeof language === 'string' && SUPPORTED_LANGUAGE_CODES.includes(language as LanguageCode)) await i18n.changeLanguage(language)
+    if (typeof language === 'string' && SUPPORTED_LANGUAGE_CODES.includes(language as LanguageCode)) {
+      await i18n.changeLanguage(language)
+      setPersistedUiLanguage(language as LanguageCode)
+      await rebuildMenu()
+    }
   })
 
   const workspace = getWorkspaces()[0]!

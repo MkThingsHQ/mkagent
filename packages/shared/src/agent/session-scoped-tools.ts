@@ -34,5 +34,3 @@ export function isPathInPlansDir(path: string, workspacePath: string, sessionId:
 export function cleanupSessionScopedTools(sessionId: string): void {
   clearPlanFileState(sessionId);
 }
-
-export function invalidateAllSessionToolsCaches(): void {}

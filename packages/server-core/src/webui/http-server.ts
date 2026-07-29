@@ -10,7 +10,8 @@
  *    for separate-port deployments or development.
  */
 
-import { mkdtemp, writeFile } from 'node:fs/promises'
+import { rmSync } from 'node:fs'
+import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { basename, join, extname } from 'node:path'
 import {
@@ -46,6 +47,12 @@ const MIME_TYPES: Record<string, string> = {
   '.webp': 'image/webp',
   '.map': 'application/json',
 }
+
+const MAX_ATTACHMENT_FILES = 20
+const MAX_ATTACHMENT_FILE_SIZE = 50 * 1024 * 1024
+const MAX_ATTACHMENT_TOTAL_SIZE = 100 * 1024 * 1024
+const MAX_ATTACHMENT_REQUEST_SIZE = MAX_ATTACHMENT_TOTAL_SIZE + 1024 * 1024
+const ATTACHMENT_UPLOAD_TTL_MS = 60 * 60 * 1000
 
 function getMimeType(path: string): string {
   return MIME_TYPES[extname(path).toLowerCase()] ?? 'application/octet-stream'
@@ -170,7 +177,16 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
   } = options
 
   const rateLimiter = new RateLimiter(5, 60_000)
-  const cleanupTimer = setInterval(() => rateLimiter.cleanup(), 120_000)
+  const uploadDirectories = new Map<string, number>()
+  const cleanupTimer = setInterval(() => {
+    rateLimiter.cleanup()
+    const now = Date.now()
+    for (const [dir, createdAt] of uploadDirectories) {
+      if (now - createdAt < ATTACHMENT_UPLOAD_TTL_MS) continue
+      uploadDirectories.delete(dir)
+      void rm(dir, { recursive: true, force: true })
+    }
+  }, 120_000)
 
   const loginPassword = password || secret
   const trustedProxySet = new Set(trustedProxies ?? [])
@@ -313,6 +329,11 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
     // a private temporary directory, then feed those paths through the same
     // attachment validation and persistence pipeline used by Desktop.
     if (path === '/api/attachments' && req.method === 'POST') {
+      const contentLength = Number(req.headers.get('content-length'))
+      if (Number.isFinite(contentLength) && contentLength > MAX_ATTACHMENT_REQUEST_SIZE) {
+        return Response.json({ error: 'Attachments must be 100 MB or smaller in total' }, { status: 413 })
+      }
+
       let form
       try {
         form = await req.formData()
@@ -320,22 +341,32 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
         return Response.json({ error: 'Invalid multipart form data' }, { status: 400 })
       }
       const files = form.getAll('files').filter((value): value is Exclude<typeof value, string> => typeof value !== 'string')
-      if (files.length === 0 || files.length > 20) {
+      if (files.length === 0 || files.length > MAX_ATTACHMENT_FILES) {
         return Response.json({ error: 'Select between 1 and 20 files' }, { status: 400 })
       }
-      if (files.some(file => file.size > 50 * 1024 * 1024)) {
+      if (files.some(file => file.size > MAX_ATTACHMENT_FILE_SIZE)) {
         return Response.json({ error: 'Each attachment must be 50 MB or smaller' }, { status: 413 })
+      }
+      if (files.reduce((total, file) => total + file.size, 0) > MAX_ATTACHMENT_TOTAL_SIZE) {
+        return Response.json({ error: 'Attachments must be 100 MB or smaller in total' }, { status: 413 })
       }
 
       const uploadDir = await mkdtemp(join(tmpdir(), 'mkagent-webui-upload-'))
-      const paths: string[] = []
-      for (const [index, file] of files.entries()) {
-        const safeName = basename(file.name).replace(/[^a-zA-Z0-9._ -]/g, '_') || `attachment-${index + 1}`
-        const filePath = join(uploadDir, `${index + 1}-${safeName}`)
-        await writeFile(filePath, Buffer.from(await file.arrayBuffer()))
-        paths.push(filePath)
+      uploadDirectories.set(uploadDir, Date.now())
+      try {
+        const paths: string[] = []
+        for (const [index, file] of files.entries()) {
+          const safeName = basename(file.name).replace(/[^a-zA-Z0-9._ -]/g, '_') || `attachment-${index + 1}`
+          const filePath = join(uploadDir, `${index + 1}-${safeName}`)
+          await writeFile(filePath, Buffer.from(await file.arrayBuffer()))
+          paths.push(filePath)
+        }
+        return Response.json({ paths })
+      } catch (error) {
+        uploadDirectories.delete(uploadDir)
+        await rm(uploadDir, { recursive: true, force: true })
+        throw error
       }
-      return Response.json({ paths })
     }
 
     // ── Serve SPA static files ──
@@ -361,7 +392,13 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
 
   return {
     fetch,
-    dispose: () => clearInterval(cleanupTimer),
+    dispose: () => {
+      clearInterval(cleanupTimer)
+      for (const dir of uploadDirectories.keys()) {
+        rmSync(dir, { recursive: true, force: true })
+      }
+      uploadDirectories.clear()
+    },
   }
 }
 

@@ -32,4 +32,27 @@ describe('pickProviderAppropriateMiniModel', () => {
     const registry = createMockRegistry({});
     expect(pickProviderAppropriateMiniModel('unknown', registry, false)).toBeUndefined();
   });
+
+  it('returns the first resolvable Google preferred model', () => {
+    const registry = createMockRegistry({
+      google: [{ id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' }],
+    });
+    expect(pickProviderAppropriateMiniModel('google', registry, false)).toBe('gemini-2.5-pro');
+  });
+
+  it('returns the first resolvable DeepSeek preferred model', () => {
+    const registry = createMockRegistry({
+      deepseek: [{ id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash' }],
+    });
+    expect(pickProviderAppropriateMiniModel('deepseek', registry, false)).toBe('deepseek-v4-flash');
+  });
+
+  it('returns undefined when a known provider has no resolvable candidate', () => {
+    const registry = createMockRegistry({ openai: [{ id: 'unlisted', name: 'Unlisted' }] });
+    expect(pickProviderAppropriateMiniModel('openai', registry, false)).toBeUndefined();
+  });
+
+  it('returns undefined for an empty registry', () => {
+    expect(pickProviderAppropriateMiniModel('openai', createMockRegistry({}), false)).toBeUndefined();
+  });
 });

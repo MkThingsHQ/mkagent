@@ -59,6 +59,39 @@ describe('resolveServerPath fallback', () => {
   });
 });
 
+describe('resolveBundledRuntimePath', () => {
+  const tmpBase = join(tmpdir(), `runtime-resolver-test-${Date.now()}`);
+
+  afterEach(() => {
+    try { rmSync(tmpBase, { recursive: true, force: true }); } catch {}
+  });
+
+  it('finds Bun copied as an Electron extraResource', () => {
+    const appRoot = join(tmpBase, 'resources', 'app');
+    const resourcesPath = join(tmpBase, 'resources');
+    const binary = process.platform === 'win32' ? 'bun.exe' : 'bun';
+    const bundled = join(resourcesPath, 'vendor', 'bun', binary);
+    mkdirSync(join(resourcesPath, 'vendor', 'bun'), { recursive: true });
+    writeFileSync(bundled, 'stub');
+
+    const paths = resolveBackendRuntimePaths({ appRootPath: appRoot, resourcesPath, isPackaged: true });
+    expect(paths.bundledRuntimePath).toBe(bundled);
+    expect(paths.nodeRuntimePath).toBe(bundled);
+  });
+
+  it('falls back to Bun inside the unpacked app directory', () => {
+    const appRoot = join(tmpBase, 'resources', 'app');
+    const resourcesPath = join(tmpBase, 'resources');
+    const binary = process.platform === 'win32' ? 'bun.exe' : 'bun';
+    const bundled = join(appRoot, 'vendor', 'bun', binary);
+    mkdirSync(join(appRoot, 'vendor', 'bun'), { recursive: true });
+    writeFileSync(bundled, 'stub');
+
+    const paths = resolveBackendRuntimePaths({ appRootPath: appRoot, resourcesPath, isPackaged: true });
+    expect(paths.bundledRuntimePath).toBe(bundled);
+  });
+});
+
 describe('resolveRipgrepPath', () => {
   const tmpBase = join(tmpdir(), `rg-resolver-test-${Date.now()}`);
 

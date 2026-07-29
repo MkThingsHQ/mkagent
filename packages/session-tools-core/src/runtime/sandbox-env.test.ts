@@ -28,6 +28,9 @@ describe('sandbox-env', () => {
     for (const key of BLOCKED_ENV_VARS) {
       expect(sanitized[key]).toBeUndefined();
     }
+    expect(BLOCKED_ENV_VARS).toContain('DEEPSEEK_API_KEY');
+    expect(BLOCKED_ENV_VARS).toContain('LLM_API_KEY');
+    expect(BLOCKED_ENV_VARS).toContain('MKAGENT_SERVER_TOKEN');
   });
 
   it('sets python/uv cache and temp dirs inside data directory', () => {

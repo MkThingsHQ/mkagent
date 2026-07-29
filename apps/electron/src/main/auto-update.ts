@@ -217,6 +217,8 @@ autoUpdater.on('update-downloaded', async (info) => {
   }
   broadcastUpdateInfo()
 
+  const { rebuildMenu } = await import('./menu')
+  rebuildMenu()
 })
 
 autoUpdater.on('error', (error) => {

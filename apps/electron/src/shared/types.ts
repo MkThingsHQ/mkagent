@@ -223,8 +223,6 @@ export interface ElectronAPI {
   // Server info (REMOTE_ELIGIBLE — returns data from whichever server owns the workspace)
   getServerHomeDir(): Promise<string>
 
-  // App lifecycle
-  relaunchApp(): Promise<void>
   removeWorkspace(workspaceId: string): Promise<boolean>
 
   // Session export/import

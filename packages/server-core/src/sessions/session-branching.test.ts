@@ -42,6 +42,10 @@ describe('SessionManager branching', () => {
 
         const manager = new SessionManager();
         await manager.initialize();
+        manager.getOrCreateAgent = async (managed) => {
+          managed.agent = { ensureBranchReady: async () => {}, destroy: () => {} };
+          return managed.agent;
+        };
         const branch = await manager.createSession('workspace-default', {
           branchFromSessionId: source.id,
           branchFromMessageId: 'assistant-1',
@@ -49,6 +53,7 @@ describe('SessionManager branching', () => {
         const storedBranch = loadSession(workspaceRoot, branch.id);
         const anchors = await loadPiTurnAnchors(getSessionPath(workspaceRoot, branch.id));
         console.log(JSON.stringify({ branch, storedBranch, anchors }));
+        manager.cleanup();
       `
       const run = Bun.spawnSync([process.execPath, '--eval', script], {
         cwd: join(import.meta.dir, '..', '..', '..'),

@@ -20,6 +20,7 @@ import type {
 } from './backend/types.ts';
 import { AbortReason } from './backend/types.ts';
 import { PermissionManager } from './core/permission-manager.ts';
+import { ConfigWatcherManager } from './core/config-watcher-manager.ts';
 import { buildCallLlmRequest, type LLMQueryRequest, type LLMQueryResult } from './llm-tool.ts';
 import type { PermissionMode } from './mode-manager.ts';
 import { DEFAULT_THINKING_LEVEL, normalizeThinkingLevel, type ThinkingLevel } from './thinking-levels.ts';
@@ -72,6 +73,7 @@ export abstract class BaseAgent implements AgentBackend {
   protected _model: string;
   protected _thinkingLevel: ThinkingLevel;
   protected permissionManager: PermissionManager;
+  protected configWatcherManager: ConfigWatcherManager | null = null;
   protected _currentTurnUserMessage: string | null = null;
 
   onPermissionRequest: PermissionCallback | null = null;
@@ -104,8 +106,20 @@ export abstract class BaseAgent implements AgentBackend {
     this.onDebug?.(message);
   }
 
-  protected startConfigWatcher(): void {}
-  protected stopConfigWatcher(): void {}
+  protected startConfigWatcher(): void {
+    if (this.configWatcherManager || this.config.skipConfigWatcher) return;
+    this.configWatcherManager = new ConfigWatcherManager({
+      workspaceRootPath: this.config.workspace.rootPath,
+      isHeadless: this.config.isHeadless,
+      onDebug: message => this.debug(message),
+    });
+    this.configWatcherManager.start();
+  }
+
+  protected stopConfigWatcher(): void {
+    this.configWatcherManager?.stop();
+    this.configWatcherManager = null;
+  }
 
   getModel(): string {
     return this._model;

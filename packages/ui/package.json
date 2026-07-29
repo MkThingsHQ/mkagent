@@ -9,7 +9,6 @@
   "exports": {
     ".": "./src/index.ts",
     "./chat": "./src/components/chat/index.ts",
-    "./chat/SessionViewer": "./src/components/chat/SessionViewer.tsx",
     "./chat/TurnCard": "./src/components/chat/TurnCard.tsx",
     "./chat/turn-utils": "./src/components/chat/turn-utils.ts",
     "./markdown": "./src/components/markdown/index.ts",

@@ -2,11 +2,13 @@ import { afterEach, beforeEach, describe, expect, it, mock } from 'bun:test'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
+import { resolveBackendContext } from '@mkagent/shared/agent/backend'
 import {
   SessionManager,
   createManagedSession,
   resolveMidStreamDeliveryOutcome,
 } from './SessionManager.ts'
+import { buildBackendRuntimeSignature, buildRestartRequiredSignature } from './runtime-config.ts'
 
 describe('mid-stream queue runtime invariants', () => {
   let tmpRoot: string
@@ -103,5 +105,60 @@ describe('mid-stream queue runtime invariants', () => {
     expect(processingEvent?.message.timestamp).toBe(replayed?.timestamp)
     expect(processingEvent?.optimisticMessageId).toBe('optimistic-user')
     expect(sendMessage).toHaveBeenCalledTimes(1)
+  })
+
+  it('replays a queued message without duplicating the persisted user message', async () => {
+    const sessionId = 'queue-no-duplicate'
+    const managed = buildSession(sessionId)
+    let releaseFirstTurn!: () => void
+    const firstTurnReleased = new Promise<void>(resolve => { releaseFirstTurn = resolve })
+    let markFirstTurnStarted!: () => void
+    const firstTurnStarted = new Promise<void>(resolve => { markFirstTurnStarted = resolve })
+    let turn = 0
+
+    managed.agent = {
+      isProcessing: () => false,
+      updateRuntimeConfig: async () => true,
+      redirect: () => false,
+      chat: async function* () {
+        turn += 1
+        if (turn === 1) {
+          markFirstTurnStarted()
+          await firstTurnReleased
+        }
+      },
+      destroy: () => {},
+      dispose: () => {},
+    } as never
+    const context = resolveBackendContext({})
+    managed.backendRuntimeSignature = buildBackendRuntimeSignature({
+      connection: context.connection,
+      provider: context.provider,
+      authType: context.authType,
+      resolvedModel: context.resolvedModel,
+    })
+    managed.backendRestartSignature = buildRestartRequiredSignature({
+      connection: context.connection,
+      provider: context.provider,
+      authType: context.authType,
+      resolvedModel: context.resolvedModel,
+    })
+
+    let completedTurns = 0
+    let resolveBothTurns!: () => void
+    const bothTurnsCompleted = new Promise<void>(resolve => { resolveBothTurns = resolve })
+    sm.onSessionComplete(() => {
+      if (++completedTurns === 2) resolveBothTurns()
+    })
+
+    const firstSend = sm.sendMessage(sessionId, 'first question')
+    await firstTurnStarted
+    await sm.sendMessage(sessionId, 'follow up')
+    releaseFirstTurn()
+    await firstSend
+    await bothTurnsCompleted
+
+    const session = await sm.getSession(sessionId)
+    expect(session?.messages.filter(message => message.role === 'user' && message.content === 'follow up')).toHaveLength(1)
   })
 })

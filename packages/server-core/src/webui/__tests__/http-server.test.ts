@@ -1,8 +1,9 @@
 import { afterEach, describe, expect, it } from 'bun:test'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { startWebuiHttpServer } from '../http-server'
+import { createSessionToken } from '../auth'
+import { createWebuiHandler, startWebuiHttpServer } from '../http-server'
 
 const SECRET = 'test-server-secret'
 const PASSWORD = 'test-password'
@@ -190,7 +191,7 @@ describe('startWebuiHttpServer', () => {
   })
 
   it('accepts authenticated browser attachments and sanitizes filenames', async () => {
-    const { baseUrl } = await createServer({ wsProtocol: 'ws' })
+    const { server, baseUrl } = await createServer({ wsProtocol: 'ws' })
     const authRes = await fetch(`${baseUrl}/api/auth`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -210,7 +211,33 @@ describe('startWebuiHttpServer', () => {
     expect(paths).toHaveLength(1)
     expect(paths[0]).not.toContain('..')
     expect(readFileSync(paths[0]!, 'utf-8')).toBe('hello')
-    TEMP_DIRS.push(join(paths[0]!, '..'))
+    const uploadDir = join(paths[0]!, '..')
+    server.stop()
+    SERVERS.splice(SERVERS.indexOf(server), 1)
+    expect(existsSync(uploadDir)).toBe(false)
+  })
+
+  it('rejects attachment requests over the total size limit before parsing the body', async () => {
+    const handler = createWebuiHandler({
+      webuiDir: createTestWebuiDir(),
+      secret: SECRET,
+      password: PASSWORD,
+      wsProtocol: 'ws',
+      wsPort: 9100,
+      getHealthCheck: () => ({ status: 'ok' }),
+      logger,
+    })
+    const token = await createSessionToken(SECRET)
+    const response = await handler.fetch(new Request('http://localhost/api/attachments', {
+      method: 'POST',
+      headers: {
+        cookie: `mkagent_session=${token}`,
+        'content-length': String(102 * 1024 * 1024),
+      },
+      body: new Uint8Array(),
+    }))
+    expect(response.status).toBe(413)
+    handler.dispose()
   })
 
   it('rejects browser attachments without a session cookie', async () => {

@@ -14,6 +14,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { Subprocess } from 'bun'
 import WebSocket from 'ws'
+import { RPC_CHANNELS } from '@mkagent/shared/protocol'
 
 const SERVER_ENTRY = join(import.meta.dir, '..', 'index.ts')
 const STARTUP_TIMEOUT = 15_000
@@ -130,6 +131,21 @@ function connectWs(url: string, token: string): Promise<WebSocket> {
   })
 }
 
+function invokeWs(ws: WebSocket, channel: string, ...args: unknown[]): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const id = crypto.randomUUID()
+    const onMessage = (data: WebSocket.RawData) => {
+      const message = JSON.parse(data.toString())
+      if (message.type !== 'response' || message.id !== id) return
+      ws.off('message', onMessage)
+      if (message.error) reject(new Error(message.error.message))
+      else resolve(message.result)
+    }
+    ws.on('message', onMessage)
+    ws.send(JSON.stringify({ id, type: 'request', channel, args }))
+  })
+}
+
 describe('headless server smoke test', () => {
   let server: SpawnedServer | null = null
 
@@ -144,6 +160,16 @@ describe('headless server smoke test', () => {
     server = await spawnTestServer()
     const ws = await connectWs(server.url, server.token)
     expect(ws.readyState).toBe(WebSocket.OPEN)
+    ws.close()
+  }, TEST_TIMEOUT)
+
+  it('persists notification preferences used by the retained settings UI', async () => {
+    server = await spawnTestServer()
+    const ws = await connectWs(server.url, server.token)
+
+    expect(await invokeWs(ws, RPC_CHANNELS.notification.GET_ENABLED)).toBe(true)
+    await invokeWs(ws, RPC_CHANNELS.notification.SET_ENABLED, false)
+    expect(await invokeWs(ws, RPC_CHANNELS.notification.GET_ENABLED)).toBe(false)
     ws.close()
   }, TEST_TIMEOUT)
 

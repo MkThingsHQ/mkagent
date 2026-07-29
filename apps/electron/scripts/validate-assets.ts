@@ -2,8 +2,10 @@ import { existsSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 const appDir = join(import.meta.dir, '..')
-const platformKey = `${process.platform}-${process.arch}`
-const executable = process.platform === 'win32' ? '.exe' : ''
+const targetPlatform = process.env.MKAGENT_TARGET_PLATFORM ?? process.platform
+const targetArch = process.env.MKAGENT_TARGET_ARCH ?? process.arch
+const platformKey = `${targetPlatform}-${targetArch}`
+const executable = targetPlatform === 'win32' ? '.exe' : ''
 const required = [
   'dist/main.cjs',
   'dist/bootstrap-preload.cjs',

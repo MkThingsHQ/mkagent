@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'bun:test';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import {
   createReadToolDefinition,
   createBashToolDefinition,
@@ -130,5 +132,14 @@ describe('Pi SDK 0.70.0 CreateAgentSessionOptions contract', () => {
     for (const tool of customTools) {
       expect(allowlistSet.has(tool.name)).toBe(true);
     }
+  });
+});
+
+describe('Pi runtime settings', () => {
+  it('bridges the persisted Windows shell path into Pi settings', () => {
+    const source = readFileSync(join(import.meta.dir, 'index.ts'), 'utf8');
+    expect(source).toContain('process.env.MKAGENT_GIT_BASH_PATH');
+    expect(source).toContain('settingsManager.applyOverrides({ shellPath })');
+    expect(source).toContain('sessionOptions.settingsManager = settingsManager');
   });
 });

@@ -503,10 +503,6 @@ export function setBrowserToolEnabled(enabled: boolean): void {
   if (!config) return;
   config.browserToolEnabled = enabled;
   saveConfig(config);
-
-  // Clear session tool caches so all sessions pick up the change immediately.
-  // Lazy import to avoid circular dependency (storage ← session-scoped-tools ← storage).
-  import('../agent/session-scoped-tools.ts').then(m => m.invalidateAllSessionToolsCaches()).catch(() => {});
 }
 
 /**

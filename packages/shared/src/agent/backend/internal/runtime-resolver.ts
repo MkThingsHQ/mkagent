@@ -32,11 +32,11 @@ function resolveUpwards(base: string, relativePath: string, maxLevels = 4): stri
 
 function resolveBundledRuntimePath(hostRuntime: BackendHostRuntimeContext): string | undefined {
   const binary = process.platform === 'win32' ? 'bun.exe' : 'bun';
-  const base = process.platform === 'win32'
-    ? hostRuntime.resourcesPath || hostRuntime.appRootPath
-    : hostRuntime.appRootPath;
-  const bundled = join(base, 'vendor', 'bun', binary);
-  if (existsSync(bundled)) return bundled;
+  const bundled = firstExistingPath([
+    ...(hostRuntime.resourcesPath ? [join(hostRuntime.resourcesPath, 'vendor', 'bun', binary)] : []),
+    join(hostRuntime.appRootPath, 'vendor', 'bun', binary),
+  ]);
+  if (bundled) return bundled;
   if (hostRuntime.isPackaged) return undefined;
   try {
     const command = process.platform === 'win32' ? 'where' : 'which';

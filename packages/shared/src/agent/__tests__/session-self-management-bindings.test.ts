@@ -22,6 +22,14 @@ function makeContext() {
 }
 
 describe('Pi session self-management bindings', () => {
+  it('has no self-management callbacks before registration', () => {
+    const context = makeContext()
+    expect(context.getSessionInfo).toBeUndefined()
+    expect(context.listSessions).toBeUndefined()
+    expect(context.listBackgroundTasks).toBeUndefined()
+    expect(context.sendAgentMessage).toBeUndefined()
+  })
+
   it('exposes only callbacks registered for the retained session tools', async () => {
     registerSessionScopedToolCallbacks(sessionId, {
       getSessionInfoFn: id => ({
@@ -59,5 +67,57 @@ describe('Pi session self-management bindings', () => {
     })
 
     expect(context.getSessionInfo?.()?.name).toBe('Late Binding')
+  })
+
+  it('observes callback replacement without recreating context', () => {
+    const context = makeContext()
+    registerSessionScopedToolCallbacks(sessionId, {
+      getSessionInfoFn: () => ({ id: sessionId, name: 'First', permissionMode: 'ask', createdAt: 1, isActive: true }),
+    })
+    expect(context.getSessionInfo?.()?.name).toBe('First')
+    mergeSessionScopedToolCallbacks(sessionId, {
+      getSessionInfoFn: () => ({ id: sessionId, name: 'Second', permissionMode: 'ask', createdAt: 1, isActive: true }),
+    })
+    expect(context.getSessionInfo?.()?.name).toBe('Second')
+  })
+
+  it('defaults getSessionInfo to the current session', () => {
+    let received: string | undefined
+    registerSessionScopedToolCallbacks(sessionId, {
+      getSessionInfoFn: id => {
+        received = id
+        return { id: id ?? sessionId, name: 'Session', permissionMode: 'ask', createdAt: 1, isActive: true }
+      },
+    })
+    const context = makeContext()
+    context.getSessionInfo?.()
+    expect(received).toBe(sessionId)
+    context.getSessionInfo?.('other')
+    expect(received).toBe('other')
+  })
+
+  it('defaults background task lookup to the current session', () => {
+    let received: string | undefined
+    registerSessionScopedToolCallbacks(sessionId, {
+      listBackgroundTasksFn: id => {
+        received = id
+        return []
+      },
+    })
+    const context = makeContext()
+    context.listBackgroundTasks?.()
+    expect(received).toBe(sessionId)
+    context.listBackgroundTasks?.('other')
+    expect(received).toBe('other')
+  })
+
+  it('keeps late send-message registration live', async () => {
+    registerSessionScopedToolCallbacks(sessionId, {})
+    const context = makeContext()
+    expect(context.sendAgentMessage).toBeUndefined()
+    mergeSessionScopedToolCallbacks(sessionId, {
+      sendAgentMessageFn: async id => ({ delivery: id === 'other' ? 'delivered' : 'queued', targetBusy: false }),
+    })
+    expect((await context.sendAgentMessage?.('other', 'hello'))?.delivery).toBe('delivered')
   })
 })

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, mock } from 'bun:test'
 import type { RpcServer } from '@mkagent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
+import { CHANNEL_MAP } from '../../../transport/channel-map'
 
 const registeredChannels: string[] = []
 
@@ -147,5 +148,40 @@ describe('RPC handler profile registration', () => {
     const actual = new Set(registeredChannels.filter(ch => ch.includes(':')))
     expect([...expected].filter(ch => !actual.has(ch))).toEqual([])
     expect([...actual].filter(ch => !expected.has(ch))).toEqual([])
+  })
+
+  it('registers all retained channels exactly once', async () => {
+    const expected = new Set([
+      ...await getExpectedCoreChannels(),
+      ...await getExpectedGuiChannels(),
+    ])
+    const { registerAllRpcHandlers } = await import('../index')
+
+    registerAllRpcHandlers(createMockServer(), createMockDeps())
+
+    const appChannels = registeredChannels.filter(channel => channel.includes(':'))
+    const actual = new Set(appChannels)
+    expect([...expected].filter(channel => !actual.has(channel)).sort()).toEqual([])
+    expect([...actual].filter(channel => !expected.has(channel)).sort()).toEqual([])
+
+    const counts = new Map<string, number>()
+    for (const channel of appChannels) counts.set(channel, (counts.get(channel) ?? 0) + 1)
+    expect([...counts.entries()].filter(([, count]) => count > 1)).toEqual([])
+  })
+
+  it('backs every retained client API channel with a handler', async () => {
+    const { HANDLED_CHANNELS: serverChannels } = await import('@mkagent/server-core/handlers/rpc/server')
+    const handled = new Set([
+      ...await getExpectedCoreChannels(),
+      ...await getExpectedGuiChannels(),
+      ...serverChannels,
+    ])
+    const missing = Object.values(CHANNEL_MAP)
+      .filter(entry => entry.type === 'invoke')
+      .map(entry => entry.channel)
+      .filter(channel => !channel.startsWith('__') && !handled.has(channel))
+      .sort()
+
+    expect(missing).toEqual([])
   })
 })

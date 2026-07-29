@@ -26,6 +26,7 @@ import {
   SessionManager as PiSessionManager,
   AuthStorage as PiAuthStorage,
   ModelRegistry as PiModelRegistry,
+  SettingsManager as PiSettingsManager,
   createReadToolDefinition,
   createBashToolDefinition,
   createEditToolDefinition,
@@ -581,6 +582,10 @@ async function ensureSession(): Promise<AgentSession> {
     const agentDir = initConfig.agentDir || join(initConfig.sessionPath, '.pi-agent');
     mkdirSync(agentDir, { recursive: true });
     sessionOptions.agentDir = agentDir;
+    const settingsManager = PiSettingsManager.create(cwd, agentDir);
+    const shellPath = process.env.MKAGENT_GIT_BASH_PATH?.trim();
+    if (shellPath) settingsManager.applyOverrides({ shellPath });
+    sessionOptions.settingsManager = settingsManager;
 
     // Session resume: use a per-MkAgent-session directory so the Pi SDK can
     // persist and resume its own session across subprocess restarts.

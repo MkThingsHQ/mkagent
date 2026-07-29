@@ -5,7 +5,10 @@ const appDir = join(import.meta.dir, '..')
 const rootDir = join(appDir, '..', '..')
 const source = join(appDir, 'resources')
 const destination = join(appDir, 'dist', 'resources')
-const platformKey = `${process.platform}-${process.arch}`
+const targetPlatform = process.env.MKAGENT_TARGET_PLATFORM ?? process.platform
+const targetArch = process.env.MKAGENT_TARGET_ARCH ?? process.arch
+const hasExplicitTarget = Boolean(process.env.MKAGENT_TARGET_PLATFORM || process.env.MKAGENT_TARGET_ARCH)
+const platformKey = `${targetPlatform}-${targetArch}`
 
 const docNames = [
   'browser-tools.md',
@@ -66,16 +69,26 @@ const piServer = join(piPackage, 'dist', 'index.js')
 mkdirSync(join(destination, 'pi-agent-server'), { recursive: true })
 copyFileSync(piServer, join(destination, 'pi-agent-server', 'index.js'))
 
-const uv = Bun.which('uv')
-if (!uv) throw new Error('uv is required to package document tools')
-const uvDestination = join(destination, 'bin', platformKey, process.platform === 'win32' ? 'uv.exe' : 'uv')
+const uvBinary = targetPlatform === 'win32' ? 'uv.exe' : 'uv'
+const preparedUv = join(source, 'bin', platformKey, uvBinary)
+const uv = existsSync(preparedUv)
+  ? preparedUv
+  : targetPlatform === process.platform && targetArch === process.arch
+    ? Bun.which('uv')
+    : null
+if (!uv) throw new Error(`uv is not prepared for ${platformKey}`)
+const uvDestination = join(destination, 'bin', platformKey, uvBinary)
 mkdirSync(join(destination, 'bin', platformKey), { recursive: true })
 copyFileSync(uv, uvDestination)
 chmodSync(uvDestination, 0o755)
 
-const bunDestination = join(appDir, 'vendor', 'bun', process.platform === 'win32' ? 'bun.exe' : 'bun')
+const bunDestination = join(appDir, 'vendor', 'bun', targetPlatform === 'win32' ? 'bun.exe' : 'bun')
 mkdirSync(join(appDir, 'vendor', 'bun'), { recursive: true })
-copyFileSync(process.execPath, bunDestination)
+if (!hasExplicitTarget) {
+  copyFileSync(process.execPath, bunDestination)
+} else if (!existsSync(bunDestination)) {
+  throw new Error(`Bun is not prepared for ${platformKey}`)
+}
 chmodSync(bunDestination, 0o755)
 
 console.log(`Copied packaged resources for ${platformKey} (${basename(process.execPath)})`)
