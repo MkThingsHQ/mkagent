@@ -2064,6 +2064,10 @@
       "sha256": "8492e023b7a8e1a47e54b584b558e0d5608be83817e86fbbad6f358141c110bb",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
+    "migration-audit.md": {
+      "sha256": "eb5aaf7e3e45d6700ba316d3b2ad07528fc6a328547472b04f89a970b91a9d51",
+      "reason": "MkAgent product-boundary, migration, or operating documentation"
+    },
     "migration-mvp.md": {
       "sha256": "73d50db5d5aca87180449b615973a9fc4b1fcf5f76a1826ade7746b1bee15752",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
