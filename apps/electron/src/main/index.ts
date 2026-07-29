@@ -12,10 +12,13 @@ import { cleanupSessionFileWatchForClient } from '@mkagent/server-core/handlers/
 import { initModelRefreshService, setFetcherPlatform } from '@mkagent/server-core/model-fetchers'
 import { setImageProcessor, setSearchPlatform } from '@mkagent/server-core/services'
 import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@mkagent/server-core/sessions'
-import { addWorkspace, getWorkspaces, registerPiModelResolver } from '@mkagent/shared/config'
+import { addWorkspace, ensurePresetThemes, ensureToolIcons, getWorkspaces, registerPiModelResolver } from '@mkagent/shared/config'
 import { getCredentialManager } from '@mkagent/shared/credentials'
+import { initializeDocs } from '@mkagent/shared/docs'
 import { setupI18n, i18n, SUPPORTED_LANGUAGE_CODES, type LanguageCode } from '@mkagent/shared/i18n'
+import { ensureDefaultPermissions } from '@mkagent/shared/agent/permissions-config'
 import { initializeBackendHostRuntime } from '@mkagent/shared/agent/backend'
+import { initializeReleaseNotes } from '@mkagent/shared/release-notes'
 import { getAllPiModels, getPiModelsForAuthProvider } from '@mkagent/shared/config'
 import { getDefaultWorkspacesDir, ensureDefaultWorkspace } from '@mkagent/shared/workspaces'
 import { setBundledAssetsRoot } from '@mkagent/shared/utils'
@@ -115,6 +118,11 @@ function ensureLocalWorkspace() {
 
 async function start() {
   configureBundledTools()
+  initializeDocs()
+  initializeReleaseNotes()
+  ensureDefaultPermissions()
+  ensureToolIcons()
+  ensurePresetThemes()
   registerPiModelResolver(provider => provider ? getPiModelsForAuthProvider(provider) : getAllPiModels())
 
   windowManager = new WindowManager()

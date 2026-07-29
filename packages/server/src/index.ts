@@ -32,8 +32,18 @@ import { validateSession, createWebuiHandler, nodeHttpAdapter } from '@mkagent/s
 import type { WebuiHandler } from '@mkagent/server-core/webui'
 import { getCredentialManager } from '@mkagent/shared/credentials'
 import { initializeBackendHostRuntime } from '@mkagent/shared/agent/backend'
-import { getAllPiModels, getPiModelsForAuthProvider, registerPiModelResolver } from '@mkagent/shared/config'
-import { ensureDefaultWorkspace } from '@mkagent/shared/workspaces'
+import { ensureDefaultPermissions } from '@mkagent/shared/agent/permissions-config'
+import {
+  addWorkspace,
+  ensurePresetThemes,
+  ensureToolIcons,
+  getAllPiModels,
+  getPiModelsForAuthProvider,
+  getWorkspaces,
+  registerPiModelResolver,
+} from '@mkagent/shared/config'
+import { initializeReleaseNotes } from '@mkagent/shared/release-notes'
+import { ensureDefaultWorkspace, getDefaultWorkspacesDir } from '@mkagent/shared/workspaces'
 
 // --generate-token: print a crypto-random token and exit
 if (process.argv.includes('--generate-token')) {
@@ -93,7 +103,6 @@ function parseOptionalWebSocketUrl(name: string, value: string | undefined): str
 const bundledAssetsRoot = process.env.MKAGENT_BUNDLED_ASSETS_ROOT
   ?? join(import.meta.dir, '..', '..', '..', '..')
 
-ensureDefaultWorkspace()
 registerPiModelResolver(provider => provider ? getPiModelsForAuthProvider(provider) : getAllPiModels())
 initializeBackendHostRuntime({
   hostRuntime: {
@@ -192,7 +201,21 @@ const instance = await (async () => {
         const apiKey = await manager.getLlmApiKey(slug).catch(() => null)
         return { apiKey: apiKey ?? undefined }
       }),
-      createSessionManager: () => new SessionManager(),
+      createSessionManager: () => {
+        initializeReleaseNotes()
+        ensureDefaultPermissions()
+        ensureToolIcons()
+        ensurePresetThemes()
+        ensureDefaultWorkspace()
+        if (getWorkspaces().length === 0) {
+          addWorkspace({
+            name: 'Default',
+            rootPath: join(getDefaultWorkspacesDir(), 'default'),
+            lastAccessedAt: Date.now(),
+          })
+        }
+        return new SessionManager()
+      },
       bindRpcServer: (sm, server) => sm.setRpcServer(server),
       createHandlerDeps: ({ sessionManager, platform }) => ({ sessionManager, platform }),
       registerAllRpcHandlers: registerCoreRpcHandlers,

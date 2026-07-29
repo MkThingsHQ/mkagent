@@ -4,6 +4,7 @@ import { homedir } from 'os'
 import { RPC_CHANNELS } from '@mkagent/shared/protocol'
 import { getWorkspaceByNameOrId, addWorkspace, removeWorkspace, setActiveWorkspace } from '@mkagent/shared/config'
 import { perf } from '@mkagent/shared/utils'
+import { safeJsonParse } from '@mkagent/shared/utils/files'
 import { pushTyped, type RpcServer } from '@mkagent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
 import { isValidWorkspaceRootPath } from '../../utils/path-validation'
@@ -18,6 +19,8 @@ export const CORE_HANDLED_CHANNELS = [
   RPC_CHANNELS.window.SWITCH_WORKSPACE,
   RPC_CHANNELS.workspace.READ_IMAGE,
   RPC_CHANNELS.workspace.WRITE_IMAGE,
+  RPC_CHANNELS.workspace.GET_PERMISSIONS,
+  RPC_CHANNELS.permissions.GET_DEFAULTS,
   RPC_CHANNELS.theme.GET_APP,
   RPC_CHANNELS.theme.GET_PRESETS,
   RPC_CHANNELS.theme.LOAD_PRESET,
@@ -130,6 +133,42 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
     end()
 
     return { workspaceId }
+  })
+
+  server.handle(RPC_CHANNELS.workspace.GET_PERMISSIONS, async (_ctx, workspaceId: string) => {
+    const workspace = getWorkspaceByNameOrId(workspaceId)
+    if (!workspace) return null
+
+    const { existsSync, readFileSync } = await import('fs')
+    const { getWorkspacePermissionsPath } = await import('@mkagent/shared/agent')
+    const path = getWorkspacePermissionsPath(workspace.rootPath)
+
+    if (!existsSync(path)) return null
+
+    try {
+      const content = readFileSync(path, 'utf-8')
+      return safeJsonParse(content)
+    } catch (error) {
+      deps.platform.logger.error('Error reading workspace permissions config:', error)
+      return null
+    }
+  })
+
+  server.handle(RPC_CHANNELS.permissions.GET_DEFAULTS, async () => {
+    const { existsSync, readFileSync } = await import('fs')
+    const { getAppPermissionsDir } = await import('@mkagent/shared/agent')
+    const { join } = await import('path')
+
+    const defaultPath = join(getAppPermissionsDir(), 'default.json')
+    if (!existsSync(defaultPath)) return { config: null, path: defaultPath }
+
+    try {
+      const content = readFileSync(defaultPath, 'utf-8')
+      return { config: safeJsonParse(content), path: defaultPath }
+    } catch (error) {
+      deps.platform.logger.error('Error reading default permissions config:', error)
+      return { config: null, path: defaultPath }
+    }
   })
 
   // ============================================================

@@ -289,6 +289,19 @@ function AppShellContent({
   useAction('app.search', () => setSearchActive(true))
 
   // Unified sidebar keyboard navigation state
+  const [collapsedItems, setCollapsedItems] = React.useState<Set<string>>(() => {
+    const saved = storage.get<string[] | null>(storage.KEYS.collapsedSidebarItems, null)
+    return saved !== null ? new Set(saved) : new Set()
+  })
+  const isExpanded = React.useCallback((id: string) => !collapsedItems.has(id), [collapsedItems])
+  const toggleExpanded = React.useCallback((id: string) => {
+    setCollapsedItems(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
   const [focusedSidebarItemId, setFocusedSidebarItemId] = React.useState<string | null>(null)
   const sidebarItemRefs = React.useRef<Map<string, HTMLElement>>(new Map())
 
@@ -337,7 +350,12 @@ function AppShellContent({
       setFocusedSidebarItemId(null)
     }
 
-        previousWorkspaceRef.current = activeWorkspaceId
+    if (previousWorkspaceId !== activeWorkspaceId) {
+      const newCollapsedItems = storage.get<string[] | null>(storage.KEYS.collapsedSidebarItems, null, activeWorkspaceId)
+      setCollapsedItems(newCollapsedItems !== null ? new Set(newCollapsedItems) : new Set())
+    }
+
+    previousWorkspaceRef.current = activeWorkspaceId
   }, [activeWorkspaceId])
 
   // Subscribe to live skill updates (when skills are added/removed dynamically)
@@ -715,6 +733,11 @@ function AppShellContent({
     storage.set(storage.KEYS.focusModeEnabled, isSidebarAndNavigatorHidden)
   }, [isSidebarAndNavigatorHidden])
 
+  React.useEffect(() => {
+    if (!activeWorkspaceId) return
+    storage.set(storage.KEYS.collapsedSidebarItems, [...collapsedItems], activeWorkspaceId)
+  }, [collapsedItems, activeWorkspaceId])
+
   // Listen for focus mode toggle from menu (View → Focus Mode)
   React.useEffect(() => {
     const cleanup = window.electronAPI.onMenuToggleFocusMode?.(() => {
@@ -1047,7 +1070,7 @@ function AppShellContent({
                     <TooltipContent side="right">{newChatHotkey}</TooltipContent>
                   </Tooltip>
                 </div>
-                {/* Primary Nav: All Sessions | Skills | Settings */}
+                {/* Primary Nav: All Sessions (Flagged, Archived) | Skills | Settings */}
                 {/* pb-4 provides clearance so the last item scrolls above the mask-fade-bottom gradient */}
                 <div className="flex-1 overflow-y-auto min-h-0 mask-fade-bottom pb-4">
                 <LeftSidebar
@@ -1062,6 +1085,9 @@ function AppShellContent({
                       icon: Inbox,
                       variant: sessionFilter?.kind === 'allSessions' ? 'default' : 'ghost',
                       onClick: handleAllSessionsClick,
+                      expandable: true,
+                      expanded: isExpanded('nav:allSessions'),
+                      onToggle: () => toggleExpanded('nav:allSessions'),
                       contextMenu: {
                         type: 'allSessions',
                         onMarkAllRead: () => {
@@ -1076,22 +1102,24 @@ function AppShellContent({
                           void window.electronAPI.markAllSessionsRead(activeWorkspaceId)
                         },
                       },
-                    },
-                    {
-                      id: 'nav:flagged',
-                      title: t('sidebar.flagged'),
-                      label: String(flaggedCount),
-                      icon: Flag,
-                      variant: sessionFilter?.kind === 'flagged' ? 'default' : 'ghost',
-                      onClick: handleFlaggedClick,
-                    },
-                    {
-                      id: 'nav:archived',
-                      title: t('sidebar.archived'),
-                      label: archivedCount > 0 ? String(archivedCount) : undefined,
-                      icon: Archive,
-                      variant: sessionFilter?.kind === 'archived' ? 'default' : 'ghost',
-                      onClick: handleArchivedClick,
+                      items: [
+                        {
+                          id: 'nav:flagged',
+                          title: t('sidebar.flagged'),
+                          label: String(flaggedCount),
+                          icon: <Flag className="h-3.5 w-3.5" />,
+                          variant: sessionFilter?.kind === 'flagged' ? 'default' : 'ghost',
+                          onClick: handleFlaggedClick,
+                        },
+                        {
+                          id: 'nav:archived',
+                          title: t('sidebar.archived'),
+                          label: archivedCount > 0 ? String(archivedCount) : undefined,
+                          icon: Archive,
+                          variant: sessionFilter?.kind === 'archived' ? 'default' : 'ghost',
+                          onClick: handleArchivedClick,
+                        },
+                      ],
                     },
                     { id: 'separator:sessions-skills', type: 'separator' },
                     {
