@@ -59,14 +59,14 @@ export function AdminApprovalRequest({
             <span>{t('chat.adminApprovalRequired')}</span>
           </div>
           <div className="text-xs leading-[18px] text-muted-foreground">
-            Installing <span className="font-medium text-foreground">{request.appName}</span> needs your Mac admin approval.
-            {request.requiresSystemPrompt ? " You’ll see your regular macOS password/Touch ID prompt." : ''}
+            {t('adminApproval.installing')} <span className="font-medium text-foreground">{request.appName}</span> {t('adminApproval.needsMacApproval')}
+            {request.requiresSystemPrompt ? ` ${t('adminApproval.systemPromptHint')}` : ''}
             <br />
-            <span className="font-medium text-foreground">Why:</span> {request.reason}
+            <span className="font-medium text-foreground">{t('adminApproval.why')}:</span> {request.reason}
             {request.impact && (
               <>
                 <br />
-                <span className="font-medium text-foreground">Impact:</span> {request.impact}
+                <span className="font-medium text-foreground">{t('adminApproval.impact')}:</span> {request.impact}
               </>
             )}
           </div>
@@ -85,7 +85,7 @@ export function AdminApprovalRequest({
           onClick={handleApprove}
         >
           <Check className="h-3.5 w-3.5" />
-          Approve
+          {t('adminApproval.approve')}
         </Button>
 
         <Button
@@ -95,7 +95,7 @@ export function AdminApprovalRequest({
           onClick={onCancel}
         >
           <X className="h-3.5 w-3.5" />
-          Cancel
+          {t('common.cancel')}
         </Button>
 
         <div className="min-w-0 flex-1" />
@@ -104,10 +104,10 @@ export function AdminApprovalRequest({
           <Switch
             checked={rememberChoice}
             onCheckedChange={setRememberChoice}
-            aria-label={`Remember this exact command for ${rememberForMinutes} minutes`}
+            aria-label={t('adminApproval.rememberExactCommand', { count: rememberForMinutes })}
           />
           <Label className="text-[11px] text-muted-foreground cursor-pointer" onClick={() => setRememberChoice(!rememberChoice)}>
-            Remember for {rememberForMinutes} min
+            {t('adminApproval.rememberMinutes', { count: rememberForMinutes })}
           </Label>
         </div>
       </div>

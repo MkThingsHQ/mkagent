@@ -335,6 +335,7 @@ export function InlineSlashCommand({
   position,
   className,
 }: InlineSlashCommandProps) {
+  const { t } = useTranslation()
   const menuRef = React.useRef<HTMLDivElement>(null)
   const listRef = React.useRef<HTMLDivElement>(null)
   const [selectedIndex, setSelectedIndex] = React.useState(0)
@@ -491,7 +492,7 @@ export function InlineSlashCommand({
       {/* Always-visible footer hint for @ mentions */}
       <div className="h-px bg-border/50 mx-2" />
       <div className="px-3 py-2.5 select-none text-xs text-muted-foreground">
-        Use @ for skills and files
+        {t('chat.useAtForSkillsFiles')}
       </div>
     </div>
   )

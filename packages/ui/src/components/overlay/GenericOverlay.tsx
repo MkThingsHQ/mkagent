@@ -151,7 +151,7 @@ export function GenericOverlay({
       }}
       title={resolvedTitle}
       embedded={embedded}
-      error={error ? { label: 'Tool Failed', message: error } : undefined}
+      error={error ? { label: t('overlay.toolFailed'), message: error } : undefined}
       className="bg-foreground-3"
     >
       <ContentFrame title={t('overlay.preview')}>
@@ -160,13 +160,13 @@ export function GenericOverlay({
             // Side-by-side diff view
             <div className="flex gap-4 h-full p-4">
               <div className="flex-1 flex flex-col min-w-0">
-                <div className="text-xs text-muted-foreground mb-2 font-medium">Original</div>
+                <div className="text-xs text-muted-foreground mb-2 font-medium">{t('common.original')}</div>
                 <div className="flex-1 overflow-auto p-4">
                   <CodeBlock code={originalContent} language={detectedLanguage} mode="minimal" forcedTheme={theme} />
                 </div>
               </div>
               <div className="flex-1 flex flex-col min-w-0">
-                <div className="text-xs text-muted-foreground mb-2 font-medium">Modified</div>
+                <div className="text-xs text-muted-foreground mb-2 font-medium">{t('common.modified')}</div>
                 <div className="flex-1 overflow-auto p-4">
                   <CodeBlock code={modifiedContent} language={detectedLanguage} mode="minimal" forcedTheme={theme} />
                 </div>

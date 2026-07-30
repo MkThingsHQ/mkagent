@@ -2457,7 +2457,7 @@ export function ResponseCard({
               )}
             >
               <ListTodo className={cn(SIZE_CONFIG.iconSize, "text-success")} />
-              <span className="font-medium text-success">Plan</span>
+              <span className="font-medium text-success">{t('plan.title')}</span>
             </div>
           )}
 
@@ -2528,7 +2528,7 @@ export function ResponseCard({
                     )}
                   >
                     <FileText className={SIZE_CONFIG.iconSize} />
-                    <span>Markdown</span>
+                    <span>{t('common.markdown')}</span>
                   </button>
                 )}
               </div>
@@ -2641,7 +2641,7 @@ export function ResponseCard({
           <div className={cn("px-4 py-2 border-t border-border/30 flex items-center bg-muted/20", SIZE_CONFIG.fontSize)}>
             <div className="flex items-center gap-2 text-muted-foreground">
               <Spinner className={SIZE_CONFIG.spinnerSize} />
-              <span>Streaming...</span>
+              <span>{t('chat.streaming')}</span>
             </div>
           </div>
         )}

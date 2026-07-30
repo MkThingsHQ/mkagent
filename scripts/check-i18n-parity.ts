@@ -14,7 +14,8 @@
  *
  * Scope: this script intentionally only checks locale files under
  * `packages/shared/src/i18n/locales`. It does NOT scan for hardcoded
- * strings — that's the job of `scripts/lint-i18n-staged.sh` (pre-commit).
+ * strings or referenced keys — static key coverage is handled separately by
+ * `scripts/check-i18n-usage.ts`.
  */
 
 import { readdirSync, readFileSync } from 'node:fs'

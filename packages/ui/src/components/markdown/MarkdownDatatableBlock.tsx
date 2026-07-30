@@ -27,6 +27,7 @@
  */
 
 import * as React from 'react'
+import i18next from 'i18next'
 import niceTicks from 'nice-ticks'
 import { ArrowUpDown, Check, ChevronRight, Group, ListFilter, Maximize2 } from 'lucide-react'
 import { cn } from '../../lib/utils'
@@ -94,7 +95,9 @@ function formatCell(value: unknown, type?: ColumnDef['type']): React.ReactNode {
       return <span className="tabular-nums">{n.toLocaleString()}</span>
     }
     case 'boolean':
-      return value ? <span className="text-success">Yes</span> : <span className="text-muted-foreground">No</span>
+      return value
+        ? <span className="text-success">{i18next.t('common.yes')}</span>
+        : <span className="text-muted-foreground">{i18next.t('common.no')}</span>
     case 'badge': {
       const s = String(value).toLowerCase()
       const color = s === 'active' || s === 'passing' || s === 'success' || s === 'done'

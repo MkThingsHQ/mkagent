@@ -338,7 +338,7 @@ export function ApiKeyInput({
     <form id={formId} onSubmit={handleSubmit} className="space-y-6">
       {/* API Key */}
       <div className="space-y-2">
-        <Label htmlFor="api-key">API Key</Label>
+        <Label htmlFor="api-key">{t('apiSetup.apiKey')}</Label>
         <div className={cn(
           "relative rounded-md shadow-minimal transition-colors",
           "bg-foreground-2 focus-within:bg-background"
@@ -375,7 +375,7 @@ export function ApiKeyInput({
       {presets.length > 1 && (
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <Label htmlFor="base-url">Endpoint</Label>
+          <Label htmlFor="base-url">{t('apiSetup.endpoint')}</Label>
           <DropdownMenu>
             <DropdownMenuTrigger
               disabled={isDisabled}
@@ -421,7 +421,7 @@ export function ApiKeyInput({
       {/* Protocol Toggle — visible as soon as Custom preset is selected */}
       {activePreset === 'custom' && !isDefaultProviderPreset && (
         <div className="space-y-2">
-          <Label>Protocol</Label>
+          <Label>{t('apiSetup.protocol')}</Label>
           <div className={cn(
             "flex rounded-md shadow-minimal overflow-hidden",
             "bg-foreground-2",

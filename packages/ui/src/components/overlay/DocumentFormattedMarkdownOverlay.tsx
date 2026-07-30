@@ -12,6 +12,7 @@
  */
 
 import { ListTodo } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Markdown } from '../markdown'
 import type { AnnotationV1 } from '@mkagent/core'
 import type { ExternalOpenAnnotationRequest } from '../annotations/use-annotation-interaction-controller'
@@ -78,6 +79,8 @@ export function DocumentFormattedMarkdownOverlay({
   isStreaming = false,
   openAnnotationRequest,
 }: DocumentFormattedMarkdownOverlayProps) {
+  const { t } = useTranslation()
+
   return (
     <FullscreenOverlayBase
       isOpen={isOpen}
@@ -85,7 +88,7 @@ export function DocumentFormattedMarkdownOverlay({
       filePath={filePath}
       typeBadge={typeBadge}
       copyContent={content}
-      error={error ? { label: 'Write Failed', message: error } : undefined}
+      error={error ? { label: t('overlay.writeFailed'), message: error } : undefined}
     >
       {/* Content wrapper — min-h-full for vertical centering within FullscreenOverlayBase's scroll container.
           Scrolling and gradient fade mask are handled by FullscreenOverlayBase. */}
@@ -96,7 +99,7 @@ export function DocumentFormattedMarkdownOverlay({
           {variant === 'plan' && (
             <div className="px-4 py-2 border-b border-border/30 flex items-center gap-2 bg-success/5 rounded-t-[16px]">
               <ListTodo className="w-3 h-3 text-success" />
-              <span className="text-[13px] font-medium text-success">Plan</span>
+              <span className="text-[13px] font-medium text-success">{t('plan.title')}</span>
             </div>
           )}
 
