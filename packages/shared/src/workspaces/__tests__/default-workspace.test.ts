@@ -17,7 +17,7 @@ describe('ensureDefaultWorkspace', () => {
         console.log(JSON.stringify({ first, second }));
       `;
       const run = Bun.spawnSync([process.execPath, '--eval', script], {
-        env: { ...process.env, MKAGENT_CONFIG_DIR: configDir },
+        env: { ...process.env, CONFIG_DIR: configDir },
         stdout: 'pipe',
         stderr: 'pipe',
       });

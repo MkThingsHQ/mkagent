@@ -26,7 +26,7 @@ import { type ConfigDefaults } from './config-defaults-schema.ts';
 import { isValidThemeFile } from './validators.ts';
 
 // Re-export CONFIG_DIR for convenience (centralized in paths.ts)
-export { CONFIG_DIR } from './paths.ts';
+export { CONFIG_DIR, getConfigDir } from './paths.ts';
 
 // Re-export base types from core (single source of truth)
 export type {

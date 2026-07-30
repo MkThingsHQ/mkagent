@@ -1,8 +1,8 @@
 import { existsSync } from 'node:fs'
 import { join } from 'path'
-import { homedir } from 'os'
 import { RPC_CHANNELS } from '@mkagent/shared/protocol'
 import { getWorkspaceByNameOrId, addWorkspace, removeWorkspace, setActiveWorkspace } from '@mkagent/shared/config'
+import { getDefaultWorkspacesDir } from '@mkagent/shared/workspaces'
 import { perf } from '@mkagent/shared/utils'
 import { safeJsonParse } from '@mkagent/shared/utils/files'
 import { pushTyped, type RpcServer } from '@mkagent/server-core/transport'
@@ -61,8 +61,7 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
 
   // Check if a workspace slug already exists (for validation before creation)
   server.handle(RPC_CHANNELS.workspaces.CHECK_SLUG, async (_ctx, slug: string) => {
-    const defaultWorkspacesDir = join(homedir(), '.mkagent', 'workspaces')
-    const workspacePath = join(defaultWorkspacesDir, slug)
+    const workspacePath = join(getDefaultWorkspacesDir(), slug)
     const exists = existsSync(workspacePath)
     return { exists, path: workspacePath }
   })

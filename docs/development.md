@@ -73,16 +73,16 @@ migration/             # Migration plan, audit, UI history
 The configuration root defaults to `~/.mkagent` but can be redirected for parallel development or isolated tests:
 
 ```bash
-MKAGENT_CONFIG_DIR=/tmp/mkagent-dev bun run server:dev:webui
+CONFIG_DIR=/tmp/mkagent-dev bun run server:dev:webui
 ```
 
-`MKAGENT_CONFIG_DIR` is read once at module-load (`packages/shared/src/config/paths.ts`) and influences every downstream path (workspaces, credentials, logs, tool icons). Tests inject the env var explicitly; they do not create files in `$HOME`.
+`CONFIG_DIR` is read once at module-load (`packages/shared/src/config/paths.ts`) and influences every downstream path (workspaces, credentials, logs, tool icons). Tests inject the env var explicitly; they do not create files in `$HOME`.
 
 ## Useful environment variables
 
 | Variable | Default | Effect |
 |---|---|---|
-| `MKAGENT_CONFIG_DIR` | `~/.mkagent` | Override the configuration root (also called the "data directory") |
+| `CONFIG_DIR` | `~/.mkagent` | Override the configuration root (also called the "data directory") |
 | `MKAGENT_SERVER_TOKEN` | — | Required bearer token for headless server RPC auth |
 | `MKAGENT_RPC_HOST` / `MKAGENT_RPC_PORT` | `127.0.0.1` / `9100` | Server bind address / port |
 | `MKAGENT_RPC_TLS_CERT` / `_KEY` / `_CA` | — | Enable `wss://` with PEM-encoded cert/key; CA is optional |

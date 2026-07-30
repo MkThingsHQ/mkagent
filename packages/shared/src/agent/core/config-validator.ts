@@ -12,6 +12,7 @@
  */
 
 import type { ConfigValidationResult, ConfigFileType, ConfigValidatorConfig } from './types.ts';
+import { CONFIG_DIR } from '../../config/paths.ts';
 
 /**
  * Patterns for detecting known config file types.
@@ -42,6 +43,27 @@ const MKAGENT_AGENT_CONFIG_PATTERNS = [
   // Tool icons
   /\.mkagent\/tool-icons\/tool-icons\.json$/,
 ];
+
+function normalizeConfigPathForMatch(filePath: string): string {
+  const normalized = filePath.replace(/\\/g, '/');
+  return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
+}
+
+function isMkAgentConfigPath(filePath: string): boolean {
+  const normalized = normalizeConfigPathForMatch(filePath);
+  const configRoot = normalizeConfigPathForMatch(CONFIG_DIR).replace(/\/+$/, '');
+  if (!normalized.startsWith(`${configRoot}/`)) return false;
+
+  const relativePath = normalized.slice(configRoot.length + 1);
+  return (
+    relativePath === 'config.json' ||
+    relativePath === 'preferences.json' ||
+    relativePath === 'theme.json' ||
+    relativePath === 'tool-icons/tool-icons.json' ||
+    /^permissions\/[^/]+\.json$/.test(relativePath) ||
+    /^workspaces\/[^/]+\/(config|permissions|theme)\.json$/.test(relativePath)
+  );
+}
 
 /**
  * ConfigValidator provides pre-write validation for config files.
@@ -98,10 +120,8 @@ export class ConfigValidator {
    * @returns true if this is a MkAgent config
    */
   isCraftAgentConfig(filePath: string): boolean {
-    const normalizedPath = process.platform === 'win32'
-      ? filePath.replace(/\\/g, '/').toLowerCase()
-      : filePath.replace(/\\/g, '/');
-    return MKAGENT_AGENT_CONFIG_PATTERNS.some((pattern) => pattern.test(normalizedPath));
+    const normalizedPath = normalizeConfigPathForMatch(filePath);
+    return isMkAgentConfigPath(normalizedPath) || MKAGENT_AGENT_CONFIG_PATTERNS.some((pattern) => pattern.test(normalizedPath));
   }
 
   // ============================================================

@@ -1,6 +1,6 @@
 # 数据目录
 
-默认根目录是 `~/.mkagent`(首次启动时由 `$HOME` 或 `%USERPROFILE%` 解析)。通过 `MKAGENT_CONFIG_DIR` 可以隔离测试、运行多实例或备份到自定义位置。MkAgent 不会读取或迁移任何其他产品的数据。
+默认根目录是 `~/.mkagent`(首次启动时由 `$HOME` 或 `%USERPROFILE%` 解析)。通过 `CONFIG_DIR` 可以隔离测试、运行多实例或备份到自定义位置。MkAgent 不会读取或迁移任何其他产品的数据。
 
 ## 布局
 

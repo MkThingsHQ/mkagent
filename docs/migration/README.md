@@ -68,7 +68,7 @@
 | Agent backend | 仅注册 `pi`，自定义协议与 Ollama 都是 Pi 连接变体 |
 | 鉴权 | API key、无鉴权 Ollama、ChatGPT Plus OAuth、Claude Pro/Max OAuth；OAuth credential 统一交给 Pi，刷新结果回写安全存储 |
 | 仓库 | 源码 `open-fox/mkagent`（private），发布产物 `open-fox/mkagent-public`（public） |
-| 数据目录 | `~/.mkagent`，仅 `MKAGENT_CONFIG_DIR` 可覆盖，不读取或迁移其他产品 |
+| 数据目录 | `~/.mkagent`，仅 `CONFIG_DIR` 可覆盖，不读取或迁移其他产品 |
 | 默认 workspace | slug 为 `default`，首次启动统一 `ensureDefaultWorkspace()` |
 | AppID/Bundle | `app.mkagent.desktop` |
 | 协议 | `mkagent://` |

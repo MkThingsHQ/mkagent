@@ -1,7 +1,7 @@
 import log from 'electron-log/main'
 import { appendFileSync, existsSync, mkdirSync, renameSync, rmSync, statSync } from 'node:fs'
-import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
+import { CONFIG_DIR } from '@mkagent/shared/config'
 
 export default log
 
@@ -56,7 +56,7 @@ export const windowLog = log.scope('window')
 export const agentLog = log.scope('agent')
 export const searchLog = log.scope('search')
 
-export const autoUpdateLogPath = join(homedir(), '.mkagent', 'logs', 'auto-update.log')
+export const autoUpdateLogPath = join(CONFIG_DIR, 'logs', 'auto-update.log')
 const backupPath = `${autoUpdateLogPath}.1`
 const maxBytes = 2 * 1024 * 1024
 

@@ -8,6 +8,7 @@
 import type { SessionToolContext } from '../context.ts';
 import type { ToolResult } from '../types.ts';
 import { renderMermaidSVG } from 'beautiful-mermaid';
+import { DOC_REFS } from '@mkagent/shared/docs';
 import { normalizeMermaidSource } from '../validation.ts';
 
 export interface MermaidValidateArgs {
@@ -53,7 +54,7 @@ export async function handleMermaidValidate(
         text: JSON.stringify({
           valid: false,
           error: errorMessage,
-          suggestion: 'Check the syntax against ~/.mkagent/docs/mermaid.md',
+          suggestion: `Check the syntax against ${DOC_REFS.mermaid}`,
         }, null, 2),
       }],
       isError: true,

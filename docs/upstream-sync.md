@@ -55,7 +55,7 @@ Reference checkouts (`../craft-agents-oss`, `../echo`, `../xagent`) stay read-on
   │    bun run server:build:subprocess                                │
   │                                                                  │
   │ 6. GUI smoke against a fresh config dir                           │
-  │    rm -rf /tmp/mkagent-smoke && MKAGENT_CONFIG_DIR=/tmp/mkagent-smoke \│
+  │    rm -rf /tmp/mkagent-smoke && CONFIG_DIR=/tmp/mkagent-smoke \│
   │       bun run electron:dist:dev:mac                              │
   │    + headless smoke: bun run server:dev:webui                     │
   └──────────────────────────────────────────────────────────────────┘

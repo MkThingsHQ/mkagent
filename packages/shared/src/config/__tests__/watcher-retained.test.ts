@@ -15,7 +15,7 @@ function runWatcherScript(source: string): unknown {
   const root = mkdtempSync(join(tmpdir(), 'mkagent-watcher-retained-'));
   roots.push(root);
   const result = Bun.spawnSync([process.execPath, '--eval', source], {
-    env: { ...process.env, MKAGENT_CONFIG_DIR: join(root, 'config'), TEST_ROOT: root },
+    env: { ...process.env, CONFIG_DIR: join(root, 'config'), TEST_ROOT: root },
     stdout: 'pipe',
     stderr: 'pipe',
   });
@@ -106,7 +106,7 @@ describe('ConfigWatcher retained behavior', () => {
       import { existsSync } from 'node:fs';
       import { join } from 'node:path';
       const { ConfigWatcher, _getActiveWatchers } = await import(${JSON.stringify(watcherUrl)});
-      const expected = join(process.env.MKAGENT_CONFIG_DIR, 'workspaces', 'alpha');
+      const expected = join(process.env.CONFIG_DIR, 'workspaces', 'alpha');
       const first = new ConfigWatcher('alpha', {});
       const duplicate = new ConfigWatcher('alpha', {});
       first.start();

@@ -18,6 +18,7 @@ import { debug } from '../utils/debug.ts';
 import { dirname, isAbsolute, relative, resolve } from 'path';
 import { getSessionSafeAllowedToolNames } from '@mkagent/session-tools-core';
 import { FEATURE_FLAGS } from '../feature-flags.ts';
+import { CONFIG_DIR } from '../config/paths.ts';
 import { isBrowserToolNameOrAlias } from './browser-tool-names.ts';
 import type { PermissionsContext, MergedPermissionsConfig } from './permissions-config.ts';
 import {
@@ -1683,6 +1684,8 @@ export function looksLikePotentialWrite(command: string): boolean {
 export function getPathHint(targetPath: string, plansFolderPath: string, dataFolderPath?: string): string | null {
   const normalizedTarget = targetPath.replace(/\\/g, '/').toLowerCase();
   const normalizedPlans = plansFolderPath.replace(/\\/g, '/').toLowerCase();
+  const normalizedConfigDir = CONFIG_DIR.replace(/\\/g, '/').replace(/\/+$/, '').toLowerCase();
+  const normalizedWorkspacesDir = `${normalizedConfigDir}/workspaces/`;
 
   // Case: Writing to session folder but missing /plans/ or /data/
   if (normalizedTarget.includes('/sessions/') && !normalizedTarget.includes('/plans/') && !normalizedTarget.includes('/data/')) {
@@ -1699,12 +1702,12 @@ export function getPathHint(targetPath: string, plansFolderPath: string, dataFol
   }
 
   // Case: Writing to workspace root instead of session
-  if (normalizedTarget.includes('/.mkagent/workspaces/') && !normalizedTarget.includes('/sessions/')) {
+  if (normalizedTarget.includes(normalizedWorkspacesDir) && !normalizedTarget.includes('/sessions/')) {
     return 'Hint: Write to the session plans or data folder, not the workspace root.';
   }
 
-  // Case: Writing outside .mkagent entirely
-  if (!normalizedTarget.includes('/.mkagent/')) {
+  // Case: Writing outside the configured MkAgent data directory entirely
+  if (!normalizedTarget.startsWith(`${normalizedConfigDir}/`)) {
     return 'Hint: Files must be written to the session plans or data folder. Use plansFolderPath or dataFolderPath from <session_state>.';
   }
 

@@ -301,7 +301,7 @@ mkagent health
             └── .pi-sessions/
 ```
 
-- 默认覆盖变量为 `MKAGENT_CONFIG_DIR`；文档 CLI 使用 `MKAGENT_UV`、`MKAGENT_SCRIPTS` 等统一前缀。
+- 默认覆盖变量为 `CONFIG_DIR`；文档 CLI 使用 `MKAGENT_UV`、`MKAGENT_SCRIPTS` 等统一前缀。
 - 不读取或迁移 `~/.craft-agent`、`~/.xagent`，避免污染已有应用数据。
 - 默认 workspace 的稳定 slug 是 `default`，显示名默认 `Default`/`默认`；Desktop 和 Server 首次启动都调用同一 `ensureDefaultWorkspace()`。
 - 默认 workspace 必须在 config 不存在、索引损坏、无 workspace、headless 启动和多窗口恢复场景都有测试。

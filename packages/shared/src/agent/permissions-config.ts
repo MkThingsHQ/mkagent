@@ -1,7 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { homedir } from 'node:os';
 import { join } from 'node:path';
-import { CONFIG_DIR } from '../config/paths.ts';
+import { CONFIG_DIR, getConfigDir } from '../config/paths.ts';
 import { isValidPermissionsFile } from '../config/validators.ts';
 import { debug } from '../utils/debug.ts';
 import { readJsonFileSync, safeJsonParse } from '../utils/files.ts';
@@ -51,7 +50,7 @@ export interface PermissionsContext {
 let permissionsInitialized = false;
 
 export function getAppPermissionsDir(): string {
-  return join(process.env.MKAGENT_CONFIG_DIR || join(homedir(), '.mkagent'), 'permissions');
+  return join(getConfigDir(), 'permissions');
 }
 
 export function ensureDefaultPermissions(): void {

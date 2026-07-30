@@ -210,8 +210,8 @@
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx": {
-      "sha256": "82177a29bec87f50b688b83a4e5df83604be3276a029b4ba6ebf27618a499cb7",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+      "sha256": "ebeee1f251d9ee3bb4de35838aff819ebb8b736a0953faf20c68ce1446488275",
+      "reason": "Craft chat display passes persisted user-message timestamps to the shared timestamp and copy footer"
     },
     "apps/electron/src/renderer/components/app-shell/input/structured/AdminApprovalRequest.tsx": {
       "sha256": "91e51bef40e8457e371e2489417a8133f56bb97c625dedc1574dc19c11f9a1c2",

@@ -55,7 +55,7 @@ MkAgent 工作期间,参考 checkout(`../craft-agents-oss`、`../echo`、`../xag
   │    bun run server:build:subprocess                                │
   │                                                                  │
   │ 6. 对全新 config dir 做 GUI smoke                                  │
-  │    rm -rf /tmp/mkagent-smoke && MKAGENT_CONFIG_DIR=/tmp/mkagent-smoke \│
+  │    rm -rf /tmp/mkagent-smoke && CONFIG_DIR=/tmp/mkagent-smoke \│
   │       bun run electron:dist:dev:mac                              │
   │    + headless smoke: bun run server:dev:webui                     │
   └──────────────────────────────────────────────────────────────────┘

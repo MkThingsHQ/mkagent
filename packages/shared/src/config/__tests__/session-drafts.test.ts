@@ -16,7 +16,7 @@ function runEval(configDir: string, code: string): string {
     '--eval',
     `import { getSessionDraft, setSessionDraft, deleteSessionDraft, getAllSessionDrafts } from '${STORAGE_MODULE_PATH}'; ${code}`,
   ], {
-    env: { ...process.env, MKAGENT_CONFIG_DIR: configDir },
+    env: { ...process.env, CONFIG_DIR: configDir },
     stdout: 'pipe',
     stderr: 'pipe',
   })

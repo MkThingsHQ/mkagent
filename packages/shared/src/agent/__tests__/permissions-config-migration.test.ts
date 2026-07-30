@@ -4,12 +4,12 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 
 const originalCwd = process.cwd();
-const originalConfigDir = process.env.MKAGENT_CONFIG_DIR;
+const originalConfigDir = process.env.CONFIG_DIR;
 
 afterEach(() => {
   process.chdir(originalCwd);
-  if (originalConfigDir === undefined) delete process.env.MKAGENT_CONFIG_DIR;
-  else process.env.MKAGENT_CONFIG_DIR = originalConfigDir;
+  if (originalConfigDir === undefined) delete process.env.CONFIG_DIR;
+  else process.env.CONFIG_DIR = originalConfigDir;
 });
 
 describe('ensureDefaultPermissions migration', () => {
@@ -51,7 +51,7 @@ describe('ensureDefaultPermissions migration', () => {
       }, null, 2)
     );
 
-    process.env.MKAGENT_CONFIG_DIR = tempConfig;
+    process.env.CONFIG_DIR = tempConfig;
     process.chdir(tempRoot);
 
     const mod = await import(`../permissions-config.ts?case=${Date.now()}`);

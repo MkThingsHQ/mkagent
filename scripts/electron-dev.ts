@@ -36,9 +36,9 @@ function detectInstance(): void {
     process.env.MKAGENT_INSTANCE_NUMBER = instanceNum;
     process.env.MKAGENT_VITE_PORT = `${instanceNum}173`;
     process.env.MKAGENT_APP_NAME = `MkAgent [${instanceNum}]`;
-    process.env.MKAGENT_CONFIG_DIR = join(process.env.HOME || "", `.mkagent-${instanceNum}`);
+    process.env.CONFIG_DIR = join(process.env.HOME || "", `.mkagent-${instanceNum}`);
     process.env.MKAGENT_DEEPLINK_SCHEME = `mkagent${instanceNum}`;
-    console.log(`🔢 Instance ${instanceNum} detected: port=${process.env.MKAGENT_VITE_PORT}, config=${process.env.MKAGENT_CONFIG_DIR}`);
+    console.log(`🔢 Instance ${instanceNum} detected: port=${process.env.MKAGENT_VITE_PORT}, config=${process.env.CONFIG_DIR}`);
   }
 }
 
@@ -182,7 +182,7 @@ function getElectronEnv(): Record<string, string> {
   return {
     ...process.env as Record<string, string>,
     VITE_DEV_SERVER_URL: `http://localhost:${vitePort}`,
-    MKAGENT_CONFIG_DIR: process.env.MKAGENT_CONFIG_DIR || "",
+    CONFIG_DIR: process.env.CONFIG_DIR || "",
     MKAGENT_APP_NAME: process.env.MKAGENT_APP_NAME || "MkAgent",
     MKAGENT_DEEPLINK_SCHEME: process.env.MKAGENT_DEEPLINK_SCHEME || "mkagent",
     MKAGENT_INSTANCE_NUMBER: process.env.MKAGENT_INSTANCE_NUMBER || "",
@@ -190,7 +190,7 @@ function getElectronEnv(): Record<string, string> {
 }
 
 function getElectronCommand(): string[] {
-  const configDir = process.env.MKAGENT_CONFIG_DIR;
+  const configDir = process.env.CONFIG_DIR;
   const userDataArg = process.env.MKAGENT_INSTANCE_NUMBER && configDir
     ? [`--user-data-dir=${join(configDir, "electron-user-data")}`]
     : [];

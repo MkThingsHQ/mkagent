@@ -38,7 +38,7 @@ async function spawnTestServer(extraEnv?: Record<string, string>): Promise<Spawn
       ...parentEnv,
       ...extraEnv,
       MKAGENT_SERVER_TOKEN: token,
-      MKAGENT_CONFIG_DIR: configDir,
+      CONFIG_DIR: configDir,
       MKAGENT_RPC_PORT: '0',
       MKAGENT_RPC_HOST: '127.0.0.1',
       MKAGENT_HEALTH_PORT: '0', // random port
@@ -188,7 +188,7 @@ describe('headless server smoke test', () => {
       env: {
         ...parentEnv,
         MKAGENT_SERVER_TOKEN: token,
-        MKAGENT_CONFIG_DIR: configDir,
+        CONFIG_DIR: configDir,
         MKAGENT_RPC_PORT: '0',
         MKAGENT_RPC_HOST: '127.0.0.1',
       },

@@ -1,6 +1,6 @@
 # Data directory
 
-The default root is `~/.mkagent` (resolved from `$HOME` or `%USERPROFILE%` at first launch). Set `MKAGENT_CONFIG_DIR` to isolate tests, run multiple instances, or back up to a custom location. MkAgent never reads or migrates data from any other product.
+The default root is `~/.mkagent` (resolved from `$HOME` or `%USERPROFILE%` at first launch). Set `CONFIG_DIR` to isolate tests, run multiple instances, or back up to a custom location. MkAgent never reads or migrates data from any other product.
 
 ## Layout
 

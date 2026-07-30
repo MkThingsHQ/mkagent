@@ -18,7 +18,7 @@ describe('session branch rollback on preflight failure', () => {
         import { SessionManager } from ${JSON.stringify(SESSION_MANAGER_URL)};
         import { createSession, listSessions, loadSession, saveSession } from '@mkagent/shared/sessions';
 
-        const configDir = process.env.MKAGENT_CONFIG_DIR;
+        const configDir = process.env.CONFIG_DIR;
         const workspaceRoot = join(configDir, 'workspaces', 'default');
         mkdirSync(workspaceRoot, { recursive: true });
         writeFileSync(join(workspaceRoot, 'config.json'), JSON.stringify({
@@ -71,7 +71,7 @@ describe('session branch rollback on preflight failure', () => {
       `
       const run = Bun.spawnSync([process.execPath, '--eval', script], {
         cwd: join(import.meta.dir, '../../../../..'),
-        env: { ...process.env, MKAGENT_CONFIG_DIR: configDir },
+        env: { ...process.env, CONFIG_DIR: configDir },
         stdout: 'pipe',
         stderr: 'pipe',
       })

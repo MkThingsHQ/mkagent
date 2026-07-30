@@ -20,6 +20,7 @@ import {
   pathStartsWith,
   toPortablePath,
 } from '../../utils/paths.ts';
+import { CONFIG_DIR } from '../../config/paths.ts';
 import type { PathProcessorConfig } from './types.ts';
 
 // Re-export useful utilities from paths.ts
@@ -44,6 +45,28 @@ const CONFIG_FILE_PATTERNS = [
   /Cargo\.toml$/,
   /\.env(\..+)?$/,
 ];
+
+function normalizeConfigPathForMatch(filePath: string): string {
+  const normalized = filePath.replace(/\\/g, '/');
+  return process.platform === 'win32' ? normalized.toLowerCase() : normalized;
+}
+
+function isMkAgentConfigPath(filePath: string): boolean {
+  const normalized = normalizeConfigPathForMatch(filePath);
+  const configRoot = normalizeConfigPathForMatch(CONFIG_DIR).replace(/\/+$/, '');
+  if (!normalized.startsWith(`${configRoot}/`)) return false;
+
+  const relativePath = normalized.slice(configRoot.length + 1);
+  return (
+    relativePath === 'config.json' ||
+    relativePath === 'preferences.json' ||
+    relativePath === 'theme.json' ||
+    relativePath === 'tool-icons/tool-icons.json' ||
+    /^permissions\/[^/]+\.json$/.test(relativePath) ||
+    /^workspaces\/[^/]+\/(config|permissions|theme)\.json$/.test(relativePath) ||
+    /^workspaces\/[^/]+\/skills\/[^/]+\/SKILL\.md$/.test(relativePath)
+  );
+}
 
 /**
  * PathProcessor provides path utilities for agent tool processing.
@@ -155,7 +178,7 @@ export class PathProcessor {
    */
   isConfigFile(filePath: string): boolean {
     const normalized = this.normalizeForComparison(this.expandPath(filePath));
-    return CONFIG_FILE_PATTERNS.some((pattern) => pattern.test(normalized));
+    return isMkAgentConfigPath(normalized) || CONFIG_FILE_PATTERNS.some((pattern) => pattern.test(normalized));
   }
 
   /**

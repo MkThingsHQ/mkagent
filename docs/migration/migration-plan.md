@@ -165,7 +165,7 @@
 - 自定义模型协议限定为 `openai-completions | anthropic-messages`。
 - Session header 保留连接、模型、权限、token usage、resume、flag、archive、unread、技术状态和分支关系。
 - RPC channel 按保留能力重建 allowlist；删除功能的 channel 不保留兼容空实现。
-- 数据根目录固定为 `~/.mkagent`，仅允许通过 `MKAGENT_CONFIG_DIR` 覆盖；不读取或迁移旧产品目录。
+- 数据根目录固定为 `~/.mkagent`，仅允许通过 `CONFIG_DIR` 覆盖；不读取或迁移旧产品目录。
 - Skills 来源优先级固定为 global < workspace < project；`requiredSources` 不生效并给出兼容提示。
 - 会话导出不得包含连接密钥、代理凭证、Sentry 信息或其他加密数据。
 

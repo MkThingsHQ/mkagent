@@ -12,7 +12,7 @@
  * thing that broke title generation across restarts.
  *
  * `CONFIG_DIR` is captured at module-load, so each scenario runs in a
- * subprocess with `MKAGENT_CONFIG_DIR` set in its env (same pattern as
+ * subprocess with `CONFIG_DIR` set in its env (same pattern as
  * `packages/shared/src/config/__tests__/storage-startup-migration.test.ts`).
  */
 import { describe, it, expect } from 'bun:test'
@@ -28,7 +28,7 @@ interface RunResult {
 
 function runScript(configDir: string, script: string): RunResult {
   const result = Bun.spawnSync([process.execPath, '--eval', script], {
-    env: { ...process.env, MKAGENT_CONFIG_DIR: configDir },
+    env: { ...process.env, CONFIG_DIR: configDir },
     stdout: 'pipe',
     stderr: 'pipe',
   })

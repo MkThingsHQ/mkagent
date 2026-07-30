@@ -73,16 +73,16 @@ migration/             # 迁移计划、audit、UI 历史
 默认配置根目录为 `~/.mkagent`,但为了并行开发或隔离测试可以重定向:
 
 ```bash
-MKAGENT_CONFIG_DIR=/tmp/mkagent-dev bun run server:dev:webui
+CONFIG_DIR=/tmp/mkagent-dev bun run server:dev:webui
 ```
 
-`MKAGENT_CONFIG_DIR` 在模块加载时(`packages/shared/src/config/paths.ts`)读一次,所有下游路径(workspaces、credentials、logs、tool icons)都会跟随。测试通过 `MKAGENT_CONFIG_DIR` 显式注入,不会在 `$HOME` 下创建文件。
+`CONFIG_DIR` 在模块加载时(`packages/shared/src/config/paths.ts`)读一次,所有下游路径(workspaces、credentials、logs、tool icons)都会跟随。测试通过 `CONFIG_DIR` 显式注入,不会在 `$HOME` 下创建文件。
 
 ## 常用环境变量
 
 | 变量 | 默认值 | 作用 |
 |---|---|---|
-| `MKAGENT_CONFIG_DIR` | `~/.mkagent` | 配置根(也叫数据目录)覆盖入口 |
+| `CONFIG_DIR` | `~/.mkagent` | 配置根(也叫数据目录)覆盖入口 |
 | `MKAGENT_SERVER_TOKEN` | — | headless server RPC 鉴权必需的 bearer token |
 | `MKAGENT_RPC_HOST` / `MKAGENT_RPC_PORT` | `127.0.0.1` / `9100` | server 绑定地址 / 端口 |
 | `MKAGENT_RPC_TLS_CERT` / `_KEY` / `_CA` | — | 启用 `wss://`,使用 PEM 编码的 cert/key;CA 可选 |

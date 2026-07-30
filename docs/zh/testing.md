@@ -28,7 +28,7 @@ bun run lint:craft-test-coverage
 
 ## Hermeticity 规则
 
-- 测试通过注入 `MKAGENT_CONFIG_DIR` 而不是读 `$HOME`。canonical 注入示例见 `packages/shared/src/config/__tests__/preferences-ui-language.test.ts`。
+- 测试通过注入 `CONFIG_DIR` 而不是读 `$HOME`。canonical 注入示例见 `packages/shared/src/config/__tests__/preferences-ui-language.test.ts`。
 - 共享的 Prerequisite Manager 只保留 Browser 文档与 Skill 指令的 prerequisite。测试 setup 覆盖 `pathExists`、`browserToolEnabled`、`browserToolsDocPath`。
 - 接触凭证层的测试用伪造的 `CredentialManager`;不会真写 keychain。
 - 接触 network interceptor 的测试用 mock fetch;真 interceptor 只在 Electron main 加载。

@@ -28,7 +28,7 @@ bun run lint:craft-test-coverage
 
 ## Hermeticity rules
 
-- Tests inject `MKAGENT_CONFIG_DIR` rather than reading `$HOME`. See `packages/shared/src/config/__tests__/preferences-ui-language.test.ts` for the canonical injection pattern.
+- Tests inject `CONFIG_DIR` rather than reading `$HOME`. See `packages/shared/src/config/__tests__/preferences-ui-language.test.ts` for the canonical injection pattern.
 - The shared Prerequisite Manager retains Browser documentation and Skill instruction prerequisites only. Test setups override `pathExists`, `browserToolEnabled`, and `browserToolsDocPath`.
 - Tests that exercise the credential layer use a fake `CredentialManager`. No real keychain writes.
 - Tests that exercise the network interceptor use a mocked fetch; the real interceptor is only loaded on Electron main.
