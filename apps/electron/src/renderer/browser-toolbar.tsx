@@ -39,8 +39,11 @@ interface ToolbarState {
   themeColor?: string | null
 }
 
+type BrowserThemeMode = 'light' | 'dark' | 'system'
+
 declare global {
   interface Window {
+    __MKAGENT_APPLY_BROWSER_THEME__?: (mode: BrowserThemeMode) => void
     browserToolbar: {
       instanceId: string
       navigate: (url: string) => Promise<void>
@@ -53,6 +56,7 @@ declare global {
       closeWindowEntirely: () => Promise<void>
       onStateUpdate: (callback: (state: ToolbarState) => void) => () => void
       onThemeColor: (callback: (color: string | null) => void) => () => void
+      onThemeMode: (callback: (mode: BrowserThemeMode) => void) => () => void
       onForceCloseMenu: (callback: (payload: { reason?: string }) => void) => () => void
     }
   }
@@ -91,6 +95,13 @@ function BrowserToolbarApp() {
   useEffect(() => {
     if (!api) return
     return api.onThemeColor(setThemeColor)
+  }, [api])
+
+  useEffect(() => {
+    if (!api) return
+    return api.onThemeMode((mode) => {
+      window.__MKAGENT_APPLY_BROWSER_THEME__?.(mode)
+    })
   }, [api])
 
   useEffect(() => {

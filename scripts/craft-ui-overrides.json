@@ -5,6 +5,26 @@
       "sha256": "1bfa047301be236f250a31aba862a40dcd513e889877287d547bd52d6f44ce34",
       "reason": "Craft application shell retains Claude and ChatGPT OAuth props while excluded product surfaces remain removed"
     },
+    "apps/electron/src/renderer/browser-empty-state.html": {
+      "sha256": "c82afe0928071236a407e8c4faa1fc3b52e2c7cb2f33bc4c075cbebdbd9fcb6e",
+      "reason": "Craft browser empty state corrected to honor explicit app theme mode instead of always following the operating system"
+    },
+    "apps/electron/src/renderer/browser-empty-state.tsx": {
+      "sha256": "1ee37195bba7594bf936fc374c8c490eebabf2f3715b5f6d9ea0c66d3e5ccd6e",
+      "reason": "Craft standalone browser empty-state renderer initializes the retained localization runtime before rendering"
+    },
+    "apps/electron/src/renderer/browser-toolbar.html": {
+      "sha256": "a12a4dbc2eee21f3fa6e1c2a3cabb84247dc15eadd6607c9e4a82f4f454dbce2",
+      "reason": "Craft browser toolbar corrected to honor explicit app theme mode before first paint"
+    },
+    "apps/electron/src/renderer/browser-toolbar.tsx": {
+      "sha256": "f81de1d9b87f4c32b32f7bce68f37f26f85329cd960869541875ad2903c512d2",
+      "reason": "Craft browser toolbar renderer extended to apply live app-theme updates"
+    },
+    "apps/electron/src/renderer/context/ThemeContext.tsx": {
+      "sha256": "451f88e4f421ec91b225563ab090df88d624dd501ea3d1135e1bead93f2d25a5",
+      "reason": "Craft theme context corrected to hydrate host-managed auxiliary windows from the saved app preference on startup"
+    },
     "apps/electron/src/renderer/atoms/panel-stack.ts": {
       "sha256": "48c3a6f6f3eafdd79705236de9deb0212b256699cde23962650b7d5f5456260e",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"

@@ -20,6 +20,7 @@ const CHANNELS = {
   DESTROY: 'browser-toolbar:destroy',
   STATE_UPDATE: 'browser-toolbar:state-update',
   THEME_COLOR: 'browser-toolbar:theme-color',
+  THEME_MODE: 'browser-toolbar:theme-mode',
 } as const
 
 // Instance ID is passed via query parameter by BrowserPaneManager
@@ -44,6 +45,11 @@ contextBridge.exposeInMainWorld('browserToolbar', {
     const handler = (_event: Electron.IpcRendererEvent, color: string | null) => callback(color)
     ipcRenderer.on(CHANNELS.THEME_COLOR, handler)
     return () => { ipcRenderer.removeListener(CHANNELS.THEME_COLOR, handler) }
+  },
+  onThemeMode: (callback: (mode: 'light' | 'dark' | 'system') => void) => {
+    const handler = (_event: Electron.IpcRendererEvent, mode: 'light' | 'dark' | 'system') => callback(mode)
+    ipcRenderer.on(CHANNELS.THEME_MODE, handler)
+    return () => { ipcRenderer.removeListener(CHANNELS.THEME_MODE, handler) }
   },
   onForceCloseMenu: (callback: (payload: { reason?: string }) => void) => {
     const handler = (_event: Electron.IpcRendererEvent, payload: { reason?: string }) => callback(payload)

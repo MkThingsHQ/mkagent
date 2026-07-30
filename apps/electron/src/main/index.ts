@@ -187,6 +187,7 @@ async function start() {
       platform: current,
       windowManager: windowManager!,
       browserPaneManager: browserPaneManager!,
+      onThemePreferencesChanged: preferences => browserPaneManager!.setThemeMode(preferences.mode),
     }),
     registerAllRpcHandlers,
     setSessionEventSink: (manager, sink) => manager.setEventSink(sink),

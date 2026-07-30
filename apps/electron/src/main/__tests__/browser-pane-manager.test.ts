@@ -31,7 +31,9 @@ function createMockWebContents() {
         throw new Error('mock toolbar load failure')
       }
     }),
-    loadFile: mock(async (path: string, _opts?: unknown) => {
+    loadFile: mock(async (path: string, opts?: { query?: Record<string, string> }) => {
+      const query = opts?.query ? `?${new URLSearchParams(opts.query).toString()}` : ''
+      currentUrl = `file://${path}${query}`
       if (path.includes('browser-toolbar.html') && toolbarLoadFailuresRemaining > 0) {
         toolbarLoadFailuresRemaining--
         throw new Error('mock toolbar load failure')
@@ -69,6 +71,9 @@ function createMockWebContents() {
     },
     _listeners: listeners,
     _emit: (event: string, ...args: any[]) => {
+      if ((event === 'did-navigate' || event === 'did-navigate-in-page') && typeof args[0] === 'string') {
+        currentUrl = args[0]
+      }
       for (const cb of listeners[event] || []) cb({}, ...args)
     },
   }
@@ -124,6 +129,7 @@ function createMockWindow(opts?: { width?: number; height?: number; minWidth?: n
     setBrowserView: mock((_view: any) => {}),
     addBrowserView: mock((_view: any) => {}),
     setTopBrowserView: mock((_view: any) => {}),
+    setBackgroundColor: mock((_color: string) => {}),
     getContentSize: mock(() => [contentWidth, contentHeight]),
     setContentSize: mock((width: number, height: number) => {
       contentWidth = Math.max(minWidth, Math.floor(width))
@@ -256,6 +262,40 @@ describe('BrowserPaneManager', () => {
     expect(list).toHaveLength(1)
     expect(list[0].id).toBe('test-1')
     expect(list[0].agentControlActive).toBe(false)
+  })
+
+  it('uses the app theme mode for new browser surfaces', async () => {
+    manager.setThemeMode('dark')
+    manager.createInstance('theme-dark')
+    await Bun.sleep(0)
+
+    const instance = (manager as any).instances.get('theme-dark')
+    expect(instance.pageView.webContents.loadFile).toHaveBeenCalledWith(
+      expect.stringContaining('browser-empty-state.html'),
+      { query: { themeMode: 'dark' } },
+    )
+    expect(instance.toolbarView.webContents.loadFile).toHaveBeenCalledWith(
+      expect.stringContaining('browser-toolbar.html'),
+      { query: { instanceId: 'theme-dark', themeMode: 'dark' } },
+    )
+  })
+
+  it('updates an open browser window when the app theme changes', async () => {
+    manager.createInstance('theme-live')
+    await Bun.sleep(0)
+    const instance = (manager as any).instances.get('theme-live')
+
+    manager.setThemeMode('dark')
+
+    expect(instance.window.setBackgroundColor).toHaveBeenLastCalledWith('#2b292e')
+    expect(instance.pageView.webContents.setBackgroundColor).toHaveBeenLastCalledWith('#2b292e')
+    expect(instance.toolbarView.webContents.send).toHaveBeenCalledWith(
+      'browser-toolbar:theme-mode',
+      'dark',
+    )
+    expect(instance.pageView.webContents.executeJavaScript).toHaveBeenCalledWith(
+      expect.stringContaining('"dark"'),
+    )
   })
 
   it('is idempotent when explicit ID already exists', () => {

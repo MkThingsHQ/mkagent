@@ -133,6 +133,7 @@ export function ThemeProvider({
   const [font, setFontState] = useState<FontFamily>(stored?.font ?? defaultFont)
   const [systemPreference, setSystemPreference] = useState<'light' | 'dark'>(getSystemPreference)
   const [previewColorTheme, setPreviewColorTheme] = useState<string | null>(null)
+  const initialThemePreferences = useRef({ mode, colorTheme, font })
 
   // === Workspace-level theme override ===
   const [workspaceColorTheme, setWorkspaceColorThemeState] = useState<string | null>(null)
@@ -431,6 +432,13 @@ export function ThemeProvider({
     })
 
     return cleanup
+  }, [])
+
+  // Hydrate host-managed auxiliary windows (such as Browser Window) on app
+  // startup. Setter broadcasts alone are insufficient when a saved override is
+  // restored from localStorage without the user changing it in this process.
+  useEffect(() => {
+    void window.electronAPI?.broadcastThemePreferences?.(initialThemePreferences.current)
   }, [])
 
   // === Setters with persistence and broadcast ===

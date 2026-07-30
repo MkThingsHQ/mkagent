@@ -8,7 +8,7 @@
  */
 
 import { readdirSync, readFileSync, statSync } from 'node:fs'
-import { extname, join, relative, resolve } from 'node:path'
+import { dirname, extname, join, relative, resolve } from 'node:path'
 import ts from 'typescript'
 
 const ROOT = resolve(import.meta.dir, '..')
@@ -16,6 +16,7 @@ const EN_PATH = join(ROOT, 'packages/shared/src/i18n/locales/en.json')
 const SOURCE_ROOTS = ['apps', 'packages'].map((dir) => join(ROOT, dir))
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx'])
 const IGNORED_DIRS = new Set(['node_modules', 'dist', 'build', 'coverage'])
+const ELECTRON_RENDERER_DIR = join(ROOT, 'apps/electron/src/renderer')
 const TRANSLATION_KEY_FIELDS = new Set([
   'descriptionKey',
   'labelKey',
@@ -65,6 +66,43 @@ function isTranslationCall(node: ts.CallExpression): boolean {
 function hasTranslation(key: string): boolean {
   if (definedKeys.has(key)) return true
   return definedKeys.has(`${key}_one`) && definedKeys.has(`${key}_other`)
+}
+
+function standaloneRendererEntries(): string[] {
+  const entries: string[] = []
+  for (const file of readdirSync(ELECTRON_RENDERER_DIR)) {
+    if (extname(file) !== '.html') continue
+    const htmlPath = join(ELECTRON_RENDERER_DIR, file)
+    const html = readFileSync(htmlPath, 'utf8')
+    const scriptSource = html.match(/<script\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/)?.[1]
+    if (!scriptSource || !scriptSource.startsWith('.')) continue
+    entries.push(resolve(dirname(htmlPath), scriptSource))
+  }
+  return entries
+}
+
+function initializesI18n(file: string): boolean {
+  const sourceText = readFileSync(file, 'utf8')
+  const sourceFile = ts.createSourceFile(
+    file,
+    sourceText,
+    ts.ScriptTarget.Latest,
+    true,
+    file.endsWith('x') ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+  )
+  let initialized = false
+  const visit = (node: ts.Node): void => {
+    if (
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === 'setupI18n'
+    ) {
+      initialized = true
+    }
+    ts.forEachChild(node, visit)
+  }
+  visit(sourceFile)
+  return initialized
 }
 
 const references: Reference[] = []
@@ -121,4 +159,13 @@ if (missing.length > 0) {
   process.exit(1)
 }
 
-console.log(`i18n usage OK (${references.length} static references, ${definedKeys.size} English keys)`)
+const uninitializedEntries = standaloneRendererEntries().filter((file) => !initializesI18n(file))
+if (uninitializedEntries.length > 0) {
+  console.error('i18n usage check failed: standalone Electron renderer entries must call setupI18n() before rendering:')
+  for (const file of uninitializedEntries) {
+    console.error(`  ${relative(ROOT, file)}`)
+  }
+  process.exit(1)
+}
+
+console.log(`i18n usage OK (${references.length} static references, ${definedKeys.size} English keys, ${standaloneRendererEntries().length} renderer entries initialized)`)

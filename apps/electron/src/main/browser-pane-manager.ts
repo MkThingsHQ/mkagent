@@ -121,7 +121,9 @@ const TOOLBAR_CHANNELS = {
   DESTROY: 'browser-toolbar:destroy',
   STATE_UPDATE: 'browser-toolbar:state-update',
   THEME_COLOR: 'browser-toolbar:theme-color',
+  THEME_MODE: 'browser-toolbar:theme-mode',
 } as const
+type BrowserThemeMode = 'light' | 'dark' | 'system'
 export const BROWSER_PANE_SESSION_PARTITION = 'persist:browser-pane'
 const SESSION_PARTITION = BROWSER_PANE_SESSION_PARTITION
 
@@ -339,6 +341,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
   private popupParentByWebContentsId = new Map<number, string>()
   private windowManager: WindowManager | null = null
   private sessionPathResolver: ((sessionId: string) => string | null) | null = null
+  private themeMode: BrowserThemeMode = 'system'
 
   setWindowManager(windowManager: WindowManager): void {
     this.windowManager = windowManager
@@ -360,6 +363,50 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     this.interactedCallback = callback
   }
 
+  setThemeMode(mode: string): void {
+    if (mode !== 'light' && mode !== 'dark' && mode !== 'system') {
+      mainLog.warn(`[browser-pane] ignoring invalid theme mode: ${mode}`)
+      return
+    }
+
+    this.themeMode = mode
+    for (const instance of this.instances.values()) {
+      this.applyThemeMode(instance)
+    }
+  }
+
+  private resolveThemeMode(): 'light' | 'dark' {
+    if (this.themeMode === 'system') {
+      return nativeTheme.shouldUseDarkColors ? 'dark' : 'light'
+    }
+    return this.themeMode
+  }
+
+  private themeBackgroundColor(): string {
+    return this.resolveThemeMode() === 'dark' ? '#2b292e' : '#fafafb'
+  }
+
+  private applyThemeMode(instance: BrowserInstance): void {
+    const bgColor = this.themeBackgroundColor()
+    if (!instance.window.isDestroyed()) {
+      instance.window.setBackgroundColor(bgColor)
+    }
+
+    const pageWebContents = instance.pageView.webContents
+    const pageWcWithBg = pageWebContents as typeof pageWebContents & { setBackgroundColor?: (color: string) => void }
+    pageWcWithBg.setBackgroundColor?.(bgColor)
+
+    if (!instance.toolbarView.webContents.isDestroyed()) {
+      instance.toolbarView.webContents.send(TOOLBAR_CHANNELS.THEME_MODE, this.themeMode)
+    }
+
+    if (!pageWebContents.isDestroyed() && this.isBrowserEmptyStateUrl(pageWebContents.getURL())) {
+      void pageWebContents.executeJavaScript(
+        `window.__MKAGENT_APPLY_BROWSER_THEME__?.(${JSON.stringify(this.themeMode)})`,
+      ).catch(() => {})
+    }
+  }
+
   createInstance(id?: string, options?: CreateBrowserInstanceOptions): string {
     const instanceId = id || `browser-${++instanceCounter}`
     const shouldShow = options?.show ?? false
@@ -376,8 +423,8 @@ export class BrowserPaneManager implements IBrowserPaneManager {
     this.setupSessionPermissions(ses)
     this.setupSessionObservers(ses)
 
-    // Match background to current OS theme to prevent black/white flash on open
-    const bgColor = nativeTheme.shouldUseDarkColors ? '#2b292e' : '#fafafb'
+    // Match the app theme before first paint; "system" resolves through Electron.
+    const bgColor = this.themeBackgroundColor()
 
     const window = new BrowserWindow({
       width: 1200,
@@ -1908,7 +1955,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
 
   /** Resolve the app's current accent color as a concrete CSS value (not a var reference). */
   private getResolvedAccentColor(): string {
-    const isDark = nativeTheme.shouldUseDarkColors
+    const isDark = this.resolveThemeMode() === 'dark'
     const userTheme = loadAppTheme()
     const accent = isDark
       ? (userTheme?.dark?.accent ?? userTheme?.accent ?? DEFAULT_THEME.dark!.accent!)
@@ -2162,12 +2209,18 @@ export class BrowserPaneManager implements IBrowserPaneManager {
   }
 
   private async loadEmptyStatePage(instance: BrowserInstance): Promise<void> {
+    const query = { themeMode: this.themeMode }
     if (VITE_DEV_SERVER_URL) {
-      await instance.pageView.webContents.loadURL(`${VITE_DEV_SERVER_URL}/${BROWSER_EMPTY_STATE_PAGE}`)
+      await instance.pageView.webContents.loadURL(
+        `${VITE_DEV_SERVER_URL}/${BROWSER_EMPTY_STATE_PAGE}?themeMode=${encodeURIComponent(this.themeMode)}`,
+      )
       return
     }
 
-    await instance.pageView.webContents.loadFile(join(__dirname, `renderer/${BROWSER_EMPTY_STATE_PAGE}`))
+    await instance.pageView.webContents.loadFile(
+      join(__dirname, `renderer/${BROWSER_EMPTY_STATE_PAGE}`),
+      { query },
+    )
   }
 
   private async handleDeepLinkUrl(url: string): Promise<void> {
@@ -2232,7 +2285,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
   }
 
   private async loadToolbarPage(instance: BrowserInstance): Promise<void> {
-    const query = `instanceId=${encodeURIComponent(instance.id)}`
+    const query = `instanceId=${encodeURIComponent(instance.id)}&themeMode=${encodeURIComponent(this.themeMode)}`
     let lastError: unknown = null
 
     for (let attempt = 0; attempt <= TOOLBAR_LOAD_MAX_RETRIES; attempt++) {
@@ -2242,7 +2295,7 @@ export class BrowserPaneManager implements IBrowserPaneManager {
         } else {
           await instance.toolbarView.webContents.loadFile(
             join(__dirname, 'renderer/browser-toolbar.html'),
-            { query: { instanceId: instance.id } },
+            { query: { instanceId: instance.id, themeMode: this.themeMode } },
           )
         }
 

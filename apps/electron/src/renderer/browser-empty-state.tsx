@@ -1,10 +1,16 @@
 import React, { useCallback } from 'react'
-import { useTranslation } from 'react-i18next'
+import { initReactI18next, useTranslation } from 'react-i18next'
+import LanguageDetector from 'i18next-browser-languagedetector'
 import ReactDOM from 'react-dom/client'
+import { setupI18n } from '@mkagent/shared/i18n'
 import { BrowserEmptyStateCard } from '@mkagent/ui'
 import { routes } from '../shared/routes'
 import { EMPTY_STATE_PROMPT_SAMPLES } from './components/browser/empty-state-prompts'
 import './index.css'
+
+// This is a standalone entry (browser-empty-state.html), so it does not pass
+// through main.tsx. Initialize i18n before rendering or t() returns raw keys.
+setupI18n([LanguageDetector, initReactI18next])
 
 function BrowserEmptyStateApp() {
   const { t } = useTranslation()

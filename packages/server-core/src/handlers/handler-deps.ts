@@ -21,4 +21,5 @@ export interface HandlerDeps<
   platform: PlatformServices
   windowManager?: TWindowManager
   browserPaneManager?: TBrowserPaneManager
+  onThemePreferencesChanged?: (preferences: { mode: string; colorTheme: string; font: string }) => void
 }

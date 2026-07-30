@@ -9,10 +9,22 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500&display=swap" rel="stylesheet">
   <script>
-    // Sync theme class before first paint to prevent light/dark flash
-    if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      document.documentElement.classList.replace('light', 'dark')
-    }
+    // Sync the app theme before first paint; only "system" follows the OS.
+    (() => {
+      const media = window.matchMedia('(prefers-color-scheme: dark)')
+      const applyTheme = (mode) => {
+        const normalized = mode === 'light' || mode === 'dark' ? mode : 'system'
+        const resolved = normalized === 'system' ? (media.matches ? 'dark' : 'light') : normalized
+        document.documentElement.dataset.themeMode = normalized
+        document.documentElement.classList.remove('light', 'dark')
+        document.documentElement.classList.add(resolved)
+      }
+      window.__MKAGENT_APPLY_BROWSER_THEME__ = applyTheme
+      media.addEventListener('change', () => {
+        if (document.documentElement.dataset.themeMode === 'system') applyTheme('system')
+      })
+      applyTheme(new URLSearchParams(window.location.search).get('themeMode'))
+    })()
   </script>
   <style>
     /* Prevent any flash of unstyled content */

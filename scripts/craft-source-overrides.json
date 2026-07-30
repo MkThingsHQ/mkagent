@@ -275,8 +275,8 @@
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "apps/electron/src/main/__tests__/browser-pane-manager.test.ts": {
-      "sha256": "5efe06737734506aabe96c99a806be22ed57020cc234033de2e799d613615b74",
-      "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
+      "sha256": "8a4017f1987c720fcce33b26506e2ac84246f8d225db5f6e785841c3cdfc8b4b",
+      "reason": "Craft browser tests strengthened to cover app-theme hydration and live theme updates that the upstream system-theme-only implementation misses"
     },
     "apps/electron/src/main/__tests__/connection-setup-logic.test.ts": {
       "sha256": "20042322a1a0c22f1f91a79c1ec8c6420938682323e2d7d73b3d842d72995370",
@@ -323,8 +323,8 @@
       "reason": "Craft Electron runtime adapted for the retained Lite runtime and removed product channels"
     },
     "apps/electron/src/main/browser-pane-manager.ts": {
-      "sha256": "0e5f607a42ed5d3ec7a745967012686035ae20bc7b56ad46ef61aa95bcd0baf2",
-      "reason": "Craft Electron runtime adapted for the retained Lite runtime and removed product channels"
+      "sha256": "4dab4b8725187b3b0c759e45d8ac93a3718ac7ec4074145245edfc522dc05532",
+      "reason": "Craft browser runtime adapted to honor the explicit app light, dark, or system preference for first paint and live updates"
     },
     "apps/electron/src/main/deep-link.ts": {
       "sha256": "e34c7ebb13153f332fe1ffe50b7b3eb5981fd412f60cf1aabcdcdc60adf55562",
@@ -367,8 +367,8 @@
       "reason": "Craft Electron runtime adapted for the retained Lite runtime and removed product channels"
     },
     "apps/electron/src/main/index.ts": {
-      "sha256": "f37473906bfde08c6ef599deda5538a5a3a61faa4d20ea03936fbd70196dadc1",
-      "reason": "Craft Electron runtime adapted for the retained Lite runtime and removed product channels"
+      "sha256": "864f2c238d8ea9fda5cf680146b35b0013d31e76449c4004cb16a313fdc36284",
+      "reason": "Craft Electron runtime adapted to forward app theme preference broadcasts to auxiliary browser windows"
     },
     "apps/electron/src/main/logger.ts": {
       "sha256": "0bf1e637ddd50a9610922870520e04349ca117bc194e8058029630d43367cedf",
@@ -386,9 +386,33 @@
       "sha256": "177b89d91deeb0b4fc4622a19cd697328a23c1a00866a9b74f41140ca0ece259",
       "reason": "Craft preload retains desktop-owned Claude and ChatGPT OAuth browser flows while removed product APIs stay absent"
     },
+    "apps/electron/src/preload/browser-toolbar.ts": {
+      "sha256": "408a3e0cb210653e442f35577e140b183fad748bb72fdf07c31b39180022b837",
+      "reason": "Craft browser toolbar preload extended with the minimal app-theme update event"
+    },
     "apps/electron/src/renderer/App.tsx": {
       "sha256": "1bfa047301be236f250a31aba862a40dcd513e889877287d547bd52d6f44ce34",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/browser-empty-state.html": {
+      "sha256": "c82afe0928071236a407e8c4faa1fc3b52e2c7cb2f33bc4c075cbebdbd9fcb6e",
+      "reason": "Craft browser empty state corrected to honor explicit app theme mode instead of always following the operating system"
+    },
+    "apps/electron/src/renderer/browser-empty-state.tsx": {
+      "sha256": "1ee37195bba7594bf936fc374c8c490eebabf2f3715b5f6d9ea0c66d3e5ccd6e",
+      "reason": "Craft standalone browser empty-state renderer initializes the retained localization runtime before rendering"
+    },
+    "apps/electron/src/renderer/browser-toolbar.html": {
+      "sha256": "a12a4dbc2eee21f3fa6e1c2a3cabb84247dc15eadd6607c9e4a82f4f454dbce2",
+      "reason": "Craft browser toolbar corrected to honor explicit app theme mode before first paint"
+    },
+    "apps/electron/src/renderer/browser-toolbar.tsx": {
+      "sha256": "f81de1d9b87f4c32b32f7bce68f37f26f85329cd960869541875ad2903c512d2",
+      "reason": "Craft browser toolbar renderer extended to apply live app-theme updates"
+    },
+    "apps/electron/src/renderer/context/ThemeContext.tsx": {
+      "sha256": "451f88e4f421ec91b225563ab090df88d624dd501ea3d1135e1bead93f2d25a5",
+      "reason": "Craft theme context corrected to hydrate host-managed auxiliary windows from the saved app preference on startup"
     },
     "apps/electron/src/renderer/atoms/__tests__/browser-pane.test.ts": {
       "sha256": "3920dbfc87eb8b75f1aa02bef5b4d98b791bb513dfd4827e4cff4d4312388432",
@@ -991,8 +1015,8 @@
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "packages/server-core/src/handlers/handler-deps.ts": {
-      "sha256": "473162c3379b5e5a606c35beec246b3e08a2c479610affa160e7fc959b903932",
-      "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
+      "sha256": "380944e2c6c35b348a3fc0c3c82a4fb98e3cf6a349d79b0a1238cd17e832b1b9",
+      "reason": "Craft handler dependency contract extended with an optional host callback for auxiliary-window theme synchronization"
     },
     "packages/server-core/src/handlers/index.ts": {
       "sha256": "f7a5d2007fc507a77fbff3472a896bc666305514fce46b3e9d6f331c19a7a59c",
@@ -1043,8 +1067,8 @@
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/server-core/src/handlers/rpc/workspace.ts": {
-      "sha256": "1bbbc84e2843d34b992364a9f0750e37b1233bd81b41dad299c9a56e22473d8f",
-      "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
+      "sha256": "2b229846b6567c6732d701670375ecfafa549651e0c48243e1556bf8ac6bb2ae",
+      "reason": "Craft theme preference broadcast also notifies the local host so auxiliary browser windows remain synchronized"
     },
     "packages/server-core/src/handlers/session-manager-interface.ts": {
       "sha256": "d3b5d5f744bb98190c33d93f281075a67d605c0c5565d908e8ea5f2ae926ded2",
@@ -2121,7 +2145,7 @@
       "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
     },
     "scripts/craft-ui-overrides.json": {
-      "sha256": "fa9f0302cb796f775cd0952eb38fc7eac5b96a961aff5a4d8fbd9cfff8b1f305",
+      "sha256": "8a430c4ad5b3dca94ce1f5bc640f1f20bf7b33427359f85264ffc2d10479a4cc",
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
     },
     ".github/workflows/ci.yml": {
@@ -2313,8 +2337,8 @@
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
     },
     "scripts/check-i18n-usage.ts": {
-      "sha256": "fded008e13164cea7fbb7d6c380b60ea35d08f10b9a4213989bd7c9450b0d455",
-      "reason": "MkAgent lineage, build, or validation guard required by localization validation"
+      "sha256": "ee3ea6c9c413d0cdf8ffc8a39fe8dbc655fa9a29782016a30fc33dfe9c163925",
+      "reason": "MkAgent localization guard also verifies that every standalone Electron renderer initializes i18n"
     },
     "scripts/check-craft-test-coverage.ts": {
       "sha256": "9b51a9a96f11a1c0a5e24ac031bfd68e275316eee2c4de3c4509660ba59937ae",
