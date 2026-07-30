@@ -15,6 +15,8 @@ import {
 import { WsRpcClient, type TransportConnectionState } from '../transport/client'
 import { buildClientApi } from '../transport/build-api'
 import { CHANNEL_MAP } from '../transport/channel-map'
+import { createCallbackServer, CHATGPT_OAUTH_CONFIG } from '@mkagent/shared/auth'
+import { RPC_CHANNELS } from '@mkagent/shared/protocol'
 
 const webContentsId = ipcRenderer.sendSync('__get-web-contents-id') as number
 const workspaceId = ipcRenderer.sendSync('__get-workspace-id') as string
@@ -62,5 +64,49 @@ api.getSystemWarnings = async () => ({
 })
 api.getFilePath = (file: File) => webUtils.getPathForFile(file)
 api.changeLanguage = (language: string) => ipcRenderer.invoke('__i18n:changeLanguage', language)
+
+api.startClaudeOAuth = async () => {
+  try {
+    const result = await client.invoke(RPC_CHANNELS.onboarding.START_CLAUDE_OAUTH)
+    if (result.success && result.authUrl) await shell.openExternal(result.authUrl)
+    return result
+  } catch (error) {
+    return { success: false, error: error instanceof Error ? error.message : 'Claude OAuth failed' }
+  }
+}
+
+api.startChatGptOAuth = async (connectionSlug: string) => {
+  let callbackServer: Awaited<ReturnType<typeof createCallbackServer>> | null = null
+  let state: string | undefined
+  try {
+    callbackServer = await createCallbackServer({
+      appType: 'electron',
+      port: CHATGPT_OAUTH_CONFIG.CALLBACK_PORT,
+      callbackPaths: ['/auth/callback'],
+    })
+    const started = await client.invoke(RPC_CHANNELS.chatgpt.START_OAUTH, connectionSlug)
+    state = started.state
+    await shell.openExternal(started.authUrl)
+    const callback = await callbackServer.promise
+    if (callback.query.error) {
+      await client.invoke(RPC_CHANNELS.chatgpt.CANCEL_OAUTH, { state })
+      return { success: false, error: callback.query.error_description || callback.query.error }
+    }
+    if (!callback.query.code) {
+      await client.invoke(RPC_CHANNELS.chatgpt.CANCEL_OAUTH, { state })
+      return { success: false, error: 'No authorization code received' }
+    }
+    return await client.invoke(RPC_CHANNELS.chatgpt.COMPLETE_OAUTH, {
+      flowId: started.flowId,
+      code: callback.query.code,
+      state,
+    })
+  } catch (error) {
+    if (state) client.invoke(RPC_CHANNELS.chatgpt.CANCEL_OAUTH, { state }).catch(() => {})
+    return { success: false, error: error instanceof Error ? error.message : 'ChatGPT OAuth flow failed' }
+  } finally {
+    callbackServer?.close()
+  }
+}
 
 contextBridge.exposeInMainWorld('electronAPI', api)

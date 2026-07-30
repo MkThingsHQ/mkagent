@@ -27,7 +27,7 @@ export function pickProviderAppropriateMiniModel(
   const preferred = PI_PREFERRED_DEFAULTS[authProvider];
   if (!preferred || preferred.length === 0) return undefined;
   for (const candidate of preferred) {
-    if (isDeniedMiniModelId(candidate)) continue;
+    if (isDeniedMiniModelId(candidate, authProvider)) continue;
     const resolved = resolvePiModel(modelRegistry, candidate, authProvider, preferCustomEndpoint);
     if (resolved) return candidate;
   }

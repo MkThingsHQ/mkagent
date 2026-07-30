@@ -205,6 +205,25 @@ describe('isDeniedMiniModelId', () => {
   it('denies codex-mini-latest regardless of auth provider', () => {
     expect(isDeniedMiniModelId('codex-mini-latest')).toBe(true);
     expect(isDeniedMiniModelId('pi/codex-mini-latest')).toBe(true);
+    expect(isDeniedMiniModelId('codex-mini-latest', 'openai')).toBe(true);
+    expect(isDeniedMiniModelId('codex-mini-latest', 'openai-codex')).toBe(true);
+  });
+
+  it('denies *codex-mini* variants when piAuthProvider is openai-codex (ChatGPT account)', () => {
+    expect(isDeniedMiniModelId('gpt-5.1-codex-mini', 'openai-codex')).toBe(true);
+    expect(isDeniedMiniModelId('pi/gpt-5.1-codex-mini', 'openai-codex')).toBe(true);
+    expect(isDeniedMiniModelId('gpt-5.2-codex-mini-preview', 'openai-codex')).toBe(true);
+  });
+
+  it('allows *codex-mini* variants when piAuthProvider is a regular openai API key', () => {
+    expect(isDeniedMiniModelId('gpt-5.1-codex-mini', 'openai')).toBe(false);
+    expect(isDeniedMiniModelId('pi/gpt-5.1-codex-mini', 'openai')).toBe(false);
+  });
+
+  it('allows non-codex-mini models under openai-codex auth', () => {
+    expect(isDeniedMiniModelId('gpt-5.1-codex', 'openai-codex')).toBe(false);
+    expect(isDeniedMiniModelId('gpt-5-mini', 'openai-codex')).toBe(false);
+    expect(isDeniedMiniModelId('claude-haiku-4-5', 'openai-codex')).toBe(false);
   });
 
   it('treats unset piAuthProvider as unrestricted (only the hardcoded denylist applies)', () => {

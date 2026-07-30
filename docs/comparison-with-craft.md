@@ -46,7 +46,7 @@ Both repositories are Bun monorepos with the same workspace layout (`apps/{elect
 | Concern | MkAgent | Craft Agents |
 |---|---|---|
 | Registered `AgentBackend`s | `pi` only | `pi`, `claude-agent-sdk`, plus optional **Copilot / gateway** subscriptions |
-| Auth model | API-key + custom endpoints + Ollama (Pi transports) | API-key + custom + **OAuth (Anthropic, OpenAI, GitHub Copilot, Google Workspace, Slack, Microsoft)** + subscription flows + gateway |
+| Auth model | API key + custom endpoints + Ollama + **ChatGPT/Claude subscription OAuth**, all through Pi | API-key + custom + **OAuth (Anthropic, OpenAI, GitHub Copilot, Google Workspace, Slack, Microsoft)** + subscription flows + gateway |
 | Subprocess model | `packages/pi-agent-server` runs as a Bun subprocess; communicates over JSONL on stdio | Pi subprocess (same) **plus** SDK subprocess (`@anthropic-ai/claude-agent-sdk-binary`, ~217 MB native `claude` binary per platform arch) **plus** bridge/session MCP servers **plus** WhatsApp worker subprocess |
 | Built-in transports | OpenAI-compatible, Anthropic-compatible, Ollama (Pi `0.80.6`) | Same, plus Anthropic SDK direct mode and Copilot SDK mode |
 | Image generation | ❌ (deleted; image attachments still supported) | ✅ (`gen_image` model + tool) |
@@ -122,7 +122,9 @@ The matrix below extends [`docs/feature-matrix.md`](./feature-matrix.md) with ex
 | Mini chat, `EditPopover`, mini model, titles, summaries | ✅ | ✅ |
 | Theme presets, light/dark/system, i18n (`en`, `zh-Hans`) | ✅ (15 themes inherited from Craft) | ✅ (same) |
 | Tool icons, default permissions, "What's New" notes | ✅ | ✅ |
-| Claude backend, Claude OAuth/subscription | ❌ | ✅ |
+| Claude Agent SDK backend | ❌ | ✅ |
+| Claude Pro/Max OAuth subscription | ✅ (Pi) | ✅ (Claude SDK by default) |
+| ChatGPT Plus OAuth subscription | ✅ (Pi) | ✅ (Pi) |
 | GitHub Copilot SDK + OAuth subscription | ❌ | ✅ |
 | External messaging gateway + WhatsApp / Slack / Lark workers | ❌ | ✅ |
 | Sources (API Source, MCP Source, MCP pool), Source OAuth flows | ❌ | ✅ |
@@ -132,7 +134,8 @@ The matrix below extends [`docs/feature-matrix.md`](./feature-matrix.md) with ex
 | Product automations / scheduler / recurring tasks | ❌ | ✅ |
 | Session labels + user-defined statuses (settings UI) | ❌ | ✅ |
 | Projects / Kanban | ❌ | ✅ |
-| Claude / gateway-supplied OAuth callback server, deep links | ❌ | ✅ |
+| LLM subscription OAuth callback | ✅ (ChatGPT Desktop callback; Claude code flow) | ✅ |
+| Generic / Sources / gateway OAuth | ❌ | ✅ |
 | Image generation (`gen_image` tool + provider routing) | ❌ | ✅ |
 
 ## 6. Test, typecheck and lint coverage delta

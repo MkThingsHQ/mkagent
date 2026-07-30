@@ -411,3 +411,33 @@ eac5792 fix: enforce file-level Craft parity
 8. 旧进程、旧 profile 和缓存会制造假结论，测试环境必须可识别、可隔离、可清理。
 9. 每次代码修改都会使旧哈希结论失效；最终修复后必须重新跑全部审计门禁。
 10. “全部通过”只能描述实际执行的范围，未运行的平台和外部 provider 必须单独说明。
+
+## 9. 2026-07-30 LLM 订阅 OAuth 恢复审核
+
+本轮在 `dev/llm_oauth` 分支恢复 ChatGPT Plus 与 Claude Pro/Max 订阅登录，继续保持唯一 Agent backend 为 Pi。实现直接复用 Craft 的 ChatGPT/Claude OAuth、PKCE、callback 页面、onboarding 和凭据结构，只在 MkAgent 品牌、宿主边界以及 Pi OAuth 凭据刷新回写处做必要定制。未恢复 Claude Agent SDK、GitHub Copilot、Sources、MCP 或通用 OAuth。
+
+### 9.1 依赖闭包检查
+
+- Desktop：恢复 Craft 的 Claude code flow 与 ChatGPT localhost callback；OAuth 凭据按 LLM connection slug 安全存储。
+- WebUI：可使用服务器已有的 OAuth connection；新的 ChatGPT localhost 登录仍明确限制在 Desktop，Claude 保留手工 code flow。
+- Pi：父进程向子进程传递完整 OAuth credential；Pi 刷新 access token 后回写 MkAgent 凭据存储，并在后续 prompt、mini query 和 query 前同步最新值。
+- 产品边界：内置 connection 只有 Claude、ChatGPT 和 Pi API key；没有 Copilot、Sources/MCP 或 Claude SDK backend。
+
+### 9.2 自动化结果
+
+| 验证 | 结果 |
+|---|---|
+| 普通测试 | 3,176 pass，11 个 Windows-only skip，0 fail |
+| isolated tests | 37 pass，0 fail |
+| `typecheck:all` / `validate:ci` | 通过 |
+| Craft 文件血缘 | 1,332 个 MkAgent 文件；1,246 个同路径；770 个归一化一致；476 个登记差异；86 个 MkAgent-only；619 个审核删除 |
+| Craft UI 血缘 | 283 个归一化一致，101 个逐文件登记差异，384 个 Renderer 文件 |
+| Craft 测试覆盖 | 373 个 Craft 测试全部分类；246 同路径、5 替代、122 随删除能力排除；31 个 case 减少已审核 |
+| lint | 0 error；70 个既有 React Hook warning |
+| Electron / WebUI / CLI / Pi subprocess / headless server build | 通过 |
+
+### 9.3 未执行范围
+
+- 没有使用真实 ChatGPT 或 Claude 账号完成外部 OAuth 登录和实际模型请求；该验证需要用户账号与浏览器交互。
+- 本地桌面自动化命令 `orca` 不可用，因此没有执行设置页点击和 callback 后的 GUI smoke；本轮 UI 结论来自 Craft 文件血缘门禁、Renderer 构建、类型检查和 onboarding/RPC 测试。
+- 没有构建或运行 Windows/Linux 安装包，也没有执行签名、公证与发布验证。

@@ -40,6 +40,7 @@ import type {
   AgentSessionEvent,
   AgentToolResult,
   AuthCredential,
+  AuthStorageBackend,
   CreateAgentSessionOptions,
   ToolDefinition,
 } from '@earendil-works/pi-coding-agent';
@@ -85,7 +86,9 @@ import { applySystemPromptOverride } from './system-prompt-override.ts';
 // ============================================================
 
 /** Credential union used in init and token_update messages */
-type PiCredential = { type: 'api_key'; key: string };
+type PiCredential =
+  | { type: 'api_key'; key: string }
+  | { type: 'oauth'; access: string; refresh: string; expires: number };
 
 /** Custom endpoint protocol — determines which streaming adapter Pi SDK uses */
 type CustomEndpointApi = 'openai-completions' | 'anthropic-messages';
@@ -214,6 +217,12 @@ interface OutboundRuntimeConfigUpdateResult {
   errorMessage?: string;
 }
 interface OutboundSessionIdUpdate { type: 'session_id_update'; sessionId: string }
+interface OutboundOAuthCredentialUpdate {
+  type: 'oauth_credential_update';
+  provider: string;
+  credential: Extract<PiCredential, { type: 'oauth' }>;
+  previousRefresh?: string;
+}
 interface OutboundError { type: 'error'; message: string; code?: string }
 
 type OutboundMessage =
@@ -229,7 +238,49 @@ type OutboundMessage =
   | OutboundSetAutoCompactionResult
   | OutboundRuntimeConfigUpdateResult
   | OutboundSessionIdUpdate
+  | OutboundOAuthCredentialUpdate
   | OutboundError;
+
+class OAuthSyncAuthStorageBackend implements AuthStorageBackend {
+  private value: string | undefined;
+
+  withLock<T>(fn: (current: string | undefined) => { result: T; next?: string }): T {
+    const { result, next } = fn(this.value);
+    if (next !== undefined) {
+      this.value = next;
+    }
+    return result;
+  }
+
+  async withLockAsync<T>(fn: (current: string | undefined) => Promise<{ result: T; next?: string }>): Promise<T> {
+    const previous = this.value;
+    const { result, next } = await fn(previous);
+    if (next !== undefined) {
+      this.value = next;
+      this.sendOAuthCredentialUpdates(previous, next);
+    }
+    return result;
+  }
+
+  private sendOAuthCredentialUpdates(previous: string | undefined, next: string): void {
+    const previousCredentials = previous ? JSON.parse(previous) as Record<string, AuthCredential> : {};
+    const nextCredentials = JSON.parse(next) as Record<string, AuthCredential>;
+
+    for (const [provider, credential] of Object.entries(nextCredentials)) {
+      if (credential.type !== 'oauth') continue;
+
+      const previousCredential = previousCredentials[provider];
+      if (JSON.stringify(previousCredential) === JSON.stringify(credential)) continue;
+
+      send({
+        type: 'oauth_credential_update',
+        provider,
+        credential,
+        previousRefresh: previousCredential?.type === 'oauth' ? previousCredential.refresh : undefined,
+      });
+    }
+  }
+}
 
 // ============================================================
 // State
@@ -476,7 +527,7 @@ function createAuthenticatedRegistry(): {
   // Reuse module-level authStorage if already created (allows token_update to mutate it).
   // Only create a new one on first call or after re-init.
   if (!moduleAuthStorage) {
-    moduleAuthStorage = PiAuthStorage.inMemory();
+    moduleAuthStorage = PiAuthStorage.fromStorage(new OAuthSyncAuthStorageBackend());
   }
   const authStorage = moduleAuthStorage;
   if (initConfig?.piAuth) {
@@ -910,7 +961,7 @@ async function queryLlm(request: LLMQueryRequest): Promise<LLMQueryResult> {
     const resolved = resolvePiModel(modelRegistry, bareModel, authProvider, shouldPreferCustomEndpoint());
     const resolvedProvider = (resolved as any)?.provider;
     const isCompatible = resolvedProvider === authProvider || resolvedProvider === 'custom-endpoint';
-    if (!resolved || !isCompatible || isDeniedMiniModelId(model)) {
+    if (!resolved || !isCompatible || isDeniedMiniModelId(model, piAuthProvider)) {
       // Anthropic: keep Haiku (the cheap/fast mini). For every other provider
       // Haiku is unresolvable, so walk PI_PREFERRED_DEFAULTS for a model that
       // actually works under the user's auth.
@@ -1031,7 +1082,7 @@ async function queryLlm(request: LLMQueryRequest): Promise<LLMQueryResult> {
     'pi/gpt-5-mini',
     initConfig.miniModel,
     getDefaultSummarizationModel(),
-  ].filter((candidate): candidate is string => !!candidate && !isDeniedMiniModelId(candidate));
+  ].filter((candidate): candidate is string => !!candidate && !isDeniedMiniModelId(candidate, piAuthProvider));
 
   const triedModels = new Set<string>();
   let currentModel = model;

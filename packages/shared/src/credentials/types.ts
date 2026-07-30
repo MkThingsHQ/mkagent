@@ -1,6 +1,6 @@
-/** Credential storage types for API-key based model connections. */
+/** Credential storage types for model connections. */
 
-export type CredentialType = 'llm_api_key';
+export type CredentialType = 'llm_api_key' | 'llm_oauth';
 
 const CREDENTIAL_DELIMITER = '::';
 
@@ -11,6 +11,9 @@ export interface CredentialId {
 
 export interface StoredCredential {
   value: string;
+  refreshToken?: string;
+  expiresAt?: number;
+  idToken?: string;
 }
 
 export type CredentialHealthIssueType =
@@ -35,6 +38,6 @@ export function credentialIdToAccount(id: CredentialId): string {
 
 export function accountToCredentialId(account: string): CredentialId | null {
   const [type, connectionSlug, ...rest] = account.split(CREDENTIAL_DELIMITER);
-  if (type !== 'llm_api_key' || !connectionSlug || rest.length > 0) return null;
+  if ((type !== 'llm_api_key' && type !== 'llm_oauth') || !connectionSlug || rest.length > 0) return null;
   return { type, connectionSlug };
 }

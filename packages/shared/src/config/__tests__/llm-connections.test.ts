@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import '../../../tests/setup/register-pi-model-resolver.ts'
 import {
   authTypeRequiresEndpoint,
+  authTypeToCredentialType,
   authTypeToCredentialStorageType,
   defaultMidStreamBehavior,
   generateSlug,
@@ -40,6 +41,8 @@ describe('Pi-only LLM connections', () => {
     expect(authTypeToCredentialStorageType('api_key')).toBe('api_key')
     expect(authTypeToCredentialStorageType('api_key_with_endpoint')).toBe('api_key')
     expect(authTypeToCredentialStorageType('none')).toBeNull()
+    expect(authTypeToCredentialStorageType('oauth')).toBe('oauth')
+    expect(authTypeToCredentialType('oauth')).toBe('oauth_token')
     expect(authTypeRequiresEndpoint('api_key_with_endpoint')).toBe(true)
     expect(authTypeRequiresEndpoint('api_key')).toBe(false)
   })
@@ -70,6 +73,7 @@ describe('Pi-only LLM connections', () => {
     expect(generateSlug('DeepSeek Main')).toBe('deepseek-main')
     expect(isValidProviderAuthCombination('pi', 'api_key')).toBe(true)
     expect(isValidProviderAuthCombination('pi_compat', 'api_key_with_endpoint')).toBe(true)
+    expect(isValidProviderAuthCombination('pi', 'oauth')).toBe(true)
     expect(isValidProviderAuthCombination('pi', 'api_key_with_endpoint')).toBe(false)
   })
 

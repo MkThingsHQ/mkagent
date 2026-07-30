@@ -115,3 +115,31 @@ describe('updateLlmConnection – customEndpoint', () => {
     expect(conn.customEndpoint).toEqual({ api: 'anthropic-messages' })
   })
 })
+
+describe('updateLlmConnection – Anthropic OAuth identity', () => {
+  const identity = {
+    oauthAccountUuid: 'account-1',
+    oauthAccountEmail: 'user@example.test',
+    oauthOrganizationUuid: 'org-1',
+    oauthOrganizationName: 'Example',
+    oauthProfileVerifiedAt: 1_700_000_000_000,
+  }
+
+  it('persists identity fields when provided in updates', () => {
+    const { runUpdate, readConnection } = setup([
+      makeConnection({ slug: 'claude-max', authType: 'oauth' }),
+    ])
+
+    expect(runUpdate('claude-max', identity)).toBe(true)
+    expect(readConnection('claude-max')).toMatchObject(identity)
+  })
+
+  it('preserves identity across an unrelated update', () => {
+    const { runUpdate, readConnection } = setup([
+      makeConnection({ slug: 'claude-max', authType: 'oauth', ...identity }),
+    ])
+
+    expect(runUpdate('claude-max', { name: 'Renamed Claude Max' })).toBe(true)
+    expect(readConnection('claude-max')).toMatchObject({ name: 'Renamed Claude Max', ...identity })
+  })
+})

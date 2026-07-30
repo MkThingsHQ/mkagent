@@ -531,10 +531,12 @@ export class PiAgent extends BaseAgent {
 
   }
 
-  /** Build Pi's provider-aware API-key credential. */
+  /** Build Pi's provider-aware credential. */
   private async getPiAuth(): Promise<{
     provider: string;
-    credential: { type: 'api_key'; key: string };
+    credential:
+      | { type: 'api_key'; key: string }
+      | { type: 'oauth'; access: string; refresh: string; expires: number };
   } | null> {
     const piAuthProvider = getBackendRuntime(this.config).piAuthProvider;
     if (!piAuthProvider) return null;
@@ -542,6 +544,22 @@ export class PiAgent extends BaseAgent {
     try {
       const credentialManager = getCredentialManager();
       const slug = this.config.connectionSlug || 'pi';
+
+      if (this.config.authType === 'oauth') {
+        const oauth = await credentialManager.getLlmOAuth(slug);
+        if (oauth?.accessToken && oauth.refreshToken) {
+          return {
+            provider: piAuthProvider,
+            credential: {
+              type: 'oauth',
+              access: oauth.accessToken,
+              refresh: oauth.refreshToken,
+              expires: oauth.expiresAt ?? 0,
+            },
+          };
+        }
+        return null;
+      }
 
       const apiKey = await credentialManager.getLlmApiKey(slug);
       if (apiKey) {
@@ -554,6 +572,47 @@ export class PiAgent extends BaseAgent {
       this.debug(`Failed to retrieve Pi auth: ${error}`);
       return null;
     }
+  }
+
+  private static readonly oauthPersistChains = new Map<string, Promise<void>>();
+
+  private persistRefreshedOAuthCredential(message: {
+    provider: string;
+    credential: { type: 'oauth'; access: string; refresh: string; expires: number };
+    previousRefresh?: string;
+  }): void {
+    const slug = this.config.connectionSlug;
+    const provider = getBackendRuntime(this.config).piAuthProvider;
+    if (!slug || this.config.authType !== 'oauth' || provider !== message.provider) return;
+
+    const previous = PiAgent.oauthPersistChains.get(slug) ?? Promise.resolve();
+    const current = previous.then(async () => {
+      const credentialManager = getCredentialManager();
+      const stored = await credentialManager.getLlmOAuth(slug);
+      if (stored?.refreshToken && message.previousRefresh && stored.refreshToken !== message.previousRefresh) {
+        const latest = await this.getPiAuth();
+        if (latest) this.send({ type: 'token_update', piAuth: latest });
+        return;
+      }
+      await credentialManager.setLlmOAuth(slug, {
+        accessToken: message.credential.access,
+        refreshToken: message.credential.refresh,
+        expiresAt: message.credential.expires,
+        idToken: stored?.idToken,
+      });
+    });
+    PiAgent.oauthPersistChains.set(slug, current);
+    current.finally(() => {
+      if (PiAgent.oauthPersistChains.get(slug) === current) PiAgent.oauthPersistChains.delete(slug);
+    }).catch(() => {});
+  }
+
+  private async pushLatestOAuthCredential(): Promise<void> {
+    if (this.config.authType !== 'oauth') return;
+    const slug = this.config.connectionSlug;
+    if (slug) await PiAgent.oauthPersistChains.get(slug);
+    const piAuth = await this.getPiAuth();
+    if (piAuth) this.send({ type: 'token_update', piAuth });
   }
 
   /**
@@ -699,6 +758,14 @@ export class PiAgent extends BaseAgent {
           this.piSessionId = msg.sessionId as string;
           this.config.onSdkSessionIdUpdate?.(this.piSessionId!);
         }
+        break;
+
+      case 'oauth_credential_update':
+        this.persistRefreshedOAuthCredential(msg as unknown as {
+          provider: string;
+          credential: { type: 'oauth'; access: string; refresh: string; expires: number };
+          previousRefresh?: string;
+        });
         break;
 
       case 'error': {
@@ -1675,6 +1742,7 @@ export class PiAgent extends BaseAgent {
 
       // Send prompt to subprocess
       const turnId = `turn-${++this.rpcIdCounter}`;
+      await this.pushLatestOAuthCredential();
       this.send({
         type: 'prompt',
         id: turnId,
@@ -2025,6 +2093,7 @@ export class PiAgent extends BaseAgent {
       this.pendingMiniCompletions.set(id, { resolve, reject });
     });
 
+    await this.pushLatestOAuthCredential();
     this.send({ type: 'mini_completion', id, prompt });
 
     // Keep this aligned with the subprocess-side queryLlm timeout.
@@ -2063,6 +2132,7 @@ export class PiAgent extends BaseAgent {
       this.pendingLlmQueries.set(id, { resolve, reject });
     });
 
+    await this.pushLatestOAuthCredential();
     this.send({ type: 'llm_query', id, request });
 
     // Keep this aligned with the subprocess-side queryLlm timeout.

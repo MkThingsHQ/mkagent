@@ -1,6 +1,6 @@
 # MkAgent 文档（中文）
 
-本目录是 MkAgent 用户文档的中文译本，与 [`docs/`](../) 下的英文文档一一对应。MkAgent 是基于 [Craft Agents OSS](https://github.com/craft-ai-agents/craft-agents-oss) `v0.11.2` 派生的本地跨平台 Agent 精简发行版，仅注册 Pi Agent，不包含任何订阅/OAuth 登录、外部消息、Automations、Labels、Projects/Kanban、Sources/MCP、Viewer 或图片生成能力。
+本目录是 MkAgent 用户文档的中文译本，与 [`docs/`](../) 下的英文文档一一对应。MkAgent 是基于 [Craft Agents OSS](https://github.com/craft-ai-agents/craft-agents-oss) `v0.11.2` 派生的本地跨平台 Agent 精简发行版，仅注册 Pi Agent，并通过 Craft 的 OAuth 流程支持 ChatGPT Plus 与 Claude Pro/Max 订阅。MkAgent 不包含 Claude Agent SDK、GitHub Copilot 订阅、外部消息、Automations、Labels、Projects/Kanban、Sources/MCP、Viewer 或图片生成能力。
 
 ## 文档导航
 

@@ -5,6 +5,7 @@ import {
   setupTestRequiresApiKey,
   resolveCustomEndpointSetup,
   createBuiltInConnection,
+  BUILT_IN_CONNECTION_TEMPLATES,
 } from './connection-setup-logic'
 
 describe('validateSetupTestInput', () => {
@@ -115,6 +116,30 @@ describe('resolveCustomEndpointSetup', () => {
 // per-connection submenu in Settings → AI shows a checkmark on the right item
 // out of the box (no read-time fallback needed for fresh connections).
 describe('createBuiltInConnection seeds midStreamBehavior', () => {
+  it('keeps only the two subscription templates and the Pi API key template', () => {
+    expect(Object.keys(BUILT_IN_CONNECTION_TEMPLATES).sort()).toEqual([
+      'chatgpt-plus',
+      'claude-max',
+      'pi-api-key',
+    ])
+  })
+
+  it('routes Claude Max OAuth through Pi with Anthropic auth', () => {
+    const conn = createBuiltInConnection('claude-max')
+    expect(conn.providerType).toBe('pi')
+    expect(conn.authType).toBe('oauth')
+    expect(conn.piAuthProvider).toBe('anthropic')
+    expect(conn.midStreamBehavior).toBe('steer')
+  })
+
+  it('routes ChatGPT Plus OAuth through Pi with openai-codex auth', () => {
+    const conn = createBuiltInConnection('chatgpt-plus')
+    expect(conn.providerType).toBe('pi')
+    expect(conn.authType).toBe('oauth')
+    expect(conn.piAuthProvider).toBe('openai-codex')
+    expect(conn.midStreamBehavior).toBe('steer')
+  })
+
   it("Pi API key (MkAgent Backend) → 'steer'", () => {
     const conn = createBuiltInConnection('pi-api-key')
     expect(conn.providerType).toBe('pi')

@@ -1,5 +1,17 @@
 # MkAgent Craft Lite 功能迁移执行记录
 
+## 2026-07-30：恢复两种 LLM 订阅，保持 Pi-only
+
+本轮边界只恢复 ChatGPT Plus 与 Claude Pro/Max，不恢复 GitHub Copilot 或 Sources/MCP。实现遵循以下闭包：
+
+- OAuth 登录、PKCE、callback page/server、provider 配置和订阅 UI 直接复用 Craft 同路径源码；仅替换 MkAgent 品牌与宿主接线。
+- 两种连接的 `providerType` 都是 `pi`。ChatGPT 使用 `piAuthProvider: openai-codex`，Claude 使用 `piAuthProvider: anthropic`；仓库不新增 `@anthropic-ai/claude-agent-sdk`。
+- 安全存储保留 access token、refresh token、expiry 与可选 ID token。父进程把完整 OAuth credential 传给 Pi；Pi 自动刷新后通过子进程协议回传，父进程按 connection slug 串行写回。
+- Desktop 负责 ChatGPT localhost callback；Claude 继续使用 Craft 的手工 authorization-code 流程。WebUI 可以复用已存储凭证，但不发起 ChatGPT localhost 登录。
+- 设置与 onboarding 只显示 Claude、ChatGPT、API key 和本地模型入口；没有 Copilot 或 Sources 入口、RPC、依赖与资源。
+
+审查仍使用 [`migration-audit.md`](./migration-audit.md) 的逐文件血缘、UI 同步、测试覆盖、类型检查、全量测试、lint 与构建门禁。
+
 ## 1. 文档目的
 
 本文记录 MkAgent 从“Craft Agent 的 MVP/Lite 实现”到“代码、功能、UI、架构均以 Craft 源码为基础做减法”的完整执行过程，说明本轮如何清理被隐藏但未删除的功能、验证源码继承关系、补齐会话运行时，以及建立与 Craft 对齐的测试和验收边界。

@@ -137,6 +137,18 @@ export const BUILT_IN_CONNECTION_TEMPLATES: Record<string, {
   authType: LlmConnection['authType'] | ((hasCustomEndpoint: boolean) => LlmConnection['authType'])
   piAuthProvider?: string
 }> = {
+  'claude-max': {
+    name: 'Claude Max',
+    providerType: 'pi',
+    authType: 'oauth',
+    piAuthProvider: 'anthropic',
+  },
+  'chatgpt-plus': {
+    name: 'ChatGPT Plus',
+    providerType: 'pi',
+    authType: 'oauth',
+    piAuthProvider: 'openai-codex',
+  },
   'pi-api-key': {
     name: 'MkAgent Backend (API Key)',
     providerType: 'pi',
@@ -152,6 +164,7 @@ export const BUILT_IN_CONNECTION_TEMPLATES: Record<string, {
 const PI_AUTH_PROVIDER_DISPLAY_NAMES: Record<string, string> = {
   anthropic: 'Anthropic',
   openai: 'OpenAI',
+  'openai-codex': 'OpenAI',
   google: 'Google AI Studio',
   openrouter: 'OpenRouter',
   'azure-openai-responses': 'Azure OpenAI',

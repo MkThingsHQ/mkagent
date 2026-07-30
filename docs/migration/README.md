@@ -3,7 +3,7 @@
 本目录记录 MkAgent 从零起步，基于 [Craft Agents OSS](https://github.com/craft-ai-agents/craft-agents-oss) `v0.11.2` / `a60ebc1a5a7c` 派生 Lite 产品的完整迁移过程，包含产品边界、阶段计划、UI 对齐、功能裁剪、代码审计与质量验证。
 
 - **上游基线**：`craft-agents-oss` `v0.11.2` / `a60ebc1a5a7c`
-- **产品定位**：Pi-only 的本地跨平台 Agent Lite 发行版，保留 Craft 架构、UI 组件和 Pi Agent，删除订阅/OAuth、外部 Messaging、Automations、Labels、Projects/Kanban、Sources/MCP、Viewer、图片生成等完整产品功能面。
+- **产品定位**：Pi-only 的本地跨平台 Agent Lite 发行版，保留 Craft 架构、UI 组件和 Pi Agent；恢复 ChatGPT Plus 与 Claude Pro/Max 两种 LLM 订阅 OAuth，但继续删除 Claude Agent SDK、GitHub Copilot、Sources/MCP、外部 Messaging、Automations、Labels、Projects/Kanban、Viewer、图片生成等产品功能面。
 - **代码来源**：96.0% 与 Craft 同路径，59.0% 在最小归一化（包 scope、协议、数据目录、品牌字符串）后完全一致；其余为 Lite 裁剪、品牌替换、Pi-only 接线与恢复的上游测试。
 
 ## 阅读顺序建议
@@ -66,7 +66,7 @@
 | 主题 | 决策 |
 | --- | --- |
 | Agent backend | 仅注册 `pi`，自定义协议与 Ollama 都是 Pi 连接变体 |
-| 鉴权 | 仅 API key 与无鉴权 Ollama；物理删除订阅/OAuth 全栈 |
+| 鉴权 | API key、无鉴权 Ollama、ChatGPT Plus OAuth、Claude Pro/Max OAuth；OAuth credential 统一交给 Pi，刷新结果回写安全存储 |
 | 仓库 | 源码 `open-fox/mkagent`（private），发布产物 `open-fox/mkagent-public`（public） |
 | 数据目录 | `~/.mkagent`，仅 `MKAGENT_CONFIG_DIR` 可覆盖，不读取或迁移其他产品 |
 | 默认 workspace | slug 为 `default`，首次启动统一 `ensureDefaultWorkspace()` |
@@ -76,7 +76,7 @@
 | i18n | 仅 `en` 与 `zh-Hans` |
 | Sentry | 与 craft 对齐；`SENTRY_ELECTRON_INGEST_URL` 存在时启用；不增加设置开关；source map 不上传 |
 | 自动更新 | `electron-updater` + `open-fox/mkagent-public` GitHub provider；客户端不含 token |
-| 排除功能 | Claude backend、订阅/OAuth、外部 Messaging、Automations、Labels、自定义 Statuses、Projects/Kanban、Sources/MCP、Viewer/公开分享、Session transfer、远程 Workspace 产品绑定、图片生成模型 |
+| 排除功能 | Claude Agent SDK backend、GitHub Copilot、两种 LLM 订阅以外的 OAuth、外部 Messaging、Automations、Labels、自定义 Statuses、Projects/Kanban、Sources/MCP、Viewer/公开分享、Session transfer、远程 Workspace 产品绑定、图片生成模型 |
 
 ## 复现命令
 

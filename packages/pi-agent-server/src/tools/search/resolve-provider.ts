@@ -15,7 +15,9 @@ import { ResponsesApiSearchProvider } from './providers/openai.ts';
 import { GoogleSearchProvider } from './providers/google.ts';
 import { DDGSearchProvider } from './providers/ddg.ts';
 
-export type SearchProviderCredential = { type: 'api_key'; key: string };
+export type SearchProviderCredential =
+  | { type: 'api_key'; key: string }
+  | { type: 'oauth'; access: string; refresh: string; expires: number };
 
 export interface SearchProviderAuthConfig {
   provider?: string;

@@ -6,12 +6,14 @@
 
 | 形式 | Provider 预设 | 备注 |
 |---|---|---|
+| ChatGPT Plus | `openai-codex` | 复用 Craft ChatGPT OAuth，由 Pi 执行 |
+| Claude Pro/Max | `anthropic` | 复用 Craft Claude OAuth，由 Pi 执行 |
 | Pi provider 预设 | `@earendil-works/pi-ai` 0.80.6 自带的全部 preset(anthropic、openai、google、deepseek、xai、mistral、groq、openrouter 等) | 通过 API key 鉴权 |
 | 自定义 `openai-completions` | 用户自行提供 base URL | API key 可选(Ollama 留空) |
 | 自定义 `anthropic-messages` | 用户自行提供 base URL | API key 可选 |
 | 本地 Ollama | `http://127.0.0.1:11434/v1` | 无鉴权,使用 OpenAI-completions 协议 |
 
-订阅 / OAuth(Anthropic Max、ChatGPT Plus、GitHub Copilot、Craft gateway)被刻意不支持;没有 token refresh、callback server、deep-link 处理器。
+GitHub Copilot、Craft gateway、Sources OAuth 与通用 OAuth 连接仍不支持。两种保留订阅复用 Craft 的 OAuth 实现；项目不安装 Claude Agent SDK 或 Copilot SDK。
 
 ## 连接类型 vs 认证类型
 
@@ -20,13 +22,15 @@
 | 字段 | 取值 | 决定 |
 |---|---|---|
 | `providerType` | `pi`、`pi_compat` | Pi 用哪种传输方式去访问模型 |
-| `authType` | `api_key`、`api_key_with_endpoint`、`none` | 凭证如何提供 |
+| `authType` | `oauth`、`api_key`、`api_key_with_endpoint`、`none` | 凭证如何提供 |
 | `customEndpoint.api` | `openai-completions`、`anthropic-messages` | `pi_compat` 用哪种 HTTP 协议 |
 
 `pi` 是 Pi 的原生传输:Pi SDK 内置认识 OpenAI、Anthropic、Google、DeepSeek、xAI、Mistral、Groq、OpenRouter 等 provider。`pi_compat` 给其他所有情况(Ollama、vLLM、DashScope、Azure OpenAI 部署、私有网关)用,必须额外给一个 `baseUrl`,并指定走哪种通用协议。`authType` 只描述随请求一起带过去的凭证。上面那张"支持的连接形式"表格里的 4 种形式,可以重新对应到这三个字段:
 
 | 形式 | `providerType` | `authType` | `customEndpoint.api` |
 |---|---|---|---|
+| ChatGPT Plus | `pi` | `oauth` | — |
+| Claude Pro/Max | `pi` | `oauth` | — |
 | Pi provider 预设 | `pi` | `api_key` | — |
 | 自定义 `openai-completions` | `pi_compat` | `api_key_with_endpoint` | `openai-completions` |
 | 自定义 `anthropic-messages` | `pi_compat` | `api_key_with_endpoint` | `anthropic-messages` |
@@ -44,6 +48,19 @@
   "piAuthProvider": "anthropic"
 }
 ```
+
+ChatGPT Plus 通过 Pi OAuth 运行:
+
+```json
+{
+  "slug": "chatgpt-plus",
+  "providerType": "pi",
+  "authType": "oauth",
+  "piAuthProvider": "openai-codex"
+}
+```
+
+Claude Pro/Max 使用相同结构，`slug` 为 `claude-max`，`piAuthProvider` 为 `anthropic`。
 
 通过自定义端点访问 DeepSeek:
 
@@ -88,8 +105,8 @@
 ## 凭证生命周期
 
 ```text
-Settings UI
-   │  form: name, baseUrl, protocol, apiKey
+Settings UI / Craft OAuth flow
+   │  API key 或 OAuth access + refresh + expiry
    ▼
 @mkagent/shared/credentials
    │  持久化到 OS keychain(Keychain / libsecret / Credential Vault)
@@ -97,7 +114,10 @@ Settings UI
 连接记录(不存明文 key)
    │
    ▼
-运行时:Pi SDK provider 取凭证引用
+运行时:完整凭证注入 Pi AuthStorage
+   │
+   ▼
+Pi 刷新:新 OAuth 凭证回传父进程并持久化
 ```
 
 删除一条连接时,如果其他连接仍在使用,凭证引用不会被清除。测试通过注入假的凭证 provider,绝不真写 keychain;见 `packages/shared/src/credentials/__tests__/`。
@@ -110,7 +130,7 @@ Settings UI
 
 ## 刻意不实现的部分
 
-`authType` 目前只允许 API key、带端点的 API key,以及 none。OAuth 登录(Anthropic Max、ChatGPT Plus、GitHub Copilot、Craft gateway)被刻意不支持,因此没有 token refresh、callback server、deep-link 处理器。要补 OAuth 需要扩展 `LlmAuthType` 枚举、在 `CredentialManager` 增加 OAuth token 存储路径,以及为每个 provider 加刷新逻辑;feature-matrix 上下文参见 `docs/zh/comparison-with-craft.md`。
+OAuth 仅限 ChatGPT Plus 与 Claude Pro/Max。GitHub Copilot、Craft gateway、Sources OAuth、通用 OAuth provider 与 Claude Agent SDK 仍物理删除。Desktop 负责 ChatGPT localhost callback；WebUI 可以使用已经存储的 ChatGPT 订阅，但不能发起新的 ChatGPT 登录。
 
 ## 在 CLI 中验证连接
 

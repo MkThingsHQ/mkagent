@@ -41,7 +41,11 @@ interface OnboardingWizardProps {
   onBack: () => void
   onSelectApiSetupMethod: (method: ApiSetupMethod) => void
   onSubmitCredential: (data: ApiKeySubmitData) => void
+  onStartOAuth?: (methodOverride?: ApiSetupMethod) => void
   onFinish: () => void
+  isWaitingForCode?: boolean
+  onSubmitAuthCode?: (code: string) => void
+  onCancelOAuth?: () => void
 
   // Git Bash (Windows)
   onBrowseGitBash?: () => Promise<string | null>
@@ -75,7 +79,7 @@ interface OnboardingWizardProps {
  *
  * Manages the step-by-step flow for setting up MkAgent:
  * 1. Welcome
- * 2. Provider Select (API key or local/custom endpoint)
+ * 2. Provider Select (subscriptions, API key, or local/custom endpoint)
  * 3. Credentials or local model
  * 4. Completion
  */
@@ -85,7 +89,11 @@ export function OnboardingWizard({
   onBack,
   onSelectApiSetupMethod,
   onSubmitCredential,
+  onStartOAuth,
   onFinish,
+  isWaitingForCode,
+  onSubmitAuthCode,
+  onCancelOAuth,
   // Git Bash (Windows)
   onBrowseGitBash,
   onUseGitBashPath,
@@ -150,7 +158,11 @@ export function OnboardingWizard({
             status={state.credentialStatus}
             errorMessage={state.errorMessage}
             onSubmit={onSubmitCredential}
+            onStartOAuth={onStartOAuth}
             onBack={onBack}
+            isWaitingForCode={isWaitingForCode}
+            onSubmitAuthCode={onSubmitAuthCode}
+            onCancelOAuth={onCancelOAuth}
             editInitialValues={editInitialValues}
           />
         )

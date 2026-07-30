@@ -82,7 +82,8 @@ After any sync, both files **must** be regenerated and reviewed. The intent is t
 
 ## What is not eligible for sync
 
-- Claude backend, Claude OAuth/subscription, and the `claude-agent-sdk*` packages
+- Claude Agent SDK backend and the `claude-agent-sdk*` packages; keep the retained Claude OAuth flow routed through Pi
+- GitHub Copilot, generic / Sources OAuth, and their SDKs
 - External messaging gateway and workers
 - Sources, MCP server, bridge MCP server, MCP-related UI
 - Image generation models and `gen_image`

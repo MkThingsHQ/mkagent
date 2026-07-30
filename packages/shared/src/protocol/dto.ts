@@ -176,6 +176,11 @@ export interface FileAttachment {
 export interface SessionFile { name: string; path: string; type: 'file' | 'directory'; size?: number; children?: SessionFile[] }
 export interface FileSearchResult { name: string; path: string; type: 'file' | 'directory'; relativePath: string }
 
+export interface ClaudeOAuthIdentityDto {
+  account?: { uuid?: string; emailAddress?: string };
+  organization?: { uuid?: string; name?: string };
+}
+
 export interface LlmConnectionSetup {
   slug: string;
   credential?: string;
@@ -186,6 +191,7 @@ export interface LlmConnectionSetup {
   modelSelectionMode?: 'automaticallySyncedFromProvider' | 'userDefined3Tier';
   updateOnly?: boolean;
   customEndpoint?: CustomEndpointConfig;
+  oauthIdentity?: ClaudeOAuthIdentityDto;
 }
 export interface TestLlmConnectionParams {
   provider: 'pi';
@@ -196,6 +202,12 @@ export interface TestLlmConnectionParams {
   customEndpoint?: CustomEndpointConfig;
 }
 export interface TestLlmConnectionResult { success: boolean; error?: string }
+export interface ClaudeOAuthResult {
+  success: boolean;
+  token?: string;
+  error?: string;
+  identity?: ClaudeOAuthIdentityDto;
+}
 export interface SkillFile { name: string; type: 'file' | 'directory'; size?: number; children?: SkillFile[] }
 export interface SessionSearchMatch { sessionId: string; lineNumber: number; snippet: string }
 export interface SessionSearchResult { sessionId: string; matchCount: number; matches: SessionSearchMatch[] }

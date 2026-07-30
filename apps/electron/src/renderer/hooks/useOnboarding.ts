@@ -19,7 +19,7 @@ import type { ProviderChoice } from '@/components/onboarding/ProviderSelectStep'
 import type { LocalModelSubmitData } from '@/components/onboarding/LocalModelStep'
 import type { ApiKeySubmitData } from '@/components/apisetup'
 import type { CustomEndpointConfig } from '@config/llm-connections'
-import type { SetupNeeds, LlmConnectionSetup } from '../../shared/types'
+import type { SetupNeeds, LlmConnectionSetup, ClaudeOAuthIdentityDto } from '../../shared/types'
 
 interface UseOnboardingOptions {
   /** Called when onboarding is complete */
@@ -57,6 +57,10 @@ interface UseOnboardingReturn {
 
   // Credentials
   handleSubmitCredential: (data: ApiKeySubmitData) => void
+  handleStartOAuth: (methodOverride?: ApiSetupMethod, connectionSlugOverride?: string) => void
+  isWaitingForCode: boolean
+  handleSubmitAuthCode: (code: string) => void
+  handleCancelOAuth: () => void
 
   // Local model
   handleSubmitLocalModel: (data: LocalModelSubmitData) => void
@@ -82,6 +86,8 @@ interface UseOnboardingReturn {
 
 // Base slug for each setup method (used as template key in ipc.ts)
 export const BASE_SLUG_FOR_METHOD: Record<ApiSetupMethod, string> = {
+  claude_oauth: 'claude-max',
+  pi_chatgpt_oauth: 'chatgpt-plus',
   pi_api_key: 'pi-api-key',
 }
 
@@ -130,22 +136,16 @@ export function apiSetupMethodToConnectionSetup(
     piAuthProvider?: string
     modelSelectionMode?: 'automaticallySyncedFromProvider' | 'userDefined3Tier'
     customEndpoint?: CustomEndpointConfig
+    oauthIdentity?: ClaudeOAuthIdentityDto
   },
   editingSlug: string | null,
   existingSlugs: Set<string>,
 ): LlmConnectionSetup {
   const slug = resolveSlugForMethod(method, editingSlug, existingSlugs)
 
-  return {
-    slug,
-    credential: options.credential,
-    baseUrl: options.baseUrl,
-    defaultModel: options.connectionDefaultModel,
-    models: options.models,
-    piAuthProvider: options.piAuthProvider,
-    modelSelectionMode: options.modelSelectionMode,
-    customEndpoint: options.customEndpoint,
-  }
+  if (method === 'claude_oauth') return { slug, credential: options.credential, oauthIdentity: options.oauthIdentity }
+  if (method === 'pi_chatgpt_oauth') return { slug, credential: options.credential }
+  return { slug, credential: options.credential, baseUrl: options.baseUrl, defaultModel: options.connectionDefaultModel, models: options.models, piAuthProvider: options.piAuthProvider, modelSelectionMode: options.modelSelectionMode, customEndpoint: options.customEndpoint }
 }
 
 export function useOnboarding({
@@ -158,6 +158,7 @@ export function useOnboarding({
   editingSlug = null,
   existingSlugs = new Set(),
 }: UseOnboardingOptions): UseOnboardingReturn {
+  const [isWaitingForCode, setIsWaitingForCode] = useState(false)
   // Main wizard state
   const [state, setState] = useState<OnboardingState>({
     step: initialStep,
@@ -205,6 +206,7 @@ export function useOnboarding({
       piAuthProvider?: string
       modelSelectionMode?: 'automaticallySyncedFromProvider' | 'userDefined3Tier'
       customEndpoint?: CustomEndpointConfig
+      oauthIdentity?: ClaudeOAuthIdentityDto
     },
     methodOverride?: ApiSetupMethod,
     connectionSlugOverride?: string,
@@ -227,6 +229,7 @@ export function useOnboarding({
         piAuthProvider: options?.piAuthProvider,
         modelSelectionMode: options?.modelSelectionMode,
         customEndpoint: options?.customEndpoint,
+        oauthIdentity: options?.oauthIdentity,
       }, connectionSlugOverride ?? editingSlug, existingSlugs)
       // Use new unified API
       const result = await window.electronAPI.setupLlmConnection(
@@ -411,20 +414,105 @@ export function useOnboarding({
     }
   }, [handleSaveConfig, state.apiSetupMethod])
 
-  // Map retained provider choices to the Pi connection flow
+  const saveAndValidateConnection = useCallback(async (
+    connectionSlug: string,
+    method: ApiSetupMethod,
+    credential?: string,
+    updateOnly?: boolean,
+    oauthIdentity?: ClaudeOAuthIdentityDto,
+  ) => {
+    const saved = await handleSaveConfig(
+      credential,
+      oauthIdentity ? { oauthIdentity } : undefined,
+      method,
+      connectionSlug,
+      updateOnly,
+    )
+    if (!saved) {
+      setState(s => ({ ...s, credentialStatus: 'error' }))
+      return false
+    }
+    const testResult = await window.electronAPI.testLlmConnection(connectionSlug)
+    if (testResult.success) {
+      setState(s => ({ ...s, credentialStatus: 'success', step: 'complete' }))
+      return true
+    }
+    setState(s => ({ ...s, credentialStatus: 'error', errorMessage: testResult.error || 'Connection test failed' }))
+    return false
+  }, [handleSaveConfig])
+
+  const handleStartOAuth = useCallback(async (methodOverride?: ApiSetupMethod, connectionSlugOverride?: string) => {
+    const method = methodOverride ?? state.apiSetupMethod
+    if (method !== 'claude_oauth' && method !== 'pi_chatgpt_oauth') return
+    setState(s => ({ ...s, credentialStatus: 'validating', errorMessage: undefined }))
+    try {
+      const targetSlug = resolveSlugForMethod(method, connectionSlugOverride ?? editingSlug, existingSlugs)
+      if (method === 'pi_chatgpt_oauth') {
+        const result = await window.electronAPI.startChatGptOAuth(targetSlug)
+        if (result.success) {
+          await saveAndValidateConnection(targetSlug, method, undefined, Boolean(connectionSlugOverride ?? editingSlug))
+        } else {
+          setState(s => ({ ...s, credentialStatus: 'error', errorMessage: result.error || 'ChatGPT authentication failed' }))
+        }
+        return
+      }
+      const result = await window.electronAPI.startClaudeOAuth()
+      if (result.success) {
+        setIsWaitingForCode(true)
+        setState(s => ({ ...s, credentialStatus: 'idle' }))
+      } else {
+        setState(s => ({ ...s, credentialStatus: 'error', errorMessage: result.error || 'Failed to start OAuth' }))
+      }
+    } catch (error) {
+      setState(s => ({ ...s, credentialStatus: 'error', errorMessage: error instanceof Error ? error.message : 'OAuth failed' }))
+    }
+  }, [state.apiSetupMethod, editingSlug, existingSlugs, saveAndValidateConnection])
+
+  const handleSubmitAuthCode = useCallback(async (code: string) => {
+    if (!code.trim()) {
+      setState(s => ({ ...s, credentialStatus: 'error', errorMessage: 'Please enter the authorization code' }))
+      return
+    }
+    setState(s => ({ ...s, credentialStatus: 'validating', errorMessage: undefined }))
+    const targetSlug = resolveSlugForMethod('claude_oauth', editingSlug, existingSlugs)
+    try {
+      const result = await window.electronAPI.exchangeClaudeCode(code.trim(), targetSlug)
+      if (result.success && result.token) {
+        setIsWaitingForCode(false)
+        await saveAndValidateConnection(targetSlug, 'claude_oauth', result.token, Boolean(editingSlug), result.identity)
+      } else {
+        setState(s => ({ ...s, credentialStatus: 'error', errorMessage: result.error || 'Failed to exchange code' }))
+      }
+    } catch (error) {
+      setState(s => ({ ...s, credentialStatus: 'error', errorMessage: error instanceof Error ? error.message : 'Failed to exchange code' }))
+    }
+  }, [editingSlug, existingSlugs, saveAndValidateConnection])
+
+  const handleCancelOAuth = useCallback(async () => {
+    setIsWaitingForCode(false)
+    setState(s => ({ ...s, credentialStatus: 'idle', errorMessage: undefined }))
+    await window.electronAPI.clearClaudeOAuthState()
+  }, [])
+
   const handleSelectProvider = useCallback((choice: ProviderChoice) => {
     if (choice === 'local') {
       setState(s => ({ ...s, step: 'local-model', apiSetupMethod: 'pi_api_key', credentialStatus: 'idle', errorMessage: undefined }))
       return
     }
+    const method: ApiSetupMethod = choice === 'claude'
+      ? 'claude_oauth'
+      : choice === 'chatgpt'
+        ? 'pi_chatgpt_oauth'
+        : 'pi_api_key'
     setState(s => ({
       ...s,
-      apiSetupMethod: 'pi_api_key',
+      apiSetupMethod: method,
       step: 'credentials',
       credentialStatus: 'idle',
       errorMessage: undefined,
     }))
-  }, [])
+    if (choice === 'claude' || choice === 'chatgpt') setTimeout(() => handleStartOAuth(method), 0)
+  }, [handleStartOAuth])
 
   // Submit local model configuration (Ollama or any OpenAI-compatible local server)
   const handleSubmitLocalModel = useCallback(async (data: LocalModelSubmitData) => {
@@ -548,6 +636,10 @@ export function useOnboarding({
     handleSelectProvider,
     handleSelectApiSetupMethod,
     handleSubmitCredential,
+    handleStartOAuth,
+    isWaitingForCode,
+    handleSubmitAuthCode,
+    handleCancelOAuth,
     handleSubmitLocalModel,
     // Git Bash (Windows)
     handleBrowseGitBash,

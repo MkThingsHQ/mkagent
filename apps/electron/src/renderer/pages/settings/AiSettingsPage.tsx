@@ -570,9 +570,11 @@ function WorkspaceOverrideCard({ workspace, llmConnections, onSettingsChange }: 
 // Helpers
 // ============================================
 
-/** Map a connection's provider type to the corresponding API key setup method. */
+/** Map a connection to its retained setup method. */
 function getApiKeyMethodForConnection(conn: LlmConnectionWithStatus): ApiSetupMethod {
-  void conn
+  if (conn.authType === 'oauth') {
+    return conn.piAuthProvider === 'anthropic' ? 'claude_oauth' : 'pi_chatgpt_oauth'
+  }
   return 'pi_api_key'
 }
 
@@ -1170,6 +1172,10 @@ export default function AiSettingsPage() {
                   onSelectProvider={apiSetupOnboarding.handleSelectProvider}
                   onSelectApiSetupMethod={apiSetupOnboarding.handleSelectApiSetupMethod}
                   onSubmitCredential={apiSetupOnboarding.handleSubmitCredential}
+                  onStartOAuth={apiSetupOnboarding.handleStartOAuth}
+                  isWaitingForCode={apiSetupOnboarding.isWaitingForCode}
+                  onSubmitAuthCode={apiSetupOnboarding.handleSubmitAuthCode}
+                  onCancelOAuth={apiSetupOnboarding.handleCancelOAuth}
                   onSubmitLocalModel={apiSetupOnboarding.handleSubmitLocalModel}
                   onFinish={handleApiSetupFinish}
                   editInitialValues={editInitialValues}

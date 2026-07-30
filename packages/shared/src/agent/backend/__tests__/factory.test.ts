@@ -48,6 +48,11 @@ describe('Pi-only backend registry', () => {
     expect(connectionAuthTypeToBackendAuthType('api_key_with_endpoint')).toBe('api_key_with_endpoint');
   });
 
+  it('passes OAuth through to the Pi backend', () => {
+    expect(connectionAuthTypeToBackendAuthType('oauth')).toBe('oauth');
+    expect(detectProvider('oauth')).toBe('pi');
+  });
+
   it('maps no-auth connections to undefined credentials', () => {
     expect(connectionAuthTypeToBackendAuthType('none')).toBeUndefined();
   });

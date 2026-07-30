@@ -49,7 +49,7 @@
 | 维度 | MkAgent | Craft Agents |
 |---|---|---|
 | 已注册的 `AgentBackend` | 仅 `pi` | `pi`、`claude-agent-sdk`，外加可选的 **Copilot / gateway** 订阅 |
-| 鉴权模型 | API key + 自定义端点 + Ollama（Pi 传输） | API key + 自定义 + **OAuth（Anthropic、OpenAI、GitHub Copilot、Google Workspace、Slack、Microsoft）** + 订阅流程 + gateway |
+| 鉴权模型 | API key + 自定义端点 + Ollama + **ChatGPT/Claude 订阅 OAuth**，全部通过 Pi | API key + 自定义 + **OAuth（Anthropic、OpenAI、GitHub Copilot、Google Workspace、Slack、Microsoft）** + 订阅流程 + gateway |
 | 子进程模型 | `packages/pi-agent-server` 作为 Bun 子进程运行；通过 JSONL on stdio 通信 | Pi 子进程（同）**外加** SDK 子进程（`@anthropic-ai/claude-agent-sdk-binary`，每个平台架构约 217 MB 的 native `claude` 二进制）**外加** bridge/session MCP server **外加** WhatsApp worker 子进程 |
 | 内置传输 | OpenAI-兼容、Anthropic-兼容、Ollama（Pi `0.80.6`） | 同上，外加 Anthropic SDK 直连模式与 Copilot SDK 模式 |
 | 图片生成 | ❌（已删除；图片附件仍支持） | ✅（`gen_image` 模型 + 工具） |
@@ -123,7 +123,9 @@
 | Mini chat、`EditPopover`、mini model、标题与摘要 | ✅ | ✅ |
 | 主题预设、亮/暗/跟随系统、i18n（`en`、`zh-Hans`） | ✅（继承 Craft 的 15 个主题） | ✅（同） |
 | Tool icons、默认权限、"What's New" 公告 | ✅ | ✅ |
-| Claude backend、Claude OAuth/订阅 | ❌ | ✅ |
+| Claude Agent SDK backend | ❌ | ✅ |
+| Claude Pro/Max OAuth 订阅 | ✅（Pi） | ✅（默认 Claude SDK） |
+| ChatGPT Plus OAuth 订阅 | ✅（Pi） | ✅（Pi） |
 | GitHub Copilot SDK + OAuth 订阅 | ❌ | ✅ |
 | 外部 messaging gateway + WhatsApp / Slack / Lark worker | ❌ | ✅ |
 | Sources（API Source、MCP Source、MCP pool），Source OAuth 流程 | ❌ | ✅ |
@@ -133,7 +135,8 @@
 | 产品 Automations / scheduler / 周期任务 | ❌ | ✅ |
 | 会话 labels + 用户自定义 status（设置 UI） | ❌ | ✅ |
 | Projects / Kanban | ❌ | ✅ |
-| 由 Claude / gateway 提供的 OAuth callback server、deep link | ❌ | ✅ |
+| LLM 订阅 OAuth callback | ✅（ChatGPT Desktop callback；Claude code flow） | ✅ |
+| 通用 / Sources / gateway OAuth | ❌ | ✅ |
 | 图片生成（`gen_image` 工具 + provider 路由） | ❌ | ✅ |
 
 ## 6. 测试 / typecheck / lint 覆盖率差异

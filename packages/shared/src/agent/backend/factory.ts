@@ -241,6 +241,7 @@ export function connectionAuthTypeToBackendAuthType(
   switch (authType) {
     case 'api_key':
     case 'api_key_with_endpoint':
+    case 'oauth':
       // Pass through API-key auth types that Pi handles.
       return authType;
     case 'none':

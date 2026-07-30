@@ -10,7 +10,7 @@ export function registerPiModelResolver(resolver: PiModelResolver): void {
 }
 
 export type LlmProviderType = 'pi' | 'pi_compat';
-export type LlmAuthType = 'api_key' | 'api_key_with_endpoint' | 'none';
+export type LlmAuthType = 'api_key' | 'api_key_with_endpoint' | 'oauth' | 'none';
 export type ModelSelectionMode = 'automaticallySyncedFromProvider' | 'userDefined3Tier';
 export type CustomEndpointApi = 'openai-completions' | 'anthropic-messages';
 export type MidStreamBehavior = 'steer' | 'queue';
@@ -32,6 +32,11 @@ export interface LlmConnection {
   piAuthProvider?: string;
   customEndpoint?: CustomEndpointConfig;
   midStreamBehavior?: MidStreamBehavior;
+  oauthAccountUuid?: string;
+  oauthAccountEmail?: string;
+  oauthOrganizationUuid?: string;
+  oauthOrganizationName?: string;
+  oauthProfileVerifiedAt?: number;
   createdAt: number;
   lastUsedAt?: number;
 }
@@ -42,9 +47,14 @@ export interface LlmConnectionWithStatus extends LlmConnection {
   isDefault?: boolean;
 }
 
-/** Pi rejects this stale alias even for API-key connections. */
-export function isDeniedMiniModelId(modelId: string): boolean {
+/**
+ * Returns true when `modelId` must not be used as the mini/summarization model.
+ * `codex-mini-latest` is always denied. ChatGPT subscription auth also rejects
+ * every `*codex-mini*` variant, while regular OpenAI API keys remain unaffected.
+ */
+export function isDeniedMiniModelId(modelId: string, piAuthProvider?: string): boolean {
   const bare = modelId.startsWith('pi/') ? modelId.slice(3) : modelId;
+  if (piAuthProvider === 'openai-codex' && bare.includes('codex-mini')) return true;
   return bare === 'codex-mini-latest';
 }
 
@@ -58,7 +68,7 @@ function findSmallModel(
     typeof model === 'string'
       ? model.toLowerCase()
       : `${model.id} ${model.name} ${model.shortName}`.toLowerCase();
-  const allowed = connection.models.filter(model => !isDeniedMiniModelId(idOf(model)));
+  const allowed = connection.models.filter(model => !isDeniedMiniModelId(idOf(model), connection.piAuthProvider));
   const preferred = allowed.find(model =>
     ['mini', 'haiku', 'flash'].some(keyword => searchText(model).includes(keyword))
   );
@@ -90,14 +100,16 @@ export function getLlmCredentialKey(slug: string): string {
   return `llm::${slug}::api_key`;
 }
 
-export type LlmCredentialStorageType = 'api_key' | null;
+export type LlmCredentialStorageType = 'api_key' | 'oauth' | null;
 
 export function authTypeToCredentialStorageType(authType: LlmAuthType): LlmCredentialStorageType {
-  return authType === 'none' ? null : 'api_key';
+  if (authType === 'none') return null;
+  return authType === 'oauth' ? 'oauth' : 'api_key';
 }
 
-export function authTypeToCredentialType(authType: LlmAuthType): 'api_key' | null {
-  return authTypeToCredentialStorageType(authType);
+export function authTypeToCredentialType(authType: LlmAuthType): 'api_key' | 'oauth_token' | null {
+  if (authType === 'oauth') return 'oauth_token';
+  return authType === 'none' ? null : 'api_key';
 }
 
 export function authTypeRequiresEndpoint(authType: LlmAuthType): boolean {
@@ -182,6 +194,7 @@ export const PI_PREFERRED_DEFAULTS: Record<string, string[]> = {
     'claude-sonnet-4-6',
     'claude-haiku-4-5',
   ],
+  'openai-codex': ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.2', 'gpt-5.1'],
   openai: ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.2', 'gpt-5.1'],
   google: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3-flash-preview'],
   deepseek: ['deepseek-v4-pro', 'deepseek-v4-flash'],
@@ -233,6 +246,6 @@ export function isValidProviderAuthCombination(
   authType: LlmAuthType,
 ): boolean {
   return providerType === 'pi'
-    ? authType === 'api_key'
+    ? authType === 'api_key' || authType === 'oauth'
     : authType === 'api_key_with_endpoint' || authType === 'none';
 }

@@ -82,7 +82,8 @@ MkAgent 工作期间,参考 checkout(`../craft-agents-oss`、`../echo`、`../xag
 
 ## 不允许同步的内容
 
-- Claude backend、Claude OAuth / 订阅、`claude-agent-sdk*` 包
+- Claude Agent SDK backend 与 `claude-agent-sdk*` 包；保留的 Claude OAuth 必须继续通过 Pi
+- GitHub Copilot、通用 / Sources OAuth 及其 SDK
 - 外部 messaging gateway 与 worker
 - Sources、MCP server、bridge MCP server、相关 UI
 - 图片生成模型与 `gen_image`

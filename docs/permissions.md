@@ -42,7 +42,7 @@ The engine is shared by Electron and headless server. The renderer is the only p
 | Browser actions | same-origin and explicit cross-origin list | cookie writes, downloads, arbitrary scripts |
 | Network | configured proxy, plus `localhost` | ports outside the configured allowlist |
 
-Source, MCP, and OAuth allowlists are not loaded — the corresponding schema fields exist only for backwards-compatible reads and no-op.
+Source, MCP, and Source-OAuth allowlists are not loaded — the corresponding schema fields exist only for backwards-compatible reads and no-op. LLM subscription OAuth credentials use the credential manager and are not permission allowlists.
 
 ## Prompt lifecycle
 

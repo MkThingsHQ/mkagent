@@ -1,5 +1,7 @@
 # MkAgent MVP 标准实施计划
 
+> 2026-07-30 边界修订：本文主体记录原始 Lite 迁移计划。当前仅恢复 ChatGPT Plus 与 Claude Pro/Max 的 Craft OAuth 闭包，两者均由 Pi 执行；Claude Agent SDK、GitHub Copilot、Sources/MCP 不恢复。实施记录见 [`migration-features.md`](./migration-features.md)。
+
 ## 1. 总体方案
 
 - 在当前仅有 `migration-mvp.md`、尚未初始化 Git 的目录中建立全新项目。

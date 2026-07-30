@@ -31,7 +31,7 @@
 
 | 字段 | 位置 | 加密方式 |
 |---|---|---|
-| API key、OAuth token(MkAgent 中无) | `credentials/` | 由 OS keychain(`CredentialManager`) |
+| API key 与 LLM OAuth token | `credentials/` | 由 OS keychain(`CredentialManager`) |
 | 代理凭证 | 设置页 | OS keychain |
 | workspace 设置 | `workspaces/<slug>/config.json` | 明文,但凭证字段是引用而不是内嵌 |
 | 会话 JSONL | `workspaces/<slug>/sessions/<id>/session.jsonl` | 明文,但凭证形字段在写入前已脱敏 |

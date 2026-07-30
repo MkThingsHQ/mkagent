@@ -201,6 +201,7 @@ import type {
   DeepLinkNavigation,
   WindowCloseRequest,
   DirectoryListingResult,
+  ClaudeOAuthResult,
 } from '@mkagent/shared/protocol'
 
 export interface ElectronAPI {
@@ -345,6 +346,14 @@ export interface ElectronAPI {
 
   // Onboarding
   getSetupNeeds(): Promise<SetupNeeds>
+  startClaudeOAuth(): Promise<{ success: boolean; authUrl?: string; error?: string }>
+  exchangeClaudeCode(code: string, connectionSlug: string): Promise<ClaudeOAuthResult>
+  hasClaudeOAuthState(): Promise<boolean>
+  clearClaudeOAuthState(): Promise<{ success: boolean }>
+  startChatGptOAuth(connectionSlug: string): Promise<{ success: boolean; error?: string }>
+  cancelChatGptOAuth(): Promise<{ success: boolean }>
+  getChatGptAuthStatus(connectionSlug: string): Promise<{ authenticated: boolean; expiresAt?: number; hasRefreshToken?: boolean }>
+  chatGptLogout(connectionSlug: string): Promise<{ success: boolean }>
   deferSetup(): Promise<{ success: boolean }>
   /** Unified LLM connection setup */
   setupLlmConnection(setup: LlmConnectionSetup): Promise<{ success: boolean; error?: string }>

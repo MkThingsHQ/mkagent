@@ -184,7 +184,26 @@ export function createWebApi(options: WebApiOptions): { api: ElectronAPI; client
     isChannelAvailable: channel => client.isChannelAvailable(channel),
   }
 
-  const api = { ...baseApi, ...local } as ElectronAPI
+  const oauth: Partial<ElectronAPI> = {
+    startClaudeOAuth: async () => {
+      const popup = window.open('about:blank', '_blank')
+      try {
+        const result = await baseApi.startClaudeOAuth()
+        if (result.success && result.authUrl && popup) popup.location.href = result.authUrl
+        else popup?.close()
+        return result
+      } catch (error) {
+        popup?.close()
+        return { success: false, error: error instanceof Error ? error.message : 'Claude OAuth failed' }
+      }
+    },
+    startChatGptOAuth: async () => ({
+      success: false,
+      error: i18n.t('errors.chatGptOAuthNotAvailable'),
+    }),
+  }
+
+  const api = { ...baseApi, ...local, ...oauth } as ElectronAPI
   return { api, client }
 }
 

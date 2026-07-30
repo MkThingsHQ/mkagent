@@ -1,5 +1,7 @@
 # MkAgent Craft Lite 源码复用与裁剪审计报告
 
+> 历史快照说明：本文的统计与“OAuth 已删除”结论对应 2026-07-29 的 Lite 边界。2026-07-30 起，MkAgent 在保持 Pi-only 的前提下恢复 ChatGPT Plus 与 Claude Pro/Max 两种 LLM OAuth；Claude Agent SDK、GitHub Copilot 和 Sources/MCP 仍不恢复。当前状态见 [`README.md`](./README.md) 与 [`migration-features.md`](./migration-features.md)。
+
 ## Project Thesis
 
 MkAgent 不是一套重新实现的 Agent 产品，而是以 Craft Agents OSS 为固定上游、完整沿用其 Desktop/WebUI/CLI、WebSocket RPC、会话和 UI 组件架构，只保留 Pi Agent 核心能力并删除完整产品功能面的 Lite 发行版。

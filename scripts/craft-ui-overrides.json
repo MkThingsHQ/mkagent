@@ -2,8 +2,8 @@
   "version": 2,
   "files": {
     "apps/electron/src/renderer/App.tsx": {
-      "sha256": "8456905354281e4993eec764e7789c5759350d1e13ea2e4bfcfde139a4b30514",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+      "sha256": "1bfa047301be236f250a31aba862a40dcd513e889877287d547bd52d6f44ce34",
+      "reason": "Craft application shell retains Claude and ChatGPT OAuth props while excluded product surfaces remain removed"
     },
     "apps/electron/src/renderer/atoms/panel-stack.ts": {
       "sha256": "48c3a6f6f3eafdd79705236de9deb0212b256699cde23962650b7d5f5456260e",
@@ -114,8 +114,8 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/apisetup/index.ts": {
-      "sha256": "17d52ace16a6f3108d335944eb8224fdf656bee6b04671020e5d97aa8a59a514",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+      "sha256": "c507115453628315c73c53477bc7caf4d0f4261b3872819b9afa4a1a7423286d",
+      "reason": "Craft API setup barrel restores the shared OAuth control without Copilot or Sources exports"
     },
     "apps/electron/src/renderer/components/info/index.ts": {
       "sha256": "7c7e7259107a658445b68a8d22015c7f6debed01b8f47a541c7e30a397a2c875",
@@ -262,20 +262,20 @@
       "reason": "Craft onboarding adapted to Pi API-key and local-model providers"
     },
     "apps/electron/src/renderer/components/onboarding/CredentialsStep.tsx": {
-      "sha256": "0ea4c353d1fb7e7cfcbd18d52e54c21aa873f99d4b99f59b8496c425c81a33fb",
-      "reason": "Craft onboarding adapted to Pi API-key and local-model providers"
+      "sha256": "6103bcea6d4b863404d077eda8e74f49a13490a6f21a34e0742c4a88f13c1ac2",
+      "reason": "Craft onboarding retains Claude and ChatGPT OAuth controls while Copilot and direct Claude SDK branches stay removed"
     },
     "apps/electron/src/renderer/components/onboarding/APISetupStep.tsx": {
-      "sha256": "41166e67555ef2d160108238460dc9f999714e6cb8a5d653cdfa9707099f0775",
-      "reason": "Craft onboarding adapted to Pi API-key and local-model providers"
+      "sha256": "6c0b8d0762c16ceb7a56c7f9c7da8f322b65857f127c1d3b05282577914f0cc6",
+      "reason": "Craft setup method union is trimmed to two Pi-routed subscriptions and the existing Pi API-key flow"
     },
     "apps/electron/src/renderer/components/onboarding/ProviderSelectStep.tsx": {
-      "sha256": "a0b916a392d148f84c2b214a06370682c685e89907d28f366a4fc668c1997594",
-      "reason": "Craft onboarding adapted to Pi API-key and local-model providers"
+      "sha256": "cb31b8def0c34458ad00e9162088066978fa9958cc5e92ca241009a9dd732447",
+      "reason": "Craft provider cards retain Claude and ChatGPT, use MkAgent branding, and omit Copilot"
     },
     "apps/electron/src/renderer/components/onboarding/OnboardingWizard.tsx": {
-      "sha256": "b8783d9fbeba0cccce78c3949291a10c40532d413ec812ed8d31130fec8a71e2",
-      "reason": "Craft onboarding adapted to Pi API-key and local-model providers"
+      "sha256": "5b3b30da6f9e05e6912561263e5b7c5176ebfffebf99be3eacf710c1f0faecbd",
+      "reason": "Craft onboarding wizard restores the retained OAuth state and actions without Copilot state"
     },
     "apps/electron/src/renderer/event-processor/types.ts": {
       "sha256": "d7b7e087f95d721c16fe7630c4c404c26c2ae0e42ae6ae8b5e4866b8695edc6e",
@@ -302,8 +302,8 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/hooks/useOnboarding.ts": {
-      "sha256": "f703900c4c902b27bbaa2d113ffd1a90b345f43c7cff424199974e64036fae1c",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+      "sha256": "e88faba94ea2067930eb6adb076d66976179bb0400dd3c807c345642f3f999be",
+      "reason": "Craft onboarding hook retains Claude and ChatGPT OAuth lifecycle and removes Copilot and direct Claude SDK setup"
     },
     "apps/electron/src/renderer/hooks/useSessionMenuActions.ts": {
       "sha256": "25d98eb805bd2b787a4aa2fe56af66b187ea581cf23ffd4530282874cd58dbfe",
@@ -314,8 +314,8 @@
       "reason": "Craft renderer test adapted to retained Lite behavior"
     },
     "apps/electron/src/renderer/hooks/__tests__/useOnboarding.test.ts": {
-      "sha256": "5c723811846b79da739b9a45e6d59ced24da8d2344852f7d7ec04fa46c09b30a",
-      "reason": "Craft renderer test adapted to retained Lite behavior"
+      "sha256": "f6f47abc46b7346c2636a2e5bd95eef6dc82f1d923e41c0ec08ca9484a0a8e20",
+      "reason": "Craft onboarding tests retain Claude and ChatGPT slug and identity coverage while excluding Copilot"
     },
     "apps/electron/src/renderer/hooks/useNotifications.ts": {
       "sha256": "a4e07d0f673a4d92f8e0d97fea3803b2d59e75363a76a23559d3a210d6c9e673",
@@ -382,8 +382,8 @@
       "reason": "Craft settings UI adapted only to retained MkAgent settings"
     },
     "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx": {
-      "sha256": "44561f922c365b1935168250065cace4eddf094bd7f16c5519296c43037fcd79",
-      "reason": "Craft settings UI adapted only to retained MkAgent settings"
+      "sha256": "56660c7f2f95f49d8a65e32f13baeb94994fd5c4c1707c771ace26aa01258b22",
+      "reason": "Craft AI settings restores retained Claude and ChatGPT reauthentication while all other removed settings remain absent"
     },
     "apps/electron/src/renderer/pages/settings/index.ts": {
       "sha256": "b7bfec4ded6fcd0ad804b7079866f600c8b10ce00de8a832650f52e6f7c58454",

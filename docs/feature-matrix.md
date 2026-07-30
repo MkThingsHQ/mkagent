@@ -5,7 +5,7 @@ This document records MkAgent's intentional product boundary relative to the ups
 ## Retained
 
 - Electron Desktop, WebUI, CLI, headless server, shared renderer, and WebSocket RPC
-- Pi agent backend and API-key model connections
+- Pi agent backend, API-key model connections, and ChatGPT Plus / Claude Pro/Max subscriptions
 - Custom OpenAI-compatible and Anthropic-compatible endpoints, plus Ollama
 - Local multi-workspace support and the `default` workspace
 - Sessions (create, continue, cancel, resume, search, rename, delete, flag, archive, unread, import/export, branch, multi-window)
@@ -17,7 +17,8 @@ This document records MkAgent's intentional product boundary relative to the ups
 
 ## Removed
 
-- Claude backend and all subscription / OAuth authentication
+- Claude Agent SDK backend
+- GitHub Copilot and all OAuth beyond the two retained LLM subscriptions
 - External messaging channels and workers
 - Product automations and schedulers
 - Session labels and user-defined statuses

@@ -42,7 +42,7 @@ Electron 与 headless server 共享这套引擎。renderer 是唯一决定要不
 | Browser 操作 | 同源 + 明确允许的跨域列表 | cookie 写入、下载、任意脚本 |
 | 网络 | 配置的代理 + `localhost` | 配置允许名单之外的端口 |
 
-Source、MCP、OAuth 允许名单不会被加载——对应 schema 字段只保留作向后兼容读,实际不生效。
+Source、MCP 与 Source OAuth 允许名单不会被加载——对应 schema 字段只保留作向后兼容读，实际不生效。LLM 订阅 OAuth 凭证通过凭证管理器保存，不属于权限 allowlist。
 
 ## 询问生命周期
 

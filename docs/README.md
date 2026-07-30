@@ -1,6 +1,6 @@
 # MkAgent documentation (English)
 
-MkAgent is a cross-platform local Lite distribution derived from [Craft Agents OSS](https://github.com/craft-ai-agents/craft-agents-oss) `v0.11.2`. It registers the Pi agent backend only. It does not include any subscription or OAuth authentication, external messaging channels, product automations, session labels, projects/Kanban, sources/MCP, the Craft Viewer, or image generation capabilities.
+MkAgent is a cross-platform local Lite distribution derived from [Craft Agents OSS](https://github.com/craft-ai-agents/craft-agents-oss) `v0.11.2`. It registers the Pi agent backend only and supports ChatGPT Plus and Claude Pro/Max subscriptions through Craft's OAuth flows. It does not include the Claude Agent SDK, GitHub Copilot subscription, external messaging channels, product automations, session labels, projects/Kanban, sources/MCP, the Craft Viewer, or image generation capabilities.
 
 This directory is the English-language user documentation. A Chinese translation lives under [`zh/`](./zh/README.md) and is kept in sync with the English source.
 

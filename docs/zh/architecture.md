@@ -101,4 +101,4 @@ Pi 子进程与主进程隔离:
 
 ## 刻意不存在的部分
 
-Craft Agents 自带 OAuth callback server、Slack/Teams/Lark messaging gateway、基于 Baileys 的 WhatsApp worker、session MCP server、bridge MCP server、`gen_image` provider、独立 `apps/viewer` Electron 应用以及每个 source 的 MCP bridge 进程。MkAgent 一个都不打包,具体证据与安装包体积差异见 [`comparison-with-craft.md`](./comparison-with-craft.md)。
+Craft Agents 自带广泛的 OAuth 与 Sources 集成、Slack/Teams/Lark messaging gateway、基于 Baileys 的 WhatsApp worker、session MCP server、bridge MCP server 和独立 `apps/viewer` Electron 应用。MkAgent 在这一范围内仅保留 ChatGPT 与 Claude 的 LLM OAuth 流程，其余组件仍不打包。Craft 使用的底层 `pi-ai` 依赖虽然包含 OpenRouter 图片生成 API，但 Craft 和 MkAgent 都没有把它注册为 Agent 工具。具体证据与安装包体积差异见 [`comparison-with-craft.md`](./comparison-with-craft.md)。

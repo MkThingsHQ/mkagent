@@ -109,12 +109,48 @@ export class CredentialManager {
     return this.delete({ type: 'llm_api_key', connectionSlug });
   }
 
+  async getLlmOAuth(connectionSlug: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: number;
+    idToken?: string;
+  } | null> {
+    const credential = await this.get({ type: 'llm_oauth', connectionSlug });
+    if (!credential) return null;
+    return {
+      accessToken: credential.value,
+      refreshToken: credential.refreshToken,
+      expiresAt: credential.expiresAt,
+      idToken: credential.idToken,
+    };
+  }
+
+  async setLlmOAuth(connectionSlug: string, credentials: {
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: number;
+    idToken?: string;
+  }): Promise<void> {
+    await this.set({ type: 'llm_oauth', connectionSlug }, {
+      value: credentials.accessToken,
+      refreshToken: credentials.refreshToken,
+      expiresAt: credentials.expiresAt,
+      idToken: credentials.idToken,
+    });
+  }
+
+  async deleteLlmOAuth(connectionSlug: string): Promise<boolean> {
+    return this.delete({ type: 'llm_oauth', connectionSlug });
+  }
+
   async deleteLlmCredentials(connectionSlug: string): Promise<void> {
     await this.deleteLlmApiKey(connectionSlug);
+    await this.deleteLlmOAuth(connectionSlug);
   }
 
   async hasLlmCredentials(connectionSlug: string, authType: LlmAuthType): Promise<boolean> {
     if (authType === 'none') return true;
+    if (authType === 'oauth') return Boolean(await this.getLlmOAuth(connectionSlug));
     return Boolean(await this.getLlmApiKey(connectionSlug));
   }
 

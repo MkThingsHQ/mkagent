@@ -20,6 +20,7 @@
 <main class="content">
   <header class="hero" id="overview">
     <h1>MkAgent Craft Lite 源码复用与裁剪审计</h1>
+    <div class="risk"><strong>历史快照：</strong>本文统计对应 2026-07-29 边界。2026-07-30 起已在保持 Pi-only 的前提下恢复 ChatGPT Plus 与 Claude Pro/Max 两种 LLM OAuth；Claude Agent SDK、GitHub Copilot 与 Sources/MCP 仍不恢复。</div>
     <p>MkAgent 是 Craft Agents OSS 的 Pi-only Lite 版本，不是独立重写。此前 UI 对齐确实大规模复用了 Craft，但把许多排除功能留在代码中并仅隐藏；本轮已把它们从文件、状态、路由、协议、事件、设置和文案层物理删除。</p>
     <div class="meta"><span>基线 5c8308b</span><span>Craft a60ebc1 / v0.11.2</span><span>TypeScript / React</span><span>Apache-2.0</span></div>
   </header>
@@ -78,7 +79,7 @@ CLI ──────────────┘                               
       <tr><td>Viewer / sharing</td><td>删除菜单、事件、Viewer URL 和未引用的 SessionViewer</td></tr>
       <tr><td>Session transfer</td><td>删除对话框、target helper、API 与 transfer context</td></tr>
       <tr><td>Remote workspace product</td><td>删除 picker/connect UI 与 remoteServer 镜像绑定</td></tr>
-      <tr><td>OAuth / subscription</td><td>删除 API、UI、Copilot 资产、重复账户与 re-auth 分支</td></tr>
+      <tr><td>OAuth / subscription</td><td>历史状态为全部删除；当前仅恢复 ChatGPT 与 Claude LLM OAuth，Copilot、Sources OAuth 与 Claude Agent SDK 仍删除</td></tr>
       <tr><td>Compatibility no-ops</td><td>删除 <code>craft-renderer-compat.ts</code>，retained API 必须映射真实 channel</td></tr>
     </tbody></table></div>
   </section>

@@ -4,14 +4,13 @@ import { cn } from "@/lib/utils"
 import { StepFormLayout, BackButton, ContinueButton } from "./primitives"
 import type { LlmAuthType, LlmProviderType } from "@mkagent/shared/config/llm-connections"
 
-/** MkAgent only supports Pi connections configured with API keys or local/custom endpoints. */
-export type ApiSetupMethod = 'pi_api_key'
+export type ApiSetupMethod = 'claude_oauth' | 'pi_chatgpt_oauth' | 'pi_api_key'
 
-export function apiSetupMethodToConnectionTypes(_method: ApiSetupMethod): {
+export function apiSetupMethodToConnectionTypes(method: ApiSetupMethod): {
   providerType: LlmProviderType
   authType: LlmAuthType
 } {
-  return { providerType: 'pi', authType: 'api_key' }
+  return { providerType: 'pi', authType: method === 'pi_api_key' ? 'api_key' : 'oauth' }
 }
 
 interface APISetupStepProps {

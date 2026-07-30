@@ -1929,6 +1929,10 @@ export default function App() {
             onSkipSetup={onboarding.handleSkipSetup}
             onSelectApiSetupMethod={onboarding.handleSelectApiSetupMethod}
             onSubmitCredential={onboarding.handleSubmitCredential}
+            onStartOAuth={onboarding.handleStartOAuth}
+            isWaitingForCode={onboarding.isWaitingForCode}
+            onSubmitAuthCode={onboarding.handleSubmitAuthCode}
+            onCancelOAuth={onboarding.handleCancelOAuth}
             onSubmitLocalModel={onboarding.handleSubmitLocalModel}
             onFinish={onboarding.handleFinish}
             onBrowseGitBash={onboarding.handleBrowseGitBash}

@@ -31,7 +31,7 @@ The default root is `~/.mkagent` (resolved from `$HOME` or `%USERPROFILE%` at fi
 
 | Field | Where it lives | Encryption |
 |---|---|---|
-| API keys, OAuth tokens (none in MkAgent) | `credentials/` | OS keychain via the shared `CredentialManager` |
+| API keys and LLM OAuth tokens | `credentials/` | OS keychain via the shared `CredentialManager` |
 | Proxy credentials | settings page | OS keychain |
 | Workspace settings | `workspaces/<slug>/config.json` | plaintext, but credential-shaped fields are referenced, not inlined |
 | Session JSONL | `workspaces/<slug>/sessions/<id>/session.jsonl` | plaintext, but credential-shaped fields are redacted before they reach the file |

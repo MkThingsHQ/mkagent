@@ -5,7 +5,7 @@
 ## 保留能力
 
 - Electron Desktop、WebUI、CLI、headless server、共享 renderer、WebSocket RPC
-- Pi agent backend 与 API key 模型连接
+- Pi agent backend、API key 模型连接，以及 ChatGPT Plus / Claude Pro/Max 订阅
 - 自定义 OpenAI-兼容与 Anthropic-兼容端点,以及 Ollama
 - 本地多 workspace 与 `default` workspace
 - 会话(create / continue / cancel / resume / search / rename / delete / flag / archive / unread / import-export / branch / multi-window)
@@ -17,7 +17,8 @@
 
 ## 删除能力
 
-- Claude backend 与所有订阅 / OAuth 鉴权
+- Claude Agent SDK backend
+- GitHub Copilot，以及两种保留 LLM 订阅之外的全部 OAuth
 - 外部 messaging channel 与 worker
 - 产品 Automations 与定时任务
 - 会话 labels 与用户自定义 status

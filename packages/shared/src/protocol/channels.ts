@@ -148,7 +148,18 @@ export const RPC_CHANNELS = {
   },
   onboarding: {
     GET_AUTH_STATE: 'onboarding:getAuthState',
+    START_CLAUDE_OAUTH: 'onboarding:startClaudeOAuth',
+    EXCHANGE_CLAUDE_CODE: 'onboarding:exchangeClaudeCode',
+    HAS_CLAUDE_OAUTH_STATE: 'onboarding:hasClaudeOAuthState',
+    CLEAR_CLAUDE_OAUTH_STATE: 'onboarding:clearClaudeOAuthState',
     DEFER_SETUP: 'onboarding:deferSetup',
+  },
+  chatgpt: {
+    START_OAUTH: 'chatgpt:startOAuth',
+    COMPLETE_OAUTH: 'chatgpt:completeOAuth',
+    CANCEL_OAUTH: 'chatgpt:cancelOAuth',
+    GET_AUTH_STATUS: 'chatgpt:getAuthStatus',
+    LOGOUT: 'chatgpt:logout',
   },
   llmConnections: {
     LIST: 'LLM_Connection:list',

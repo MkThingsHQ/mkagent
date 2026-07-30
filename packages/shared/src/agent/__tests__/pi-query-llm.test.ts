@@ -11,6 +11,7 @@ import { describe, expect, it } from 'bun:test';
 import { PiAgent } from '../pi-agent.ts';
 import type { BackendConfig } from '../backend/types.ts';
 import type { LLMQueryRequest, LLMQueryResult } from '../llm-tool.ts';
+import { getCredentialManager } from '../../credentials/index.ts';
 
 function createConfig(overrides: Partial<BackendConfig> = {}): BackendConfig {
   return {
@@ -54,6 +55,101 @@ async function flushMicrotasks(): Promise<void> {
 }
 
 describe('PiAgent.queryLlm — subprocess RPC round-trip', () => {
+  it('sends the complete OAuth credential to Pi before a query', async () => {
+    const manager = getCredentialManager();
+    const originalGetLlmOAuth = manager.getLlmOAuth;
+    manager.getLlmOAuth = async () => ({
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
+      expiresAt: 123456789,
+    });
+
+    const agent = new PiAgent(createConfig({
+      authType: 'oauth',
+      connectionSlug: 'claude-max',
+      runtime: { piAuthProvider: 'anthropic' },
+    }));
+    const { sent } = installFakeSubprocess(agent);
+
+    try {
+      const pending = agent.queryLlm({ prompt: 'hi' });
+      await flushMicrotasks();
+      await Bun.sleep(0);
+
+      expect(sent[0]).toEqual({
+        type: 'token_update',
+        piAuth: {
+          provider: 'anthropic',
+          credential: {
+            type: 'oauth',
+            access: 'access-token',
+            refresh: 'refresh-token',
+            expires: 123456789,
+          },
+        },
+      });
+      expect(sent[1]?.type).toBe('llm_query');
+
+      (agent as any).handleLine(JSON.stringify({
+        type: 'llm_query_result',
+        id: sent[1]!.id,
+        result: { text: 'ok' },
+      }));
+      await pending;
+    } finally {
+      manager.getLlmOAuth = originalGetLlmOAuth;
+      agent.destroy();
+    }
+  });
+
+  it('persists OAuth credentials refreshed by Pi without dropping the ID token', async () => {
+    const manager = getCredentialManager();
+    const originalGetLlmOAuth = manager.getLlmOAuth;
+    const originalSetLlmOAuth = manager.setLlmOAuth;
+    let saved: Parameters<typeof manager.setLlmOAuth>[1] | undefined;
+    manager.getLlmOAuth = async () => ({
+      accessToken: 'old-access',
+      refreshToken: 'old-refresh',
+      expiresAt: 1,
+      idToken: 'identity-token',
+    });
+    manager.setLlmOAuth = async (_slug, credentials) => {
+      saved = credentials;
+    };
+
+    const agent = new PiAgent(createConfig({
+      authType: 'oauth',
+      connectionSlug: 'chatgpt-plus',
+      runtime: { piAuthProvider: 'openai-codex' },
+    }));
+
+    try {
+      (agent as any).handleLine(JSON.stringify({
+        type: 'oauth_credential_update',
+        provider: 'openai-codex',
+        previousRefresh: 'old-refresh',
+        credential: {
+          type: 'oauth',
+          access: 'new-access',
+          refresh: 'new-refresh',
+          expires: 999,
+        },
+      }));
+      await flushMicrotasks();
+
+      expect(saved).toEqual({
+        accessToken: 'new-access',
+        refreshToken: 'new-refresh',
+        expiresAt: 999,
+        idToken: 'identity-token',
+      });
+    } finally {
+      manager.getLlmOAuth = originalGetLlmOAuth;
+      manager.setLlmOAuth = originalSetLlmOAuth;
+      agent.destroy();
+    }
+  });
+
   it('propagates the full LLMQueryRequest shape over the llm_query RPC unchanged', async () => {
     const agent = new PiAgent(createConfig());
     const { sent } = installFakeSubprocess(agent);
