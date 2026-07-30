@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next"
 import { Button } from "@/components/ui/button"
 import { Spinner } from "@mkagent/ui"
-import { CraftAgentsSymbol } from "@/components/icons/CraftAgentsSymbol"
+import { MkAgentAppIcon } from "@/components/icons/MkAgentAppIcon"
 import { StepFormLayout } from "./primitives"
 
 interface CompletionStepProps {
@@ -33,7 +33,7 @@ export function CompletionStep({
         </div>
       ) : (
         <div className="flex size-16 items-center justify-center">
-          <CraftAgentsSymbol className="size-10 text-accent" />
+          <MkAgentAppIcon className="size-10" size={40} />
         </div>
       )}
       title={isSaving ? t("onboarding.completion.settingUp") : t("onboarding.completion.allSet")}

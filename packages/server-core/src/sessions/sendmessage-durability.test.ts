@@ -29,7 +29,7 @@ describe('sendMessage durability', () => {
     rmSync(tmpRoot, { recursive: true, force: true })
   })
 
-  function buildSession(id: string) {
+  function buildSession(id: string, name: string | null = 'durability test') {
     const workspace = {
       id: 'ws_test',
       name: 'Test Workspace',
@@ -37,7 +37,7 @@ describe('sendMessage durability', () => {
       createdAt: Date.now(),
     }
     const managed = createManagedSession(
-      { id, name: 'durability test' },
+      { id, name: name ?? undefined },
       workspace as never,
       { messagesLoaded: true },
     )
@@ -52,6 +52,29 @@ describe('sendMessage durability', () => {
     // First line is the header, remaining lines are messages.
     return lines.slice(1).map(l => JSON.parse(l)).map(m => m.id as string)
   }
+
+  function readPersistedHeader(sessionId: string): { name?: string } {
+    const path = getSessionFilePath(tmpRoot, sessionId)
+    return JSON.parse(readFileSync(path, 'utf-8').split('\n')[0])
+  }
+
+  it('uses the first-message preview as a fallback for legacy unnamed sessions', () => {
+    const managed = createManagedSession(
+      { id: 'legacy-title', preview: '你是什么模型？' },
+      { id: 'ws_test', name: 'Test Workspace', rootPath: tmpRoot, createdAt: Date.now() } as never,
+    )
+
+    expect(managed.name).toBe('你是什么模型？')
+  })
+
+  it('persists a fallback title before first-message agent initialization', async () => {
+    const sessionId = 'first-message-title'
+    buildSession(sessionId, null)
+
+    await sm.sendMessage(sessionId, '修复会话标题').catch(() => {})
+
+    expect(readPersistedHeader(sessionId).name).toBe('修复会话标题')
+  })
 
   it('user message is on disk before onAck fires (normal branch)', async () => {
     const sessionId = 'durability-normal'

@@ -74,8 +74,8 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/ui/rich-text-input.tsx": {
-      "sha256": "3c2a3d5fa8a63238d539c1781ce0a6e9f202a94fb9b12367862645b2665d4975",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+      "sha256": "385ae49bb8687932f2f303a0361f8a5fa026f41124c6d89f9fa47a633cb9adf9",
+      "reason": "Craft rich-text input retains the xagent-proven DOM and IME placeholder visibility fix"
     },
     "apps/electron/src/renderer/components/ui/mention-badge.tsx": {
       "sha256": "ffc771e934c91ac7bee74012e32ca92a4606371f2ade39830ebe66a889c29d8f",
@@ -258,8 +258,20 @@
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/onboarding/WelcomeStep.tsx": {
-      "sha256": "1bb16fabd55ed3f6191d6165dc68e5a935860f1b7531a9bd883b1095c652eb9c",
-      "reason": "Craft onboarding adapted to Pi API-key and local-model providers"
+      "sha256": "fb0a1e179c208cfbf5ad19afa373484f992873f7bdb2792bbb107b7766c14d4c",
+      "reason": "Craft onboarding uses the MkAgent app icon while retaining the upstream layout"
+    },
+    "apps/electron/src/renderer/components/onboarding/CompletionStep.tsx": {
+      "sha256": "41fbccbe0002d041770f34392c47572380f77d1b8eb4f4c9bab7c3b84411a467",
+      "reason": "Craft onboarding uses the MkAgent app icon while retaining the upstream layout"
+    },
+    "apps/electron/src/renderer/components/onboarding/ReauthScreen.tsx": {
+      "sha256": "ae48a297f7a1e10567a1544aba58aa4baf5056c7e9f651fb1a3e7d011ae06095",
+      "reason": "Craft reauthentication screen removes an unused Craft icon import and stale product comment"
+    },
+    "apps/electron/src/renderer/components/ui/__tests__/rich-text-input.test.ts": {
+      "sha256": "2910ca919db761812e2fa78e35c21b3ad98334b5d1959f6947117be8a1c8efa7",
+      "reason": "Craft rich-text input test retains the xagent-proven placeholder visibility regression coverage"
     },
     "apps/electron/src/renderer/components/onboarding/CredentialsStep.tsx": {
       "sha256": "6103bcea6d4b863404d077eda8e74f49a13490a6f21a34e0742c4a88f13c1ac2",

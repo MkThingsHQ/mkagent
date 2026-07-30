@@ -3,8 +3,8 @@
   "baselineCommit": "a60ebc1a5a7cb0a6af7a77d5eed0512c5fc07658",
   "modified": {
     "packages/shared/src/auth/callback-page.ts": {
-      "sha256": "e3d4b505fce0bc507232facf3b5e499b3ec94b813f744b544710e293e058bfb9",
-      "reason": "Craft LLM OAuth callback page adapted only for MkAgent branding"
+      "sha256": "added983bb95f06a06e4f04dfbbf585af0259072717f5d29d5d70509a5b3995d",
+      "reason": "Craft LLM OAuth callback page uses the embedded MkAgent mark instead of the Craft banner"
     },
     "packages/shared/src/auth/claude-oauth.ts": {
       "sha256": "7706a1a27e1a02d6a1c6ab12127e16b25a5df95fd40205e7feba64af918a4a64",
@@ -586,9 +586,17 @@
       "sha256": "cb31b8def0c34458ad00e9162088066978fa9958cc5e92ca241009a9dd732447",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
+    "apps/electron/src/renderer/components/onboarding/CompletionStep.tsx": {
+      "sha256": "41fbccbe0002d041770f34392c47572380f77d1b8eb4f4c9bab7c3b84411a467",
+      "reason": "Craft onboarding uses the MkAgent app icon while retaining the upstream layout"
+    },
+    "apps/electron/src/renderer/components/onboarding/ReauthScreen.tsx": {
+      "sha256": "ae48a297f7a1e10567a1544aba58aa4baf5056c7e9f651fb1a3e7d011ae06095",
+      "reason": "Craft reauthentication screen removes an unused Craft icon import and stale product comment"
+    },
     "apps/electron/src/renderer/components/onboarding/WelcomeStep.tsx": {
-      "sha256": "1bb16fabd55ed3f6191d6165dc68e5a935860f1b7531a9bd883b1095c652eb9c",
-      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+      "sha256": "fb0a1e179c208cfbf5ad19afa373484f992873f7bdb2792bbb107b7766c14d4c",
+      "reason": "Craft onboarding uses the MkAgent app icon while retaining the upstream layout"
     },
     "apps/electron/src/renderer/components/ui/EditPopover.tsx": {
       "sha256": "6bed04b6ba78ad5942da8ba3f7fd0b66468b0af9046ff4ef0fe199e3b9b9ee47",
@@ -603,8 +611,12 @@
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/ui/rich-text-input.tsx": {
-      "sha256": "3c2a3d5fa8a63238d539c1781ce0a6e9f202a94fb9b12367862645b2665d4975",
-      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+      "sha256": "385ae49bb8687932f2f303a0361f8a5fa026f41124c6d89f9fa47a633cb9adf9",
+      "reason": "Craft rich-text input retains the xagent-proven DOM and IME placeholder visibility fix"
+    },
+    "apps/electron/src/renderer/components/ui/__tests__/rich-text-input.test.ts": {
+      "sha256": "2910ca919db761812e2fa78e35c21b3ad98334b5d1959f6947117be8a1c8efa7",
+      "reason": "Craft rich-text input test retains the xagent-proven placeholder visibility regression coverage"
     },
     "apps/electron/src/renderer/components/workspace/AddWorkspaceStep_Choice.tsx": {
       "sha256": "f5552f9fa804d7885b4a3bdcd5f24a4869c0af989acf6e72928badbebd616476",
@@ -1059,8 +1071,8 @@
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/server-core/src/sessions/SessionManager.ts": {
-      "sha256": "0f135714cd8fdba8593d4d3d80c116c20fbe9ccac76bdded9f6c1189f5f7b9b8",
-      "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
+      "sha256": "051e2ba1aa8b03ac01d65088c10cb8e37c3523453cbb8e0716a92c76f7f52825",
+      "reason": "Craft session title generation is restored for the Pi-only runtime with legacy preview fallback"
     },
     "packages/server-core/src/sessions/background-task-surface.test.ts": {
       "sha256": "4d1e66985991c88426fd5f6760e1d687c3ca31dead1cfde09b794d8aea0acc27",
@@ -1077,6 +1089,10 @@
     "packages/server-core/src/sessions/pi-turn-anchors.test.ts": {
       "sha256": "e17ba01950f21699a282676af8681ccb9bd7f65fbee8738119adf7e90c87c64d",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
+    },
+    "packages/server-core/src/sessions/sendmessage-durability.test.ts": {
+      "sha256": "f7484badaba4d2a804ba59358b7e2a794ed00525e5842ba9745081e960ace21c",
+      "reason": "Craft durability test is extended with first-message and legacy session title regressions"
     },
     "packages/server-core/src/utils/path-validation.test.ts": {
       "sha256": "beaae088ce9265aacc62c979036c9a9cabd2a56a4c2c7f71049dc4bca8aea457",
@@ -1495,8 +1511,8 @@
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/branding.ts": {
-      "sha256": "aebf67ab1b6ff484a6bd20b70d3583eb15f1badb79a851a8a8628cfaedc46422",
-      "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
+      "sha256": "1a067b03d88fd91c6a7e2dfda28e6541ff9965828eb800618616e95396245911",
+      "reason": "Craft callback branding is replaced with the embedded MkAgent mark"
     },
     "packages/shared/src/config/__tests__/default-thinking-level.test.ts": {
       "sha256": "1534144ebe2e97b707d10dd2cd067e80a896628e686d0d7c5859b132f7e8d2e3",
@@ -1607,12 +1623,12 @@
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "packages/shared/src/i18n/locales/en.json": {
-      "sha256": "8b56c04ca7b17489fa7577c7c7ad54f94e8416649a00d38c24cb36f508858a32",
-      "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
+      "sha256": "1f619c3cb04abfcd5be205e91e2c2529108b0582c42ddde90931ac5ce3ae182d",
+      "reason": "Craft locale is reduced to product-neutral subscription and reauthentication copy"
     },
     "packages/shared/src/i18n/locales/zh-Hans.json": {
-      "sha256": "cbd7e24da5cf940897049d14fd03207f57eefe0e5194e07bda63f35b2140d644",
-      "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
+      "sha256": "55ab16c69dc8e3214045a895abba9e0537cabaedb466b9e6b7b4bc30ee7f3d01",
+      "reason": "Craft locale is reduced to product-neutral subscription and reauthentication copy"
     },
     "packages/shared/src/i18n/registry.ts": {
       "sha256": "4bded553ab0c1689cb38e3c6cb25c155855e048a27123d0a953658ef65c6c16a",
@@ -2029,7 +2045,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "packages/shared/src/auth/__tests__/llm-oauth.test.ts": {
-      "sha256": "c8aa4b7bc64a1bff29c906845af17a28a13cc82812d34544cb35828042f125c4",
+      "sha256": "d31df220858de7f87a46b73c934a9ff2391732af9b29573ba064a82f82443b7a",
       "reason": "Regression coverage for retained Craft LLM OAuth configuration, branding, and connection-scoped secure credential storage"
     },
     "packages/server-core/src/sessions/retained-session-events.test.ts": {
@@ -2061,7 +2077,7 @@
       "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
     },
     "scripts/craft-ui-overrides.json": {
-      "sha256": "25ce6ed122da30c1d4ce1213afa86f690139b4118ef5c82dc8bc34377f35080b",
+      "sha256": "3531fe78b82602260e54e23c70fd57b4aad8a555570621de1a7b2619c873f81e",
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
     },
     ".github/workflows/ci.yml": {
@@ -2421,6 +2437,9 @@
     "apps/electron/src/renderer/components/automations/types.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
     "apps/electron/src/renderer/components/automations/utils.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
     "apps/electron/src/renderer/components/chat/AuthRequestCard.tsx": "Renderer dependency serves only an excluded Craft full-product surface",
+    "apps/electron/src/renderer/components/icons/CraftAgentsLogo.tsx": "Legacy Craft brand asset is replaced by the MkAgent app icon",
+    "apps/electron/src/renderer/components/icons/CraftAgentsSymbol.tsx": "Legacy Craft brand asset is replaced by the MkAgent app icon",
+    "apps/electron/src/renderer/components/icons/CraftAppIcon.tsx": "Legacy Craft brand asset is replaced by the MkAgent app icon",
     "apps/electron/src/renderer/components/icons/McpIcon.tsx": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/components/icons/TodoStateIcons.tsx": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/components/info/AutoRulesDataTable.tsx": "Renderer dependency serves only an excluded Craft full-product surface",

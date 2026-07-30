@@ -42,6 +42,7 @@ import {
   ConfigWatcher,
   getMiniModel,
   getWorkspaces,
+  resolveTitleLanguageName,
   type ConfigWatcherCallbacks,
 } from '@mkagent/shared/config'
 import type { LoadedSkill } from '@mkagent/shared/skills'
@@ -75,7 +76,7 @@ import { getWorkspaceAllowedDirs, validateFilePath } from '@mkagent/server-core/
 import { normalizeThinkingLevel, type ThinkingLevel } from '@mkagent/shared/agent/thinking-levels'
 import type { PermissionMode } from '@mkagent/shared/agent/mode-types'
 import { buildBackendRuntimeSignature, buildRestartRequiredSignature } from './runtime-config'
-import { rollbackFailedBranchCreation } from '@mkagent/server-core/domain'
+import { rollbackFailedBranchCreation, sanitizeForTitle } from '@mkagent/server-core/domain'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -99,6 +100,11 @@ let runtimeHooks: SessionRuntimeHooks = {
   captureException: () => {},
   onSessionStarted: () => {},
   onSessionStopped: () => {},
+}
+
+function createFallbackTitle(content: string): string | undefined {
+  const sanitized = sanitizeForTitle(content)
+  return sanitized ? sanitized.slice(0, 50) + (sanitized.length > 50 ? '…' : '') : undefined
 }
 
 export function setSessionRuntimeHooks(hooks: Partial<SessionRuntimeHooks>): void {
@@ -232,7 +238,7 @@ export function createManagedSession(
     createdAt: session.createdAt ?? now,
     lastUsedAt: session.lastUsedAt ?? now,
     lastMessageAt: session.lastMessageAt,
-    name: session.name,
+    name: session.name ?? createFallbackTitle(session.preview ?? ''),
     isFlagged: session.isFlagged,
     hidden: session.hidden,
     lastReadMessageId: session.lastReadMessageId,
@@ -619,6 +625,7 @@ export class SessionManager implements ISessionManager {
     const managed = this.sessions.get(sessionId)
     if (!managed) throw new Error(`Session not found: ${sessionId}`)
     this.ensureMessagesLoaded(managed)
+    let shouldGenerateTitle = false
     const now = this.nextTimestamp()
     let userMessage: Message
     if (existingMessageId) {
@@ -677,8 +684,35 @@ export class SessionManager implements ISessionManager {
         status: 'accepted',
         optimisticMessageId: options?.optimisticMessageId,
       })
+
+      const isFirstUserMessage = managed.messages.filter(item => item.role === 'user').length === 1
+      if (isFirstUserMessage && !managed.name && !options?.hidden) {
+        let titleSource = message
+        for (const badge of options?.badges ?? []) {
+          if (badge.rawText && badge.label) titleSource = titleSource.replace(badge.rawText, badge.label)
+        }
+        const initialTitle = createFallbackTitle(titleSource)
+        if (initialTitle) {
+          managed.name = initialTitle
+          await this.flushSession(managed.id)
+          this.emit(managed.workspace.id, { type: 'title_generated', sessionId, title: initialTitle })
+          shouldGenerateTitle = true
+        }
+      }
     }
     await this.runTurn(managed, message, attachments)
+    if (shouldGenerateTitle) void this.generateTitle(managed, message)
+  }
+
+  private async generateTitle(managed: ManagedSession, userMessage: string): Promise<void> {
+    try {
+      const agent = await this.getOrCreateAgent(managed)
+      const title = await agent.generateTitle(userMessage, { language: resolveTitleLanguageName() })
+      if (!title) return
+      managed.name = title
+      await this.flushSession(managed.id)
+      this.emit(managed.workspace.id, { type: 'title_generated', sessionId: managed.id, title })
+    } catch { return }
   }
 
   private async runTurn(
@@ -1581,7 +1615,7 @@ export class SessionManager implements ISessionManager {
       const agent = await this.getOrCreateAgent(managed)
       const recentUsers = managed.messages.filter(item => item.role === 'user').slice(-3).map(item => item.content)
       const lastAssistant = this.getSessionFinalText(sessionId) ?? ''
-      const title = await agent.regenerateTitle(recentUsers, lastAssistant)
+      const title = await agent.regenerateTitle(recentUsers, lastAssistant, { language: resolveTitleLanguageName() })
       if (!title) return { success: false, error: 'Title generation returned no result' }
       await this.renameSession(sessionId, title)
       return { success: true, title }

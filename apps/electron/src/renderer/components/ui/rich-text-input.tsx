@@ -36,6 +36,14 @@ export function isEscapeDuringComposition(
   return Boolean(isComposingRefActive || event.isComposing || event.nativeEvent?.isComposing)
 }
 
+export function shouldShowRichTextPlaceholder(
+  value: string,
+  hasEditableDomText: boolean,
+  isCompositionActive: boolean
+): boolean {
+  return !value && !hasEditableDomText && !isCompositionActive
+}
+
 export interface RichTextInputProps extends Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange' | 'onInput' | 'onPaste'> {
   /** Current text value */
   value: string
@@ -501,6 +509,8 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
     const safeValue = React.useMemo(() => coerceInputText(value), [value])
     const divRef = React.useRef<HTMLDivElement>(null)
     const [isFocused, setIsFocused] = React.useState(false)
+    const [hasEditableDomText, setHasEditableDomText] = React.useState(() => Boolean(safeValue))
+    const [isCompositionActive, setIsCompositionActive] = React.useState(false)
     const isComposing = React.useRef(false)
     const lastValueRef = React.useRef(safeValue)
     const cursorPositionRef = React.useRef(0)
@@ -573,6 +583,7 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
 
       lastValueRef.current = newText
       cursorPositionRef.current = cursorPos
+      setHasEditableDomText(Boolean(newText))
 
       // Check if mentions changed - if so, we need to re-render HTML
       const newSignature = getMentionSignature(newText, skillSlugs)
@@ -594,11 +605,13 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
     // Handle composition (IME)
     const handleCompositionStart = React.useCallback(() => {
       isComposing.current = true
+      setIsCompositionActive(true)
     }, [])
 
     const handleCompositionEnd = React.useCallback(() => {
       isComposing.current = false
       handleInput()
+      setIsCompositionActive(false)
     }, [handleInput])
 
     const handleKeyDownInternal = React.useCallback((e: React.KeyboardEvent<HTMLDivElement>) => {
@@ -666,6 +679,7 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
 
       const html = textToHTML(safeValue, skills, workspaceId)
       divRef.current.innerHTML = html || '<br>'
+      setHasEditableDomText(Boolean(safeValue))
 
       // Restore cursor position after innerHTML update.
       // Only restore if:
@@ -686,6 +700,7 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
       const html = textToHTML(safeValue, skills, workspaceId)
       divRef.current.innerHTML = html || '<br>'
       lastValueRef.current = safeValue
+      setHasEditableDomText(Boolean(safeValue))
     }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Handle selection changes to highlight badges when selected
@@ -732,7 +747,11 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
     }, [])
 
     // Show placeholder when input is empty (regardless of focus state)
-    const showPlaceholder = !safeValue
+    const showPlaceholder = shouldShowRichTextPlaceholder(
+      safeValue,
+      hasEditableDomText,
+      isCompositionActive
+    )
 
     // Normalize placeholder to array for RotatingPlaceholder
     const placeholderArray = React.useMemo(() => {
