@@ -11,6 +11,7 @@
 | Browser 面板 | [browser.md](./browser.md) |
 | 命令行 | [cli.md](./cli.md) |
 | 连接与模型 | [connections.md](./connections.md) |
+| 与 Craft Agents 的当前差异对比（含安装包体积） | [comparison-with-craft.md](./comparison-with-craft.md) |
 | 数据目录 | [data-directory.md](./data-directory.md) |
 | 开发环境 | [development.md](./development.md) |
 | 文档工具 | [document-tools.md](./document-tools.md) |
