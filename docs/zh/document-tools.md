@@ -22,13 +22,14 @@
 包装器通过 `uv` 调用 Python 3.12。MkAgent 按以下顺序解析 runtime:
 
 ```text
-1. process.env.MKAGENT_UV                      (显式覆盖)
-2. ctx.resourcesBasePath + "/uv"              (MkAgent dev 构建自带)
-3. ctx.appRootPath + "/vendor/uv"             (旧布局)
-4. PATH (系统 `uv`)
+1. process.env.MKAGENT_UV                                      (显式覆盖)
+2. resources/bin/<platform-arch>/uv                            (内置 runtime)
+3. PATH                                                        (仅开发期)
 ```
 
-`mkagent-public` release 不打包 per-platform `uv` 二进制——Craft Agents 会;两者包装器都能跑,因为系统 `uv` + Python 3.12 就能解析脚本的依赖。
+Desktop 的各平台 release 脚本会固定并下载 `uv 0.10.6`；headless 包也会把目标平台的 `uv` 复制到资源中。打包环境不允许只从 PATH 解析 runtime；Electron 与 headless launcher 会通过 `MKAGENT_UV` 注入内置二进制的绝对路径。开发环境没有准备好的二进制时，才会回退到 PATH 中的 `uv`。
+
+内置 `uv` 不等于同时内置 Python 与全部文档依赖。缓存为空时首次调用仍可能下载 Python 3.12，以及每个脚本在 PEP 723 header 中声明的依赖；后续调用会复用缓存。
 
 ## Renderer
 

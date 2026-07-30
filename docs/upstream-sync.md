@@ -83,14 +83,14 @@ After any sync, both files **must** be regenerated and reviewed. The intent is t
 ## What is not eligible for sync
 
 - Claude Agent SDK backend and the `claude-agent-sdk*` packages; keep the retained Claude OAuth flow routed through Pi
-- GitHub Copilot, generic / Sources OAuth, and their SDKs
+- GitHub Copilot, generic/Sources OAuth, and their SDKs
 - External messaging gateway and workers
 - Sources, MCP server, bridge MCP server, MCP-related UI
 - Image generation models and `gen_image`
 - Public sharing, Viewer app
 - Product automations and the scheduler UI
 - Sources API/Settings UI, session labels, user-defined statuses
-- Bundled per-platform `uv` and the WhatsApp worker
+- WhatsApp worker
 
 These are recorded as Lite-boundary deletions in [`comparison-with-craft.md`](./comparison-with-craft.md) and the [`migration/`](./migration/README.md) archive.
 

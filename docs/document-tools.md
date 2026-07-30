@@ -22,13 +22,14 @@ All wrappers exist as both `*-tool` (POSIX shell) and `*-tool.cmd` (Windows) var
 The wrapper invokes Python 3.12 under `uv`. MkAgent resolves the runtime in this order:
 
 ```text
-1. process.env.MKAGENT_UV                     (explicit override)
-2. ctx.resourcesBasePath + "/uv"              (bundled in MkAgent dev builds)
-3. ctx.appRootPath + "/vendor/uv"             (legacy layout)
-4. PATH (system `uv`)
+1. process.env.MKAGENT_UV                                      (explicit override)
+2. resources/bin/<platform-arch>/uv                            (bundled runtime)
+3. PATH                                                        (development only)
 ```
 
-`mkagent-public` releases do **not** bundle a per-platform `uv` binary; Craft Agents does. Both wrappers still work because system `uv` plus a Python 3.12 interpreter resolves the script's environment.
+Desktop platform release scripts pin and download `uv 0.10.6`; headless packages also copy a target-platform `uv` into their assets. Packaged execution rejects a PATH-only runtime; Electron and the headless launcher inject the absolute bundled path through `MKAGENT_UV`. Development builds may use `uv` from PATH when the prepared binary is absent.
+
+Bundling `uv` does not bundle Python or every document dependency. On first use with a cold cache, `uv` may still download Python 3.12 and the dependencies declared in each script's PEP 723 header; later calls reuse the cache.
 
 ## Renderers
 

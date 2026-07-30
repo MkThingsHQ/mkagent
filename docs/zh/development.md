@@ -9,7 +9,7 @@
 | Bun | 1.3.14+ | workspace、runtime、构建(`bun.lock`) |
 | Node | ≥ 18(Bun 自带 fallback) | TypeScript 工具链 |
 | Python | 3.12 | 文档工具 smoke 测试 |
-| `uv` | 最新 | 文档工具 runtime(优先用系统 `uv`;MkAgent 通过 `MKAGENT_UV` 环境变量或 PATH 解析) |
+| `uv` | 开发期使用兼容的最新版本；Desktop release 内置 `0.10.6` | 运行文档工具 smoke test 和准备构建资源；打包产物会内置目标平台二进制 |
 | Git | 任意现代版本 | 可选启用 husky pre-commit |
 
 `bun` 是唯一的 workspace linker;不通过 npm / yarn 安装依赖,因为 `bun.lock` 是唯一真值来源。
@@ -96,7 +96,7 @@ MKAGENT_CONFIG_DIR=/tmp/mkagent-dev bun run server:dev:webui
 | `MKAGENT_WEBUI_DIR` | 不设置 | 在 RPC 端口上启用 WebUI 资源 |
 | `MKAGENT_WEBUI_PASSWORD` / `_SECURE_COOKIE` / `_WS_URL` | 不设置 | WebUI 登录密码、cookie `Secure` 标志覆盖、浏览器侧 `ws://` URL |
 | `MKAGENT_PI_MODEL_API` | 不设置 | 给 interceptor 的 Pi 模型提示 |
-| `MKAGENT_UV` / `MKAGENT_BUN` / `MKAGENT_NODE` | 不设置 | 解析文档工具包装器使用的 runtime(否则走系统 fallback) |
+| `MKAGENT_UV` / `MKAGENT_BUN` / `MKAGENT_NODE` | 不设置 | 覆盖脚本 runtime；打包 launcher 通常注入内置绝对路径，开发期才可回退到 PATH |
 | `MKAGENT_DEV_RUNTIME` | 不设置 | 设为 `1` 在本地打包时跳过代码签名 |
 | `SENTRY_ELECTRON_INGEST_URL` | 空(不生效) | 启用 Electron Sentry 上报必需 |
 | `MKAGENT_SERVER_URL` / `MKAGENT_TLS_CA` | 不设置 | CLI 连接参数 |

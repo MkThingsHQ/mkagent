@@ -90,7 +90,7 @@ MkAgent 工作期间,参考 checkout(`../craft-agents-oss`、`../echo`、`../xag
 - 公开分享、Viewer app
 - 产品 Automations 与 scheduler UI
 - Sources API / Settings UI、会话 labels、用户自定义 status
-- 自带的 per-platform `uv` 与 WhatsApp worker
+- WhatsApp worker
 
 以上都登记在 Lite 边界删除项中,详见 [`comparison-with-craft.md`](./comparison-with-craft.md) 与 [`migration/`](./migration/README.md)。
 

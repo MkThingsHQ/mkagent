@@ -9,7 +9,7 @@ This page summarizes how to set up an MkAgent development environment and which 
 | Bun | 1.3.14+ | Workspace, runtime, builds (`bun.lock`) |
 | Node | ≥ 18 (Bun ships it for fallbacks) | TypeScript toolchain |
 | Python | 3.12 | Document-tool smoke tests |
-| `uv` | latest | Document-tool runtime (system `uv` is preferred; MkAgent resolves `MKAGENT_UV` env or PATH) |
+| `uv` | latest compatible for development; `0.10.6` in desktop release builds | Runs document-tool smoke tests and prepares assets; packaged artifacts bundle their target-platform binary |
 | Git | any modern version | `pre-commit`-style checks via husky are opt-in |
 
 `bun` is the only workspace linker; npm/yarn are not used to install dependencies because `bun.lock` is the source of truth.
@@ -96,7 +96,7 @@ MKAGENT_CONFIG_DIR=/tmp/mkagent-dev bun run server:dev:webui
 | `MKAGENT_WEBUI_DIR` | unset | Enable WebUI assets on the RPC port |
 | `MKAGENT_WEBUI_PASSWORD` / `_SECURE_COOKIE` / `_WS_URL` | unset | WebUI login password, cookie `Secure` flag override, and browser-side `ws://` URL |
 | `MKAGENT_PI_MODEL_API` | unset | Interceptor-level Pi model hint |
-| `MKAGENT_UV` / `MKAGENT_BUN` / `MKAGENT_NODE` | unset | Resolve the runtime used by document-tool wrappers (system fallbacks used otherwise) |
+| `MKAGENT_UV` / `MKAGENT_BUN` / `MKAGENT_NODE` | unset | Override script runtimes; packaged launchers normally inject absolute bundled paths, while development may fall back to PATH |
 | `MKAGENT_DEV_RUNTIME` | unset | Set to `1` to skip code-signing during local packaging |
 | `SENTRY_ELECTRON_INGEST_URL` | empty (inert) | Required to enable Sentry uploads in the Electron app |
 | `MKAGENT_SERVER_URL` / `MKAGENT_TLS_CA` | unset | CLI connection options |
