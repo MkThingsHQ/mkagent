@@ -2,13 +2,33 @@ name: Release
 
 on:
   push:
-    tags: ["v*"]
-  workflow_dispatch:
+    tags:
+      - "v*"
 
 permissions:
   contents: read
 
+concurrency:
+  group: release-${{ github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - uses: astral-sh/setup-uv@v6
+      - run: bun install --frozen-lockfile
+      - name: Verify version, changelog, and release notes
+        run: bun run release:check "${GITHUB_REF_NAME}"
+      - run: bun run validate:ci
+      - run: bun run audit:craft-reuse
+      - run: bun run lint
+      - run: bun run test
+
   credentials:
     runs-on: ubuntu-latest
     environment: release
@@ -25,17 +45,17 @@ jobs:
       - name: Require stable-release credentials
         shell: bash
         run: |
-          test -n "$APPLE_CERTIFICATE"
-          test -n "$APPLE_PASSWORD"
-          test -n "$APPLE_ID"
-          test -n "$APPLE_APP_PASSWORD"
-          test -n "$APPLE_TEAM_ID"
-          test -n "$WINDOWS_CERTIFICATE"
-          test -n "$WINDOWS_PASSWORD"
-          test -n "$PUBLIC_TOKEN"
+          missing=0
+          for name in APPLE_CERTIFICATE APPLE_PASSWORD APPLE_ID APPLE_APP_PASSWORD APPLE_TEAM_ID WINDOWS_CERTIFICATE WINDOWS_PASSWORD PUBLIC_TOKEN; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing release environment secret: $name"
+              missing=1
+            fi
+          done
+          exit "$missing"
 
   build:
-    needs: credentials
+    needs: [verify, credentials]
     environment: release
     strategy:
       fail-fast: false
@@ -43,15 +63,19 @@ jobs:
         include:
           - os: macos-15
             target: mac
+            platform: darwin
             arch: arm64
           - os: macos-15-intel
             target: mac
+            platform: darwin
             arch: x64
           - os: windows-latest
             target: win
+            platform: win32
             arch: x64
           - os: ubuntu-latest
             target: linux
+            platform: linux
             arch: x64
     runs-on: ${{ matrix.os }}
     steps:
@@ -65,7 +89,6 @@ jobs:
       - name: Package desktop
         working-directory: apps/electron
         env:
-          GH_TOKEN: ${{ github.token }}
           CSC_LINK: ${{ matrix.target == 'win' && secrets.WIN_CSC_LINK || secrets.CSC_LINK }}
           CSC_KEY_PASSWORD: ${{ matrix.target == 'win' && secrets.WIN_CSC_KEY_PASSWORD || secrets.CSC_KEY_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
@@ -75,16 +98,32 @@ jobs:
         run: bunx electron-builder --config electron-builder.yml --${{ matrix.target }} --${{ matrix.arch }} --publish never
       - name: Build headless server
         shell: bash
-        run: bun run scripts/build-server.ts --output=dist/MkAgent-server-${{ runner.os }}-${{ matrix.arch }} --compress
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          bun run scripts/build-server.ts --output="dist/MkAgent-server-${version}-${{ matrix.platform }}-${{ matrix.arch }}" --compress
+      - name: Compress Windows headless server
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}".TrimStart("v")
+          Compress-Archive -Path "dist/MkAgent-server-$version-${{ matrix.platform }}-${{ matrix.arch }}/*" -DestinationPath "dist/MkAgent-server-$version-${{ matrix.platform }}-${{ matrix.arch }}.zip"
       - uses: actions/upload-artifact@v4
         with:
           name: release-${{ matrix.target }}-${{ matrix.arch }}
+          if-no-files-found: error
+          retention-days: 7
           path: |
-            apps/electron/release/*
-            dist/MkAgent-server-*
+            apps/electron/release/*.dmg
+            apps/electron/release/*.zip
+            apps/electron/release/*.exe
+            apps/electron/release/*.AppImage
+            apps/electron/release/*.blockmap
+            apps/electron/release/latest*.yml
+            dist/MkAgent-server-*.tar.gz
+            dist/MkAgent-server-*.zip
 
   cli:
-    needs: credentials
+    needs: verify
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -93,30 +132,53 @@ jobs:
           bun-version: 1.3.14
       - run: bun install --frozen-lockfile
       - run: bun run cli:build
-      - name: Package CLI
+      - name: Package CLI bundle
         run: tar -czf MkAgent-cli-bun.tar.gz -C apps/cli/dist mkagent
       - uses: actions/upload-artifact@v4
         with:
           name: release-cli
           path: MkAgent-cli-bun.tar.gz
+          if-no-files-found: error
+          retention-days: 7
 
   publish:
     needs: [build, cli]
     runs-on: ubuntu-latest
     environment: release
     steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.14
+      - run: bun install --frozen-lockfile
       - uses: actions/download-artifact@v4
         with:
+          pattern: release-*
           path: artifacts
-          merge-multiple: true
-      - name: Generate checksums
-        run: |
-          find artifacts -type f -print0 | sort -z | xargs -0 sha256sum > SHA256SUMS
-          mv SHA256SUMS artifacts/SHA256SUMS
-      - name: Publish public release
+      - name: Collect and verify release assets
+        env:
+          VERSION: ${{ github.ref_name }}
+        run: bun run scripts/collect-release-assets.ts artifacts release-assets "${VERSION#v}"
+      - name: Create draft release and upload all assets
         env:
           GH_TOKEN: ${{ secrets.MKAGENT_PUBLIC_RELEASE_TOKEN }}
           TAG: ${{ github.ref_name }}
+        shell: bash
         run: |
-          gh release view "$TAG" --repo open-fox/mkagent-public >/dev/null 2>&1 || gh release create "$TAG" --repo open-fox/mkagent-public --title "MkAgent $TAG" --notes "Signed MkAgent desktop, headless server, update manifests, blockmaps, CLI, and checksums."
-          find artifacts -type f -print0 | xargs -0 gh release upload "$TAG" --repo open-fox/mkagent-public --clobber
+          notes="apps/electron/resources/release-notes/${TAG#v}.md"
+          state="$(gh release view "$TAG" --repo open-fox/mkagent-public --json isDraft --jq .isDraft 2>/dev/null || true)"
+          if [ "$state" = "false" ]; then
+            echo "::error::Public release $TAG is already published and cannot be replaced"
+            exit 1
+          fi
+          if [ -z "$state" ]; then
+            gh release create "$TAG" --repo open-fox/mkagent-public --target main --title "MkAgent $TAG" --notes-file "$notes" --draft
+          else
+            gh release edit "$TAG" --repo open-fox/mkagent-public --title "MkAgent $TAG" --notes-file "$notes"
+          fi
+          gh release upload "$TAG" release-assets/* --repo open-fox/mkagent-public --clobber
+      - name: Publish release after successful upload
+        env:
+          GH_TOKEN: ${{ secrets.MKAGENT_PUBLIC_RELEASE_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: gh release edit "$TAG" --repo open-fox/mkagent-public --draft=false --latest

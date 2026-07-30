@@ -21,6 +21,10 @@ extraMetadata:
 extraResources:
   - from: ../../node_modules/@vscode/ripgrep/bin
     to: app/node_modules/@vscode/ripgrep/bin
+  - from: ../../LICENSE
+    to: LICENSE
+  - from: ../../NOTICE
+    to: NOTICE
 
 publish:
   provider: github

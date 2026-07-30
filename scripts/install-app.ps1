@@ -1,10 +1,10 @@
 # MkAgent Windows Installer
-# Usage: irm https://mkagent.app/install-app.ps1 | iex
+# Usage: download this script from the private source repository, inspect it, then run it.
 
 & {
 $ErrorActionPreference = "Stop"
 
-$VERSIONS_URL = "https://mkagent.app/electron"
+$VERSIONS_URL = "https://github.com/open-fox/mkagent-public/releases/latest/download"
 $DOWNLOAD_DIR = "$env:TEMP\mkagent-install"
 $APP_NAME = "MkAgent"
 
@@ -29,11 +29,11 @@ Write-Info "Detected platform: $platform (arch: $arch)"
 # Create download directory
 New-Item -ItemType Directory -Force -Path $DOWNLOAD_DIR | Out-Null
 
-# Fetch YAML manifest directly from /electron/latest/ (no version endpoint needed)
+# Fetch the electron-builder manifest from the latest public GitHub release.
 Write-Info "Fetching release info..."
 $yamlPath = Join-Path $DOWNLOAD_DIR "latest.yml"
 try {
-    Invoke-WebRequest -Uri "$VERSIONS_URL/latest/latest.yml" -OutFile $yamlPath -UseBasicParsing
+    Invoke-WebRequest -Uri "$VERSIONS_URL/latest.yml" -OutFile $yamlPath -UseBasicParsing
 } catch {
     Write-Err "Failed to fetch release info: $_"
 }
@@ -58,7 +58,7 @@ Write-Info "Latest version: $version"
 # Parse YAML to extract sha512, url (filename), and size for our architecture
 # YAML format:
 #   files:
-#     - url: Craft-Agents-x64.exe
+#     - url: MkAgent-0.1.0-x64.exe
 #       sha512: <base64>
 #       size: 123456789
 #       arch: x64
@@ -108,7 +108,7 @@ if (-not $checksum -or $checksum.Length -lt 80) {
 
 # Use default filename if not found
 if (-not $filename) {
-    $filename = "Craft-Agents-$arch.exe"
+    $filename = "MkAgent-$version-$arch.exe"
 }
 
 $installerUrl = "$VERSIONS_URL/latest/$filename"

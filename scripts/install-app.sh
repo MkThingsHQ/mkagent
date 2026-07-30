@@ -2,7 +2,7 @@
 
 set -e
 
-VERSIONS_URL="https://mkagent.app/electron"
+VERSIONS_URL="https://github.com/open-fox/mkagent-public/releases/latest/download"
 DOWNLOAD_DIR="$HOME/.mkagent/downloads"
 
 # Colors for output
@@ -152,7 +152,7 @@ else
         error "Linux currently only supports x64 architecture. Your architecture: $arch"
     fi
     platform="linux-${arch}"
-    APP_NAME="Craft-Agents-x64.AppImage"
+    APP_NAME="MkAgent-x64.AppImage"
     INSTALL_DIR="$HOME/.local/bin"
     ext="AppImage"
     yml_file="latest-linux.yml"
@@ -164,9 +164,9 @@ info "Detected platform: $platform"
 mkdir -p "$DOWNLOAD_DIR"
 mkdir -p "$INSTALL_DIR"
 
-# Fetch YAML manifest directly from /electron/latest/ (no version endpoint needed)
+# Fetch the electron-builder manifest from the latest public GitHub release.
 info "Fetching release info..."
-manifest_yaml=$(download_file "$VERSIONS_URL/latest/$yml_file")
+manifest_yaml=$(download_file "$VERSIONS_URL/$yml_file")
 
 if [ -z "$manifest_yaml" ]; then
     error "Failed to fetch release info from $yml_file"
@@ -201,13 +201,13 @@ fi
 
 # Use default filename if not found
 if [ -z "$filename" ]; then
-    filename="Craft-Agents-${arch}.${ext}"
+    filename="MkAgent-${version}-${arch}.${ext}"
 fi
 
 info "Expected sha512: ${checksum:0:20}..."
 
 # Download installer
-installer_url="$VERSIONS_URL/latest/$filename"
+installer_url="$VERSIONS_URL/$filename"
 installer_path="$DOWNLOAD_DIR/$filename"
 
 info "Downloading $filename..."
@@ -317,12 +317,12 @@ else
     # New paths
     APP_DIR="$HOME/.mkagent/app"
     WRAPPER_PATH="$INSTALL_DIR/mkagent"
-    APPIMAGE_INSTALL_PATH="$APP_DIR/Craft-Agents-x64.AppImage"
+    APPIMAGE_INSTALL_PATH="$APP_DIR/MkAgent-x64.AppImage"
 
     # Kill the app if it's running
-    if pgrep -f "Craft-Agent.*AppImage" >/dev/null 2>&1; then
+    if pgrep -f "MkAgent.*AppImage" >/dev/null 2>&1; then
         info "Stopping MkAgent..."
-        pkill -f "Craft-Agent.*AppImage" 2>/dev/null || true
+        pkill -f "MkAgent.*AppImage" 2>/dev/null || true
         sleep 2
     fi
 
@@ -344,14 +344,14 @@ else
 #!/bin/bash
 # MkAgent launcher - handles Linux-specific AppImage issues
 
-APPIMAGE_PATH="$HOME/.mkagent/app/Craft-Agents-x64.AppImage"
+APPIMAGE_PATH="$HOME/.mkagent/app/MkAgent-x64.AppImage"
 ELECTRON_CACHE="$HOME/.config/@mkagent"
 ELECTRON_CACHE_ALT="$HOME/.cache/@mkagent"
 
 # Verify AppImage exists
 if [ ! -f "$APPIMAGE_PATH" ]; then
     echo "Error: MkAgent not found at $APPIMAGE_PATH"
-    echo "Reinstall: curl -fsSL https://mkagent.app/install-app.sh | bash"
+    echo "Reinstall from https://github.com/open-fox/mkagent-public/releases/latest"
     exit 1
 fi
 
@@ -361,9 +361,9 @@ if [ -z "$DISPLAY" ]; then
 fi
 
 # Clear stale cache referencing AppImage mount paths
-# AppImage creates a new /tmp/.mount_Craft-XXXX each launch, so any cached path is stale
+# AppImage creates a new /tmp/.mount_MkAgen-XXXX each launch, so any cached path is stale
 for cache_dir in "$ELECTRON_CACHE" "$ELECTRON_CACHE_ALT"; do
-    if [ -d "$cache_dir" ] && grep -rq '/tmp/\.mount_Craft' "$cache_dir" 2>/dev/null; then
+    if [ -d "$cache_dir" ] && grep -rq '/tmp/\.mount_MkAgen' "$cache_dir" 2>/dev/null; then
         rm -rf "$cache_dir"
     fi
 done

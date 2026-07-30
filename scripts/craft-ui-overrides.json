@@ -110,7 +110,7 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/apisetup/ApiKeyInput.tsx": {
-      "sha256": "deaf3f54d23857b2606d1b89021cc651848ea7df61872e60c6c0860336e97f6d",
+      "sha256": "0267701516a5237dfb2266f86e1b676dd92558e1d8099416e6c5ade3b13d4506",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/apisetup/index.ts": {
@@ -210,8 +210,20 @@
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx": {
-      "sha256": "1f55ff3386e79bae8a8cebc0139548498648620a940ba24f2f2bea611e97a4b2",
+      "sha256": "82177a29bec87f50b688b83a4e5df83604be3276a029b4ba6ebf27618a499cb7",
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/input/structured/AdminApprovalRequest.tsx": {
+      "sha256": "91e51bef40e8457e371e2489417a8133f56bb97c625dedc1574dc19c11f9a1c2",
+      "reason": "Craft renderer file adapted for complete MkAgent localization coverage"
+    },
+    "apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx": {
+      "sha256": "35636ea9bae3ea48425cfdfc690e696cc570a82c9286048579053353859a1ad8",
+      "reason": "Craft renderer file adapted for complete MkAgent localization coverage"
+    },
+    "apps/electron/src/renderer/components/ui/slash-command-menu.tsx": {
+      "sha256": "db0b47ea137523cd04179baeb1f78c485ceb1116bbd1ed18767c4ae756987e5c",
+      "reason": "Craft renderer file adapted for complete MkAgent localization coverage"
     },
     "apps/electron/src/renderer/components/app-shell/__tests__/transport-connection-banner.test.ts": {
       "sha256": "22b5051fe16d65c5c111f4206bcee44d3c1d4435f861d6a6be73852883e5af90",

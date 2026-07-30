@@ -51,6 +51,8 @@
     "lint:i18n:usage": "bun run scripts/check-i18n-usage.ts",
     "sort-locales": "bun scripts/sort-locales.ts",
     "lint:i18n:sorted": "bun scripts/sort-locales.ts --check",
+    "release:prepare": "bun run scripts/release.ts prepare",
+    "release:check": "bun run scripts/release.ts check",
     "lint": "bun run lint:craft-ui-sync && bun run lint:craft-test-coverage && bun run lint:electron && bun run lint:shared && bun run lint:ui",
     "link": "bun link",
     "electron:clean": "bun run scripts/electron-clean.ts",
