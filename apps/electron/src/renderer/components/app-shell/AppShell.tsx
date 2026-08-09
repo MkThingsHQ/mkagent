@@ -1157,7 +1157,7 @@ function AppShellContent({
                       id: 'nav:openConnector',
                       title: t('sidebar.openConnector'),
                       icon: Cable,
-                      variant: isOpenConnectorMode ? 'default' : 'ghost',
+                      variant: isOpenConnectorMode && navState.section == null ? 'default' : 'ghost',
                       onClick: () => handleOpenConnectorClick(),
                       expandable: true,
                       expanded: isExpanded('nav:openConnector'),

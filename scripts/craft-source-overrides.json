@@ -463,7 +463,7 @@
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/app-shell/AppShell.tsx": {
-      "sha256": "6c66a80dd4bba01499202b4bcb51b0fdd3dec0139827a4cf91c41f01b7e5b74f",
+      "sha256": "ee125672e53b050135e6bb78e3983c83301799bb25a1de60ac9557263160b2af",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/app-shell/BatchSessionMenu.tsx": {
@@ -2205,7 +2205,7 @@
       "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
     },
     "scripts/craft-ui-overrides.json": {
-      "sha256": "a08cb6c9fc01950cbbc0d457f34a5140bc912c7fcd72d14c5cb7499bcc7966aa",
+      "sha256": "6eae628fbf06fcfd73bdc34ce26eb2072a461f3b26d6eee4c6c8203751f983a6",
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
     },
     ".github/workflows/ci.yml": {

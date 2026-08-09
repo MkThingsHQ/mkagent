@@ -214,7 +214,7 @@
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/AppShell.tsx": {
-      "sha256": "6c66a80dd4bba01499202b4bcb51b0fdd3dec0139827a4cf91c41f01b7e5b74f",
+      "sha256": "ee125672e53b050135e6bb78e3983c83301799bb25a1de60ac9557263160b2af",
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/WorkspaceSwitcher.tsx": {
