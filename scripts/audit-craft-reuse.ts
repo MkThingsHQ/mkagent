@@ -54,7 +54,11 @@ async function readCraftFile(file: string): Promise<Buffer> {
   return Buffer.from(proc.stdout)
 }
 
-const isAuditedFile = (file: string) => file !== 'scripts/craft-source-overrides.json'
+const isAuditedFile = (file: string) => {
+  const normalized = file.replace(/\/$/, '')
+  return normalized !== 'scripts/craft-source-overrides.json'
+    && normalized !== 'vendor/open-connector'
+}
 
 const normalizeCraft = (source: string) => source
   .replaceAll('@craft-agent/', '@mkagent/')

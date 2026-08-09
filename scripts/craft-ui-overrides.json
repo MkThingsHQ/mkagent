@@ -50,11 +50,11 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/index.html": {
-      "sha256": "ded83e3435b22343c047a0c6ec56bda95d71d5c69833c632d39aa8e6b76e610b",
+      "sha256": "47c1f08cdb85f8d53f35ed040b415367091b57c6fed84eb8568c3728a933889c",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/contexts/NavigationContext.tsx": {
-      "sha256": "0f460eb8fc9d74083231389918d0bf54b4f4844ca25d7775f42e5c0d62b2a99f",
+      "sha256": "0c85e9f7d772665eb03f20891246c36c078fcd569bb2c08d3312148655adcf8a",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts": {
@@ -214,7 +214,7 @@
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/AppShell.tsx": {
-      "sha256": "d36f2cd417fde2821bf28895bf9bd6b8ef48d06c6360564d2bf2cd162f9ba53e",
+      "sha256": "6c66a80dd4bba01499202b4bcb51b0fdd3dec0139827a4cf91c41f01b7e5b74f",
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/WorkspaceSwitcher.tsx": {
@@ -274,7 +274,7 @@
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": {
-      "sha256": "52f5971be39fc8e4ca91b6888ca940271b018e68d12b5d66bb3ab4308f3085ba",
+      "sha256": "0cc6bdf99fec7ae02ca756bce7a9a7026b61a795eea3b032b4bb6565db8b6e3b",
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": {
@@ -390,7 +390,7 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/lib/nav-helpers.ts": {
-      "sha256": "5d3e051f11765283eebc0680dff031de9430ffcb7160633447ebb546f7c1f33c",
+      "sha256": "a7907e11866c2b2baa5ddc0a8f6c854b0e0bb22399f70efafc28f03dfd0e19bc",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/lib/navigation-registry.ts": {
@@ -438,8 +438,12 @@
       "reason": "Craft settings UI adapted only to retained MkAgent settings"
     },
     "apps/electron/src/renderer/pages/index.ts": {
-      "sha256": "4899116eabd23af0657fa153ba3b00ab99680b2ea837f62946f333a4a57198ef",
+      "sha256": "600afa072a6fe907f728b3859928ca2fba89e42b5631482d4e54cf0bda9339a3",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/pages/OpenConnectorPage.tsx": {
+      "sha256": "67c683af2e785950ca3171a2b5d8559eddd34f30fc4256f370d896aab5c3e3b8",
+      "reason": "MkAgent-only desktop page embeds the pinned OpenConnector console without restoring Craft Sources UI"
     },
     "apps/electron/src/renderer/pages/ChatPage.tsx": {
       "sha256": "25d948183a107e8cc41599b3fab3b809abd56152b69cd249fa88bd1ea905b5e8",

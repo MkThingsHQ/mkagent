@@ -9,6 +9,7 @@ import { debug } from '../utils/debug.ts';
 import type { BrowserPaneFns } from './browser-tools.ts';
 import type { LLMQueryRequest, LLMQueryResult } from './llm-tool.ts';
 import type { SpawnSessionFn } from './spawn-session-tool.ts';
+import type { OpenConnectorToolBridge } from '../open-connector/agent-tools.ts';
 
 export interface SessionScopedToolCallbacks {
   onPlanSubmitted?: (planPath: string) => void;
@@ -23,6 +24,7 @@ export interface SessionScopedToolCallbacks {
     message: string,
     attachments?: Array<{ path: string; name?: string }>
   ) => Promise<SendAgentMessageResult>;
+  openConnectorToolBridge?: OpenConnectorToolBridge;
 }
 
 const registry = new Map<string, SessionScopedToolCallbacks>();

@@ -5,6 +5,7 @@
  */
 
 export { default as ChatPage } from './ChatPage'
+export { default as OpenConnectorPage } from './OpenConnectorPage'
 // Settings pages
 export {
   SettingsNavigator,

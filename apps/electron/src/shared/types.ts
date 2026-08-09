@@ -156,6 +156,14 @@ export interface TransportCloseInfo {
   wasClean?: boolean
 }
 
+export interface OpenConnectorConsoleInfo {
+  url: string
+  mcpUrl: string
+  port: number
+  status: 'running' | 'failed'
+  error?: string
+}
+
 export interface TransportConnectionState {
   mode: TransportMode
   status: TransportConnectionStatus
@@ -295,6 +303,9 @@ export interface ElectronAPI {
   getRuntimeEnvironment(): 'electron' | 'web'
   getHomeDir(): Promise<string>
   isDebugMode(): Promise<boolean>
+
+  // OpenConnector local sidecar
+  getOpenConnectorConsole(): Promise<OpenConnectorConsoleInfo>
 
   // Transport connection status (preload-local, not RPC channels)
   getTransportConnectionState(): Promise<TransportConnectionState>
@@ -590,10 +601,19 @@ export interface SkillsNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+export type OpenConnectorSection = 'providers' | 'actions' | 'runs'
+
+export interface OpenConnectorNavigationState {
+  navigator: 'openConnector'
+  section?: OpenConnectorSection
+  rightSidebar?: RightSidebarPanel
+}
+
 export type NavigationState =
   | SessionsNavigationState
   | SettingsNavigationState
   | SkillsNavigationState
+  | OpenConnectorNavigationState
 
 export const isSessionsNavigation = (
   state: NavigationState
@@ -607,6 +627,10 @@ export const isSkillsNavigation = (
   state: NavigationState
 ): state is SkillsNavigationState => state.navigator === 'skills'
 
+export const isOpenConnectorNavigation = (
+  state: NavigationState
+): state is OpenConnectorNavigationState => state.navigator === 'openConnector'
+
 export const DEFAULT_NAVIGATION_STATE: NavigationState = {
   navigator: 'sessions',
   filter: { kind: 'allSessions' },
@@ -614,6 +638,9 @@ export const DEFAULT_NAVIGATION_STATE: NavigationState = {
 }
 
 export const getNavigationStateKey = (state: NavigationState): string => {
+  if (state.navigator === 'openConnector') {
+    return state.section ? `openConnector/${state.section}` : 'openConnector'
+  }
   if (state.navigator === 'skills') {
     return state.details ? `skills/skill/${state.details.skillSlug}` : 'skills'
   }
@@ -625,6 +652,13 @@ export const getNavigationStateKey = (state: NavigationState): string => {
 }
 
 export const parseNavigationStateKey = (key: string): NavigationState | null => {
+  if (key === 'openConnector') return { navigator: 'openConnector' }
+  if (key === 'openConnector/providers' || key === 'openConnector/actions' || key === 'openConnector/runs') {
+    return {
+      navigator: 'openConnector',
+      section: key.slice('openConnector/'.length) as OpenConnectorSection,
+    }
+  }
   if (key === 'skills') return { navigator: 'skills', details: null }
   if (key.startsWith('skills/skill/')) {
     const skillSlug = key.slice(13)

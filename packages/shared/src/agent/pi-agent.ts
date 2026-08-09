@@ -95,6 +95,11 @@ import { extractWorkspaceSlug } from '../utils/workspace.ts';
 import { LLM_QUERY_TIMEOUT_MS, type LLMQueryRequest, type LLMQueryResult } from './llm-tool.ts';
 import { executeBrowserToolCommand } from './browser-tool-runtime.ts';
 import { saveBinaryResponse } from '../utils/binary-detection.ts';
+import {
+  executeOpenConnectorProxyTool,
+  normalizeOpenConnectorToolDefinitions,
+  parseOpenConnectorProxyToolName,
+} from '../open-connector/agent-tools.ts';
 
 // ============================================================
 // PiAgent Implementation
@@ -226,6 +231,8 @@ export class PiAgent extends BaseAgent {
     resolve: (result: { content: string; isError: boolean }) => void;
     reject: (error: Error) => void;
   }> = new Map();
+
+  private activeProxyToolControllers = new Map<string, AbortController>();
 
   // Pending mini completions (correlation map for subprocess mini_completion_result)
   private pendingMiniCompletions: Map<string, {
@@ -506,6 +513,14 @@ export class PiAgent extends BaseAgent {
     // are executed in the main process when the LLM calls them.
     this.assertBackendSessionToolParity();
     let sessionToolDefs = getSessionToolProxyDefs();
+    const openConnectorBridge = getSessionScopedToolCallbacks(sessionId)?.openConnectorToolBridge;
+    if (openConnectorBridge) {
+      try {
+        sessionToolDefs.push(...normalizeOpenConnectorToolDefinitions(await openConnectorBridge.listTools()));
+      } catch (error) {
+        this.debug(`OpenConnector tools unavailable: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
 
     // Mirror Claude's gate: hide `browser_tool` when the user has disabled
     // the built-in browser tool. Without this filter, Pi would still advertise
@@ -703,6 +718,12 @@ export class PiAgent extends BaseAgent {
           toolName: string;
           args: Record<string, unknown>;
         });
+        break;
+
+      case 'tool_execute_cancel':
+        this.activeProxyToolControllers.get(String(msg.requestId))?.abort(
+          new Error('Proxy tool execution was cancelled'),
+        );
         break;
 
       case 'session_tool_completed':
@@ -1081,8 +1102,10 @@ export class PiAgent extends BaseAgent {
     toolName: string;
     args: Record<string, unknown>;
   }): Promise<void> {
+    const controller = new AbortController();
+    this.activeProxyToolControllers.set(request.requestId, controller);
     try {
-      const result = await this.routeToolCall(request.toolName, request.args);
+      const result = await this.routeToolCall(request.toolName, request.args, controller.signal);
       this.send({
         type: 'tool_execute_response',
         requestId: request.requestId,
@@ -1097,6 +1120,10 @@ export class PiAgent extends BaseAgent {
           isError: true,
         },
       });
+    } finally {
+      if (this.activeProxyToolControllers.get(request.requestId) === controller) {
+        this.activeProxyToolControllers.delete(request.requestId);
+      }
     }
   }
 
@@ -1110,7 +1137,8 @@ export class PiAgent extends BaseAgent {
    */
   private async routeToolCall(
     toolName: string,
-    args: Record<string, unknown>
+    args: Record<string, unknown>,
+    signal?: AbortSignal,
   ): Promise<{ content: string; isError: boolean }> {
     // Session-scoped tools — strip mcp__session__ prefix added by the Pi SDK
     // registration (tools are registered as mcp__session__SubmitPlan, etc.)
@@ -1120,6 +1148,11 @@ export class PiAgent extends BaseAgent {
 
     if (SESSION_TOOL_NAMES.has(strippedName)) {
       return this.executeSessionTool(strippedName, args);
+    }
+
+    if (parseOpenConnectorProxyToolName(toolName)) {
+      const bridge = getSessionScopedToolCallbacks(this._sessionId)?.openConnectorToolBridge;
+      return executeOpenConnectorProxyTool(bridge, toolName, args, { signal });
     }
 
     // Unknown tool
@@ -1384,6 +1417,7 @@ export class PiAgent extends BaseAgent {
     this.resetSubprocessErrorDedup();
     this.subprocessReady = null;
     this.subprocessReadyResolve = null;
+    this.abortActiveProxyTools('Pi subprocess exited');
 
     // If we were processing, emit error + complete
     if (this._isProcessing) {
@@ -1870,6 +1904,8 @@ export class PiAgent extends BaseAgent {
     }
     this.pendingPermissions.clear();
 
+    this.abortActiveProxyTools(reason || 'Session stopped by user');
+
     // Send abort to subprocess
     this.send({ type: 'abort' });
     this.eventQueue.complete();
@@ -1887,6 +1923,8 @@ export class PiAgent extends BaseAgent {
       pending.resolve(false);
     }
     this.pendingPermissions.clear();
+
+    this.abortActiveProxyTools(`Session force-aborted: ${reason}`);
 
     // Reject all pending tool executions
     for (const [, pending] of this.pendingToolExecutions) {
@@ -1990,6 +2028,7 @@ export class PiAgent extends BaseAgent {
    * Used before an idle runtime restart so we don't leave transient children behind.
    */
   private async killSubprocessGracefully(timeoutMs = 2_000): Promise<void> {
+    this.abortActiveProxyTools('Pi subprocess is restarting');
     const child = this.subprocess;
     if (!child) {
       this.killSubprocess();
@@ -2050,6 +2089,7 @@ export class PiAgent extends BaseAgent {
    * Kill the subprocess and clean up resources.
    */
   private killSubprocess(): void {
+    this.abortActiveProxyTools('Pi subprocess stopped');
     if (this.readline) {
       this.readline.close();
       this.readline = null;
@@ -2074,6 +2114,13 @@ export class PiAgent extends BaseAgent {
     // Clear any in-flight overflow-recovery state so a stale fallback timer
     // doesn't fire on a torn-down adapter.
     this.adapter.resetOverflowState();
+  }
+
+  private abortActiveProxyTools(reason: string): void {
+    for (const controller of this.activeProxyToolControllers.values()) {
+      if (!controller.signal.aborted) controller.abort(new Error(reason));
+    }
+    this.activeProxyToolControllers.clear();
   }
 
   // ============================================================

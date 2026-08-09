@@ -146,6 +146,9 @@ export const RPC_CHANNELS = {
   credentials: {
     HEALTH_CHECK: 'credentials:healthCheck',
   },
+  openConnector: {
+    GET_CONSOLE: 'openConnector:getConsole',
+  },
   onboarding: {
     GET_AUTH_STATE: 'onboarding:getAuthState',
     START_CLAUDE_OAUTH: 'onboarding:startClaudeOAuth',

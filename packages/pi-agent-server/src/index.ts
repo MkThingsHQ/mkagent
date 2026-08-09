@@ -181,6 +181,7 @@ interface OutboundPreToolUseReq {
   input: Record<string, unknown>;
 }
 interface OutboundToolExecReq { type: 'tool_execute_request'; requestId: string; toolName: string; args: Record<string, unknown> }
+interface OutboundToolExecCancel { type: 'tool_execute_cancel'; requestId: string }
 interface OutboundSessionToolCompleted { type: 'session_tool_completed'; toolName: string; args: Record<string, unknown>; isError: boolean }
 interface OutboundMiniResult { type: 'mini_completion_result'; id: string; text: string | null }
 interface OutboundLlmQueryResult {
@@ -230,6 +231,7 @@ type OutboundMessage =
   | OutboundEvent
   | OutboundPreToolUseReq
   | OutboundToolExecReq
+  | OutboundToolExecCancel
   | OutboundSessionToolCompleted
   | OutboundMiniResult
   | OutboundLlmQueryResult
@@ -889,6 +891,7 @@ function buildProxyTools(): ToolDefinition<any, any>[] {
     execute: async (
       toolCallId: string,
       params: any,
+      signal?: AbortSignal,
     ): Promise<AgentToolResult<any>> => {
       // Check speculative prefetch cache first (parallel call_llm optimization).
       // If this tool was prefetched on message_end, the request is already in-flight —
@@ -905,28 +908,45 @@ function buildProxyTools(): ToolDefinition<any, any>[] {
       }
 
       const inputObj = params as Record<string, unknown>;
+      signal?.throwIfAborted();
 
       // Permission checking via main process
       const approvedInput = await requestPreToolUseApproval(def.name, inputObj, toolCallId);
 
       // Execute via main process
       const requestId = `proxy-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-
-      send({
-        type: 'tool_execute_request',
-        requestId,
-        toolName: def.name,
-        args: approvedInput,
-      });
-
-      const result = await new Promise<{ content: string; isError: boolean }>((resolve) => {
+      const resultPromise = new Promise<{ content: string; isError: boolean }>((resolve) => {
         pendingToolExecutions.set(requestId, { resolve });
       });
-
-      return {
-        content: [{ type: 'text', text: result.content }],
-        details: result.isError ? { isError: true } : undefined,
+      let requestSent = false;
+      let cancellationSent = false;
+      const notifyCancellation = () => {
+        if (!requestSent || cancellationSent) return;
+        cancellationSent = true;
+        send({ type: 'tool_execute_cancel', requestId });
       };
+      signal?.addEventListener('abort', notifyCancellation, { once: true });
+
+      try {
+        signal?.throwIfAborted();
+        send({
+          type: 'tool_execute_request',
+          requestId,
+          toolName: def.name,
+          args: approvedInput,
+        });
+        requestSent = true;
+        if (signal?.aborted) notifyCancellation();
+
+        const result = await resultPromise;
+        return {
+          content: [{ type: 'text', text: result.content }],
+          details: result.isError ? { isError: true } : undefined,
+        };
+      } finally {
+        signal?.removeEventListener('abort', notifyCancellation);
+        pendingToolExecutions.delete(requestId);
+      }
     },
   }));
 }

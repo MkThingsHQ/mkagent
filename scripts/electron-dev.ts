@@ -7,6 +7,7 @@ import { spawn, type Subprocess } from "bun";
 import { existsSync, rmSync, cpSync, readFileSync, statSync, mkdirSync } from "fs";
 import { join, basename } from "path";
 import * as esbuild from "esbuild";
+import { prepareOpenConnector } from "./prepare-open-connector";
 
 const ROOT_DIR = join(import.meta.dir, "..");
 const ELECTRON_DIR = join(ROOT_DIR, "apps/electron");
@@ -25,21 +26,28 @@ const ELECTRON_BIN = join(ROOT_DIR, `node_modules/.bin/electron${BIN_EXT}`);
 // Multi-instance detection (matches detect-instance.sh logic)
 // Detects instance number from folder name suffix (e.g., mkagent-1 → instance 1)
 function detectInstance(): void {
-  // Don't override if already set (e.g., by sourcing detect-instance.sh first)
-  if (process.env.MKAGENT_VITE_PORT) return;
-
   const folderName = basename(ROOT_DIR);
   const match = folderName.match(/-(\d+)$/);
+  const instanceNum = process.env.MKAGENT_INSTANCE_NUMBER || match?.[1];
 
-  if (match) {
-    const instanceNum = match[1];
-    process.env.MKAGENT_INSTANCE_NUMBER = instanceNum;
-    process.env.MKAGENT_VITE_PORT = `${instanceNum}173`;
-    process.env.MKAGENT_APP_NAME = `MkAgent [${instanceNum}]`;
-    process.env.CONFIG_DIR = join(process.env.HOME || "", `.mkagent-${instanceNum}`);
-    process.env.MKAGENT_DEEPLINK_SCHEME = `mkagent${instanceNum}`;
-    console.log(`🔢 Instance ${instanceNum} detected: port=${process.env.MKAGENT_VITE_PORT}, config=${process.env.CONFIG_DIR}`);
+  if (!instanceNum) return;
+
+  process.env.MKAGENT_INSTANCE_NUMBER ||= instanceNum;
+  process.env.MKAGENT_VITE_PORT ||= `${instanceNum}173`;
+  process.env.MKAGENT_APP_NAME ||= `MkAgent [${instanceNum}]`;
+  process.env.CONFIG_DIR ||= join(process.env.HOME || "", `.mkagent-${instanceNum}`);
+  process.env.MKAGENT_DEEPLINK_SCHEME ||= `mkagent${instanceNum}`;
+
+  const numericInstance = Number(instanceNum);
+  const openConnectorPort = 38_991 + numericInstance;
+  if (!process.env.MKAGENT_OPEN_CONNECTOR_PORT && Number.isSafeInteger(numericInstance) && openConnectorPort < 65_536) {
+    process.env.MKAGENT_OPEN_CONNECTOR_PORT = String(openConnectorPort);
   }
+
+  console.log(
+    `🔢 Instance ${instanceNum} detected: vitePort=${process.env.MKAGENT_VITE_PORT}, ` +
+    `openConnectorPort=${process.env.MKAGENT_OPEN_CONNECTOR_PORT || "default"}, config=${process.env.CONFIG_DIR}`,
+  );
 }
 
 // Load .env file if it exists
@@ -325,6 +333,8 @@ async function main(): Promise<void> {
   if (!existsSync(DIST_DIR)) {
     mkdirSync(DIST_DIR, { recursive: true });
   }
+
+  await prepareOpenConnector();
 
   copyResources();
 

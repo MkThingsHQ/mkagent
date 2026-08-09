@@ -373,7 +373,12 @@ export class WindowManager {
     // In dev mode, retry the Vite dev server (it may not be ready yet) instead of falling back
     // to file:// which doesn't exist during development.
     let failLoadRetries = 0
-    window.webContents.on('did-fail-load', (_event, errorCode, errorDescription) => {
+    window.webContents.on('did-fail-load', (_event, errorCode, errorDescription, validatedURL, isMainFrame) => {
+      if (isMainFrame === false) {
+        windowLog.warn('Subframe failed to load:', errorCode, errorDescription, validatedURL)
+        return
+      }
+
       windowLog.warn('Failed to load renderer:', errorCode, errorDescription)
       if (VITE_DEV_SERVER_URL && failLoadRetries < 5) {
         failLoadRetries++

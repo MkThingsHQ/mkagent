@@ -44,6 +44,7 @@
     "./search": "./src/search/index.ts",
     "./tools": "./src/tools/index.ts",
     "./mentions": "./src/mentions/index.ts",
+    "./open-connector": "./src/open-connector/index.ts",
     "./skills/types": "./src/skills/types.ts",
     "./protocol": "./src/protocol/index.ts",
     "./i18n": "./src/i18n/index.ts"

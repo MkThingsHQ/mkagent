@@ -75,6 +75,7 @@ import { readFileAttachment } from '@mkagent/shared/utils'
 import { getWorkspaceAllowedDirs, validateFilePath } from '@mkagent/server-core/handlers'
 import { normalizeThinkingLevel, type ThinkingLevel } from '@mkagent/shared/agent/thinking-levels'
 import type { PermissionMode } from '@mkagent/shared/agent/mode-types'
+import type { OpenConnectorToolBridge } from '@mkagent/shared/open-connector'
 import { buildBackendRuntimeSignature, buildRestartRequiredSignature } from './runtime-config'
 import { rollbackFailedBranchCreation, sanitizeForTitle } from '@mkagent/server-core/domain'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
@@ -93,6 +94,7 @@ interface SessionRuntimeHooks {
   captureException: (error: unknown, context?: { errorSource?: string; sessionId?: string }) => void
   onSessionStarted: () => void
   onSessionStopped: () => void
+  openConnectorToolBridge?: OpenConnectorToolBridge
 }
 
 let runtimeHooks: SessionRuntimeHooks = {
@@ -1095,6 +1097,7 @@ export class SessionManager implements ISessionManager {
     const browserPaneFns = this.createBrowserPaneFns(managed)
     mergeSessionScopedToolCallbacks(managed.id, {
       ...(browserPaneFns ? { browserPaneFns } : {}),
+      ...(runtimeHooks.openConnectorToolBridge ? { openConnectorToolBridge: runtimeHooks.openConnectorToolBridge } : {}),
       getSessionInfoFn: (sessionId = managed.id) => {
         const session = this.sessions.get(sessionId)
         if (!session) return null
