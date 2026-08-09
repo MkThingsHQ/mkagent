@@ -8,11 +8,12 @@
 |---|---|---|
 | Bun | 1.3.14+ | workspace、runtime、构建(`bun.lock`) |
 | Node | ≥ 18(Bun 自带 fallback) | TypeScript 工具链 |
+| npm | 所选 Node 安装自带的版本 | 只按 `package-lock.json` 安装固定的 `vendor/open-connector` submodule |
 | Python | 3.12 | 文档工具 smoke 测试 |
 | `uv` | 开发期使用兼容的最新版本；Desktop release 内置 `0.10.6` | 运行文档工具 smoke test 和准备构建资源；打包产物会内置目标平台二进制 |
 | Git | 任意现代版本 | 可选启用 husky pre-commit |
 
-`bun` 是唯一的 workspace linker;不通过 npm / yarn 安装依赖,因为 `bun.lock` 是唯一真值来源。
+`bun` 是唯一的顶层 workspace linker，`bun.lock` 仍是 MkAgent 依赖的真值来源。npm 只在独立锁定的 `vendor/open-connector` submodule 内使用；不使用 yarn。
 
 ## 首次配置
 
@@ -20,6 +21,7 @@
 git clone https://github.com/open-fox/mkagent.git
 cd mkagent
 bun install --frozen-lockfile
+bun run open-connector:prepare
 bun run validate:dev
 ```
 
@@ -44,6 +46,7 @@ docs/                  # 英文文档
 docs/zh/               # 中文翻译
 scripts/               # dev / build / lint / audit
 migration/             # 迁移计划、audit、UI 历史
+vendor/open-connector/ # OpenConnector v1.3.5 Git submodule(Desktop sidecar)
 ```
 
 `apps/online-docs` 被刻意排除在 workspace glob 之外。
@@ -60,6 +63,7 @@ migration/             # 迁移计划、audit、UI 历史
 | 生产 headless server(WebUI 已打包、Pi 已构建) | `bun run server:prod` |
 | 构建 CLI 二进制 | `bun run cli:build`(输出 `apps/cli/dist/mkagent`) |
 | 构建 Pi 子进程 | `bun run server:build:subprocess` |
+| 准备固定版本的 OpenConnector runtime 与控制台 | `bun run open-connector:prepare` |
 | 构建 macOS arm64 dev 签名的 .app | `bun run electron:dist:dev:mac` |
 | 跑全部 unit + isolated 测试 | `bun run test` |
 | 校验(typecheck + 测试 + shared 套件 + 文档工具 smoke + lint) | `bun run validate:ci` |
@@ -102,11 +106,15 @@ CONFIG_DIR=/tmp/mkagent-dev bun run server:dev:webui
 | `MKAGENT_SERVER_URL` / `MKAGENT_TLS_CA` | 不设置 | CLI 连接参数 |
 | `MKAGENT_WORKSPACE` | `default` | CLI 的 workspace 覆盖 |
 | `LLM_API_KEY` / provider 环境变量 | 不设置 | CLI 自包含 `--run` 模式的 API 凭证 |
+| `MKAGENT_OPEN_CONNECTOR_PORT` | `38991` | 覆盖 Desktop OpenConnector sidecar 使用的 loopback 端口 |
+
+`bun run electron:dev` 与 Electron 资源构建都会自动执行 `open-connector:prepare`。修改 submodule 指针后，或需要在不启动 Electron 的情况下排查 sidecar 时，可以直接运行该命令。OpenConnector 数据与自动生成的 secrets 跟随 `CONFIG_DIR`；详见 [`open-connector.md`](./open-connector.md)。
 
 ## 约定
 
 - 添加新抽象之前先复用现有 package 边界和命名。
 - 参考 checkout(`craft-agents-oss`、`echo`、`xagent`)只读;不要向它们提交修改。
+- `vendor/open-connector` 是固定版本的产品 submodule,不是参考 checkout。更新记录的指针前必须审阅并校验版本变化。
 - 每个模块改动都附带测试与文档更新。
 - 提交前跑一次 `git diff --check`,确认改动文件就只是你意图的这些。
 

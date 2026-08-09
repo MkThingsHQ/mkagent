@@ -1,6 +1,6 @@
 # Architecture
 
-MkAgent is a Bun monorepo with three clients sharing one authenticated WebSocket RPC protocol. Only the `pi` agent backend is registered.
+MkAgent is a Bun monorepo with three clients sharing one authenticated WebSocket RPC protocol. Only the `pi` agent backend is registered. OpenConnector is a separate, desktop-only sidecar rather than another agent backend.
 
 ## Layered topology
 
@@ -9,9 +9,9 @@ MkAgent is a Bun monorepo with three clients sharing one authenticated WebSocket
 | apps/electron       apps/webui         apps/cli           |
 |   Electron             Browser            RPC client       |
 |   (Browser pane,       adapter (loads    (connects to      |
-|   Sentry, auto-        the same React    running server    |
-|   update, IPC)         app via header    or spawns a        |
-|        \                  handshake)      one-shot server)  |
+|   OpenConnector,       the same React    running server    |
+|   Sentry, auto-        app via header    or spawns a       |
+|   update, IPC)         handshake)        one-shot server)  |
 +---------|----------------|--------------------|-------------+
           v                v                    v
    Browser adapter  ──>  preload Client API  ──> RPC client
@@ -50,13 +50,28 @@ MkAgent is a Bun monorepo with three clients sharing one authenticated WebSocket
 +-----------------------------------------------------------+
 ```
 
-All three clients operate the same workspace and JSONL sessions; there is no client-specific storage.
+All three clients operate the same workspace and JSONL sessions. OpenConnector is the explicit storage exception: its database, connections, and generated secrets live under `$CONFIG_DIR/connectors/open-connector/` and are used only by Electron.
 
 ## Apps
 
-- `apps/electron` embeds the local server, exposes the Client API through preload, and owns windows, Browser panes, proxy integration, auto-update, and Sentry.
+- `apps/electron` embeds the local server, exposes the Client API through preload, and owns windows, Browser panes, the OpenConnector sidecar/console, proxy integration, auto-update, and Sentry.
 - `apps/webui` loads the same React application through a browser adapter. The headless server serves its static files and the authenticated attachment endpoint.
 - `apps/cli` uses the same RPC methods and can connect to an existing server or start a temporary local instance for `run`.
+
+## Desktop-only OpenConnector boundary
+
+Electron starts the pinned OpenConnector `v1.3.5` runtime on loopback and embeds its Providers/Actions/Runs web console. The Pi session bridge discovers exactly five fixed tools from that sidecar. This path is not registered by WebUI, the headless server, or the CLI.
+
+```text
+Electron main
+  ├─ embeds: Providers / Actions / Runs console
+  ├─ spawns: vendor/open-connector sidecar (127.0.0.1)
+  │           ├─ authenticated HTTP console
+  │           └─ authenticated MCP endpoint
+  └─ bridges five mcp__open_connector__* tools into Desktop Pi sessions
+```
+
+The sidecar's MCP transport is an implementation detail of this pinned bridge. MkAgent still has no generic Source registry, user-configurable MCP pool, or Craft session/bridge MCP server. See [`open-connector.md`](./open-connector.md).
 
 ## Shared packages
 
@@ -93,6 +108,7 @@ Abort, model switching, thinking-level change, permission responses, and session
 ## Packaging surface
 
 - Desktop app: macOS arm64 / x64 (DMG + ZIP), Windows x64 (NSIS), Linux x64 (AppImage). Build entry: `bun run electron:dist[:dev][:mac|:win|:linux]`.
+- OpenConnector sidecar: `vendor/open-connector` is pinned at `v1.3.5`; Electron resource builds prepare and copy its production runtime and web console into the Desktop package.
 - Headless server: per-platform Bun binary under `apps/cli` and `packages/server`; built with `bun run scripts/build-server.ts`.
 - CLI: `bun run cli:build` produces `dist/mkagent`.
 - Pi subprocess: `bun run server:build:subprocess` produces `packages/pi-agent-server/dist/index.js`.
@@ -101,4 +117,4 @@ Abort, model switching, thinking-level change, permission responses, and session
 
 ## What is intentionally absent
 
-Craft Agents bundles broad OAuth and Sources integrations, a Slack/Teams/Lark messaging gateway, a WhatsApp worker backed by Baileys, a session MCP server, a bridge MCP server, and an `apps/viewer` Electron app for public sharing. MkAgent retains only the ChatGPT and Claude LLM OAuth flows from that surface; the other components remain absent. Although Craft's underlying `pi-ai` dependency contains an OpenRouter image-generation API, neither Craft nor MkAgent registers it as an agent tool. See [`comparison-with-craft.md`](./comparison-with-craft.md) for an evidence-backed side-by-side and the resulting installer-size delta.
+Craft Agents bundles broad OAuth and generic Sources integrations, a Slack/Teams/Lark messaging gateway, a WhatsApp worker backed by Baileys, a session MCP server, a bridge MCP server, and an `apps/viewer` Electron app for public sharing. MkAgent retains only the ChatGPT and Claude LLM OAuth flows from that surface; those generic Sources/MCP components remain absent. The dedicated OpenConnector sidecar is independently pinned and does not restore them. Although Craft's underlying `pi-ai` dependency contains an OpenRouter image-generation API, neither Craft nor MkAgent registers it as an agent tool. See [`comparison-with-craft.md`](./comparison-with-craft.md) for an evidence-backed side-by-side; its installer-size figures are dated snapshots and must be remeasured after adding bundled OpenConnector resources.
