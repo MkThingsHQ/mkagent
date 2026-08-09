@@ -43,7 +43,7 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "README.md": {
-      "sha256": "7b8edeeca8dc8360b0c05e0f4de8d1cd092c2dc364fbc1b386bc1be07a5e9adb",
+      "sha256": "56b91ce3371dd55b1d642efa59a3e9704177f2efad3c1be5ca900e23185a045b",
       "reason": "Craft documentation adapted to the retained MkAgent feature set and product identifiers"
     },
     "apps/cli/package.json": {
@@ -2397,7 +2397,7 @@
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
     },
     "scripts/check-i18n-usage.ts": {
-      "sha256": "ee3ea6c9c413d0cdf8ffc8a39fe8dbc655fa9a29782016a30fc33dfe9c163925",
+      "sha256": "7fbcc2f447101f9ae09102c62bf244120598fd0cef516ab38df01f6eb253e8ef",
       "reason": "MkAgent localization guard also verifies that every standalone Electron renderer initializes i18n"
     },
     "scripts/check-craft-test-coverage.ts": {

@@ -15,7 +15,7 @@ const ROOT = resolve(import.meta.dir, '..')
 const EN_PATH = join(ROOT, 'packages/shared/src/i18n/locales/en.json')
 const SOURCE_ROOTS = ['apps', 'packages'].map((dir) => join(ROOT, dir))
 const SOURCE_EXTENSIONS = new Set(['.ts', '.tsx', '.js', '.jsx'])
-const IGNORED_DIRS = new Set(['node_modules', 'dist', 'build', 'coverage'])
+const IGNORED_DIRS = new Set(['node_modules', 'dist', 'build', 'coverage', 'release'])
 const ELECTRON_RENDERER_DIR = join(ROOT, 'apps/electron/src/renderer')
 const TRANSLATION_KEY_FIELDS = new Set([
   'descriptionKey',
