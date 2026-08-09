@@ -235,6 +235,11 @@ async function main(): Promise<void> {
       "--format=cjs",
       "--outfile=apps/electron/dist/main.cjs",
       "--external:electron",
+      // Claude Agent SDK is pure ESM (sdk.mjs) and calls `createRequire(import.meta.url)`
+      // at module init. esbuild's CJS bundling leaves the synthesized `import_meta.url`
+      // undefined for inner ESM modules, which throws ERR_INVALID_ARG_VALUE on load.
+      // Externalize so Electron's Node runtime loads the SDK with a real import.meta.url.
+      "--external:@anthropic-ai/claude-agent-sdk",
       "--external:@aws-sdk/client-s3",
       ...buildDefines,
     ],

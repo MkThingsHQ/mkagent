@@ -5,7 +5,7 @@
  * sessions, Skills, and settings still share the same URL-driven panel model.
  */
 
-import type { NavigationState, SessionFilter, RightSidebarPanel } from './types'
+import type { NavigationState, SessionFilter, SourceFilter, RightSidebarPanel } from './types'
 import { isValidSettingsSubpage } from './settings-registry'
 
 export type RouteType = 'action' | 'view'
@@ -17,15 +17,16 @@ export interface ParsedRoute {
   params: Record<string, string>
 }
 
-export type NavigatorType = 'sessions' | 'skills' | 'settings'
+export type NavigatorType = 'sessions' | 'sources' | 'skills' | 'settings'
 
 export interface ParsedCompoundRoute {
   navigator: NavigatorType
   sessionFilter?: SessionFilter
+  sourceFilter?: SourceFilter
   details: { type: string; id: string } | null
 }
 
-const COMPOUND_ROUTE_PREFIXES = ['allSessions', 'flagged', 'archived', 'skills', 'settings']
+const COMPOUND_ROUTE_PREFIXES = ['allSessions', 'flagged', 'archived', 'sources', 'skills', 'settings']
 
 export function isCompoundRoute(route: string): boolean {
   const firstSegment = route.split('?')[0].split('/')[0]
@@ -36,6 +37,26 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
   const segments = route.split('?')[0].split('/').filter(Boolean)
   if (segments.length === 0) return null
   const first = segments[0]
+
+  if (first === 'sources') {
+    if (segments.length === 1) return { navigator: 'sources', details: null }
+    const sourceTypes = new Set(['api', 'mcp', 'local'])
+    let index = 1
+    let sourceFilter: SourceFilter | undefined
+    if (sourceTypes.has(segments[index] ?? '')) {
+      sourceFilter = { kind: 'type', sourceType: segments[index] as SourceFilter['sourceType'] }
+      index += 1
+    }
+    if (index === segments.length) return { navigator: 'sources', sourceFilter, details: null }
+    if (segments[index] === 'source' && segments[index + 1] && index + 2 === segments.length) {
+      return {
+        navigator: 'sources',
+        sourceFilter,
+        details: { type: 'source', id: segments[index + 1] },
+      }
+    }
+    return null
+  }
 
   if (first === 'settings') {
     const subpage = segments[1]
@@ -72,6 +93,10 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
 }
 
 export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
+  if (parsed.navigator === 'sources') {
+    const base = parsed.sourceFilter ? `sources/${parsed.sourceFilter.sourceType}` : 'sources'
+    return parsed.details ? `${base}/source/${parsed.details.id}` : base
+  }
   if (parsed.navigator === 'settings') {
     return parsed.details ? `settings/${parsed.details.id}` : 'settings'
   }
@@ -83,6 +108,11 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
 }
 
 function compoundToParsedRoute(compound: ParsedCompoundRoute): ParsedRoute {
+  if (compound.navigator === 'sources') {
+    return compound.details
+      ? { type: 'view', name: 'source-info', id: compound.details.id, params: {} }
+      : { type: 'view', name: 'sources', params: {} }
+  }
   if (compound.navigator === 'settings') {
     return compound.details
       ? { type: 'view', name: compound.details.id, params: {} }
@@ -120,6 +150,13 @@ export function parseRoute(route: string): ParsedRoute | null {
 }
 
 function compoundToNavigationState(compound: ParsedCompoundRoute): NavigationState {
+  if (compound.navigator === 'sources') {
+    return {
+      navigator: 'sources',
+      filter: compound.sourceFilter,
+      details: compound.details ? { type: 'source', sourceSlug: compound.details.id } : null,
+    }
+  }
   if (compound.navigator === 'settings') {
     return {
       navigator: 'settings',
@@ -151,6 +188,10 @@ export function parseRouteToNavigationState(route: string, sidebarParam?: string
 }
 
 export function buildRouteFromNavigationState(state: NavigationState): string {
+  if (state.navigator === 'sources') {
+    const base = state.filter ? `sources/${state.filter.sourceType}` : 'sources'
+    return state.details ? `${base}/source/${state.details.sourceSlug}` : base
+  }
   if (state.navigator === 'settings') {
     return state.subpage ? `settings/${state.subpage}` : 'settings'
   }

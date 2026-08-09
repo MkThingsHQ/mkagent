@@ -12,8 +12,15 @@ export {
   unregisterSessionScopedToolCallbacks,
 } from './session-scoped-tools.ts';
 export type {
+  AuthRequest,
+  AuthRequestType,
   BrowserPaneFns,
+  CredentialAuthRequest,
+  GoogleOAuthAuthRequest,
+  McpOAuthAuthRequest,
+  MicrosoftOAuthAuthRequest,
   SessionScopedToolCallbacks,
+  SlackOAuthAuthRequest,
 } from './session-scoped-tools.ts';
 export {
   blockWithReason,
@@ -53,14 +60,18 @@ export {
 export type { ThinkingLevel, ThinkingLevelDefinition } from './thinking-levels.ts';
 export {
   getAppPermissionsDir,
+  getSourcePermissionsPath,
   getWorkspacePermissionsPath,
   ensureDefaultPermissions,
   loadDefaultPermissions,
+  loadRawSourcePermissions,
   loadRawWorkspacePermissions,
+  loadSourcePermissionsConfig,
   loadWorkspacePermissionsConfig,
   parsePermissionsJson,
   permissionsConfigCache,
   PermissionsConfigSchema,
+  saveSourcePermissions,
   saveWorkspacePermissions,
   validatePermissionsConfig,
 } from './permissions-config.ts';

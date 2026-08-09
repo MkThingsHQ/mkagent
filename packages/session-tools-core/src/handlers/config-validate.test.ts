@@ -9,9 +9,11 @@ function createContext(workspacePath: string): SessionToolContext {
   return {
     sessionId: 'test-session',
     workspacePath,
+    sourcesPath: join(workspacePath, 'sources'),
     skillsPath: join(workspacePath, 'skills'),
     plansFolderPath: join(workspacePath, 'plans'),
-    callbacks: { onPlanSubmitted: () => {} },
+    callbacks: { onPlanSubmitted: () => {}, onAuthRequest: () => {} },
+    loadSourceConfig: () => null,
     fs: {
       exists: path => existsSync(path),
       readFile: path => readFileSync(path, 'utf-8'),

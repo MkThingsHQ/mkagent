@@ -1,7 +1,7 @@
 /**
- * Skill Icon Cache
+ * Unified Icon Cache
  *
- * Craft's shared icon loader, reduced to the retained Skill surface.
+ * Craft's shared icon loader for Sources and Skills.
  *
  * Icons are stored as data URLs for consistent usage across:
  * - React components (img src)
@@ -25,6 +25,16 @@ interface SkillConfig {
   metadata?: { icon?: string }
 }
 
+interface SourceConfig {
+  slug: string
+  name: string
+  type: string
+  icon?: string
+  provider?: string
+  mcp?: { url?: string }
+  api?: { baseUrl?: string }
+}
+
 // ============================================================================
 // Unified Cache
 // ============================================================================
@@ -33,6 +43,22 @@ interface SkillConfig {
  * Cache key format: `skill:{workspaceId}:{slug}`.
  */
 export const iconCache = new Map<string, string>()
+
+/** Cache for resolved service logo URLs used by Source avatars. */
+export const logoUrlCache = new Map<string, string | null>()
+
+/** @deprecated Use iconCache directly with the `source:` prefix. */
+export const sourceIconCache = {
+  get: (key: string) => iconCache.get(`source:${key}`),
+  set: (key: string, value: string) => iconCache.set(`source:${key}`, value),
+  has: (key: string) => iconCache.has(`source:${key}`),
+  delete: (key: string) => iconCache.delete(`source:${key}`),
+  clear: () => {
+    for (const key of iconCache.keys()) {
+      if (key.startsWith('source:')) iconCache.delete(key)
+    }
+  },
+}
 
 const skillIconCache = {
   get: (key: string) => iconCache.get(`skill:${key}`),
@@ -45,6 +71,20 @@ const skillIconCache = {
       if (key.startsWith('skill:')) iconCache.delete(key)
     }
   },
+}
+
+/** Clear only Source-related icon and favicon cache entries. */
+export function clearSourceIconCaches(): void {
+  for (const key of iconCache.keys()) {
+    if (key.startsWith('source:')) iconCache.delete(key)
+  }
+  logoUrlCache.clear()
+  for (const key of colorableCache) {
+    if (key.startsWith('source:')) colorableCache.delete(key)
+  }
+  for (const key of rawSvgCache.keys()) {
+    if (key.startsWith('source:')) rawSvgCache.delete(key)
+  }
 }
 
 // Special prefix for emoji icons in cache - callers check for this to render emoji
@@ -71,6 +111,89 @@ async function loadWorkspaceIcon(workspaceId: string, relativePath: string): Pro
     // Security errors or I/O failures still throw - handle them gracefully
     return null
   }
+}
+
+// ============================================================================
+// Source Icon Loading
+// ============================================================================
+
+/**
+ * Load a source icon into the cache.
+ *
+ * Resolution priority matches Craft: configured emoji/local path/URL, then
+ * auto-discovered workspace icon, then the service favicon.
+ */
+export async function loadSourceIcon(
+  source: { config: SourceConfig; workspaceId: string },
+): Promise<string | null> {
+  const { config, workspaceId } = source
+  const cacheKey = `${workspaceId}:${config.slug}`
+  const cached = sourceIconCache.get(cacheKey)
+  if (cached) return cached
+
+  const icon = config.icon
+
+  if (icon && isEmoji(icon)) {
+    const emojiMarker = `${EMOJI_ICON_PREFIX}${icon}`
+    sourceIconCache.set(cacheKey, emojiMarker)
+    return emojiMarker
+  }
+
+  if (icon?.startsWith('./')) {
+    const iconFilename = icon.slice(2)
+    const loaded = await loadWorkspaceIcon(workspaceId, `sources/${config.slug}/${iconFilename}`)
+    if (loaded) {
+      sourceIconCache.set(cacheKey, loaded)
+      return loaded
+    }
+  }
+
+  if (icon && (icon.startsWith('http://') || icon.startsWith('https://'))) {
+    sourceIconCache.set(cacheKey, icon)
+    return icon
+  }
+
+  if (!icon) {
+    const localIconSvg = await loadWorkspaceIcon(workspaceId, `sources/${config.slug}/icon.svg`)
+    if (localIconSvg) {
+      sourceIconCache.set(cacheKey, localIconSvg)
+      return localIconSvg
+    }
+
+    const localIconPng = await loadWorkspaceIcon(workspaceId, `sources/${config.slug}/icon.png`)
+    if (localIconPng) {
+      sourceIconCache.set(cacheKey, localIconPng)
+      return localIconPng
+    }
+  }
+
+  const serviceUrl = deriveServiceUrl(config)
+  if (!serviceUrl) return null
+
+  const provider = config.slug ?? config.provider
+  const logoCacheKey = `${serviceUrl}:${provider ?? ''}`
+  const cachedLogoUrl = logoUrlCache.get(logoCacheKey)
+  if (cachedLogoUrl !== undefined) {
+    if (cachedLogoUrl) sourceIconCache.set(cacheKey, cachedLogoUrl)
+    return cachedLogoUrl
+  }
+
+  try {
+    const logoUrl = await window.electronAPI.getLogoUrl(serviceUrl, provider)
+    logoUrlCache.set(logoCacheKey, logoUrl)
+    if (logoUrl) sourceIconCache.set(cacheKey, logoUrl)
+    return logoUrl
+  } catch (error) {
+    console.error('[IconCache] Failed to resolve logo URL:', error)
+    logoUrlCache.set(logoCacheKey, null)
+    return null
+  }
+}
+
+/** Get a source icon synchronously from the cache. */
+export function getSourceIconSync(workspaceId: string, slug: string): string | null {
+  const cacheKey = `${workspaceId}:${slug}`
+  return sourceIconCache.get(cacheKey) ?? null
 }
 
 // ============================================================================
@@ -151,6 +274,13 @@ export async function loadSkillIcon(
 export function getSkillIconSync(workspaceId: string, slug: string): string | null {
   const cacheKey = `${workspaceId}:${slug}`
   return skillIconCache.get(cacheKey) ?? null
+}
+
+/** Derive the service URL used for Source favicon resolution. */
+function deriveServiceUrl(config: SourceConfig): string | null {
+  if (config.type === 'mcp' && config.mcp?.url) return config.mcp.url
+  if (config.type === 'api' && config.api?.baseUrl) return config.api.baseUrl
+  return null
 }
 
 // ============================================================================

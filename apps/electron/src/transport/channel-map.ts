@@ -30,9 +30,25 @@ export const CHANNEL_MAP = {
   watchSessionFiles: invoke(RPC_CHANNELS.sessions.WATCH_FILES),
   unwatchSessionFiles: invoke(RPC_CHANNELS.sessions.UNWATCH_FILES),
   respondToPermission: invoke(RPC_CHANNELS.sessions.RESPOND_TO_PERMISSION),
+  respondToCredential: invoke(RPC_CHANNELS.sessions.RESPOND_TO_CREDENTIAL),
   onSessionEvent: listener(RPC_CHANNELS.sessions.EVENT),
   onUnreadSummaryChanged: listener(RPC_CHANNELS.sessions.UNREAD_SUMMARY_CHANGED),
   onSessionFilesChanged: listener(RPC_CHANNELS.sessions.FILES_CHANGED),
+
+  // Sources
+  getSources: invoke(RPC_CHANNELS.sources.GET),
+  createSource: invoke(RPC_CHANNELS.sources.CREATE),
+  deleteSource: invoke(RPC_CHANNELS.sources.DELETE),
+  startSourceOAuth: invoke(RPC_CHANNELS.sources.START_OAUTH),
+  saveSourceCredentials: invoke(RPC_CHANNELS.sources.SAVE_CREDENTIALS),
+  getSourcePermissionsConfig: invoke(RPC_CHANNELS.sources.GET_PERMISSIONS),
+  getMcpTools: invoke(RPC_CHANNELS.sources.GET_MCP_TOOLS),
+  oauthRevoke: invoke(RPC_CHANNELS.oauth.REVOKE),
+  onSourcesChanged: listener(RPC_CHANNELS.sources.CHANGED),
+
+  // Cross-workspace resource bundles
+  exportResources: invoke(RPC_CHANNELS.resources.EXPORT),
+  importResources: invoke(RPC_CHANNELS.resources.IMPORT),
 
   getWorkspaces: invoke(RPC_CHANNELS.workspaces.GET),
   createWorkspace: invoke(RPC_CHANNELS.workspaces.CREATE),

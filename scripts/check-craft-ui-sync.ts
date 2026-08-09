@@ -32,27 +32,23 @@ const excludedPathFragments = [
   '/messaging/',
   '/projects/',
   '/kanban/',
-  '/sources/',
   '/playground/',
 ]
 
 const excludedFiles = [
   'WorkspacePicker.tsx',
   'AddWorkspaceStep_ConnectRemote.tsx',
-  'AuthRequestCard.tsx',
   'craft-renderer-compat.ts',
   'playground.html',
 ]
 
 const forbiddenSourcePatterns: Array<[RegExp, string]> = [
-  [/\bperformOAuth\b/, 'Sources/MCP OAuth'],
   [/\bgetServerWorkspaces\b|\bcreateServerWorkspace\b/, 'remote workspace picker'],
   [/\bremoteServer\b/, 'remote workspace binding'],
-  [/\b(?:sources_changed|labels_changed|project_id_changed|session_status_changed|session_shared|source_activated)\b/, 'excluded session metadata event'],
-  [/@mkagent\/shared\/(?:labels|projects|sources|statuses|views)/, 'excluded shared feature module'],
-  [/\b(?:onAddAutomation|onAddSource|onAddProject|onConfigureStatuses|onConfigureLabels|automationSelection|sourceSelection|sourceSlug)\b/, 'excluded product callback or state'],
-  [/getDocUrl\(['"](?:sources|statuses|automations|messaging)['"]\)/, 'excluded product documentation link'],
-  [/\b(?:loadSourceIcon|getSourceIconSync|sourceIconCache)\b/, 'excluded Source icon runtime'],
+  [/\b(?:labels_changed|project_id_changed|session_status_changed|session_shared)\b/, 'excluded session metadata event'],
+  [/@mkagent\/shared\/(?:labels|projects|statuses|views)/, 'excluded shared feature module'],
+  [/\b(?:onAddAutomation|onAddProject|onConfigureStatuses|onConfigureLabels|automationSelection)\b/, 'excluded product callback or state'],
+  [/getDocUrl\(['"](?:statuses|automations|messaging)['"]\)/, 'excluded product documentation link'],
 ]
 
 const normalizeUpstream = (source: string) => source

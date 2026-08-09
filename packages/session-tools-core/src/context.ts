@@ -1,9 +1,26 @@
 /** Transport-agnostic context shared by session-scoped tool handlers. */
 
-import type { DeveloperFeedback, ValidationResult } from './types.ts';
+import type {
+  AuthRequest,
+  DeveloperFeedback,
+  GoogleService,
+  McpSourceConfig,
+  MicrosoftService,
+  SlackService,
+  SourceConfig,
+  ValidationResult,
+} from './types.ts';
+
+export interface LoadedSource {
+  config: SourceConfig;
+  folderPath: string;
+  workspaceRootPath: string;
+  workspaceId: string;
+}
 
 export interface SessionToolCallbacks {
   onPlanSubmitted(planPath: string): void;
+  onAuthRequest(request: AuthRequest): void;
 }
 
 export interface FileSystemInterface {
@@ -18,11 +35,49 @@ export interface FileSystemInterface {
 
 export interface ValidatorInterface {
   validateConfig(): ValidationResult;
+  validateSource(workspaceRootPath: string, sourceSlug: string): ValidationResult;
+  validateAllSources(workspaceRootPath: string): ValidationResult;
   validatePreferences(): ValidationResult;
-  validatePermissions(workspaceRootPath: string): ValidationResult;
+  validatePermissions(workspaceRootPath: string, sourceSlug?: string): ValidationResult;
   validateToolIcons(): ValidationResult;
   validateAll(workspaceRootPath: string): ValidationResult;
   validateSkill(workspaceRootPath: string, skillSlug: string): ValidationResult;
+}
+
+export interface CredentialManagerInterface {
+  hasValidCredentials(source: LoadedSource): Promise<boolean>;
+  getToken(source: LoadedSource): Promise<string | null>;
+  refresh(source: LoadedSource): Promise<string | null>;
+}
+
+export interface StdioMcpConfig {
+  command: string;
+  args?: string[];
+  env?: Record<string, string>;
+}
+
+export type HttpMcpConfig = Required<Pick<McpSourceConfig, 'url'>>
+  & Pick<McpSourceConfig, 'authType' | 'headers' | 'headerNames' | 'transport'>
+  & { accessToken?: string };
+
+export interface StdioValidationResult {
+  success: boolean;
+  error?: string;
+  toolCount?: number;
+  toolNames?: string[];
+  serverName?: string;
+  serverVersion?: string;
+}
+
+export interface McpValidationResult extends StdioValidationResult {
+  needsAuth?: boolean;
+}
+
+export interface ApiTestResult {
+  success: boolean;
+  status?: number;
+  error?: string;
+  hint?: string;
 }
 
 export interface SessionInfo {
@@ -82,12 +137,34 @@ export interface BackgroundTaskInfo {
 export interface SessionToolContext {
   sessionId: string;
   workspacePath: string;
+  readonly sourcesPath: string;
   skillsPath: string;
   plansFolderPath: string;
   workingDirectory?: string;
   callbacks: SessionToolCallbacks;
   fs: FileSystemInterface;
   validators?: ValidatorInterface;
+  credentialManager?: CredentialManagerInterface;
+  loadSourceConfig(sourceSlug: string): SourceConfig | null;
+  saveSourceConfig?(source: SourceConfig): void;
+  inferGoogleService?(url?: string): GoogleService | undefined;
+  inferSlackService?(url?: string): SlackService | undefined;
+  inferMicrosoftService?(url?: string): MicrosoftService | undefined;
+  isGoogleOAuthConfigured?(clientId?: string, clientSecret?: string): boolean;
+  isIconUrl?(value: string): boolean;
+  downloadSourceIcon?(sourceSlug: string, iconUrl: string): Promise<string | null>;
+  deriveServiceUrl?(source: SourceConfig): string | null;
+  getHighQualityLogoUrl?(serviceUrl: string, slug: string): Promise<string | null>;
+  downloadIcon?(destPath: string, url: string, tag: string): Promise<string | null>;
+  validateStdioMcpConnection?(config: StdioMcpConfig): Promise<StdioValidationResult>;
+  validateMcpConnection?(config: HttpMcpConfig): Promise<McpValidationResult>;
+  testApiSource?(source: SourceConfig): Promise<ApiTestResult>;
+  testGoogleSource?(source: SourceConfig): Promise<ApiTestResult>;
+  activateSourceInSession?(sourceSlug: string): Promise<{
+    ok: boolean;
+    reason?: string;
+    availability?: 'next-turn';
+  }>;
   submitFeedback?(feedback: DeveloperFeedback): void;
   updatePreferences?(updates: Record<string, unknown>): void;
   getSessionInfo?(sessionId?: string): SessionInfo | null;

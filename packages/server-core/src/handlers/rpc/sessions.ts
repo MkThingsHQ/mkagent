@@ -111,6 +111,7 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.sessions.CANCEL,
   RPC_CHANNELS.sessions.KILL_SHELL,
   RPC_CHANNELS.sessions.RESPOND_TO_PERMISSION,
+  RPC_CHANNELS.sessions.RESPOND_TO_CREDENTIAL,
   RPC_CHANNELS.sessions.COMMAND,
   RPC_CHANNELS.sessions.GET_PENDING_PLAN_EXECUTION,
   RPC_CHANNELS.sessions.GET_PERMISSION_MODE_STATE,
@@ -269,6 +270,15 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
     return sessionManager.respondToPermission(sessionId, requestId, allowed, alwaysAllow)
   })
 
+  server.handle(RPC_CHANNELS.sessions.RESPOND_TO_CREDENTIAL, async (
+    _ctx,
+    sessionId: string,
+    requestId: string,
+    response: import('@mkagent/shared/protocol').CredentialResponse,
+  ) => {
+    return sessionManager.respondToCredential(sessionId, requestId, response)
+  })
+
   // ==========================================================================
   // Consolidated Command Handlers
   // ==========================================================================
@@ -307,6 +317,8 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
         return sessionManager.setSessionThinkingLevel(sessionId, command.level)
       case 'updateWorkingDirectory':
         return sessionManager.updateWorkingDirectory(sessionId, command.dir)
+      case 'setSources':
+        return sessionManager.setSessionSources(sessionId, command.sourceSlugs)
       case 'showInFinder': {
         const sessionPath = sessionManager.getSessionPath(sessionId)
         if (sessionPath) {

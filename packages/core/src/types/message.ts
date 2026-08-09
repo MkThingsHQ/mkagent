@@ -13,7 +13,12 @@ export type MessageRole =
   | 'status'
   | 'info'
   | 'warning'
-  | 'plan';
+  | 'plan'
+  | 'auth-request';
+
+export type CredentialInputMode = 'bearer' | 'basic' | 'header' | 'query' | 'multi-header';
+export type AuthRequestType = 'credential' | 'oauth' | 'oauth-google' | 'oauth-slack' | 'oauth-microsoft';
+export type AuthStatus = 'pending' | 'completed' | 'cancelled' | 'failed';
 
 /**
  * Tool execution status
@@ -32,7 +37,7 @@ export interface ToolDisplayMeta {
   /** Description of what this tool does */
   description?: string;
   /** Category for grouping/styling */
-  category?: 'skill' | 'native';
+  category?: 'skill' | 'source' | 'native' | 'mcp';
 }
 
 /**
@@ -57,7 +62,7 @@ export interface MessageAttachment {
  */
 export interface ContentBadge {
   /** Badge type - used for fallback icon if iconBase64 not available */
-  type: 'skill' | 'context' | 'command' | 'file' | 'folder';
+  type: 'source' | 'skill' | 'context' | 'command' | 'file' | 'folder';
   /** Display label (e.g., "Linear", "Commit") */
   label: string;
   /** Original text pattern (e.g., "@linear", "@commit") */
@@ -282,11 +287,28 @@ export interface Message {
   errorActions?: Array<{
     key: string;
     label: string;
-    action?: 'retry' | 'settings' | 'open_url';
+    action?: 'retry' | 'settings' | 'reauth' | 'open_url' | 'reconnect_source';
     url?: string;
+    sourceSlug?: string;
   }>;
   // Plan-specific fields (for role='plan')
   planPath?: string;  // Path to the plan markdown file
+  authRequestId?: string;
+  authRequestType?: AuthRequestType;
+  authSourceSlug?: string;
+  authSourceName?: string;
+  authStatus?: AuthStatus;
+  authCredentialMode?: CredentialInputMode;
+  authHeaderName?: string;
+  authHeaderNames?: string[];
+  authLabels?: { credential?: string; username?: string; password?: string };
+  authDescription?: string;
+  authHint?: string;
+  authSourceUrl?: string;
+  authPasswordRequired?: boolean;
+  authError?: string;
+  authEmail?: string;
+  authWorkspace?: string;
 }
 
 /**
@@ -339,11 +361,28 @@ export interface StoredMessage {
   errorActions?: Array<{
     key: string;
     label: string;
-    action?: 'retry' | 'settings' | 'open_url';
+    action?: 'retry' | 'settings' | 'reauth' | 'open_url' | 'reconnect_source';
     url?: string;
+    sourceSlug?: string;
   }>;
   // Plan-specific fields (for role='plan')
   planPath?: string;
+  authRequestId?: string;
+  authRequestType?: AuthRequestType;
+  authSourceSlug?: string;
+  authSourceName?: string;
+  authStatus?: AuthStatus;
+  authCredentialMode?: CredentialInputMode;
+  authHeaderName?: string;
+  authHeaderNames?: string[];
+  authLabels?: { credential?: string; username?: string; password?: string };
+  authDescription?: string;
+  authHint?: string;
+  authSourceUrl?: string;
+  authPasswordRequired?: boolean;
+  authError?: string;
+  authEmail?: string;
+  authWorkspace?: string;
   // Queued: user message that is waiting to be processed (persisted for recovery)
   isQueued?: boolean;
 }
@@ -372,9 +411,10 @@ export interface RecoveryAction {
   /** Slash command to execute (e.g., '/settings') */
   command?: string;
   /** Custom action type for special handling */
-  action?: 'retry' | 'settings' | 'open_url';
+  action?: 'retry' | 'settings' | 'reauth' | 'open_url' | 'reconnect_source';
   /** URL to open (for open_url action) */
   url?: string;
+  sourceSlug?: string;
 }
 
 /**
@@ -384,12 +424,15 @@ export type ErrorCode =
   | 'invalid_api_key'
   | 'invalid_credentials'
   | 'response_too_large'
+  | 'expired_oauth_token'
   | 'token_expired'
   | 'rate_limited'
   | 'service_error'
   | 'service_unavailable'
   | 'network_error'
   | 'proxy_error'           // Proxy/firewall/captive portal intercepted the request
+  | 'mcp_auth_required'
+  | 'mcp_unreachable'
   | 'billing_error'
   | 'model_no_tool_support'  // Model doesn't support tool/function calling
   | 'invalid_model'          // Model ID not found
@@ -505,6 +548,7 @@ export type AgentEvent =
   | { type: 'task_completed'; taskId: string; status: 'completed' | 'failed' | 'stopped'; outputFile?: string; summary?: string; turnId?: string }
   | { type: 'workflow_agent_completed'; workflowId: string; agentId: string; turnId?: string }
   | { type: 'shell_killed'; shellId: string; turnId?: string }
+  | { type: 'source_activated'; sourceSlug: string; originalMessage: string }
   | { type: 'usage_update'; usage: Pick<AgentEventUsage, 'inputTokens' | 'contextWindow'> }
   | { type: 'steer_undelivered'; message: string };
 

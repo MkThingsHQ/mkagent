@@ -26,6 +26,7 @@ export const RPC_CHANNELS = {
     CANCEL: 'sessions:cancel',
     KILL_SHELL: 'sessions:killShell',
     RESPOND_TO_PERMISSION: 'sessions:respondToPermission',
+    RESPOND_TO_CREDENTIAL: 'sessions:respondToCredential',
     COMMAND: 'sessions:command',
     GET_PENDING_PLAN_EXECUTION: 'sessions:getPendingPlanExecution',
     GET_PERMISSION_MODE_STATE: 'sessions:getPermissionModeState',
@@ -203,6 +204,22 @@ export const RPC_CHANNELS = {
     DELETE: 'drafts:delete',
     GET_ALL: 'drafts:getAll',
   },
+  sources: {
+    GET: 'sources:get',
+    CREATE: 'sources:create',
+    DELETE: 'sources:delete',
+    START_OAUTH: 'sources:startOAuth',
+    SAVE_CREDENTIALS: 'sources:saveCredentials',
+    CHANGED: 'sources:changed',
+    GET_PERMISSIONS: 'sources:getPermissions',
+    GET_MCP_TOOLS: 'sources:getMcpTools',
+  },
+  oauth: {
+    START: 'oauth:start',
+    COMPLETE: 'oauth:complete',
+    CANCEL: 'oauth:cancel',
+    REVOKE: 'oauth:revoke',
+  },
   workspace: {
     GET_PERMISSIONS: 'workspace:getPermissions',
     READ_IMAGE: 'workspace:readImage',
@@ -221,6 +238,10 @@ export const RPC_CHANNELS = {
     OPEN_EDITOR: 'skills:openEditor',
     OPEN_FINDER: 'skills:openFinder',
     CHANGED: 'skills:changed',
+  },
+  resources: {
+    EXPORT: 'resources:export',
+    IMPORT: 'resources:import',
   },
   toolIcons: {
     GET_MAPPINGS: 'toolIcons:getMappings',

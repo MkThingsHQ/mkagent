@@ -207,6 +207,12 @@ const TEST_MODE_CONFIG = {
     { regex: /--help\b/, source: '--help\\b', comment: 'Display command help' },
     { regex: /-h\b$/, source: '-h\\b$', comment: 'Display command help (short)' },
   ] as CompiledBashPattern[],
+  readOnlyMcpPatterns: [
+    /blocks_read/, /blocks_list/, /blocks_get/,
+    /document_get/, /document_list/, /spaces_list/, /folders_list/,
+    /search/, /list/, /get/, /read/, /view/, /query/, /fetch/, /describe/, /info/,
+  ],
+  allowedApiEndpoints: [],
   allowedWritePaths: [],
   displayName: 'Test Safe Mode',
   shortcutHint: 'SHIFT+TAB',
@@ -646,6 +652,7 @@ describe('SAFE_MODE_CONFIG', () => {
     // They're loaded from default.json by PermissionsConfigCache at runtime
     // This design allows hot-reloading of patterns without rebuilding
     expect(SAFE_MODE_CONFIG.readOnlyBashPatterns.length).toBe(0);
+    expect(SAFE_MODE_CONFIG.readOnlyMcpPatterns.length).toBe(0);
   });
 
   it('should have display properties', () => {
@@ -659,6 +666,10 @@ describe('TEST_MODE_CONFIG', () => {
 
   it('should have read-only bash patterns defined', () => {
     expect(TEST_MODE_CONFIG.readOnlyBashPatterns.length).toBeGreaterThan(0);
+  });
+
+  it('should have read-only MCP patterns defined', () => {
+    expect(TEST_MODE_CONFIG.readOnlyMcpPatterns.length).toBeGreaterThan(0);
   });
 
 });

@@ -5,7 +5,7 @@
  * All agent events flow through a single pure function for consistent state transitions.
  */
 
-import type { Session, Message, PermissionRequest, TypedError, PermissionMode, ToolDisplayMeta } from '../../shared/types'
+import type { Session, Message, PermissionRequest, CredentialRequest, TypedError, PermissionMode, AuthRequest, ToolDisplayMeta } from '../../shared/types'
 
 /**
  * Streaming state for a session - replaces streamingTextRef
@@ -127,6 +127,13 @@ export interface PermissionRequestEvent {
   type: 'permission_request'
   sessionId: string
   request: PermissionRequest
+}
+
+/** Sources changed event. */
+export interface SourcesChangedEvent {
+  type: 'sources_changed'
+  sessionId: string
+  enabledSourceSlugs: string[]
 }
 
 /**
@@ -302,6 +309,13 @@ export interface LLMConnectionChangedEvent {
   supportsBranching?: boolean
 }
 
+/** Credential request event - prompts user for credentials. */
+export interface CredentialRequestEvent {
+  type: 'credential_request'
+  sessionId: string
+  request: CredentialRequest
+}
+
 /**
  * Task backgrounded event - background agent started
  */
@@ -391,6 +405,32 @@ export interface MessageAnnotationsUpdatedEvent {
   annotations: NonNullable<Message['annotations']>
 }
 
+/** Unified credential/OAuth request rendered inline in the conversation. */
+export interface AuthRequestEvent {
+  type: 'auth_request'
+  sessionId: string
+  message: Message
+  request: AuthRequest
+}
+
+/** Completion of an inline authentication request. */
+export interface AuthCompletedEvent {
+  type: 'auth_completed'
+  sessionId: string
+  requestId: string
+  success: boolean
+  cancelled?: boolean
+  error?: string
+}
+
+/** Source activated mid-turn; server-side owns retry. */
+export interface SourceActivatedEvent {
+  type: 'source_activated'
+  sessionId: string
+  sourceSlug: string
+  originalMessage: string
+}
+
 /**
  * Usage update event - real-time context usage during processing
  * Allows UI to show growing context as agent processes, not just on complete
@@ -416,6 +456,8 @@ export type AgentEvent =
   | ErrorEvent
   | TypedErrorEvent
   | PermissionRequestEvent
+  | CredentialRequestEvent
+  | SourcesChangedEvent
   | SessionFlaggedEvent
   | SessionUnflaggedEvent
   | SessionArchivedEvent
@@ -440,6 +482,9 @@ export type AgentEvent =
   | WorkflowAgentCompletedEvent
   | UserMessageEvent
   | MessageAnnotationsUpdatedEvent
+  | AuthRequestEvent
+  | AuthCompletedEvent
+  | SourceActivatedEvent
   | UsageUpdateEvent
 
 /**
@@ -447,6 +492,7 @@ export type AgentEvent =
  */
 export type Effect =
   | { type: 'permission_request'; request: PermissionRequest }
+  | { type: 'credential_request'; request: CredentialRequest }
   | { type: 'generate_title'; sessionId: string; userMessage: string }
   | { type: 'permission_mode_changed'; sessionId: string; permissionMode: PermissionMode; previousPermissionMode?: PermissionMode; transitionDisplay?: string; modeVersion?: number; changedAt?: string; changedBy?: 'user' | 'system' | 'restore' | 'unknown' }
   | { type: 'restore_input'; text: string }

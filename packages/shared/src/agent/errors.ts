@@ -83,6 +83,14 @@ const ERROR_DEFINITIONS: Record<ErrorCode, Omit<AgentError, 'code' | 'originalEr
     actions: [],
     canRetry: false,
   },
+  expired_oauth_token: {
+    title: 'Session Expired',
+    message: 'Your OAuth session has expired. Please sign in again.',
+    actions: [
+      { key: 's', label: 'Re-authenticate', command: '/settings', action: 'settings' },
+    ],
+    canRetry: false,
+  },
   token_expired: {
     title: 'Workspace Session Expired',
     message: 'Your workspace authentication has expired. Please re-authenticate the workspace.',
@@ -133,6 +141,21 @@ const ERROR_DEFINITIONS: Record<ErrorCode, Omit<AgentError, 'code' | 'originalEr
     actions: [
       { key: 'r', label: 'Retry', action: 'retry' },
       { key: 's', label: 'Check proxy settings', command: '/settings', action: 'settings' },
+    ],
+    canRetry: true,
+    retryDelayMs: 2000,
+  },
+  mcp_auth_required: {
+    title: 'Source Authentication Required',
+    message: 'This source needs to be authenticated again before its tools can be used.',
+    actions: [],
+    canRetry: false,
+  },
+  mcp_unreachable: {
+    title: 'Source Unreachable',
+    message: 'The source MCP server could not be reached. Check its URL, local command, and network connection.',
+    actions: [
+      { key: 'r', label: 'Retry', action: 'retry' },
     ],
     canRetry: true,
     retryDelayMs: 2000,
@@ -383,14 +406,21 @@ export function parseError(
   // Check for specific HTTP status codes or patterns
   } else if (lowerMessage.includes('402') || lowerMessage.includes('payment required')) {
     code = 'billing_error';
+  } else if (
+    lowerMessage.includes('mcp') &&
+    (lowerMessage.includes('auth') || lowerMessage.includes('401') || lowerMessage.includes('unauthorized'))
+  ) {
+    code = 'mcp_auth_required';
   } else if (lowerMessage.includes('401') || lowerMessage.includes('unauthorized') || lowerMessage.includes('invalid api key') || lowerMessage.includes('invalid x-api-key') || lowerMessage.includes('authentication failed') || lowerMessage.includes('token is expired') || lowerMessage.includes('token expired')) {
-    code = 'invalid_api_key';
+    code = lowerMessage.includes('oauth') || lowerMessage.includes('token') || lowerMessage.includes('session')
+      ? 'expired_oauth_token'
+      : 'invalid_api_key';
   } else if (lowerMessage.includes('429') || lowerMessage.includes('rate limit') || lowerMessage.includes('too many requests')) {
     code = 'rate_limited';
   } else if (lowerMessage.includes('500') || lowerMessage.includes('502') || lowerMessage.includes('503') || lowerMessage.includes('504') || lowerMessage.includes('internal server error') || lowerMessage.includes('service unavailable')) {
     code = 'service_error';
   } else if (lowerMessage.includes('network') || lowerMessage.includes('econnrefused') || lowerMessage.includes('enotfound') || lowerMessage.includes('fetch failed') || lowerMessage.includes('connection')) {
-    code = 'network_error';
+    code = lowerMessage.includes('mcp') ? 'mcp_unreachable' : 'network_error';
   } else if (
     lowerMessage.includes('image') &&
     (lowerMessage.includes('dimension') || lowerMessage.includes('8000') || lowerMessage.includes('5mb')) &&
@@ -465,7 +495,7 @@ export function parseError(
  * Check if an error is a billing/auth error that blocks usage
  */
 export function isBillingError(error: AgentError): boolean {
-  return error.code === 'billing_error' || error.code === 'invalid_api_key';
+  return error.code === 'billing_error' || error.code === 'invalid_api_key' || error.code === 'expired_oauth_token';
 }
 
 /**

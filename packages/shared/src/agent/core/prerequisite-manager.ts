@@ -6,7 +6,7 @@
  *
  * Key responsibilities:
  * - Track which files have been read via the Read tool
- * - Check Browser and Skill prerequisites before tool execution
+ * - Check Source, Browser, and Skill prerequisites before tool execution
  * - Reset state on context compaction
  */
 
@@ -50,6 +50,9 @@ export interface PrerequisiteManagerConfig {
 /** Global browser tools docs path required before browser tool usage. */
 const BROWSER_TOOLS_DOC_PATH = resolve(join(CONFIG_DIR, 'docs', 'browser-tools.md'));
 
+/** Built-in MCP servers that do not have source guides. */
+const EXEMPT_SOURCE_SLUGS = new Set(['session', 'craft-agents-docs']);
+
 // ============================================================
 // Rules
 // ============================================================
@@ -61,6 +64,34 @@ const BROWSER_TOOLS_DOC_PATH = resolve(join(CONFIG_DIR, 'docs', 'browser-tools.m
  * - What message to show when blocking
  */
 const RULES: PrerequisiteRule[] = [
+  // MCP source tools: mcp__{slug}__{tool}
+  {
+    toolMatcher: (toolName: string) => {
+      if (!toolName.startsWith('mcp__')) return false;
+      const parts = toolName.split('__');
+      if (parts.length < 3) return false;
+      const slug = parts[1];
+      return Boolean(slug && !EXEMPT_SOURCE_SLUGS.has(slug));
+    },
+    resolveRequiredPath: (toolName: string, workspaceRootPath: string) => {
+      const slug = toolName.split('__')[1];
+      return slug ? resolve(workspaceRootPath, 'sources', slug, 'guide.md') : null;
+    },
+    blockMessage:
+      'You must read the source guide before using this tool. Please read the file at {filePath} first, then retry.',
+  },
+
+  // API source tools: api_{slug}
+  {
+    toolMatcher: (toolName: string) => toolName.startsWith('api_'),
+    resolveRequiredPath: (toolName: string, workspaceRootPath: string) => {
+      const slug = toolName.slice(4);
+      return slug ? resolve(workspaceRootPath, 'sources', slug, 'guide.md') : null;
+    },
+    blockMessage:
+      'You must read the source guide before using this tool. Please read the file at {filePath} first, then retry.',
+  },
+
   // Built-in browser tool: require browser-tools.md first.
   // Only matches the session-scoped tool (not external MCP browser tools like mcp__playwright__*),
   // and skipped entirely when the built-in browser tool is disabled.
@@ -124,7 +155,12 @@ export class PrerequisiteManager {
 
     for (const rule of RULES) {
       if (!rule.toolMatcher(toolName)) continue;
-      if (!this.browserToolEnabled()) continue;
+      if (
+        (toolName === 'browser_tool' || toolName === 'mcp__session__browser_tool') &&
+        !this.browserToolEnabled()
+      ) {
+        continue;
+      }
 
       const resolvedPath = rule.resolveRequiredPath(toolName, this.workspaceRootPath);
       const requiredPath = resolvedPath === BROWSER_TOOLS_DOC_PATH ? this.browserToolsDocPath : resolvedPath;

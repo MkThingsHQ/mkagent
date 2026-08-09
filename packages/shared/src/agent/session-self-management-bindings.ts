@@ -27,4 +27,8 @@ export function attachSessionSelfManagementBindings(
     },
     configurable: true,
   });
+  Object.defineProperty(context, 'activateSourceInSession', {
+    get: () => getSessionScopedToolCallbacks(sessionId)?.activateSourceInSessionFn,
+    configurable: true,
+  });
 }

@@ -19,6 +19,9 @@ export type {
 // Message types
 export type {
   MessageRole,
+  CredentialInputMode,
+  AuthRequestType,
+  AuthStatus,
   ToolStatus,
   ToolDisplayMeta,
   AttachmentType,

@@ -1,7 +1,10 @@
 import type { EventSink, RpcServer } from '@mkagent/server-core/transport'
 import { RPC_CHANNELS, generateMessageId } from '@mkagent/shared/protocol'
 import type {
+  AuthRequest,
+  AuthResult,
   CreateSessionOptions,
+  CredentialResponse,
   FileAttachment,
   PermissionModeState,
   PermissionResponseOptions,
@@ -45,8 +48,26 @@ import {
   resolveTitleLanguageName,
   type ConfigWatcherCallbacks,
 } from '@mkagent/shared/config'
-import type { LoadedSkill } from '@mkagent/shared/skills'
+import { loadSkillBySlug, type LoadedSkill } from '@mkagent/shared/skills'
 import { loadWorkspaceConfig } from '@mkagent/shared/workspaces'
+import { McpClientPool } from '@mkagent/shared/mcp'
+import {
+  SERVER_BUILD_ERRORS,
+  TokenRefreshManager,
+  createTokenGetter,
+  getSourceCredentialManager,
+  getSourceServerBuilder,
+  getSourcesBySlugs,
+  hasRenewEndpoint,
+  isApiOAuthProvider,
+  isSourceUsable,
+  loadAllSources,
+  loadWorkspaceSources,
+  markSourceAuthenticated,
+  type LoadedSource,
+  type SourceWithCredential,
+} from '@mkagent/shared/sources'
+import { getCredentialManager } from '@mkagent/shared/credentials'
 import {
   clearPendingPlanExecution as clearStoredPendingPlanExecution,
   createSession as createStoredSession,
@@ -78,10 +99,87 @@ import type { PermissionMode } from '@mkagent/shared/agent/mode-types'
 import { buildBackendRuntimeSignature, buildRestartRequiredSignature } from './runtime-config'
 import { rollbackFailedBranchCreation, sanitizeForTitle } from '@mkagent/server-core/domain'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 
 let platform: PlatformServices | null = null
 let log: Logger = createScopedLogger(CONSOLE_LOGGER, 'session')
+
+async function buildServersFromSources(
+  sources: LoadedSource[],
+  sessionPath?: string,
+  tokenRefreshManager?: TokenRefreshManager,
+  summarize?: (prompt: string) => Promise<string | null>,
+) {
+  const credentialManager = getSourceCredentialManager()
+  const serverBuilder = getSourceServerBuilder()
+  const sourcesWithCredentials: SourceWithCredential[] = await Promise.all(
+    sources.map(async source => ({
+      source,
+      token: await credentialManager.getToken(source),
+      credential: await credentialManager.getApiCredential(source),
+    })),
+  )
+
+  const getTokenForSource = (source: LoadedSource) => {
+    if (
+      isApiOAuthProvider(source.config.provider)
+      || source.config.api?.authType === 'oauth'
+      || hasRenewEndpoint(source)
+    ) {
+      const manager = tokenRefreshManager ?? new TokenRefreshManager(credentialManager, {
+        log: message => log.debug(message),
+      })
+      return createTokenGetter(manager, source)
+    }
+    return undefined
+  }
+
+  const getCredentialForSource = (source: LoadedSource) => {
+    if (source.config.type !== 'api' || source.config.api?.authType === 'none') return undefined
+    if (isApiOAuthProvider(source.config.provider) || source.config.api?.authType === 'oauth') return undefined
+    if (hasRenewEndpoint(source)) return undefined
+    return async () => credentialManager.getApiCredential(source)
+  }
+
+  const result = await serverBuilder.buildAll(
+    sourcesWithCredentials,
+    getTokenForSource,
+    sessionPath,
+    summarize,
+    getCredentialForSource,
+  )
+
+  for (const error of result.errors) {
+    if (error.error !== SERVER_BUILD_ERRORS.AUTH_REQUIRED) continue
+    const source = sources.find(item => item.config.slug === error.sourceSlug)
+    if (!source) continue
+    const credential = await credentialManager.load(source)
+    const isExpiredRefreshable = Boolean(
+      credential
+      && (credentialManager.isExpired(credential) || credentialManager.needsRefresh(credential))
+      && (credential.refreshToken || hasRenewEndpoint(source)),
+    )
+    if (isExpiredRefreshable) {
+      error.error = SERVER_BUILD_ERRORS.TOKEN_EXPIRED
+      continue
+    }
+    credentialManager.markSourceNeedsReauth(source, 'Token missing or expired')
+  }
+
+  return result
+}
+
+async function refreshExpiredCredentials(
+  sources: LoadedSource[],
+  tokenRefreshManager: TokenRefreshManager,
+): Promise<void> {
+  const needingRefresh = await tokenRefreshManager.getSourcesNeedingRefresh(sources)
+  if (!needingRefresh.length) return
+  const { failed } = await tokenRefreshManager.refreshSources(needingRefresh)
+  if (failed.length) {
+    log.warn('Some source credentials could not be refreshed', failed.map(item => item.source.config.slug))
+  }
+}
 
 export function setSessionPlatform(nextPlatform: PlatformServices): void {
   platform = nextPlatform
@@ -214,6 +312,16 @@ interface ManagedSession extends SessionConfig {
   messageQueue: QueuedMessage[]
   backgroundShellCommands: Map<string, string>
   backgroundTaskRegistry: Map<string, RunningBackgroundTask>
+  mcpPool?: McpClientPool
+  tokenRefreshManager: TokenRefreshManager
+  pendingAuthRequestId?: string
+  pendingAuthRequest?: AuthRequest
+  autoRetryTimer?: ReturnType<typeof setTimeout>
+  autoRetryPending?: {
+    content: string
+    deadlineMs: number
+    committed: boolean
+  }
   backendRuntimeSignature?: string
   backendRestartSignature?: string
   runtimeRefreshPromise?: Promise<void>
@@ -223,6 +331,33 @@ interface ManagedSession extends SessionConfig {
   lastFinalMessageId?: string
   lastMessageRole?: Session['lastMessageRole']
   pendingExternalHeader?: SessionHeader
+}
+
+export interface AutoRetryPendingHost {
+  autoRetryPending?: {
+    content: string
+    deadlineMs: number
+    committed: boolean
+  }
+}
+
+export function claimAutoRetryPending(
+  host: AutoRetryPendingHost,
+  message: string,
+  nowMs = Date.now(),
+): 'send' | 'drop' {
+  const pending = host.autoRetryPending
+  if (pending && message === pending.content) {
+    if (nowMs < pending.deadlineMs) {
+      if (pending.committed) return 'drop'
+      pending.committed = true
+      return 'send'
+    }
+    host.autoRetryPending = undefined
+    return 'send'
+  }
+  if (pending && nowMs >= pending.deadlineMs) host.autoRetryPending = undefined
+  return 'send'
 }
 
 export function createManagedSession(
@@ -246,6 +381,7 @@ export function createManagedSession(
     permissionMode: session.permissionMode,
     previousPermissionMode: session.previousPermissionMode,
     workingDirectory: session.workingDirectory,
+    enabledSourceSlugs: session.enabledSourceSlugs,
     sdkCwd: session.sdkCwd,
     sdkSessionId: session.sdkSessionId,
     model: session.model,
@@ -273,6 +409,9 @@ export function createManagedSession(
     messageQueue: [],
     backgroundShellCommands: new Map(),
     backgroundTaskRegistry: new Map(),
+    tokenRefreshManager: new TokenRefreshManager(getSourceCredentialManager(), {
+      log: message => log.debug(message),
+    }),
   }
 }
 
@@ -377,6 +516,9 @@ export class SessionManager implements ISessionManager {
       messagesLoaded: _loaded, isProcessing: _processing,
       backgroundShellCommands: _backgroundShellCommands,
       backgroundTaskRegistry: _backgroundTaskRegistry,
+      mcpPool: _mcpPool, tokenRefreshManager: _tokenRefreshManager,
+      pendingAuthRequestId: _pendingAuthRequestId, pendingAuthRequest: _pendingAuthRequest,
+      autoRetryTimer: _autoRetryTimer, autoRetryPending: _autoRetryPending,
       runtimeRefreshPromise: _refresh, backendRuntimeSignature: _runtimeSignature,
       backendRestartSignature: _restartSignature, currentStatus: _status,
       preview: _preview, messageCount: _messageCount,
@@ -433,6 +575,7 @@ export class SessionManager implements ISessionManager {
       permissionMode: managed.permissionMode,
       lastReadMessageId: managed.lastReadMessageId,
       hasUnread: managed.hasUnread,
+      enabledSourceSlugs: managed.enabledSourceSlugs,
       workingDirectory: managed.workingDirectory,
       sessionFolderPath: getSessionStoragePath(managed.workspace.rootPath, managed.id),
       model: managed.model,
@@ -504,6 +647,7 @@ export class SessionManager implements ISessionManager {
           : options.workingDirectory,
       model: options.model ?? workspaceConfig?.defaults?.model,
       llmConnection: options.llmConnection ?? workspaceConfig?.defaults?.defaultLlmConnection,
+      enabledSourceSlugs: options.enabledSourceSlugs ?? workspaceConfig?.defaults?.enabledSourceSlugs,
       hidden: options.hidden,
       isFlagged: options.isFlagged,
       parentSessionId: options.parentSessionId,
@@ -572,6 +716,8 @@ export class SessionManager implements ISessionManager {
     if (!managed) return
     await this.cancelProcessing(sessionId, true)
     managed.agent?.destroy()
+    if (managed.autoRetryTimer) clearTimeout(managed.autoRetryTimer)
+    await managed.mcpPool?.disconnectAll()
     unregisterSessionScopedToolCallbacks(sessionId)
     sessionPersistenceQueue.cancel(sessionId)
     deleteStoredSession(managed.workspace.rootPath, sessionId)
@@ -624,7 +770,75 @@ export class SessionManager implements ISessionManager {
   ): Promise<void> {
     const managed = this.sessions.get(sessionId)
     if (!managed) throw new Error(`Session not found: ${sessionId}`)
+    if (claimAutoRetryPending(managed, message) === 'drop') {
+      log.info(`Dropped duplicate source-activation retry for ${sessionId}`)
+      return
+    }
     this.ensureMessagesLoaded(managed)
+
+    // Pre-enable sources required by invoked skills (Issue #249)
+    // This eliminates the two-turn penalty where the agent discovers missing sources at runtime.
+    // Uses targeted loadSkillBySlug() instead of loadAllSkills() to avoid O(N) filesystem scans.
+    if (options?.skillSlugs?.length) {
+      try {
+        const workspaceRoot = managed.workspace.rootPath
+
+        const requiredSources = new Set<string>()
+        for (const slug of options.skillSlugs) {
+          const skill = loadSkillBySlug(workspaceRoot, slug, managed.workingDirectory)
+          if (skill?.metadata.requiredSources) {
+            for (const src of skill.metadata.requiredSources) {
+              requiredSources.add(src)
+            }
+          }
+        }
+
+        if (requiredSources.size > 0) {
+          const currentSlugs = new Set(managed.enabledSourceSlugs || [])
+          const toEnable: string[] = []
+          const skipped: string[] = []
+          const candidateSlugs = Array.from(requiredSources)
+          const loadedSources = getSourcesBySlugs(workspaceRoot, candidateSlugs)
+          const usableSources = new Set(
+            loadedSources
+              .filter(isSourceUsable)
+              .map(source => source.config.slug)
+          )
+
+          for (const srcSlug of candidateSlugs) {
+            if (currentSlugs.has(srcSlug)) continue
+            if (usableSources.has(srcSlug)) {
+              toEnable.push(srcSlug)
+            } else {
+              skipped.push(srcSlug)
+            }
+          }
+
+          if (skipped.length > 0) {
+            log.warn(`Skill requires sources that are not usable (missing or unauthenticated): ${skipped.join(', ')}`)
+          }
+
+          if (toEnable.length > 0) {
+            managed.enabledSourceSlugs = [...(managed.enabledSourceSlugs || []), ...toEnable]
+            log.info(`Pre-enabled sources for skill invocation: ${toEnable.join(', ')}`)
+            this.persistSession(managed)
+            this.sendEvent({
+              type: 'sources_changed',
+              sessionId,
+              enabledSourceSlugs: managed.enabledSourceSlugs,
+            }, managed.workspace.id)
+          }
+        }
+      } catch (error) {
+        log.warn(`Failed to pre-enable skill sources for session ${sessionId}:`, error)
+      }
+    }
+
+    const selectedSources = getSourcesBySlugs(
+      managed.workspace.rootPath,
+      managed.enabledSourceSlugs ?? [],
+    )
+    await refreshExpiredCredentials(selectedSources, managed.tokenRefreshManager)
     let shouldGenerateTitle = false
     const now = this.nextTimestamp()
     let userMessage: Message
@@ -834,6 +1048,37 @@ export class SessionManager implements ISessionManager {
         managed.workingDirectory = event.workingDirectory
         this.emit(managed.workspace.id, { type: 'working_directory_changed', sessionId, workingDirectory: event.workingDirectory })
         break
+      case 'source_activated': {
+        this.emit(managed.workspace.id, {
+          type: 'source_activated',
+          sessionId,
+          sourceSlug: event.sourceSlug,
+          originalMessage: event.originalMessage,
+        })
+        const originalMessage = event.originalMessage ?? ''
+        if (!originalMessage.trim()) break
+        const messageWithSuffix = `${originalMessage}\n\n[${event.sourceSlug} activated]`
+        const messageCountAtSchedule = managed.messages.length
+        managed.autoRetryPending = {
+          content: messageWithSuffix,
+          deadlineMs: Date.now() + 2000,
+          committed: false,
+        }
+        if (managed.autoRetryTimer) clearTimeout(managed.autoRetryTimer)
+        managed.autoRetryTimer = setTimeout(() => {
+          const current = this.sessions.get(sessionId)
+          if (!current) return
+          current.autoRetryTimer = undefined
+          if (current.messages.length > messageCountAtSchedule) {
+            current.autoRetryPending = undefined
+            return
+          }
+          void this.sendMessage(sessionId, messageWithSuffix).catch(error => {
+            log.error(`Source activation retry failed for ${sessionId}`, error)
+          })
+        }, 100)
+        break
+      }
       case 'complete':
         if (event.usage) {
           managed.tokenUsage = { ...managed.tokenUsage, ...event.usage }
@@ -1009,7 +1254,10 @@ export class SessionManager implements ISessionManager {
   private async getOrCreateAgent(managed: ManagedSession): Promise<AgentBackend> {
     if (managed.agent) {
       await this.refreshManagedRuntime(managed)
-      if (managed.agent) return managed.agent
+      if (managed.agent) {
+        await this.applySessionSources(managed, managed.agent)
+        return managed.agent
+      }
     }
     if (!platform) throw new Error('Session platform has not been initialized')
     const workspaceConfig = loadWorkspaceConfig(managed.workspace.rootPath)
@@ -1018,6 +1266,23 @@ export class SessionManager implements ISessionManager {
       workspaceDefaultConnectionSlug: workspaceConfig?.defaults?.defaultLlmConnection,
       managedModel: managed.model,
     })
+    const allSources = loadAllSources(managed.workspace.rootPath)
+    const enabledSources = getSourcesBySlugs(
+      managed.workspace.rootPath,
+      managed.enabledSourceSlugs ?? [],
+    ).filter(isSourceUsable)
+    const sessionPath = getSessionStoragePath(managed.workspace.rootPath, managed.id)
+    const { mcpServers, apiServers } = await buildServersFromSources(
+      enabledSources,
+      sessionPath,
+      managed.tokenRefreshManager,
+    )
+    managed.mcpPool ??= new McpClientPool({
+      debug: message => log.debug(message),
+      workspaceRootPath: managed.workspace.rootPath,
+      sessionPath,
+    })
+    await managed.mcpPool.sync(mcpServers, apiServers)
     const agent = createBackendFromResolvedContext({
       context,
       hostRuntime: {
@@ -1033,6 +1298,13 @@ export class SessionManager implements ISessionManager {
         thinkingLevel: managed.thinkingLevel,
         isHeadless: !this.browserPaneManager,
         skipConfigWatcher: true,
+        mcpPool: managed.mcpPool,
+        initialSources: {
+          enabledSources,
+          mcpServers,
+          apiServers,
+          enabledSlugs: enabledSources.map(source => source.config.slug),
+        },
         onSdkSessionIdUpdate: sdkSessionId => {
           managed.sdkSessionId = sdkSessionId
           this.persistSession(managed)
@@ -1042,6 +1314,40 @@ export class SessionManager implements ISessionManager {
     })
     agent.onPermissionRequest = request => {
       this.handleAgentEvent(managed, { ...request, type: 'permission_request', permissionType: request.type })
+    }
+    agent.onAuthRequest = request => {
+      const message: Message = {
+        id: generateMessageId(),
+        role: 'auth-request',
+        content: this.getAuthRequestDescription(request),
+        timestamp: this.nextTimestamp(),
+        authRequestId: request.requestId,
+        authRequestType: request.type,
+        authSourceSlug: request.sourceSlug,
+        authSourceName: request.sourceName,
+        authStatus: 'pending',
+        ...(request.type === 'credential' ? {
+          authCredentialMode: request.mode,
+          authLabels: request.labels,
+          authDescription: request.description,
+          authHint: request.hint,
+          authHeaderName: request.headerName,
+          authHeaderNames: request.headerNames,
+          authSourceUrl: request.sourceUrl,
+          authPasswordRequired: request.passwordRequired,
+        } : {}),
+      }
+      managed.messages.push(message)
+      managed.pendingAuthRequestId = request.requestId
+      managed.pendingAuthRequest = request
+      if (managed.isProcessing) agent.interruptForHandoff(AbortReason.AuthRequest)
+      this.emit(managed.workspace.id, {
+        type: 'auth_request',
+        sessionId: managed.id,
+        message,
+        request,
+      })
+      this.persistSession(managed)
     }
     agent.onPlanSubmitted = planPath => {
       const message: Message = { id: generateMessageId(), role: 'plan', content: planPath, timestamp: this.nextTimestamp() }
@@ -1063,6 +1369,7 @@ export class SessionManager implements ISessionManager {
         thinkingLevel: request.thinkingLevel ?? managed.thinkingLevel,
         workingDirectory: request.workingDirectory,
         parentSessionId: managed.id,
+        enabledSourceSlugs: request.enabledSourceSlugs ?? managed.enabledSourceSlugs,
       })
       let fileAttachments: FileAttachment[] | undefined
       if (request.attachments?.length) {
@@ -1095,6 +1402,15 @@ export class SessionManager implements ISessionManager {
     const browserPaneFns = this.createBrowserPaneFns(managed)
     mergeSessionScopedToolCallbacks(managed.id, {
       ...(browserPaneFns ? { browserPaneFns } : {}),
+      activateSourceInSessionFn: async sourceSlug => {
+        const callback = agent.onSourceActivationRequest
+        if (!callback) return { ok: false, reason: 'Agent has no activation callback wired' }
+        const ok = await callback(sourceSlug)
+        if (!ok) return { ok: false, reason: 'Source is unavailable or failed to connect' }
+        const userMessage = agent.getCurrentTurnUserMessage()
+        if (userMessage) agent.setPendingSourceActivationRestart({ sourceSlug, userMessage })
+        return { ok: true, availability: 'next-turn' as const }
+      },
       getSessionInfoFn: (sessionId = managed.id) => {
         const session = this.sessions.get(sessionId)
         if (!session) return null
@@ -1163,14 +1479,101 @@ export class SessionManager implements ISessionManager {
         await this.sendMessage(sessionId, message, fileAttachments)
         return { delivery: targetBusy ? 'queued' : 'delivered', targetBusy }
       },
+    } as Parameters<typeof mergeSessionScopedToolCallbacks>[1] & {
+      activateSourceInSessionFn: (sourceSlug: string) => Promise<{
+        ok: boolean
+        reason?: string
+        availability?: 'next-turn'
+      }>
     })
+    agent.onSourceActivationRequest = sourceSlug => this.activateSourceInSession(managed, agent, sourceSlug)
+    agent.onSourceChange = () => {
+      void this.applySessionSources(managed, agent).catch(error => {
+        log.warn(`Failed to reload sources for session ${managed.id}`, error)
+      })
+    }
     agent.setBackgroundEventSink?.(event => { void this.processEvent(managed, event) })
     const result = await agent.postInit()
     if (result.authWarning) log.warn(result.authWarning)
+    managed.mcpPool.setSummarizeCallback(agent.getSummarizeCallback())
+    agent.setAllSources(allSources)
+    await agent.setSourceServers(
+      mcpServers,
+      apiServers,
+      enabledSources.map(source => source.config.slug),
+    )
     managed.agent = agent
     managed.backendRuntimeSignature = buildBackendRuntimeSignature({ connection: context.connection, provider: context.provider, authType: context.authType, resolvedModel: context.resolvedModel })
     managed.backendRestartSignature = buildRestartRequiredSignature({ connection: context.connection, provider: context.provider, authType: context.authType, resolvedModel: context.resolvedModel })
     return agent
+  }
+
+  private async applySessionSources(managed: ManagedSession, agent: AgentBackend): Promise<void> {
+    const allSources = loadAllSources(managed.workspace.rootPath)
+    const enabledSources = getSourcesBySlugs(
+      managed.workspace.rootPath,
+      managed.enabledSourceSlugs ?? [],
+    ).filter(isSourceUsable)
+    const sessionPath = getSessionStoragePath(managed.workspace.rootPath, managed.id)
+    const { mcpServers, apiServers, errors } = await buildServersFromSources(
+      enabledSources,
+      sessionPath,
+      managed.tokenRefreshManager,
+      agent.getSummarizeCallback(),
+    )
+    if (errors.length) log.warn(`Source build errors for session ${managed.id}`, errors)
+    managed.mcpPool ??= new McpClientPool({
+      debug: message => log.debug(message),
+      workspaceRootPath: managed.workspace.rootPath,
+      sessionPath,
+    })
+    managed.mcpPool.setSummarizeCallback(agent.getSummarizeCallback())
+    await managed.mcpPool.sync(mcpServers, apiServers)
+    agent.setAllSources(allSources)
+    await agent.setSourceServers(
+      mcpServers,
+      apiServers,
+      enabledSources.map(source => source.config.slug),
+    )
+  }
+
+  private async activateSourceInSession(
+    managed: ManagedSession,
+    agent: AgentBackend,
+    sourceSlug: string,
+  ): Promise<boolean> {
+    const [source] = getSourcesBySlugs(managed.workspace.rootPath, [sourceSlug])
+    if (!source || !isSourceUsable(source)) return false
+
+    const slugs = new Set(managed.enabledSourceSlugs ?? [])
+    const wasEnabled = slugs.has(sourceSlug)
+    slugs.add(sourceSlug)
+    managed.enabledSourceSlugs = [...slugs]
+
+    try {
+      await this.applySessionSources(managed, agent)
+      if (!agent.getActiveSourceSlugs().includes(sourceSlug)) {
+        if (!wasEnabled) {
+          slugs.delete(sourceSlug)
+          managed.enabledSourceSlugs = [...slugs]
+        }
+        return false
+      }
+      this.persistSession(managed)
+      this.emit(managed.workspace.id, {
+        type: 'sources_changed',
+        sessionId: managed.id,
+        enabledSourceSlugs: managed.enabledSourceSlugs,
+      })
+      return true
+    } catch (error) {
+      if (!wasEnabled) {
+        slugs.delete(sourceSlug)
+        managed.enabledSourceSlugs = [...slugs]
+      }
+      log.warn(`Failed to activate source ${sourceSlug} for session ${managed.id}`, error)
+      return false
+    }
   }
 
   async refreshConnectionRuntime(connectionSlug: string): Promise<void> {
@@ -1314,6 +1717,148 @@ export class SessionManager implements ISessionManager {
     if (!agent) return false
     agent.respondToPermission(requestId, allowed, alwaysAllow)
     return true
+  }
+
+  async setSessionSources(sessionId: string, sourceSlugs: string[]): Promise<void> {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) throw new Error(`Session not found: ${sessionId}`)
+    managed.enabledSourceSlugs = [...new Set(sourceSlugs)]
+    if (managed.agent) await this.applySessionSources(managed, managed.agent)
+    await this.flushSession(sessionId)
+    this.emit(managed.workspace.id, {
+      type: 'sources_changed',
+      sessionId,
+      enabledSourceSlugs: managed.enabledSourceSlugs,
+    })
+  }
+
+  async respondToCredential(
+    sessionId: string,
+    requestId: string,
+    response: CredentialResponse,
+  ): Promise<boolean> {
+    const managed = this.sessions.get(sessionId)
+    const request = managed?.pendingAuthRequest
+    if (!managed || !request || request.requestId !== requestId) {
+      return false
+    }
+
+    // The inline AuthRequestCard uses this unified response path to cancel both
+    // credential and OAuth requests. Cancellation never carries credential data.
+    if (response.cancelled) {
+      await this.completeAuthRequest(sessionId, {
+        requestId,
+        sourceSlug: request.sourceSlug,
+        success: false,
+        cancelled: true,
+      })
+      return true
+    }
+
+    // Non-cancel responses contain credential values and are valid only for
+    // credential requests. OAuth completion is delivered by the OAuth callback.
+    if (request.type !== 'credential') return false
+
+    try {
+      const credentialManager = getCredentialManager()
+      const workspaceId = basename(managed.workspace.rootPath) || managed.workspace.id
+      if (request.mode === 'basic') {
+        await credentialManager.set(
+          { type: 'source_basic', workspaceId, sourceId: request.sourceSlug },
+          { value: JSON.stringify({ username: response.username, password: response.password }) },
+        )
+      } else if (request.mode === 'bearer') {
+        await credentialManager.set(
+          { type: 'source_bearer', workspaceId, sourceId: request.sourceSlug },
+          { value: response.value ?? '' },
+        )
+      } else if (request.mode === 'multi-header') {
+        await credentialManager.set(
+          { type: 'source_apikey', workspaceId, sourceId: request.sourceSlug },
+          { value: JSON.stringify(response.headers ?? {}) },
+        )
+      } else {
+        await credentialManager.set(
+          { type: 'source_apikey', workspaceId, sourceId: request.sourceSlug },
+          { value: response.value ?? '' },
+        )
+      }
+      markSourceAuthenticated(managed.workspace.rootPath, request.sourceSlug)
+      managed.agent?.markSourceUnseen(request.sourceSlug)
+      await this.completeAuthRequest(sessionId, {
+        requestId,
+        sourceSlug: request.sourceSlug,
+        success: true,
+      })
+    } catch (error) {
+      await this.completeAuthRequest(sessionId, {
+        requestId,
+        sourceSlug: request.sourceSlug,
+        success: false,
+        error: error instanceof Error ? error.message : String(error),
+      })
+    }
+    return true
+  }
+
+  async completeAuthRequest(sessionId: string, result: AuthResult): Promise<void> {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) return
+    const authMessage = managed.messages.find(message => (
+      message.role === 'auth-request'
+      && message.authRequestId === result.requestId
+      && message.authStatus === 'pending'
+    ))
+    if (authMessage) {
+      authMessage.authStatus = result.success ? 'completed' : result.cancelled ? 'cancelled' : 'failed'
+      authMessage.authError = result.error
+      authMessage.authEmail = result.email
+      authMessage.authWorkspace = result.workspace
+    }
+    managed.pendingAuthRequestId = undefined
+    managed.pendingAuthRequest = undefined
+    if (result.success) {
+      const sourceSlugs = new Set(managed.enabledSourceSlugs ?? [])
+      sourceSlugs.add(result.sourceSlug)
+      managed.enabledSourceSlugs = [...sourceSlugs]
+      managed.tokenRefreshManager.clearCooldown(result.sourceSlug)
+      managed.agent?.markSourceUnseen(result.sourceSlug)
+      if (managed.agent) await this.applySessionSources(managed, managed.agent)
+    }
+    this.emit(managed.workspace.id, {
+      type: 'auth_completed',
+      sessionId,
+      requestId: result.requestId,
+      success: result.success,
+      cancelled: result.cancelled,
+      error: result.error,
+    })
+    await this.flushSession(sessionId)
+    await this.sendMessage(sessionId, this.formatAuthResultMessage(result))
+  }
+
+  private getAuthRequestDescription(request: AuthRequest): string {
+    switch (request.type) {
+      case 'credential': return `Authentication required for ${request.sourceName}`
+      case 'oauth': return `OAuth authentication for ${request.sourceName}`
+      case 'oauth-google': return `Sign in with Google for ${request.sourceName}`
+      case 'oauth-slack': return `Sign in with Slack for ${request.sourceName}`
+      case 'oauth-microsoft': return `Sign in with Microsoft for ${request.sourceName}`
+    }
+  }
+
+  private formatAuthResultMessage(result: AuthResult): string {
+    if (result.success) {
+      const details = [
+        `Authentication completed for ${result.sourceSlug}.`,
+        result.email ? `Signed in as ${result.email}.` : '',
+        result.workspace ? `Connected to workspace: ${result.workspace}.` : '',
+        'Credentials have been saved.',
+      ]
+      return details.filter(Boolean).join(' ')
+    }
+    if (result.cancelled) return `Authentication cancelled for ${result.sourceSlug}.`
+    return `Authentication failed for ${result.sourceSlug}: ${result.error ?? 'Unknown error'}`
   }
 
   setSessionPermissionMode(sessionId: string, mode: PermissionMode): void {
@@ -1636,6 +2181,17 @@ export class SessionManager implements ISessionManager {
     if (this.configWatchers.has(workspaceRootPath)) return
 
     const callbacks: ConfigWatcherCallbacks = {
+      onSourcesListChange: async sources => {
+        this.broadcastSourcesChanged(workspaceId, sources)
+        await this.reloadSourcesForWorkspace(workspaceRootPath)
+      },
+      onSourceChange: async () => {
+        this.broadcastSourcesChanged(workspaceId, loadWorkspaceSources(workspaceRootPath))
+        await this.reloadSourcesForWorkspace(workspaceRootPath)
+      },
+      onSourceGuideChange: () => {
+        this.broadcastSourcesChanged(workspaceId, loadWorkspaceSources(workspaceRootPath))
+      },
       onLlmConnectionsChange: () => {
         this.eventSink(RPC_CHANNELS.llmConnections.CHANGED, { to: 'all' })
       },
@@ -1671,6 +2227,22 @@ export class SessionManager implements ISessionManager {
 
   private broadcastSkillsChanged(workspaceId: string, skills: LoadedSkill[]): void {
     this.eventSink(RPC_CHANNELS.skills.CHANGED, { to: 'workspace', workspaceId }, workspaceId, skills)
+  }
+
+  private async reloadSourcesForWorkspace(workspaceRootPath: string): Promise<void> {
+    for (const managed of this.sessions.values()) {
+      if (managed.workspace.rootPath !== workspaceRootPath || managed.isProcessing || !managed.agent) continue
+      await this.applySessionSources(managed, managed.agent)
+    }
+  }
+
+  private broadcastSourcesChanged(workspaceId: string, sources: LoadedSource[]): void {
+    this.eventSink(
+      RPC_CHANNELS.sources.CHANGED,
+      { to: 'workspace', workspaceId },
+      workspaceId,
+      sources,
+    )
   }
 
   private applyExternalSessionMetadata(managed: ManagedSession, header: SessionHeader): void {
@@ -1732,6 +2304,7 @@ export class SessionManager implements ISessionManager {
       permissionMode: bundle.session.header.permissionMode,
       model: bundle.session.header.model,
       llmConnection: bundle.session.header.llmConnection,
+      enabledSourceSlugs: bundle.session.header.enabledSourceSlugs,
       hidden: bundle.session.header.hidden,
       isFlagged: bundle.session.header.isFlagged,
       parentSessionId: mode === 'fork' ? bundle.session.header.id : bundle.session.header.parentSessionId,
@@ -1752,6 +2325,8 @@ export class SessionManager implements ISessionManager {
     for (const watcher of this.configWatchers.values()) watcher.stop()
     this.configWatchers.clear()
     for (const managed of this.sessions.values()) {
+      if (managed.autoRetryTimer) clearTimeout(managed.autoRetryTimer)
+      void managed.mcpPool?.disconnectAll()
       managed.agent?.destroy()
       unregisterSessionScopedToolCallbacks(managed.id)
     }

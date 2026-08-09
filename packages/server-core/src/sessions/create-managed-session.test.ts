@@ -26,4 +26,13 @@ describe('createManagedSession', () => {
 
     expect(managed.thinkingLevel).toBeUndefined()
   })
+
+  it('preserves enabled Sources when hydrating stored sessions', () => {
+    const managed = createManagedSession({
+      id: 'session_sources',
+      enabledSourceSlugs: ['github', 'linear'],
+    }, workspace as any)
+
+    expect(managed.enabledSourceSlugs).toEqual(['github', 'linear'])
+  })
 })

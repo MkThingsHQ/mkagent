@@ -23,6 +23,9 @@ function run(toolName: string, input: Record<string, unknown>, mode: 'safe' | 'a
     permissionMode: mode,
     workspaceRootPath: '/tmp/mkagent-pre-tool',
     workspaceId: 'workspace',
+    activeSourceSlugs: [],
+    allSourceSlugs: [],
+    hasSourceActivation: true,
     permissionManager,
   })
 }
@@ -56,6 +59,44 @@ describe('runPreToolUseChecks retained Pi pipeline', () => {
       modified: true,
       input: { file_path: '/tmp/a' },
     })
+  })
+
+  it('requests activation for an inactive known MCP source', () => {
+    initializeModeState(sessionId, 'allow-all')
+    const result = runPreToolUseChecks({
+      toolName: 'mcp__linear__createIssue',
+      input: {},
+      sessionId,
+      permissionMode: 'allow-all',
+      workspaceRootPath: '/tmp/mkagent-pre-tool',
+      workspaceId: 'workspace',
+      activeSourceSlugs: [],
+      allSourceSlugs: ['linear'],
+      hasSourceActivation: true,
+      permissionManager,
+    })
+    expect(result).toEqual({
+      type: 'source_activation_needed',
+      sourceSlug: 'linear',
+      sourceExists: true,
+    })
+  })
+
+  it('allows tools from active sources', () => {
+    initializeModeState(sessionId, 'allow-all')
+    const result = runPreToolUseChecks({
+      toolName: 'mcp__linear__search',
+      input: {},
+      sessionId,
+      permissionMode: 'allow-all',
+      workspaceRootPath: '/tmp/mkagent-pre-tool',
+      workspaceId: 'workspace',
+      activeSourceSlugs: ['linear'],
+      allSourceSlugs: ['linear'],
+      hasSourceActivation: true,
+      permissionManager,
+    })
+    expect(result.type).toBe('allow')
   })
 })
 

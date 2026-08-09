@@ -22,6 +22,7 @@ type ApiToChannelMapKeys = Exclude<
   | 'getSystemWarnings' // reads env var set at startup — no IPC needed
   | 'changeLanguage' // direct IPC to main process — syncs i18n language
   | 'getFilePath' // renderer-local — webUtils.getPathForFile, no IPC round-trip
+  | 'performOAuth' // preload/WebUI orchestrate callback server, browser, and multiple RPCs
 > | BrowserPaneKeys
 type ChannelMapKeys = keyof typeof CHANNEL_MAP & string
 

@@ -4,23 +4,38 @@ import type { AgentEvent } from '@mkagent/core/types';
 import type { FileAttachment } from '../utils/files.ts';
 import { getDefaultLlmConnection, getLlmConnections } from '../config/storage.ts';
 import type { Workspace } from '../config/storage.ts';
-import { parseMentions, resolveFileMentions, resolveSkillMentions } from '../mentions/index.ts';
+import type { LoadedSource } from '../sources/types.ts';
+import { loadAllSources } from '../sources/storage.ts';
+import {
+  parseMentions,
+  resolveFileMentions,
+  resolveSkillMentions,
+  resolveSourceMentions,
+} from '../mentions/index.ts';
 import { getSessionPath, getSessionPlansPath, getSessionDataPath } from '../sessions/storage.ts';
 import { loadAllSkills } from '../skills/storage.ts';
 import { expandPath } from '../utils/paths.ts';
 import { buildRegenerateTitlePrompt, buildTitlePrompt, validateTitle } from '../utils/title-generator.ts';
 import type {
   AgentBackend,
+  AuthCallback,
   BackendConfig,
   ChatOptions,
   PermissionCallback,
   PlanCallback,
   PostInitResult,
   RecoveryMessage,
+  SdkMcpServerConfig,
+  SourceActivationCallback,
+  SourceChangeCallback,
 } from './backend/types.ts';
 import { AbortReason } from './backend/types.ts';
 import { PermissionManager } from './core/permission-manager.ts';
 import { ConfigWatcherManager } from './core/config-watcher-manager.ts';
+import { PrerequisiteManager } from './core/prerequisite-manager.ts';
+import { PromptBuilder } from './core/prompt-builder.ts';
+import { SourceManager } from './core/source-manager.ts';
+import type { ApiServerConfig } from '../mcp/mcp-pool.ts';
 import { buildCallLlmRequest, type LLMQueryRequest, type LLMQueryResult } from './llm-tool.ts';
 import type { PermissionMode } from './mode-manager.ts';
 import { DEFAULT_THINKING_LEVEL, normalizeThinkingLevel, type ThinkingLevel } from './thinking-levels.ts';
@@ -36,6 +51,7 @@ export interface SpawnSessionRequest {
   name?: string;
   llmConnection?: string;
   model?: string;
+  enabledSourceSlugs?: string[];
   permissionMode?: PermissionMode;
   thinkingLevel?: ThinkingLevel;
   workingDirectory?: string;
@@ -59,6 +75,12 @@ export interface SpawnSessionHelpResult {
     models: string[];
     defaultModel?: string;
   }>;
+  sources: Array<{
+    slug: string;
+    name: string;
+    type: string;
+    enabled: boolean;
+  }>;
   defaults: { defaultConnection: string | null; permissionMode: string };
 }
 
@@ -73,14 +95,23 @@ export abstract class BaseAgent implements AgentBackend {
   protected _model: string;
   protected _thinkingLevel: ThinkingLevel;
   protected permissionManager: PermissionManager;
+  protected sourceManager: SourceManager;
+  protected promptBuilder: PromptBuilder;
+  protected prerequisiteManager: PrerequisiteManager;
   protected configWatcherManager: ConfigWatcherManager | null = null;
   protected _currentTurnUserMessage: string | null = null;
+  protected _pendingSourceActivationRestart: { sourceSlug: string; userMessage: string } | null = null;
 
   onPermissionRequest: PermissionCallback | null = null;
   onPlanSubmitted: PlanCallback | null = null;
+  onAuthRequest: AuthCallback | null = null;
+  onSourceChange: SourceChangeCallback | null = null;
+  onSourcesListChange: ((sources: LoadedSource[]) => void) | null = null;
+  onConfigValidationError: ((file: string, errors: string[]) => void) | null = null;
   onPermissionModeChange: ((mode: PermissionMode) => void) | null = null;
   onDebug: ((message: string) => void) | null = null;
   onBackendAuthRequired: ((reason: string) => void) | null = null;
+  onSourceActivationRequest: SourceActivationCallback | null = null;
   onSpawnSession: ((request: SpawnSessionRequest) => Promise<SpawnSessionResult>) | null = null;
 
   constructor(config: BackendConfig, defaultModel: string) {
@@ -96,6 +127,20 @@ export abstract class BaseAgent implements AgentBackend {
       plansFolderPath: getSessionPlansPath(config.workspace.rootPath, this._sessionId),
       dataFolderPath: getSessionDataPath(config.workspace.rootPath, this._sessionId),
     });
+    this.sourceManager = new SourceManager({
+      onDebug: message => this.debug(message),
+    });
+    this.promptBuilder = new PromptBuilder({
+      workspace: config.workspace,
+      session: config.session,
+      debugMode: config.debugMode,
+      systemPromptPreset: config.systemPromptPreset,
+      isHeadless: config.isHeadless,
+    });
+    this.prerequisiteManager = new PrerequisiteManager({
+      workspaceRootPath: config.workspace.rootPath,
+      onDebug: message => this.debug(message),
+    });
   }
 
   get supportsBranching(): boolean {
@@ -108,11 +153,24 @@ export abstract class BaseAgent implements AgentBackend {
 
   protected startConfigWatcher(): void {
     if (this.configWatcherManager || this.config.skipConfigWatcher) return;
-    this.configWatcherManager = new ConfigWatcherManager({
-      workspaceRootPath: this.config.workspace.rootPath,
-      isHeadless: this.config.isHeadless,
-      onDebug: message => this.debug(message),
-    });
+    this.configWatcherManager = new ConfigWatcherManager(
+      {
+        workspaceRootPath: this.config.workspace.rootPath,
+        isHeadless: this.config.isHeadless,
+        onDebug: message => this.debug(message),
+      },
+      {
+        onSourceChange: (slug, source) => {
+          this.debug(`Source changed: ${slug} ${source ? 'updated' : 'deleted'}`);
+          this.onSourceChange?.(slug, source);
+        },
+        onSourcesListChange: sources => {
+          this.debug(`Sources list changed: ${sources.length} sources`);
+          this.onSourcesListChange?.(sources);
+        },
+        onValidationError: (file, errors) => this.onConfigValidationError?.(file, errors),
+      },
+    );
     this.configWatcherManager.start();
   }
 
@@ -176,8 +234,31 @@ export abstract class BaseAgent implements AgentBackend {
     return this._currentTurnUserMessage;
   }
 
-  clearHistory(): void {}
-  resetPrerequisiteState(): void {}
+  setPendingSourceActivationRestart(pending: { sourceSlug: string; userMessage: string }): void {
+    if (this._pendingSourceActivationRestart) {
+      this.debug(
+        `source-activation restart already pending (${this._pendingSourceActivationRestart.sourceSlug}); ` +
+        `ignoring overlapping activation of "${pending.sourceSlug}"`
+      );
+      return;
+    }
+    this._pendingSourceActivationRestart = pending;
+  }
+
+  consumePendingSourceActivationRestart(): { sourceSlug: string; userMessage: string } | null {
+    const pending = this._pendingSourceActivationRestart;
+    this._pendingSourceActivationRestart = null;
+    return pending;
+  }
+
+  clearHistory(): void {
+    this.prerequisiteManager.resetReadState();
+  }
+
+  resetPrerequisiteState(): void {
+    this.prerequisiteManager.resetReadState();
+    this.sourceManager.resetSeenSources();
+  }
 
   updateWorkingDirectory(path: string): void {
     this.workingDirectory = path;
@@ -191,6 +272,61 @@ export abstract class BaseAgent implements AgentBackend {
 
   getPermissionManager(): PermissionManager {
     return this.permissionManager;
+  }
+
+  async setSourceServers(
+    mcpServers: Record<string, SdkMcpServerConfig>,
+    apiServers: Record<string, unknown>,
+    intendedSlugs?: string[]
+  ): Promise<void> {
+    this.sourceManager.updateActiveState(
+      Object.keys(mcpServers),
+      Object.keys(apiServers),
+      intendedSlugs,
+    );
+
+    if (this.config.mcpPool) {
+      try {
+        await this.config.mcpPool.sync(
+          mcpServers,
+          apiServers as Record<string, ApiServerConfig>,
+        );
+      } catch (error) {
+        this.debug(`Failed to sync MCP pool: ${error instanceof Error ? error.message : String(error)}`);
+      }
+    }
+  }
+
+  getActiveSourceSlugs(): string[] {
+    return [...this.sourceManager.getIntendedSlugs()];
+  }
+
+  getAllSources(): LoadedSource[] {
+    return this.sourceManager.getAllSources();
+  }
+
+  setAllSources(sources: LoadedSource[]): void {
+    this.sourceManager.setAllSources(sources);
+  }
+
+  markSourceUnseen(sourceSlug: string): void {
+    this.sourceManager.markSourceUnseen(sourceSlug);
+  }
+
+  isSourceServerActive(serverName: string): boolean {
+    return this.sourceManager.isSourceActive(serverName);
+  }
+
+  getActiveSourceServerNames(): Set<string> {
+    return this.sourceManager.getActiveSlugs();
+  }
+
+  getSourceManager(): SourceManager {
+    return this.sourceManager;
+  }
+
+  getPromptBuilder(): PromptBuilder {
+    return this.promptBuilder;
   }
 
   isMiniAgent(): boolean {
@@ -246,6 +382,7 @@ export abstract class BaseAgent implements AgentBackend {
   destroy(): void {
     this.stopConfigWatcher();
     this.permissionManager.clearWhitelists();
+    this.sourceManager.resetSeenSources();
   }
 
   private extractSkillPaths(message: string): {
@@ -254,7 +391,11 @@ export abstract class BaseAgent implements AgentBackend {
     missingSkills: string[];
   } {
     const skills = loadAllSkills(this.config.workspace.rootPath, this.config.session?.workingDirectory);
-    const parsed = parseMentions(message, skills.map(skill => skill.slug));
+    const parsed = parseMentions(
+      message,
+      skills.map(skill => skill.slug),
+      this.sourceManager.getAllSources().map(source => source.config.slug),
+    );
     const skillPaths = new Map<string, string>();
     for (const slug of parsed.skills) {
       const skill = skills.find(candidate => candidate.slug === slug);
@@ -263,7 +404,7 @@ export abstract class BaseAgent implements AgentBackend {
     }
     const names = new Map(skills.map(skill => [skill.slug, skill.metadata.name]));
     const resolved = resolveFileMentions(
-      resolveSkillMentions(message, names),
+      resolveSourceMentions(resolveSkillMentions(message, names)),
       this.config.session?.workingDirectory ?? this.workingDirectory
     ).trim();
     return {
@@ -289,6 +430,9 @@ export abstract class BaseAgent implements AgentBackend {
       yield { type: 'error', message: `Skill(s) not found: ${missingSkills.join(', ')}` };
       yield { type: 'complete' };
       return;
+    }
+    if (skillPaths.size) {
+      this.prerequisiteManager.registerSkillPrerequisites([...skillPaths.values()]);
     }
     const branchContext = this.buildBranchSeedContext(this.config.getBranchSeedMessages?.());
     if (branchContext) this.config.markBranchSeedApplied?.();
@@ -348,6 +492,7 @@ export abstract class BaseAgent implements AgentBackend {
       name: input.name as string | undefined,
       llmConnection: input.llmConnection as string | undefined,
       model: input.model as string | undefined,
+      enabledSourceSlugs: input.enabledSourceSlugs as string[] | undefined,
       permissionMode: input.permissionMode as PermissionMode | undefined,
       thinkingLevel: input.thinkingLevel as ThinkingLevel | undefined,
       workingDirectory: typeof input.workingDirectory === 'string' && input.workingDirectory
@@ -359,6 +504,8 @@ export abstract class BaseAgent implements AgentBackend {
 
   protected getSpawnSessionHelp(): SpawnSessionHelpResult {
     const defaultConnection = getDefaultLlmConnection();
+    const allSources = loadAllSources(this.config.workspace.rootPath);
+    const activeSlugs = this.sourceManager.getActiveSlugs();
     return {
       connections: getLlmConnections().map(connection => ({
         slug: connection.slug,
@@ -367,6 +514,12 @@ export abstract class BaseAgent implements AgentBackend {
         providerType: connection.providerType,
         models: (connection.models ?? []).map(model => typeof model === 'string' ? model : model.id),
         defaultModel: connection.defaultModel,
+      })),
+      sources: allSources.map(source => ({
+        slug: source.config.slug,
+        name: source.config.name,
+        type: source.config.type,
+        enabled: activeSlugs.has(source.config.slug),
       })),
       defaults: { defaultConnection, permissionMode: this.getPermissionMode() },
     };

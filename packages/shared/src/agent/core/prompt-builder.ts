@@ -69,9 +69,9 @@ export class PromptBuilder {
    * @param options - Context building options
    * @returns Array of context strings
    */
-  buildContextParts(options: ContextBlockOptions): string[] {
+  buildContextParts(options: ContextBlockOptions, sourceStateBlock?: string): string[] {
     return [
-      ...this.buildVolatileContextParts(options),
+      ...this.buildVolatileContextParts(options, sourceStateBlock),
       ...this.buildStableContextParts(),
     ];
   }
@@ -94,7 +94,7 @@ export class PromptBuilder {
    *
    * @param options - Context building options
    */
-  buildVolatileContextParts(options: ContextBlockOptions): string[] {
+  buildVolatileContextParts(options: ContextBlockOptions, sourceStateBlock?: string): string[] {
     const parts: string[] = [];
 
     // Date/time first (kept on the user tail to preserve prompt caching)
@@ -112,6 +112,10 @@ export class PromptBuilder {
       dataFolderPath,
       consumeModeChangeUserSignal: true,
     }));
+
+    if (sourceStateBlock) {
+      parts.push(sourceStateBlock);
+    }
 
     return parts;
   }

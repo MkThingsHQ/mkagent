@@ -4,6 +4,7 @@ import type {
   ListSessionsResult,
   SendAgentMessageResult,
   SessionInfo,
+  AuthRequest,
 } from '@mkagent/session-tools-core';
 import { debug } from '../utils/debug.ts';
 import type { BrowserPaneFns } from './browser-tools.ts';
@@ -12,6 +13,7 @@ import type { SpawnSessionFn } from './spawn-session-tool.ts';
 
 export interface SessionScopedToolCallbacks {
   onPlanSubmitted?: (planPath: string) => void;
+  onAuthRequest?: (request: AuthRequest) => void;
   queryFn?: (request: LLMQueryRequest) => Promise<LLMQueryResult>;
   spawnSessionFn?: SpawnSessionFn;
   browserPaneFns?: BrowserPaneFns;
@@ -23,6 +25,12 @@ export interface SessionScopedToolCallbacks {
     message: string,
     attachments?: Array<{ path: string; name?: string }>
   ) => Promise<SendAgentMessageResult>;
+  /** Activate a source during source_test and report when its tools are ready. */
+  activateSourceInSessionFn?: (sourceSlug: string) => Promise<{
+    ok: boolean;
+    reason?: string;
+    availability?: 'immediate' | 'next-turn';
+  }>;
 }
 
 const registry = new Map<string, SessionScopedToolCallbacks>();

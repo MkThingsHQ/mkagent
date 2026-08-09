@@ -65,6 +65,26 @@ export type { CredentialHealthStatus, CredentialHealthIssue, CredentialHealthIss
 import type { LoadedSkill, SkillMetadata } from '@mkagent/shared/skills/types';
 export type { LoadedSkill, SkillMetadata };
 
+// Source types for session source selection
+import type { LoadedSource, FolderSourceConfig, SourceConnectionStatus } from '@mkagent/shared/sources/types';
+export type { LoadedSource, FolderSourceConfig, SourceConnectionStatus };
+
+// Resource bundle types (cross-workspace export/import)
+import type {
+  ExportResourcesOptions,
+  ExportResult,
+  ResourceImportMode,
+  ResourceBundle,
+  ResourceImportResult,
+} from '@mkagent/shared/resources';
+export type {
+  ExportResourcesOptions,
+  ExportResult,
+  ResourceImportMode,
+  ResourceBundle,
+  ResourceImportResult,
+};
+
 
 // LLM connection types
 import type { LlmConnection, LlmConnectionWithStatus, LlmAuthType, LlmProviderType, NetworkProxySettings } from '@mkagent/shared/config';
@@ -184,6 +204,7 @@ import type {
   SendMessageOptions,
   SessionEvent,
   PermissionResponseOptions,
+  CredentialResponse,
   SessionCommand,
   RefreshTitleResult,
   FileSearchResult,
@@ -202,6 +223,8 @@ import type {
   WindowCloseRequest,
   DirectoryListingResult,
   ClaudeOAuthResult,
+  OAuthResult,
+  McpToolsResult,
 } from '@mkagent/shared/protocol'
 
 export interface ElectronAPI {
@@ -217,6 +240,7 @@ export interface ElectronAPI {
   killShell(sessionId: string, shellId: string): Promise<{ success: boolean; error?: string }>
 
   respondToPermission(sessionId: string, requestId: string, allowed: boolean, alwaysAllow: boolean, options?: PermissionResponseOptions): Promise<boolean>
+  respondToCredential(sessionId: string, requestId: string, response: CredentialResponse): Promise<boolean>
 
   // Consolidated session command handler
   sessionCommand(sessionId: string, command: SessionCommand): Promise<void | RefreshTitleResult | { count: number }>
@@ -395,6 +419,26 @@ export interface ElectronAPI {
 
   // Session content search (full-text search via ripgrep)
   searchSessionContent(workspaceId: string, query: string, searchId?: string): Promise<SessionSearchResult[]>
+
+  // Sources
+  getSources(workspaceId: string): Promise<LoadedSource[]>
+  createSource(workspaceId: string, config: Partial<FolderSourceConfig>): Promise<FolderSourceConfig>
+  deleteSource(workspaceId: string, sourceSlug: string): Promise<void>
+  startSourceOAuth(workspaceId: string, sourceSlug: string): Promise<{ success: boolean; error?: string }>
+  saveSourceCredentials(workspaceId: string, sourceSlug: string, credential: string): Promise<void>
+  getSourcePermissionsConfig(workspaceId: string, sourceSlug: string): Promise<import('@mkagent/shared/agent').PermissionsConfigFile | null>
+  getMcpTools(workspaceId: string, sourceSlug: string): Promise<McpToolsResult>
+
+  // OAuth (server-owned credentials, client-orchestrated flow)
+  performOAuth(args: { sourceSlug: string; sessionId?: string; authRequestId?: string }): Promise<{ success: boolean; error?: string; email?: string }>
+  oauthRevoke(sourceSlug: string): Promise<{ success: boolean }>
+
+  // Sources change listener
+  onSourcesChanged(callback: (workspaceId: string, sources: LoadedSource[]) => void): () => void
+
+  // Resources (cross-workspace export/import)
+  exportResources(workspaceId: string, options: ExportResourcesOptions): Promise<ExportResult>
+  importResources(workspaceId: string, bundle: ResourceBundle, mode: ResourceImportMode): Promise<ResourceImportResult>
 
   getWorkspacePermissionsConfig(workspaceId: string): Promise<import('@mkagent/shared/agent').PermissionsConfigFile | null>
   getDefaultPermissionsConfig(): Promise<{ config: import('@mkagent/shared/agent').PermissionsConfigFile | null; path: string }>
@@ -578,6 +622,18 @@ export interface SessionsNavigationState {
   rightSidebar?: RightSidebarPanel
 }
 
+export interface SourceFilter {
+  kind: 'type'
+  sourceType: 'api' | 'mcp' | 'local'
+}
+
+export interface SourcesNavigationState {
+  navigator: 'sources'
+  filter?: SourceFilter
+  details: { type: 'source'; sourceSlug: string } | null
+  rightSidebar?: RightSidebarPanel
+}
+
 export interface SettingsNavigationState {
   navigator: 'settings'
   subpage: SettingsSubpage | null
@@ -592,12 +648,17 @@ export interface SkillsNavigationState {
 
 export type NavigationState =
   | SessionsNavigationState
+  | SourcesNavigationState
   | SettingsNavigationState
   | SkillsNavigationState
 
 export const isSessionsNavigation = (
   state: NavigationState
 ): state is SessionsNavigationState => state.navigator === 'sessions'
+
+export const isSourcesNavigation = (
+  state: NavigationState
+): state is SourcesNavigationState => state.navigator === 'sources'
 
 export const isSettingsNavigation = (
   state: NavigationState
@@ -614,6 +675,10 @@ export const DEFAULT_NAVIGATION_STATE: NavigationState = {
 }
 
 export const getNavigationStateKey = (state: NavigationState): string => {
+  if (state.navigator === 'sources') {
+    const base = state.filter ? `sources/${state.filter.sourceType}` : 'sources'
+    return state.details ? `${base}/source/${state.details.sourceSlug}` : base
+  }
   if (state.navigator === 'skills') {
     return state.details ? `skills/skill/${state.details.skillSlug}` : 'skills'
   }
@@ -625,6 +690,26 @@ export const getNavigationStateKey = (state: NavigationState): string => {
 }
 
 export const parseNavigationStateKey = (key: string): NavigationState | null => {
+  if (key === 'sources') return { navigator: 'sources', details: null }
+  if (key.startsWith('sources/')) {
+    const segments = key.split('/')
+    const sourceTypes = new Set(['api', 'mcp', 'local'])
+    let index = 1
+    let filter: SourceFilter | undefined
+    if (sourceTypes.has(segments[index] ?? '')) {
+      filter = { kind: 'type', sourceType: segments[index] as SourceFilter['sourceType'] }
+      index += 1
+    }
+    if (segments[index] === 'source' && segments[index + 1]) {
+      return {
+        navigator: 'sources',
+        filter,
+        details: { type: 'source', sourceSlug: segments[index + 1] },
+      }
+    }
+    if (index === segments.length) return { navigator: 'sources', filter, details: null }
+    return null
+  }
   if (key === 'skills') return { navigator: 'skills', details: null }
   if (key.startsWith('skills/skill/')) {
     const skillSlug = key.slice(13)

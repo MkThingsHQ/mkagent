@@ -8,9 +8,11 @@ import {
   mergeResults,
   validateJsonFileHasFields,
 } from '../validation.ts';
+import { getSourceConfigPath } from '../source-helpers.ts';
 
 export interface ConfigValidateArgs {
-  target: 'config' | 'preferences' | 'permissions' | 'tool-icons' | 'all';
+  target: 'config' | 'sources' | 'preferences' | 'permissions' | 'tool-icons' | 'all';
+  sourceSlug?: string;
 }
 
 export async function handleConfigValidate(
@@ -25,6 +27,11 @@ export async function handleConfigValidate(
       switch (args.target) {
         case 'config':
           result = ctx.validators.validateConfig();
+          break;
+        case 'sources':
+          result = args.sourceSlug
+            ? ctx.validators.validateSource(ctx.workspacePath, args.sourceSlug)
+            : ctx.validators.validateAllSources(ctx.workspacePath);
           break;
         case 'preferences':
           result = ctx.validators.validatePreferences();
@@ -61,11 +68,43 @@ export async function handleConfigValidate(
       'version',
       'tools',
     ]);
+  const sourcesResult = () => {
+    if (args.sourceSlug) {
+      return validateJsonFileHasFields(
+        getSourceConfigPath(ctx.workspacePath, args.sourceSlug),
+        ['slug', 'name', 'type'],
+      );
+    }
+    const sourcesDir = join(ctx.workspacePath, 'sources');
+    if (!ctx.fs.exists(sourcesDir)) {
+      return { valid: true, errors: [], warnings: [] } satisfies ValidationResult;
+    }
+    const results: ValidationResult[] = [];
+    for (const entry of ctx.fs.readdir(sourcesDir)) {
+      const entryPath = join(sourcesDir, entry);
+      if (!ctx.fs.isDirectory(entryPath)) continue;
+      const sourceResult = validateJsonFileHasFields(
+        join(entryPath, 'config.json'),
+        ['slug', 'name', 'type'],
+      );
+      if (!sourceResult.valid) {
+        sourceResult.errors = sourceResult.errors.map(error => ({
+          ...error,
+          path: `${entry}/${error.path}`,
+        }));
+      }
+      results.push(sourceResult);
+    }
+    return mergeResults(...results);
+  };
 
   let result: ValidationResult;
   switch (args.target) {
     case 'config':
       result = configResult();
+      break;
+    case 'sources':
+      result = sourcesResult();
       break;
     case 'preferences':
       result = preferencesResult();
@@ -77,7 +116,7 @@ export async function handleConfigValidate(
       result = toolIconsResult();
       break;
     case 'all':
-      result = mergeResults(configResult(), preferencesResult(), permissionsResult());
+      result = mergeResults(configResult(), sourcesResult(), preferencesResult(), permissionsResult());
       break;
     default:
       return errorResponse(`Unknown validation target: ${String(args.target)}`);

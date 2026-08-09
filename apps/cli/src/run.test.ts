@@ -26,6 +26,18 @@ describe('run command', () => {
     expect(parseArgs(['bun', 'mkagent', '--workspace-dir', '/tmp/workspace', 'run', 'hello']).workspaceDir).toBe('/tmp/workspace')
   })
 
+  it('parseArgs: run with --source accumulates sources', () => {
+    const args = parseArgs([
+      'bun', 'mkagent',
+      '--source', 'craft-kb',
+      '--source', 'github',
+      'run', 'do', 'stuff',
+    ])
+    expect(args.command).toBe('run')
+    expect(args.sources).toEqual(['craft-kb', 'github'])
+    expect(args.rest).toEqual(['do', 'stuff'])
+  })
+
   it('leaves workspace-dir undefined by default', () => {
     expect(parseArgs(['bun', 'mkagent', 'run', 'hello']).workspaceDir).toBeUndefined()
   })

@@ -12,7 +12,7 @@ export const SESSION_PERSISTENT_FIELDS = [
   'createdAt', 'lastUsedAt', 'lastMessageAt',
   'name', 'isFlagged', 'hidden',
   'lastReadMessageId', 'hasUnread',
-  'permissionMode', 'previousPermissionMode', 'workingDirectory',
+  'enabledSourceSlugs', 'permissionMode', 'previousPermissionMode', 'workingDirectory',
   'model', 'llmConnection', 'connectionLocked', 'thinkingLevel',
   'pendingPlanExecution',
   'isArchived', 'archivedAt',
@@ -56,6 +56,8 @@ export interface SessionConfig {
   previousPermissionMode?: PermissionMode;
   lastReadMessageId?: string;
   hasUnread?: boolean;
+  /** Explicit per-session Source selection. */
+  enabledSourceSlugs?: string[];
   workingDirectory?: string;
   sdkCwd?: string;
   model?: string;

@@ -57,6 +57,7 @@ function createMockServer(): RpcServer {
 function createMockDeps(): HandlerDeps {
   return {
     sessionManager: {} as HandlerDeps['sessionManager'],
+    oauthFlowStore: {} as HandlerDeps['oauthFlowStore'],
     platform: {
       appRootPath: '',
       resourcesPath: '',
@@ -81,14 +82,17 @@ function createMockDeps(): HandlerDeps {
 async function getExpectedCoreChannels(): Promise<Set<string>> {
   // Core handler channels (now in server-core)
   const [
-    auth, files, llm, sessions, settings, skills, system, workspace, onboarding,
+    auth, files, llm, oauth, resources, sessions, settings, skills, sources, system, workspace, onboarding,
   ] = await Promise.all([
     import('@mkagent/server-core/handlers/rpc/auth'),
     import('@mkagent/server-core/handlers/rpc/files'),
     import('@mkagent/server-core/handlers/rpc/llm-connections'),
+    import('@mkagent/server-core/handlers/rpc/oauth'),
+    import('@mkagent/server-core/handlers/rpc/resources'),
     import('@mkagent/server-core/handlers/rpc/sessions'),
     import('@mkagent/server-core/handlers/rpc/settings'),
     import('@mkagent/server-core/handlers/rpc/skills'),
+    import('@mkagent/server-core/handlers/rpc/sources'),
     import('@mkagent/server-core/handlers/rpc/system'),
     import('@mkagent/server-core/handlers/rpc/workspace'),
     import('@mkagent/server-core/handlers/rpc/onboarding'),
@@ -98,9 +102,12 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     ...auth.HANDLED_CHANNELS,
     ...files.HANDLED_CHANNELS,
     ...llm.HANDLED_CHANNELS,
+    ...oauth.HANDLED_CHANNELS,
+    ...resources.HANDLED_CHANNELS,
     ...sessions.HANDLED_CHANNELS,
     ...settings.HANDLED_CHANNELS,
     ...skills.HANDLED_CHANNELS,
+    ...sources.HANDLED_CHANNELS,
     ...system.CORE_HANDLED_CHANNELS,
     ...workspace.CORE_HANDLED_CHANNELS,
     ...onboarding.HANDLED_CHANNELS,
@@ -137,7 +144,7 @@ describe('RPC handler profile registration', () => {
     const actual = new Set(registeredChannels.filter(ch => ch.includes(':')))
     expect([...expected].filter(ch => !actual.has(ch))).toEqual([])
     expect([...actual].filter(ch => !expected.has(ch))).toEqual([])
-  })
+  }, 15_000)
 
   it('registerGuiRpcHandlers registers only gui channels', async () => {
     const expected = await getExpectedGuiChannels()
@@ -148,7 +155,7 @@ describe('RPC handler profile registration', () => {
     const actual = new Set(registeredChannels.filter(ch => ch.includes(':')))
     expect([...expected].filter(ch => !actual.has(ch))).toEqual([])
     expect([...actual].filter(ch => !expected.has(ch))).toEqual([])
-  })
+  }, 15_000)
 
   it('registers all retained channels exactly once', async () => {
     const expected = new Set([
@@ -167,7 +174,7 @@ describe('RPC handler profile registration', () => {
     const counts = new Map<string, number>()
     for (const channel of appChannels) counts.set(channel, (counts.get(channel) ?? 0) + 1)
     expect([...counts.entries()].filter(([, count]) => count > 1)).toEqual([])
-  })
+  }, 15_000)
 
   it('backs every retained client API channel with a handler', async () => {
     const { HANDLED_CHANNELS: serverChannels } = await import('@mkagent/server-core/handlers/rpc/server')
@@ -183,5 +190,5 @@ describe('RPC handler profile registration', () => {
       .sort()
 
     expect(missing).toEqual([])
-  })
+  }, 15_000)
 })

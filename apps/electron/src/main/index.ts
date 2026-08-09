@@ -182,9 +182,10 @@ async function start() {
       return manager
     },
     bindRpcServer: (manager, server) => manager.setRpcServer(server),
-    createHandlerDeps: ({ sessionManager, platform: current }) => ({
+    createHandlerDeps: ({ sessionManager, platform: current, oauthFlowStore }) => ({
       sessionManager,
       platform: current,
+      oauthFlowStore,
       windowManager: windowManager!,
       browserPaneManager: browserPaneManager!,
       onThemePreferencesChanged: preferences => browserPaneManager!.setThemeMode(preferences.mode),

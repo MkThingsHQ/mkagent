@@ -185,6 +185,29 @@ export function createWebApi(options: WebApiOptions): { api: ElectronAPI; client
   }
 
   const oauth: Partial<ElectronAPI> = {
+    performOAuth: async (args: {
+      sourceSlug: string
+      sessionId?: string
+      authRequestId?: string
+    }) => {
+      const popup = window.open('about:blank', '_blank')
+      try {
+        const callbackUrl = `${window.location.origin}/api/oauth/callback`
+        const result = await client.invoke('oauth:start', {
+          sourceSlug: args.sourceSlug,
+          callbackUrl,
+          sessionId: args.sessionId,
+          authRequestId: args.authRequestId,
+        })
+        if (popup && !popup.closed) popup.location.href = result.authUrl
+        else if (popup === null) window.location.href = result.authUrl
+        else return { success: false, error: 'Sign-in window was closed before authentication started.' }
+        return { success: true }
+      } catch (error) {
+        if (popup && !popup.closed) popup.close()
+        return { success: false, error: error instanceof Error ? error.message : 'OAuth flow failed' }
+      }
+    },
     startClaudeOAuth: async () => {
       const popup = window.open('about:blank', '_blank')
       try {

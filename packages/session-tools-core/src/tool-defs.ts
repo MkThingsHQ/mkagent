@@ -7,6 +7,13 @@ import {
   handleListBackgroundTasks,
   handleListSessions,
   handleMermaidValidate,
+  handleSourceTest,
+  handleSourceOAuthTrigger,
+  handleGoogleOAuthTrigger,
+  handleSlackOAuthTrigger,
+  handleMicrosoftOAuthTrigger,
+  handleCredentialPrompt,
+  handleRenderTemplate,
   handleScriptSandbox,
   handleSendAgentMessage,
   handleSendDeveloperFeedback,
@@ -19,12 +26,29 @@ import type { ToolResult } from './types.ts';
 
 export const SubmitPlanSchema = z.object({ planPath: z.string() });
 export const ConfigValidateSchema = z.object({
-  target: z.enum(['config', 'preferences', 'permissions', 'tool-icons', 'all']),
+  target: z.enum(['config', 'sources', 'preferences', 'permissions', 'tool-icons', 'all']),
+  sourceSlug: z.string().optional(),
 });
 export const SkillValidateSchema = z.object({ skillSlug: z.string() });
 export const MermaidValidateSchema = z.object({
   code: z.string(),
   render: z.boolean().optional(),
+});
+export const SourceTestSchema = z.object({
+  sourceSlug: z.string(),
+  autoEnable: z.boolean().optional(),
+});
+export const SourceOAuthTriggerSchema = z.object({ sourceSlug: z.string() });
+export const CredentialPromptSchema = z.object({
+  sourceSlug: z.string(),
+  mode: z.enum(['bearer', 'basic', 'header', 'query', 'multi-header']),
+  labels: z.object({
+    credential: z.string().optional(),
+    username: z.string().optional(),
+    password: z.string().optional(),
+  }).optional(),
+  description: z.string().optional(),
+  hint: z.string().optional(),
 });
 export const CallLlmSchema = z.object({
   prompt: z.string(),
@@ -79,6 +103,11 @@ export const ScriptSandboxSchema = z.object({
   stdin: z.string().optional(),
   timeoutMs: z.number().min(1).max(15000).optional(),
 });
+export const RenderTemplateSchema = z.object({
+  source: z.string(),
+  template: z.string(),
+  data: z.record(z.string(), z.unknown()),
+});
 export const SendDeveloperFeedbackSchema = z.object({ message: z.string() });
 export const BrowserToolSchema = z.object({
   command: z.union([z.string(), z.array(z.string())]),
@@ -92,6 +121,7 @@ export const SpawnSessionSchema = z.object({
   permissionMode: z.enum(['safe', 'ask', 'allow-all']).optional(),
   thinkingLevel: z.enum(['off', 'low', 'medium', 'high', 'xhigh', 'max']).optional(),
   workingDirectory: z.string().optional(),
+  enabledSourceSlugs: z.array(z.string()).optional(),
   attachments: z
     .array(z.object({ path: z.string(), name: z.string().optional() }))
     .optional(),
@@ -118,9 +148,16 @@ export const TOOL_DESCRIPTIONS = {
   config_validate: 'Validate MkAgent config, preferences, permissions, tool icons, or all retained configuration.',
   skill_validate: 'Validate a SKILL.md file discovered from project, workspace, or global scope.',
   mermaid_validate: 'Validate Mermaid syntax and optionally render the diagram.',
+  source_test: 'Validate, test, and by default enable and activate a Source in the current session.',
+  source_oauth_trigger: 'Start OAuth authentication for an MCP Source.',
+  source_google_oauth_trigger: 'Start Google OAuth authentication for a Source.',
+  source_slack_oauth_trigger: 'Start Slack OAuth authentication for a Source.',
+  source_microsoft_oauth_trigger: 'Start Microsoft OAuth authentication for a Source.',
+  source_credential_prompt: 'Prompt the user to securely enter credentials for a Source.',
   update_user_preferences: 'Update confirmed user preferences. Never infer or guess preference values.',
   transform_data: 'Transform session or Skill data into a persisted result using Python, Node, or Bun.',
   script_sandbox: 'Execute a short script with filesystem and network isolation.',
+  render_template: 'Render a Source HTML template with data into the session data directory.',
   send_developer_feedback: 'Send detailed Markdown feedback to the MkAgent development team.',
   call_llm: 'Invoke the configured mini model for a focused subtask.',
   spawn_session: 'Create an independent local session using an available Pi connection and model.',
@@ -163,9 +200,16 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
   { name: 'config_validate', description: TOOL_DESCRIPTIONS.config_validate, inputSchema: ConfigValidateSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleConfigValidate },
   { name: 'skill_validate', description: TOOL_DESCRIPTIONS.skill_validate, inputSchema: SkillValidateSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleSkillValidate },
   { name: 'mermaid_validate', description: TOOL_DESCRIPTIONS.mermaid_validate, inputSchema: MermaidValidateSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleMermaidValidate },
+  { name: 'source_test', description: TOOL_DESCRIPTIONS.source_test, inputSchema: SourceTestSchema, executionMode: 'registry', safeMode: 'allow', handler: handleSourceTest },
+  { name: 'source_oauth_trigger', description: TOOL_DESCRIPTIONS.source_oauth_trigger, inputSchema: SourceOAuthTriggerSchema, executionMode: 'registry', safeMode: 'block', handler: handleSourceOAuthTrigger },
+  { name: 'source_google_oauth_trigger', description: TOOL_DESCRIPTIONS.source_google_oauth_trigger, inputSchema: SourceOAuthTriggerSchema, executionMode: 'registry', safeMode: 'block', handler: handleGoogleOAuthTrigger },
+  { name: 'source_slack_oauth_trigger', description: TOOL_DESCRIPTIONS.source_slack_oauth_trigger, inputSchema: SourceOAuthTriggerSchema, executionMode: 'registry', safeMode: 'block', handler: handleSlackOAuthTrigger },
+  { name: 'source_microsoft_oauth_trigger', description: TOOL_DESCRIPTIONS.source_microsoft_oauth_trigger, inputSchema: SourceOAuthTriggerSchema, executionMode: 'registry', safeMode: 'block', handler: handleMicrosoftOAuthTrigger },
+  { name: 'source_credential_prompt', description: TOOL_DESCRIPTIONS.source_credential_prompt, inputSchema: CredentialPromptSchema, executionMode: 'registry', safeMode: 'block', handler: handleCredentialPrompt },
   { name: 'update_user_preferences', description: TOOL_DESCRIPTIONS.update_user_preferences, inputSchema: UpdatePreferencesSchema, executionMode: 'registry', safeMode: 'block', handler: handleUpdatePreferences },
   { name: 'transform_data', description: TOOL_DESCRIPTIONS.transform_data, inputSchema: TransformDataSchema, executionMode: 'registry', safeMode: 'allow', handler: handleTransformData },
   { name: 'script_sandbox', description: TOOL_DESCRIPTIONS.script_sandbox, inputSchema: ScriptSandboxSchema, executionMode: 'registry', safeMode: 'allow', handler: handleScriptSandbox },
+  { name: 'render_template', description: TOOL_DESCRIPTIONS.render_template, inputSchema: RenderTemplateSchema, executionMode: 'registry', safeMode: 'allow', handler: handleRenderTemplate },
   { name: 'send_developer_feedback', description: TOOL_DESCRIPTIONS.send_developer_feedback, inputSchema: SendDeveloperFeedbackSchema, executionMode: 'registry', safeMode: 'allow', handler: handleSendDeveloperFeedback },
   { name: 'call_llm', description: TOOL_DESCRIPTIONS.call_llm, inputSchema: CallLlmSchema, executionMode: 'backend', safeMode: 'allow', readOnly: true, handler: null },
   { name: 'spawn_session', description: TOOL_DESCRIPTIONS.spawn_session, inputSchema: SpawnSessionSchema, executionMode: 'backend', safeMode: 'block', handler: null },

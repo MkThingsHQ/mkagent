@@ -119,6 +119,9 @@ describe('mid-stream queue runtime invariants', () => {
     managed.agent = {
       isProcessing: () => false,
       updateRuntimeConfig: async () => true,
+      getSummarizeCallback: () => async () => null,
+      setAllSources: () => {},
+      setSourceServers: async () => {},
       redirect: () => false,
       chat: async function* () {
         turn += 1

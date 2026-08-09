@@ -7,6 +7,7 @@ export type {
   PermissionManagerConfig,
   PromptBuilderConfig,
   RecoveryMessage,
+  SourceManagerConfig,
   ToolPermissionResult,
 } from './types.ts';
 export { AbortReason } from './session-lifecycle.ts';
@@ -19,6 +20,7 @@ export {
 } from './config-watcher-manager.ts';
 export { PathProcessor } from './path-processor.ts';
 export { PermissionManager } from './permission-manager.ts';
+export { SourceManager } from './source-manager.ts';
 export { PromptBuilder } from './prompt-builder.ts';
 export { SessionLifecycleManager, createSessionLifecycleManager } from './session-lifecycle.ts';
 export { UsageTracker, createUsageTracker } from './usage-tracker.ts';
@@ -45,5 +47,11 @@ export type {
   PrerequisiteManagerLike,
   SkillQualificationResult,
 } from './pre-tool-use.ts';
+export { PrerequisiteManager } from './prerequisite-manager.ts';
+export type {
+  PrerequisiteCheckResult,
+  PrerequisiteManagerConfig,
+  PrerequisiteRule,
+} from './prerequisite-manager.ts';
 export { getRtkGain, getRtkPath, getRtkStatus, resetRtkPathCache } from './rtk-detector.ts';
 export type { RtkGainStats, RtkStatus } from './rtk-detector.ts';

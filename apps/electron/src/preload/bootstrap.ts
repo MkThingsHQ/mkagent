@@ -15,7 +15,8 @@ import {
 import { WsRpcClient, type TransportConnectionState } from '../transport/client'
 import { buildClientApi } from '../transport/build-api'
 import { CHANNEL_MAP } from '../transport/channel-map'
-import { createCallbackServer, CHATGPT_OAUTH_CONFIG } from '@mkagent/shared/auth'
+import { createCallbackServer } from '@mkagent/shared/auth/callback-server'
+import { CHATGPT_OAUTH_CONFIG } from '@mkagent/shared/auth/chatgpt-oauth-config'
 import { RPC_CHANNELS } from '@mkagent/shared/protocol'
 
 const webContentsId = ipcRenderer.sendSync('__get-web-contents-id') as number
@@ -64,6 +65,48 @@ api.getSystemWarnings = async () => ({
 })
 api.getFilePath = (file: File) => webUtils.getPathForFile(file)
 api.changeLanguage = (language: string) => ipcRenderer.invoke('__i18n:changeLanguage', language)
+
+api.performOAuth = async (args: {
+  sourceSlug: string
+  sessionId?: string
+  authRequestId?: string
+}) => {
+  let callbackServer: Awaited<ReturnType<typeof createCallbackServer>> | null = null
+  let flowId: string | undefined
+  let state: string | undefined
+  try {
+    callbackServer = await createCallbackServer({ appType: 'electron' })
+    const callbackUrl = `${callbackServer.url}/callback`
+    const started = await client.invoke(RPC_CHANNELS.oauth.START, {
+      sourceSlug: args.sourceSlug,
+      callbackUrl,
+      sessionId: args.sessionId,
+      authRequestId: args.authRequestId,
+    })
+    flowId = started.flowId
+    state = started.state
+    await shell.openExternal(started.authUrl)
+    const callback = await callbackServer.promise
+    if (callback.query.error) {
+      await client.invoke(RPC_CHANNELS.oauth.CANCEL, { flowId, state })
+      return { success: false, error: callback.query.error_description || callback.query.error }
+    }
+    if (!callback.query.code) {
+      await client.invoke(RPC_CHANNELS.oauth.CANCEL, { flowId, state })
+      return { success: false, error: 'No authorization code received' }
+    }
+    return await client.invoke(RPC_CHANNELS.oauth.COMPLETE, {
+      flowId,
+      code: callback.query.code,
+      state,
+    })
+  } catch (error) {
+    if (flowId && state) client.invoke(RPC_CHANNELS.oauth.CANCEL, { flowId, state }).catch(() => {})
+    return { success: false, error: error instanceof Error ? error.message : 'OAuth flow failed' }
+  } finally {
+    callbackServer?.close()
+  }
+}
 
 api.startClaudeOAuth = async () => {
   try {

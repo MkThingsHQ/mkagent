@@ -218,7 +218,11 @@ const instance = await (async () => {
         return new SessionManager()
       },
       bindRpcServer: (sm, server) => sm.setRpcServer(server),
-      createHandlerDeps: ({ sessionManager, platform }) => ({ sessionManager, platform }),
+      createHandlerDeps: ({ sessionManager, platform, oauthFlowStore }) => ({
+        sessionManager,
+        platform,
+        oauthFlowStore,
+      }),
       registerAllRpcHandlers: (server, deps, serverCtx) => {
         registerCoreRpcHandlers(server, deps, serverCtx)
         server.handle(RPC_CHANNELS.notification.GET_ENABLED, async () => {
@@ -254,6 +258,26 @@ if (webuiHandler) {
   const { getHealthCheck } = await import('@mkagent/server-core/handlers/rpc/server')
   const depsLike = { sessionManager: instance.sessionManager } as any
   healthCheckFn = () => getHealthCheck(depsLike)
+
+  const { getSourceCredentialManager, loadWorkspaceSources } = await import('@mkagent/shared/sources')
+  const { getWorkspaceByNameOrId } = await import('@mkagent/shared/config')
+  const { pushTyped } = await import('@mkagent/server-core/transport')
+  webuiHandler.setOAuthCallbackDeps({
+    flowStore: instance.oauthFlowStore,
+    credManager: getSourceCredentialManager(),
+    sessionManager: instance.sessionManager,
+    pushSourcesChanged: (workspaceId: string) => {
+      const workspace = getWorkspaceByNameOrId(workspaceId)
+      const sources = workspace ? loadWorkspaceSources(workspace.rootPath) : []
+      pushTyped(
+        instance.wsServer,
+        RPC_CHANNELS.sources.CHANGED,
+        { to: 'workspace', workspaceId },
+        workspaceId,
+        sources,
+      )
+    },
+  })
 
 }
 
