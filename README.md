@@ -4,10 +4,15 @@ MkAgent is a cross-platform local agent application for Desktop, WebUI, and CLI.
 
 ## Quick start
 
+Initialize the bundled OpenConnector submodule, install dependencies, and start the Desktop app:
+
 ```bash
+git submodule update --init --recursive
 bun install
 bun run electron:start
 ```
+
+The Electron start command prepares the pinned OpenConnector runtime automatically before launch.
 
 Start the local WebUI server with `bun run server:prod`, or run the CLI with `bun run apps/cli/src/index.ts --help`. MkAgent creates the `default` workspace under `~/.mkagent/workspaces/default`.
 
