@@ -2309,7 +2309,7 @@
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
     "packages/shared/src/agent/__tests__/pi-conversation-flow.integration.test.ts": {
-      "sha256": "5b389877618c941cac4c2f25dcd703777fd5d0020741565475179fb18caad025",
+      "sha256": "a900f93cc3e98985170fd5c8f1ed98687729daa7e7e737b7597c69b3606ef255",
       "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
     },
     "packages/shared/src/agent/pi-context.ts": {

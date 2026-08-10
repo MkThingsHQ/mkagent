@@ -2,7 +2,6 @@ import { afterEach, describe, expect, it } from 'bun:test'
 import { mkdtempSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
-import { PiAgent } from '../pi-agent.ts'
 import {
   registerSessionScopedToolCallbacks,
   unregisterSessionScopedToolCallbacks,
@@ -11,11 +10,14 @@ import type { AgentEvent } from '@mkagent/core/types'
 
 const resources: Array<{ stop(): void }> = []
 const tempDirs: string[] = []
+const originalConfigDir = process.env.CONFIG_DIR
 
 afterEach(() => {
   for (const resource of resources.splice(0)) resource.stop()
   for (const dir of tempDirs.splice(0)) rmSync(dir, { recursive: true, force: true })
   unregisterSessionScopedToolCallbacks('flow-session')
+  if (originalConfigDir === undefined) delete process.env.CONFIG_DIR
+  else process.env.CONFIG_DIR = originalConfigDir
 })
 
 function sse(chunks: unknown[]): Response {
@@ -57,6 +59,11 @@ describe('Pi conversation flow with a local OpenAI-compatible endpoint', () => {
 
     const workspaceRoot = mkdtempSync(join(tmpdir(), 'mkagent-flow-'))
     tempDirs.push(workspaceRoot)
+    const configDir = join(workspaceRoot, 'config')
+    process.env.CONFIG_DIR = configDir
+    const { ensureConfigDir } = await import('../../config/storage.ts')
+    ensureConfigDir()
+    const { PiAgent } = await import('../pi-agent.ts')
     registerSessionScopedToolCallbacks('flow-session', {
       getSessionInfoFn: () => ({
         id: 'flow-session',
