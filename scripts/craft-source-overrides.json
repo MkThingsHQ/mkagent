@@ -43,7 +43,7 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "README.md": {
-      "sha256": "06eb2d0d34c4785f6acdcf0ef627bbad97ad4c4afd6021e851c5b03a5a0c1fa5",
+      "sha256": "78846a0dc3499362a0c18a9742e240aab81700d466cf8ff6e0d9d846a0a55b24",
       "reason": "Craft documentation adapted to the retained MkAgent feature set and product identifiers"
     },
     "apps/cli/package.json": {
@@ -891,7 +891,7 @@
       "reason": "Craft dependency graph reduced to MkAgent Lite workspaces and retained dependencies"
     },
     "package.json": {
-      "sha256": "f370406fe7c651bd3f4fea2ff6e2223ad3b6eb2d64e2384015e4ee559bfa2e5c",
+      "sha256": "e318026b84a7fcf7fb83f156ae880d8403d8872064afe74f6e2bec5c594aea82",
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "packages/core/README.md": {
@@ -1992,6 +1992,10 @@
     }
   },
   "mkOnly": {
+    "docs/assets/mkagent-homepage.png": {
+      "sha256": "d672469f09c96e5370b0f839461378f301571b21c6b54ce318b8bd4616c0638f",
+      "reason": "MkAgent product screenshot used by repository documentation"
+    },
     "docs/migration/migration-features.md": {
       "sha256": "f39b4deba974091ea8036335c0c9095065d7094f843e642e699d1b6d72e7510c",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
@@ -2341,7 +2345,7 @@
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
     },
     "scripts/check-i18n-usage.ts": {
-      "sha256": "ee3ea6c9c413d0cdf8ffc8a39fe8dbc655fa9a29782016a30fc33dfe9c163925",
+      "sha256": "993af14ce3836b7a66bc30fa196aacf726dd3e1bd32088bdd9a2925f7016b9ac",
       "reason": "MkAgent localization guard also verifies that every standalone Electron renderer initializes i18n"
     },
     "scripts/check-craft-test-coverage.ts": {
