@@ -15,23 +15,44 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
       - uses: astral-sh/setup-uv@v6
-      - run: bun install --frozen-lockfile
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Checkout pinned Craft baseline
+        run: |
+          git clone --filter=blob:none https://github.com/craft-ai-agents/craft-agents-oss.git "$RUNNER_TEMP/craft-agents-oss"
+          git -C "$RUNNER_TEMP/craft-agents-oss" checkout --detach a60ebc1a5a7cb0a6af7a77d5eed0512c5fc07658
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
       - name: Verify version, changelog, and release notes
         run: bun run release:check "${GITHUB_REF_NAME}"
-      - run: bun run validate:ci
-      - run: bun run audit:craft-reuse
-      - run: bun run lint
-      - run: bun run test
+      - name: Validate types, focused tests, document tools, and locales
+        run: bun run validate:ci
+      - name: Audit Craft source reuse
+        env:
+          CRAFT_AGENT_SOURCE: ${{ runner.temp }}/craft-agents-oss
+        run: bun run audit:craft-reuse
+      - name: Lint
+        env:
+          CRAFT_AGENT_SOURCE: ${{ runner.temp }}/craft-agents-oss
+        run: bun run lint
+      - name: Run test suite
+        run: bun run test
 
-  credentials:
+  release-policy:
+    name: Resolve optional signing policy
     runs-on: ubuntu-latest
     environment: release
+    outputs:
+      mac_signing: ${{ steps.signing.outputs.mac_signing }}
+      windows_signing: ${{ steps.signing.outputs.windows_signing }}
     env:
       APPLE_CERTIFICATE: ${{ secrets.CSC_LINK }}
       APPLE_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
@@ -41,21 +62,51 @@ jobs:
       WINDOWS_CERTIFICATE: ${{ secrets.WIN_CSC_LINK }}
       WINDOWS_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
     steps:
-      - name: Require stable-release credentials
+      - name: Validate optional signing credentials
+        id: signing
         shell: bash
         run: |
-          missing=0
-          for name in APPLE_CERTIFICATE APPLE_PASSWORD APPLE_ID APPLE_APP_PASSWORD APPLE_TEAM_ID WINDOWS_CERTIFICATE WINDOWS_PASSWORD; do
-            if [ -z "${!name}" ]; then
-              echo "::error::Missing release environment secret: $name"
-              missing=1
-            fi
+          apple_names=(APPLE_CERTIFICATE APPLE_PASSWORD APPLE_ID APPLE_APP_PASSWORD APPLE_TEAM_ID)
+          windows_names=(WINDOWS_CERTIFICATE WINDOWS_PASSWORD)
+
+          apple_count=0
+          for name in "${apple_names[@]}"; do
+            if [ -n "${!name}" ]; then apple_count=$((apple_count + 1)); fi
           done
-          exit "$missing"
+          windows_count=0
+          for name in "${windows_names[@]}"; do
+            if [ -n "${!name}" ]; then windows_count=$((windows_count + 1)); fi
+          done
+
+          if [ "$apple_count" -ne 0 ] && [ "$apple_count" -ne "${#apple_names[@]}" ]; then
+            echo "::error::Apple signing is partially configured. Set all Apple release secrets or remove all of them for an unsigned release."
+            exit 1
+          fi
+          if [ "$windows_count" -ne 0 ] && [ "$windows_count" -ne "${#windows_names[@]}" ]; then
+            echo "::error::Windows signing is partially configured. Set both Windows release secrets or remove both for an unsigned release."
+            exit 1
+          fi
+
+          if [ "$apple_count" -eq "${#apple_names[@]}" ]; then
+            echo "mac_signing=true" >> "$GITHUB_OUTPUT"
+            echo "Apple signing and notarization enabled"
+          else
+            echo "mac_signing=false" >> "$GITHUB_OUTPUT"
+            echo "Apple credentials absent; macOS artifacts will use ad-hoc signing and manual updates"
+          fi
+
+          if [ "$windows_count" -eq "${#windows_names[@]}" ]; then
+            echo "windows_signing=true" >> "$GITHUB_OUTPUT"
+            echo "Windows Authenticode signing enabled"
+          else
+            echo "windows_signing=false" >> "$GITHUB_OUTPUT"
+            echo "Windows credentials absent; Windows artifacts will be unsigned"
+          fi
 
   build:
-    needs: [verify, credentials]
+    needs: [verify, release-policy]
     environment: release
+    timeout-minutes: 120
     strategy:
       fail-fast: false
       matrix:
@@ -77,24 +128,70 @@ jobs:
             platform: linux
             arch: x64
     runs-on: ${{ matrix.os }}
+    env:
+      NODE_OPTIONS: --max-old-space-size=4096
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.3.14
       - uses: astral-sh/setup-uv@v6
-      - run: bun install --frozen-lockfile
-      - run: bun run electron:build
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+      - name: Build desktop application
+        env:
+          MKAGENT_AUTO_UPDATE_ENABLED: ${{ matrix.target != 'mac' || needs.release-policy.outputs.mac_signing == 'true' }}
+        run: bun run electron:build
       - name: Package desktop
         working-directory: apps/electron
         env:
-          CSC_LINK: ${{ matrix.target == 'win' && secrets.WIN_CSC_LINK || secrets.CSC_LINK }}
-          CSC_KEY_PASSWORD: ${{ matrix.target == 'win' && secrets.WIN_CSC_KEY_PASSWORD || secrets.CSC_KEY_PASSWORD }}
-          APPLE_ID: ${{ secrets.APPLE_ID }}
-          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
-          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          MAC_SIGNING: ${{ needs.release-policy.outputs.mac_signing }}
+          WINDOWS_SIGNING: ${{ needs.release-policy.outputs.windows_signing }}
+          MAC_CSC_LINK: ${{ secrets.CSC_LINK }}
+          MAC_CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          MAC_APPLE_ID: ${{ secrets.APPLE_ID }}
+          MAC_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          MAC_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          WINDOWS_CSC_LINK: ${{ secrets.WIN_CSC_LINK }}
+          WINDOWS_CSC_KEY_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
         shell: bash
-        run: bunx electron-builder --config electron-builder.yml --${{ matrix.target }} --${{ matrix.arch }} --publish never
+        run: |
+          args=(--config electron-builder.yml --${{ matrix.target }} --${{ matrix.arch }} --publish never)
+          if [ "${{ matrix.target }}" = "mac" ]; then
+            if [ "$MAC_SIGNING" = "true" ]; then
+              export CSC_LINK="$MAC_CSC_LINK"
+              export CSC_KEY_PASSWORD="$MAC_CSC_KEY_PASSWORD"
+              export APPLE_ID="$MAC_APPLE_ID"
+              export APPLE_APP_SPECIFIC_PASSWORD="$MAC_APPLE_APP_SPECIFIC_PASSWORD"
+              export APPLE_TEAM_ID="$MAC_APPLE_TEAM_ID"
+              args+=("-c.forceCodeSigning=true")
+            else
+              export CSC_IDENTITY_AUTO_DISCOVERY=false
+              args+=("-c.mac.identity=-" "-c.mac.hardenedRuntime=false")
+            fi
+          elif [ "${{ matrix.target }}" = "win" ] && [ "$WINDOWS_SIGNING" = "true" ]; then
+            export CSC_LINK="$WINDOWS_CSC_LINK"
+            export CSC_KEY_PASSWORD="$WINDOWS_CSC_KEY_PASSWORD"
+            args+=("-c.forceCodeSigning=true")
+          fi
+          bunx electron-builder "${args[@]}"
+      - name: Verify macOS code signature
+        if: matrix.target == 'mac'
+        run: codesign --verify --deep --strict --verbose=2 "apps/electron/release/${{ matrix.arch == 'arm64' && 'mac-arm64' || 'mac' }}/MkAgent.app"
+      - name: Verify Windows Authenticode signature
+        if: matrix.target == 'win' && needs.release-policy.outputs.windows_signing == 'true'
+        shell: pwsh
+        run: |
+          $installers = Get-ChildItem "apps/electron/release/*.exe"
+          if ($installers.Count -eq 0) { throw "No Windows installer found" }
+          foreach ($installer in $installers) {
+            $signature = Get-AuthenticodeSignature $installer.FullName
+            if ($signature.Status -ne "Valid") {
+              throw "Invalid Authenticode signature for $($installer.Name): $($signature.Status)"
+            }
+          }
       - name: Build headless server
         shell: bash
         run: |
@@ -124,6 +221,7 @@ jobs:
   cli:
     needs: verify
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -141,9 +239,10 @@ jobs:
           retention-days: 7
 
   publish:
-    needs: [build, cli]
+    needs: [build, cli, release-policy]
     runs-on: ubuntu-latest
     environment: release
+    timeout-minutes: 30
     permissions:
       contents: write
     steps:
@@ -160,23 +259,68 @@ jobs:
         env:
           VERSION: ${{ github.ref_name }}
         run: bun run scripts/collect-release-assets.ts artifacts release-assets "${VERSION#v}"
+      - name: Record installer trust status
+        env:
+          MAC_SIGNING: ${{ needs.release-policy.outputs.mac_signing }}
+          WINDOWS_SIGNING: ${{ needs.release-policy.outputs.windows_signing }}
+        shell: bash
+        run: |
+          if [ "$MAC_SIGNING" = "true" ]; then
+            mac_status="Developer ID signed and notarized"
+          else
+            mac_status="Ad-hoc signed; Gatekeeper warning expected; manual updates required"
+          fi
+          if [ "$WINDOWS_SIGNING" = "true" ]; then
+            windows_status="Authenticode signed"
+          else
+            windows_status="Unsigned; SmartScreen warning may appear"
+          fi
+          {
+            echo "MkAgent release trust status"
+            echo "macOS: $mac_status"
+            echo "Windows: $windows_status"
+            echo "Linux, CLI, and headless server: verified by SHA256SUMS"
+          } > release-assets/SIGNING_STATUS.txt
+          shasum -a 256 release-assets/SIGNING_STATUS.txt | sed 's#release-assets/##' >> release-assets/SHA256SUMS
       - name: Create draft release and upload all assets
         env:
           GH_TOKEN: ${{ github.token }}
           RELEASE_REPOSITORY: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
+          MAC_SIGNING: ${{ needs.release-policy.outputs.mac_signing }}
+          WINDOWS_SIGNING: ${{ needs.release-policy.outputs.windows_signing }}
         shell: bash
         run: |
           notes="apps/electron/resources/release-notes/${TAG#v}.md"
+          release_notes="$RUNNER_TEMP/release-notes.md"
+          cp "$notes" "$release_notes"
+          if [ "$MAC_SIGNING" = "true" ]; then
+            mac_status="Developer ID signed and notarized"
+          else
+            mac_status="Ad-hoc signed; Gatekeeper warning expected; update by downloading the next DMG manually"
+          fi
+          if [ "$WINDOWS_SIGNING" = "true" ]; then
+            windows_status="Authenticode signed"
+          else
+            windows_status="Unsigned; SmartScreen warning may appear"
+          fi
+          {
+            echo
+            echo "## Installation trust"
+            echo
+            echo "- macOS: $mac_status."
+            echo "- Windows: $windows_status."
+            echo "- Verify downloads with \`SHA256SUMS\`; machine-readable details are in \`SIGNING_STATUS.txt\`."
+          } >> "$release_notes"
           state="$(gh release view "$TAG" --repo "$RELEASE_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null || true)"
           if [ "$state" = "false" ]; then
             echo "::error::Release $TAG is already published and cannot be replaced"
             exit 1
           fi
           if [ -z "$state" ]; then
-            gh release create "$TAG" --repo "$RELEASE_REPOSITORY" --target main --title "MkAgent $TAG" --notes-file "$notes" --draft
+            gh release create "$TAG" --repo "$RELEASE_REPOSITORY" --verify-tag --title "MkAgent $TAG" --notes-file "$release_notes" --draft
           else
-            gh release edit "$TAG" --repo "$RELEASE_REPOSITORY" --title "MkAgent $TAG" --notes-file "$notes"
+            gh release edit "$TAG" --repo "$RELEASE_REPOSITORY" --title "MkAgent $TAG" --notes-file "$release_notes"
           fi
           gh release upload "$TAG" release-assets/* --repo "$RELEASE_REPOSITORY" --clobber
       - name: Publish release after successful upload

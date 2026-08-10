@@ -45,6 +45,7 @@ function getBuildDefines(): string[] {
   const definedVars = [
     "SENTRY_ELECTRON_INGEST_URL",
     "MKAGENT_DEV_RUNTIME",
+    "MKAGENT_AUTO_UPDATE_ENABLED",
   ];
 
   return definedVars.map((varName) => {

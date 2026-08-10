@@ -43,7 +43,7 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "README.md": {
-      "sha256": "7b8edeeca8dc8360b0c05e0f4de8d1cd092c2dc364fbc1b386bc1be07a5e9adb",
+      "sha256": "06eb2d0d34c4785f6acdcf0ef627bbad97ad4c4afd6021e851c5b03a5a0c1fa5",
       "reason": "Craft documentation adapted to the retained MkAgent feature set and product identifiers"
     },
     "apps/cli/package.json": {
@@ -71,7 +71,7 @@
       "reason": "Craft CLI reduced to retained commands and the Pi-only MkAgent runtime"
     },
     "apps/electron/electron-builder.yml": {
-      "sha256": "9c7ed1af993a5098c93a9359e1fff33d6a3d19dbf17f677f83fe306cca771dac",
+      "sha256": "4de85383450b855e6e64f5e2b725a3c0d1c8c15e6513954b0f2e59673e87a993",
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/electron/eslint-rules/no-direct-navigation-state.cjs": {
@@ -315,7 +315,7 @@
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "apps/electron/src/main/auto-update.ts": {
-      "sha256": "e9b3aa44d16d59f9cb4411613ed2c286cf4f2531d32cc3ac07f4e3618bc49e0f",
+      "sha256": "1cbb162ddc0fe8dd2c40b6d24a12927924106192d1a35e59447e062490105492",
       "reason": "Craft Electron runtime adapted for the retained Lite runtime and removed product channels"
     },
     "apps/electron/src/main/browser-cdp.ts": {
@@ -891,7 +891,7 @@
       "reason": "Craft dependency graph reduced to MkAgent Lite workspaces and retained dependencies"
     },
     "package.json": {
-      "sha256": "d494b444a0a9b7378b29c4e70431fc6f0e7a8fd4acf0418dba215de69b5e25fd",
+      "sha256": "f370406fe7c651bd3f4fea2ff6e2223ad3b6eb2d64e2384015e4ee559bfa2e5c",
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "packages/core/README.md": {
@@ -1927,7 +1927,7 @@
       "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
     },
     "scripts/electron-build-main.ts": {
-      "sha256": "7dede8e248660ee7817444f2cf3bbaf6b3b7b3ff314f275f239565e42c56ff16",
+      "sha256": "11e27dea2fedc7c894225d9406bba284296e4016a8a3d6917c2f7258ff3e4694",
       "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
     },
     "scripts/electron-build-resources.ts": {
@@ -2025,7 +2025,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/comparison-with-craft.md": {
-      "sha256": "843d5b0c972b26689c8e5128bbbeb63f56a34f35f8889020607844e390e199e2",
+      "sha256": "14b4ff2fc5bae6268813aeaa63b1d1ecef7d75d8c3db27817305d6d651698480",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/migration/README.md": {
@@ -2037,7 +2037,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/architecture.md": {
-      "sha256": "7d3b79f6900f94ad2ef9c8b07d13177e3496d02f05224ebab062b9c4bc4346fb",
+      "sha256": "096efea8ce2df1c3e2514609b801f19dd27a094cf756aa5c02edaa8f53ce5daf",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/attachments.md": {
@@ -2053,7 +2053,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/comparison-with-craft.md": {
-      "sha256": "6a69fcbdc18469f1402a96a639f496bda9ac4b2a8977596bdf58ca1cdb9c55ff",
+      "sha256": "8d79ad99fc57e48a457119ff9729dfd530afc576e614b8f6200a61a5a4b0a8ec",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/connections.md": {
@@ -2065,7 +2065,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/development.md": {
-      "sha256": "7e9bbdf6530333405a356c538fe29ad00b29bcbcfe5a3824214278d0148ed983",
+      "sha256": "205f95f2a6e6b83686198fba8a3112a225a32341390216e6f46e5a11ad1d8ebb",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/document-tools.md": {
@@ -2089,7 +2089,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/releases.md": {
-      "sha256": "d01f91ba9aa3adb3edf67f554bf947b55bcde9a88b9e6e24b02ff673ec001322",
+      "sha256": "a3a8308aff88879ed1105b54f10e2211f42111ab374ae2ef2a5adceae523efff",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/sessions.md": {
@@ -2145,15 +2145,15 @@
       "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
     },
     "scripts/craft-ui-overrides.json": {
-      "sha256": "8a430c4ad5b3dca94ce1f5bc640f1f20bf7b33427359f85264ffc2d10479a4cc",
+      "sha256": "36e4f798f75ae655b4405bd484e1025c59428b8d0045bc70039ec504f58ee61d",
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
     },
     ".github/workflows/ci.yml": {
-      "sha256": "b8b8065f48bb1e73c63d5cdd0920b9ca7fd3255bc0274bb79dac8918e30511b9",
+      "sha256": "df6e1cad551e2b51d0b27817c718e49b61690b179ca396966b5d397184b26bbd",
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
     ".github/workflows/release.yml": {
-      "sha256": "1b638c3411e88cfd774163d05f16939a044769f0a95ef64a90fc1247764e12c6",
+      "sha256": "828c063e5728321f7737b2bf06ba41bfcd1f686ec7a782d0af432eec35511f77",
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
     "CHANGELOG.md": {
@@ -2217,7 +2217,7 @@
       "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
     },
     "docs/architecture.md": {
-      "sha256": "249c101a091712816bd0f10d5493775139450f2f595e6747d00f2e98f4279201",
+      "sha256": "72391d66b3dd80957d95f3b9156f562064129845ef2d7990327f59adbf9b2af4",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/attachments.md": {
@@ -2237,7 +2237,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/development.md": {
-      "sha256": "03164fac7dc28e1b3047d334c9b5d8afd0b4bfaca7d5935ec60a903441256240",
+      "sha256": "cc0624ccabefd0032f1ad254ff48a56a54207e7065241e89f1d9e2de3fd9f953",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/document-tools.md": {
@@ -2261,7 +2261,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/releases.md": {
-      "sha256": "9c264bff95721b2a201b708368bdd2272cefe8532e7a23eec2d87f199d5b4ccd",
+      "sha256": "ca7437499a0e00786e4886385e42212bcebe7f9523b57ec304de937ec192e3ca",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/sessions.md": {
@@ -2355,6 +2355,10 @@
     "scripts/release.ts": {
       "sha256": "1774d385dc3a7caf061094e5c282216a57b99f2ea8e84de10d6789b0aae1ff02",
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
+    },
+    "scripts/run-tests.ts": {
+      "sha256": "e67b6dccb64331d2dac769e143b92d116944297734826b8ad1092034bbe78d4c",
+      "reason": "MkAgent test discovery excludes generated artifacts and vendored submodule tests from CI"
     },
     "packages/shared/src/agent/core/__tests__/config-dir-paths.test.ts": {
       "sha256": "0bd513596bdc12d98c766544f62144ef572bc5be1f7973ce158d61dd86099d40",

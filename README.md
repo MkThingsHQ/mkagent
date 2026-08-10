@@ -17,17 +17,21 @@
 
 <p align="center">
   <a href="https://mkagent.app">Website</a> ·
-  <a href="https://github.com/MkThingsHQ/mkagent/releases/latest">Download</a> ·
   <a href="./docs/README.md">Documentation</a> ·
   <a href="./docs/zh/README.md">中文文档</a> ·
+  <a href="#getting-started">Quick Start</a> ·
+  <a href="https://mksaas.link/discord">Community</a> ·
   <a href="https://github.com/MkThingsHQ/mkagent/issues">Report a bug</a>
 </p>
 
-MkAgent is an open-source, cross-platform agent application powered by the
-[Pi](https://github.com/badlogic/pi-mono) agent runtime. It combines persistent local workspaces,
-multi-session workflows, model flexibility, browser tools, and document tools in one application.
+MkAgent helps developers run long-lived AI coding sessions from Desktop, WebUI, or CLI while
+keeping every workspace under their control. It is powered by the
+[Pi](https://github.com/badlogic/pi-mono) agent runtime and combines persistent local workspaces,
+model flexibility, browser tools, and document tools in one application.
 Application state stays under your local data directory, and credentials are stored through the
 operating system credential manager.
+
+[![MkAgent local-first AI agent workspace](https://mkagent.app/og.png)](https://mkagent.app)
 
 ## Features
 
@@ -44,6 +48,15 @@ operating system credential manager.
   proxy, and switch between English and Simplified Chinese.
 
 See the [feature matrix](./docs/feature-matrix.md) for the exact supported product boundary.
+
+## Tech Stack
+
+- [Bun](https://bun.sh) — Workspace runtime, package manager, scripts, and tests.
+- [Electron](https://www.electronjs.org) — Cross-platform desktop application shell.
+- [React](https://react.dev/) and [TypeScript](https://www.typescriptlang.org/) — Shared user
+  interface and typed application code.
+- [Vite](https://vite.dev/) and [Tailwind CSS](https://tailwindcss.com/) — Renderer tooling and styling.
+- [Pi](https://github.com/badlogic/pi-mono) — Agent runtime, model providers, sessions, and tool execution.
 
 ## Interfaces
 
@@ -137,6 +150,14 @@ git diff --check
 
 Use [GitHub Issues](https://github.com/MkThingsHQ/mkagent/issues) for bugs and feature requests.
 
+## Links
+
+- [Website](https://mkagent.app) — Learn more about MkAgent.
+- [Documentation](./docs/README.md) — Explore setup, architecture, models, tools, and development guides.
+- [Chinese documentation](./docs/zh/README.md) — Read the Simplified Chinese guides.
+- [Discord](https://mksaas.link/discord) — Join the community and get help.
+- [GitHub Issues](https://github.com/MkThingsHQ/mkagent/issues) — Report bugs or request features.
+
 ## Project lineage
 
 MkAgent started from selected architecture and code in
@@ -145,10 +166,11 @@ MkAgent started from selected architecture and code in
 affiliated with or endorsed by the upstream project. See [NOTICE](./NOTICE) for attribution and the
 [comparison guide](./docs/comparison-with-craft.md) for the current differences.
 
-## About
+## Author
 
-MkAgent is built by [MkThingsHQ](https://github.com/MkThingsHQ). Other open-source projects from the
-same maker include [Mkdirs](https://github.com/MkThingsHQ/mkdirs) and
+[OpenFox](https://mksaas.link/fox-x) is an independent developer building products and developer
+tools under [MkThingsHQ](https://github.com/MkThingsHQ). Other projects include
+[TanStarter](https://tanstarter.dev/), [Mkdirs](https://github.com/MkThingsHQ/mkdirs), and
 [MkDocs](https://github.com/open-fox/mkdocs).
 
 ## License

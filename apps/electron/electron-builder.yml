@@ -44,10 +44,8 @@ mac:
           - mkagent
     NSLocalNetworkUsageDescription: MkAgent uses the local network to reach local models, servers, and devices requested by the user.
   target:
-    - target: dmg
-      arch: [arm64, x64]
-    - target: zip
-      arch: [arm64, x64]
+    - dmg
+    - zip
   hardenedRuntime: true
   gatekeeperAssess: false
   entitlements: build/entitlements.mac.plist
@@ -73,8 +71,7 @@ dmg:
 win:
   icon: resources/icon.ico
   target:
-    - target: nsis
-      arch: [x64]
+    - nsis
   artifactName: MkAgent-${version}-${arch}.${ext}
   files:
     - "!vendor/bun/**/*"
@@ -95,8 +92,7 @@ linux:
   category: Utility
   maintainer: MkAgent contributors <support@mkagent.app>
   target:
-    - target: AppImage
-      arch: [x64]
+    - AppImage
   artifactName: MkAgent-${version}-${arch}.${ext}
   protocols:
     - name: MkAgent

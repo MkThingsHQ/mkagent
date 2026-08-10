@@ -1,6 +1,6 @@
 # 发布、更新与遥测
 
-开源仓库中的版本 tag 会触发 macOS DMG/ZIP、Windows NSIS、Linux AppImage、各平台 headless server 与基于 Bun 的 CLI bundle 构建。源码与可下载产物现在统一放在 [MkThingsHQ/mkagent](https://github.com/MkThingsHQ/mkagent/releases/latest)。发布环境需要 Apple 与 Windows 签名凭证；workflow 使用仓库范围的 GitHub Actions token 发布。
+开源仓库中的版本 tag 会触发 macOS DMG/ZIP、Windows NSIS、Linux AppImage、各平台 headless server 与基于 Bun 的 CLI bundle 构建。源码与可下载产物统一放在 [MkThingsHQ/mkagent](https://github.com/MkThingsHQ/mkagent/releases/latest)。签名凭证是可选的：零 secret 会发布 ad-hoc 签名的 macOS 包和未签名 Windows 安装包；某个平台的完整凭证会自动启用 Apple Developer ID 签名与公证或 Windows Authenticode。workflow 使用仓库范围的 GitHub Actions token 发布。
 
 ## 发布流水线
 
@@ -11,7 +11,7 @@
                                           校验 + 多平台构建
                                                        │
                                                        ▼
-                              签名 + 公证(Apple)、签名(Windows)
+                 有完整凭证时可信签名，否则 macOS ad-hoc、Windows 未签名
                                                        │
                                                        ▼
                   上传安装包 + manifest + blockmap + checksum
@@ -22,6 +22,8 @@
 ```
 
 安装包、manifest（如 `latest-mac.yml`、`latest.yml`、`latest-linux.yml`）、blockmap、checksum 和版本说明统一放在主仓库的 GitHub Releases 中，不提交进 Git；不再使用单独的 release-only 仓库。
+
+Pull Request 和推送到 `main` 的提交会运行未签名打包矩阵，覆盖 macOS arm64、Windows x64 和 Linux x64。对应的验证安装包与 headless server 压缩包会作为 GitHub Actions artifacts 保留 7 天。只有经过审核的 `v*` tag 才会将完整且校验通过的产物矩阵长期发布到 GitHub Release；配置某个平台的完整凭证后会自动升级为签名构建。
 
 ## 版本与 Changelog 规范
 
@@ -47,14 +49,14 @@ git push origin main v0.2.0
 
 | 平台                    | 构建                     | 命名                               | 签名                               | 备注                                                                                  |
 | ----------------------- | ------------------------ | ---------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------- |
-| macOS arm64             | DMG + ZIP                | `MkAgent-0.1.0-arm64.{dmg,zip}`    | ad-hoc(dev)/ Developer ID(release) | `hardenedRuntime: true`,`gatekeeperAssess: false`,设置 NSLocalNetworkUsageDescription |
+| macOS arm64             | DMG + ZIP                | `MkAgent-0.1.0-arm64.{dmg,zip}`    | ad-hoc 或 Developer ID + 公证      | 无证书构建关闭 Hardened Runtime，并且需要手动更新                                      |
 | macOS x64               | DMG + ZIP                | `MkAgent-0.1.0-x64.{dmg,zip}`      | 同上                               | 给 Intel Mac 用                                                                       |
-| Windows x64             | NSIS                     | `MkAgent-0.1.0-x64.exe`            | ad-hoc(dev)/ Authenticode(release) | 每用户安装到 `%LOCALAPPDATA%\Programs\`;`deleteAppDataOnUninstall: true`              |
+| Windows x64             | NSIS                     | `MkAgent-0.1.0-x64.exe`            | 未签名或 Authenticode              | 未签名构建可能触发 SmartScreen；每用户安装到 `%LOCALAPPDATA%\Programs\`              |
 | Linux x64               | AppImage                 | `MkAgent-0.1.0-x64.AppImage`       | 无                                 | desktop 类别:Utility                                                                  |
 | Headless server(每架构) | `bun build --compile`    | `mkagent-server-<platform>-<arch>` | 无                                 | 给 WebUI 与 CLI 用户消费                                                              |
 | CLI                     | `bun build --target=bun` | `MkAgent-cli-bun.tar.gz`           | 无                                 | JavaScript bundle；用户机器需要 Bun                                                   |
 
-`MKAGENT_DEV_RUNTIME=1` 加 `CSC_IDENTITY_AUTO_DISCOVERY=false` 就能产出本地可装的构建,无需任何签名 secret。
+`bun run electron:dist:dev:mac` 会生成本地 ad-hoc 签名构建并关闭自动更新。Release job 在缺少 Apple 凭证时也会显式设置 `CSC_IDENTITY_AUTO_DISCOVERY=false`、`mac.identity=-` 与 `hardenedRuntime=false`。ad-hoc 签名满足 Apple Silicon 的代码完整性要求，但不代表受信任开发者身份，因此仍会出现 Gatekeeper 警告。
 
 ## 更新
 
@@ -68,6 +70,8 @@ Electron 通过 `electron-updater` 命中 `MkThingsHQ/mkagent` 上的 GitHub Rel
 | Manifest     | 由 electron-builder 在 release 时自动生成                    |
 
 降级需要手动装老版本;自动更新只会往前走。
+
+macOS 自动更新要求应用具有 Developer ID 签名。因此，ad-hoc macOS 构建会跳过启动更新检查，并在用户手动检查时引导其前往最新 GitHub Release；这类用户需要手动下载下一个 DMG。Windows 与 Linux 继续使用各自的正常 updater target。
 
 ## 遥测:Sentry
 
@@ -87,15 +91,15 @@ Sentry 沿用 desktop 默认行为。除非构建时设置了 `SENTRY_ELECTRON_I
 
 ## GitHub 发布环境
 
-在仓库中创建受保护的 Actions environment `release`，并设置以下 environment secrets：
+workflow 在没有签名 secret 时也能工作。若要启用受信任的平台构建，请创建受保护的 Actions environment `release`，并完整配置需要的平台凭证组：
 
 | Secret                                                     | 用途                                                                                     |
 | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `CSC_LINK`、`CSC_KEY_PASSWORD`                             | Developer ID 证书及密码                                                                  |
-| `APPLE_ID`、`APPLE_APP_SPECIFIC_PASSWORD`、`APPLE_TEAM_ID` | Apple 公证                                                                               |
-| `WIN_CSC_LINK`、`WIN_CSC_KEY_PASSWORD`                     | Windows Authenticode 证书及密码                                                          |
+| `CSC_LINK`、`CSC_KEY_PASSWORD`                             | Developer ID 证书及密码；必须与全部 Apple 字段一起配置                                   |
+| `APPLE_ID`、`APPLE_APP_SPECIFIC_PASSWORD`、`APPLE_TEAM_ID` | Apple 公证；五个 Apple secret 全部存在时启用 macOS 签名与公证                            |
+| `WIN_CSC_LINK`、`WIN_CSC_KEY_PASSWORD`                     | 两个 secret 都存在时启用 Windows Authenticode                                            |
 
-workflow 使用具有 `contents: write` 权限的仓库范围 `GITHUB_TOKEN` 创建 draft Release，上传并核对完整产物矩阵，全部成功后才发布为 Latest。失败后可重跑并更新 draft，但不会覆盖已经发布的版本。
+凭证组完全缺失时进入无证书模式：macOS 使用 ad-hoc 签名，Windows 生成未签名安装包。只配置一部分会在构建开始前失败，避免 secret 拼写错误导致原本计划可信签名的版本静默降级。每个 Release 都会在正文和 `SIGNING_STATUS.txt` 中记录最终的平台信任模式，该文件也纳入 `SHA256SUMS`。workflow 使用具有 `contents: write` 权限的仓库范围 `GITHUB_TOKEN` 创建 draft Release，上传并核对完整产物矩阵及 checksum，全部成功后才发布为 Latest。失败后可重跑并更新 draft，但不会覆盖已经发布的版本。
 
 ## 发布前 checklist
 
@@ -114,4 +118,4 @@ bun run cli:build
 bun run server:build:subprocess
 ```
 
-只有上面所有命令在 tag commit 上通过才能发布。Apple 与 Windows 签名凭据配置完成前不要创建 tag；正式版会主动失败，不会退化成无签名安装包。
+只有上面所有命令在 tag commit 上通过才能发布。创建 tag 前，应当把需要的平台签名凭证组配置完整；如果有意发布未签名版本，则保持该组全部为空。
