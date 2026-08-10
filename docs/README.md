@@ -1,6 +1,6 @@
 # MkAgent documentation (English)
 
-MkAgent is a cross-platform local Lite distribution derived from [Craft Agents OSS](https://github.com/craft-ai-agents/craft-agents-oss) `v0.11.2`. It registers the Pi agent backend only and supports ChatGPT Plus and Claude Pro/Max subscriptions through Craft's OAuth flows. It does not include the Claude Agent SDK, GitHub Copilot subscription, external messaging channels, product automations, session labels, projects/Kanban, sources/MCP, the Craft Viewer, or image generation capabilities.
+MkAgent is a cross-platform, local-first AI agent workspace derived from [Craft Agents OSS](https://github.com/craft-ai-agents/craft-agents-oss) `v0.11.2`. The current runtime is Pi-only: `@earendil-works/pi-coding-agent` runs in a dedicated Bun subprocess and serves the Electron app, WebUI, CLI, and headless server through one RPC contract. MkAgent supports API-key connections, custom OpenAI/Anthropic-compatible endpoints, Ollama, and the retained ChatGPT Plus / Claude Pro/Max subscription flows. It does not include the Claude Agent SDK, GitHub Copilot, external messaging, product automations, Projects/Kanban, Sources/MCP, Viewer/public sharing, or image generation.
 
 This directory is the English-language user documentation. A Chinese translation lives under [`zh/`](./zh/README.md) and is kept in sync with the English source.
 
@@ -17,7 +17,7 @@ This directory is the English-language user documentation. A Chinese translation
 | Data directory | [data-directory.md](./data-directory.md) |
 | Development environment | [development.md](./development.md) |
 | Document tools | [document-tools.md](./document-tools.md) |
-| Feature matrix (kept vs. removed) | [feature-matrix.md](./feature-matrix.md) |
+| Features | [featues.md](./featues.md) |
 | Network proxy | [network-proxy.md](./network-proxy.md) |
 | Ollama | [ollama.md](./ollama.md) |
 | Permissions | [permissions.md](./permissions.md) |
@@ -28,12 +28,7 @@ This directory is the English-language user documentation. A Chinese translation
 | Upstream synchronization | [upstream-sync.md](./upstream-sync.md) |
 | Workspaces | [workspaces.md](./workspaces.md) |
 
-## Companion documents in `migration/`
-
-| Topic | Document |
-| --- | --- |
-| Planning and audit history | [migration/migration-audit.md](./migration/migration-audit.md), [migration/migration-features.md](./migration/migration-features.md), [migration/migration-mvp.md](./migration/migration-mvp.md), [migration/migration-plan.md](./migration/migration-plan.md), [migration/migration-ui.md](./migration/migration-ui.md) |
-| Plain-language index | [migration/README.md](./migration/README.md) |
+For a clean start, read [development.md](./development.md), then use [connections.md](./connections.md), [permissions.md](./permissions.md), and [sessions.md](./sessions.md). The `migration/` directory is an implementation archive: its plans and audit snapshots are historical unless a section explicitly says it describes the current code.
 
 ## Translation conventions
 

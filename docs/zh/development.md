@@ -17,7 +17,7 @@
 ## 首次配置
 
 ```bash
-git clone --recurse-submodules https://github.com/MkThingsHQ/mkagent.git
+git clone https://github.com/MkThingsHQ/mkagent.git
 cd mkagent
 bun install --frozen-lockfile
 bun run validate:dev

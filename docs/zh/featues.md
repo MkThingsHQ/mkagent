@@ -44,8 +44,8 @@
 ## 边界校验
 
 ```bash
-bun run audit:craft-reuse           # 1,116 / 1,163 同路径
-bun run lint:craft-test-coverage    # 246 保留 / 6 替代 / 121 因边界剔除 / 0 无解释缺失
+bun run audit:craft-reuse           # 输出当前源码血缘统计
+bun run lint:craft-test-coverage    # 246 保留 / 5 替代 / 122 因边界剔除 / 0 无解释缺失
 bun run lint:craft-ui-sync          # renderer 层 seam 检查
 ```
 

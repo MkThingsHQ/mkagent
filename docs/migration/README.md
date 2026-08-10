@@ -1,5 +1,7 @@
 # MkAgent 迁移文档总览
 
+> 归档说明：本目录记录迁移过程中的决策、计划和阶段性审计快照，不是当前实现的唯一事实来源。当前运行方式和能力以 `docs/` 顶层文档、代码与 CI 配置为准；本文中的历史数字不要直接当作今日统计。
+
 本目录记录 MkAgent 从零起步，基于 [Craft Agents OSS](https://github.com/craft-ai-agents/craft-agents-oss) `v0.11.2` / `a60ebc1a5a7c` 派生 Lite 产品的完整迁移过程，包含产品边界、阶段计划、UI 对齐、功能裁剪、代码审计与质量验证。
 
 - **上游基线**：`craft-agents-oss` `v0.11.2` / `a60ebc1a5a7c`

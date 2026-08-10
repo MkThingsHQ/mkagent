@@ -173,8 +173,8 @@ CRAFT_AGENT_SOURCE=/Volumes/SAMSUNG/workspace/agents/craft-agents-oss \
 
 清单位于：
 
-- [`scripts/craft-source-overrides.json`](./scripts/craft-source-overrides.json)
-- [`scripts/craft-ui-overrides.json`](./scripts/craft-ui-overrides.json)
+- [`scripts/craft-source-overrides.json`](../../scripts/craft-source-overrides.json)
+- [`scripts/craft-ui-overrides.json`](../../scripts/craft-ui-overrides.json)
 
 文件发生修改后，其哈希必须更新并重新审核。不能为了让检查通过而只刷新哈希；必须先重新比较 Craft 原文件并确认差异仍然必要。
 

@@ -1,6 +1,6 @@
 # Architecture
 
-MkAgent is a Bun monorepo with three clients sharing one authenticated WebSocket RPC protocol. Only the `pi` agent backend is registered.
+MkAgent is a Bun monorepo with three clients sharing one authenticated WebSocket RPC protocol. Only the `pi` agent backend is registered. The direct Pi integration is `@earendil-works/pi-coding-agent`; `pi-agent-core` and `pi-ai` are lower-level dependencies, not the application-facing session API.
 
 ## Layered topology
 
@@ -62,7 +62,7 @@ All three clients operate the same workspace and JSONL sessions; there is no cli
 
 - `packages/server-core` owns transport, handlers, `SessionManager`, and platform-neutral services. Subpackages: `bootstrap/`, `domain/`, `handlers/`, `model-fetchers/`, `runtime/`, `services/`, `sessions/`, `transport/`, `utils/`, `webui/`.
 - `packages/shared` owns protocol DTOs (`@mkagent/shared/protocol`), config, credentials, Skills, prompts, the backend registry, workspace storage, and the Pi client.
-- `packages/pi-agent-server` runs Pi in a separate Bun subprocess (`packages/pi-agent-server/dist/index.js`) and communicates through JSONL. Same SDK is used in development and in packaged builds; `bun run server:build:subprocess` produces the bundle.
+- `packages/pi-agent-server` runs `createAgentSession(...)` from `@earendil-works/pi-coding-agent` in a separate Bun subprocess (`packages/pi-agent-server/dist/index.js`) and communicates through JSONL. The same SDK boundary is used in development and packaged builds; `bun run server:build:subprocess` produces the bundle.
 - `packages/ui` and `packages/session-tools-core` provide shared rendering and session-level tools. They are platform-neutral: Electron, WebUI, and CLI reuse them.
 
 ## Backend registry
@@ -93,11 +93,11 @@ Abort, model switching, thinking-level change, permission responses, and session
 ## Packaging surface
 
 - Desktop app: macOS arm64 / x64 (DMG + ZIP), Windows x64 (NSIS), Linux x64 (AppImage). Build entry: `bun run electron:dist[:dev][:mac|:win|:linux]`.
-- Headless server: per-platform Bun binary under `apps/cli` and `packages/server`; built with `bun run scripts/build-server.ts`.
+- Headless server: per-platform compiled Bun archive; build with `bun run scripts/build-server.ts`.
 - CLI: `bun run cli:build` produces `dist/mkagent`.
 - Pi subprocess: `bun run server:build:subprocess` produces `packages/pi-agent-server/dist/index.js`.
 
-The main `MkThingsHQ/mkagent` repository publishes DMG/ZIP/NSIS/AppImage assets plus `latest-mac.yml` / `latest-linux.yml` / `latest.yml` manifests and blockmaps in GitHub Releases. `electron-updater` reads those public manifests and never embeds a GitHub token in the client.
+The main `MkThingsHQ/mkagent` repository publishes DMG/ZIP/NSIS/AppImage assets, headless-server archives, a Bun CLI archive, manifests, blockmaps, checksums, and release notes in GitHub Releases. `electron-updater` reads the public manifests and never embeds a GitHub token in the client.
 
 ## What is intentionally absent
 

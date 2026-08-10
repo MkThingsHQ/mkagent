@@ -461,7 +461,7 @@ mkagent 与 craft 的接入方式保持一致：
 文档不是整体删除项。迁移后按实际功能逐篇审查：
 
 - 必须保留并改写：README、架构、开发环境、Desktop/WebUI/CLI、Connections/Models、Ollama、权限、代理、Workspace、Sessions、Skills、mini chat、Browser、Web tools、附件、文档工具、计划审核/annotations、主题、i18n、打包、更新、数据目录、故障排查。
-- 新增：`docs/upstream-sync.md`、`docs/rebrand.md`、`docs/feature-matrix.md`、`docs/testing.md`。
+- 新增：`docs/upstream-sync.md`、`docs/rebrand.md`、`docs/featues.md`、`docs/testing.md`。
 - 删除：Claude、订阅/OAuth、Messaging、Automations、Sources/MCP、Projects/Kanban、Viewer/公开分享、远程 workspace 的用户文档。
 - 文档中的命令、截图、路径、域名和 UI 名称必须能由测试或当前实现验证；不复制与现状不符的宣传内容。
 - README 可明确说明项目源自 craft 架构并保留许可证归属；普通功能文档使用 mkagent 自身术语。

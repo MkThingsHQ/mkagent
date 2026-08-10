@@ -67,7 +67,7 @@ mkagent --provider ollama --base-url http://127.0.0.1:11434/v1 --model llama3.2 
 ## 连接已运行 server
 
 ```bash
-mkagent --url ws://127.0.0.1:9100 --token "$MKAGENT_SERVER_TOKEN" workspaces
+mkagent --url ws://127.0.0.1:9100 --token "$MKAGENT_SERVER_TOKEN" workspace list
 mkagent --url ws://127.0.0.1:9100 --token "$MKAGENT_SERVER_TOKEN" session create --name review
 mkagent --url ws://127.0.0.1:9100 --token "$MKAGENT_SERVER_TOKEN" send <session-id> "Run tests"
 ```

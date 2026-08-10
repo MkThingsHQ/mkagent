@@ -41,7 +41,7 @@ bun run lint:craft-test-coverage
 2. substituted for a Lite/branded equivalent,
 3. removed because the corresponding product feature is gone.
 
-A "missing" tag — a test that silently dropped — is a lint error. Today's snapshot: **246 kept, 6 substituted, 121 removed-for-boundary, 0 missing-without-explanation.**
+A "missing" tag — a test that silently dropped — is a lint error. Current snapshot: **246 kept, 5 substituted, 122 removed-for-boundary, 0 missing-without-explanation.** Refresh this count after changing the upstream baseline.
 
 ## Build verification
 
@@ -49,7 +49,7 @@ A "missing" tag — a test that silently dropped — is a lint error. Today's sn
 bun run electron:build           # main + preload + renderer + resources + assets
 bun run webui:build              # vite build for the shared renderer
 bun run cli:build                # produces apps/cli/dist/mkagent
-bun run server:build:subprocess  # packages/pi-agent-server/dist/index.js (~3,655 modules)
+bun run server:build:subprocess  # packages/pi-agent-server/dist/index.js
 bun run electron:dist:dev:mac    # macOS arm64 dev .app, ad-hoc signed
 ```
 

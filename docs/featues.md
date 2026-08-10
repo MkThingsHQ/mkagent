@@ -44,8 +44,8 @@ Retained modules follow the upstream directory layout, public names, coding styl
 ## Verifying the boundary
 
 ```bash
-bun run audit:craft-reuse           # 1,116 of 1,163 same-path
-bun run lint:craft-test-coverage    # 246 kept / 6 substituted / 121 removed-for-boundary / 0 missing-without-explanation
+bun run audit:craft-reuse           # current source-lineage summary
+bun run lint:craft-test-coverage    # 246 kept / 5 substituted / 122 removed-for-boundary / 0 missing-without-explanation
 bun run lint:craft-ui-sync          # renderer-level seam check
 ```
 

@@ -20,7 +20,6 @@
   <a href="./docs/zh/README.md">中文文档</a> ·
   <a href="#getting-started">Quick Start</a> ·
   <a href="https://mksaas.link/discord">Community</a> ·
-  <a href="https://github.com/MkThingsHQ/mkagent/issues">Report a bug</a>
 </p>
 
 MkAgent is an open-source, local-first AI agent workspace for anyone who wants more control over
@@ -46,8 +45,6 @@ operating system credential manager.
   or transform common document formats.
 - **Explicit control** — choose Explore, Ask, or Execute permission modes, configure a network
   proxy, and switch between English and Simplified Chinese.
-
-See the [feature matrix](./docs/feature-matrix.md) for the exact supported product boundary.
 
 ## Tech Stack
 
@@ -135,7 +132,7 @@ The complete documentation is available in [English](./docs/README.md) and
 | Work | [Workspaces](./docs/workspaces.md), [sessions](./docs/sessions.md), [Skills](./docs/skills.md) |
 | Tools | [Browser](./docs/browser.md), [attachments](./docs/attachments.md), [document tools](./docs/document-tools.md) |
 | Runtime | [CLI](./docs/cli.md), [permissions](./docs/permissions.md), [network proxy](./docs/network-proxy.md) |
-| Project | [Feature matrix](./docs/feature-matrix.md), [releases](./docs/releases.md), [upstream synchronization](./docs/upstream-sync.md) |
+| Project | [features](./docs/featues.md), [releases](./docs/releases.md), [upstream synchronization](./docs/upstream-sync.md) |
 
 ## Contributing
 

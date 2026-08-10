@@ -1,5 +1,7 @@
 # MkAgent Craft Lite 功能迁移执行记录
 
+> 历史记录：本文记录 2026-07-30 的迁移闭包与验证结果。它保留当时的数字和提交背景；当前状态请以 `docs/architecture.md`、`docs/connections.md`、`docs/testing.md` 和现行 CI 为准。
+
 ## 2026-07-30：恢复两种 LLM 订阅，保持 Pi-only
 
 本轮边界只恢复 ChatGPT Plus 与 Claude Pro/Max，不恢复 GitHub Copilot 或 Sources/MCP。实现遵循以下闭包：

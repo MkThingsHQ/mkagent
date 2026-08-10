@@ -92,7 +92,7 @@ MkAgent 工作期间,参考 checkout(`../craft-agents-oss`、`../echo`、`../xag
 - Sources API / Settings UI、会话 labels、用户自定义 status
 - WhatsApp worker
 
-以上都登记在 Lite 边界删除项中,详见 [`comparison-with-craft.md`](./comparison-with-craft.md) 与 [`migration/`](./migration/README.md)。
+以上都登记在 Lite 边界删除项中,详见 [`comparison-with-craft.md`](./comparison-with-craft.md) 与 [`migration/`](../migration/README.md)。
 
 ## 故障排查
 

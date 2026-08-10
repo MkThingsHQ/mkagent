@@ -67,7 +67,7 @@ Run options:
 ## Existing server
 
 ```bash
-mkagent --url ws://127.0.0.1:9100 --token "$MKAGENT_SERVER_TOKEN" workspaces
+mkagent --url ws://127.0.0.1:9100 --token "$MKAGENT_SERVER_TOKEN" workspace list
 mkagent --url ws://127.0.0.1:9100 --token "$MKAGENT_SERVER_TOKEN" session create --name review
 mkagent --url ws://127.0.0.1:9100 --token "$MKAGENT_SERVER_TOKEN" send <session-id> "Run tests"
 ```

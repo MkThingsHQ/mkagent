@@ -1,7 +1,7 @@
 # MkAgent vs Craft Agents 当前差异对比
 
-> 快照时间：**2026-07-30**。
-> 对比基线：MkAgent 当前 `main` 分支的工作区（HEAD `47d09e5 feat: Add Chinese documentation`）；上游仓库 [`craft-ai-agents/craft-agents-oss` `v0.11.2` / `a60ebc1a5a7c`](https://github.com/craft-ai-agents/craft-agents-oss)。MkAgent 只有一条 `main` 分支，没有 `dev/agent-memory`。
+> 快照时间：**2026-08-10**。
+> 对比基线：**2026-08-10** 的 MkAgent `main`（`00c0df4`）以及上游 tag [`craft-ai-agents/craft-agents-oss` `v0.11.2` / `a60ebc1a5a7c`](https://github.com/craft-ai-agents/craft-agents-oss)。数字是仓库快照，不是实时发布指标。任一基线变化后，应按文末命令重新审计；当前 checkout 存在一个既有的 `README.md` 修改但未刷新血缘 manifest 的提示。
 > 数据来源：两个仓库当前 on-disk 的工作区与既有的构建产物（非本轮新抓的网络数据）；重跑前请用记录中的 commit 重新 checkout 两个仓库。
 
 本文用源码与构件证据解释 MkAgent 相对 Craft Agents 保留了什么、物理删除了什么、以及这些选择会怎样改变你最终交付的安装包。MkAgent 是基于同一套架构与 renderer 的"Lite"衍生版；下面的表格是"现在到底哪里不一样"的标准答案。
@@ -249,13 +249,13 @@ Craft 注册的第二个 backend 是 `claude-agent-sdk`，自带的 Claude Code 
 | `bun run typecheck:all` | 通过；`apps/online-docs` 通过 `workspaces` glob 在 MkAgent 工作区中被排除，Craft 也是同样跳过 | 通过 | 都绿 |
 | `bun run lint` | `lint:craft-ui-sync`、`lint:craft-test-coverage`、`lint:electron`、`lint:shared`、`lint:ui` 通过；保留上游的 **20 个 React Hook `exhaustive-deps` 警告** | 额外有 `lint:ipc-sends`、`lint:tool-name-checks`、`lint:i18n:coverage`、`lint:i18n:strings`；**45 个 React Hook 警告** | MkAgent 的 lint 范围更窄 |
 | `bun run audit:craft-reuse` | 同路径 96 %、逐字一致 59 %、无解释缺失 0 条 | （不适用） | 绿 |
-| `bun run lint:craft-test-coverage` | 246 保留 / 6 替代 / 121 因 Lite 边界剔除 / **0 条无解释缺失** | （不适用） | 绿 |
+| `bun run lint:craft-test-coverage` | 246 保留 / 5 替代 / 122 因 Lite 边界剔除 / **0 条无解释缺失** | （不适用） | 绿 |
 
 MkAgent 那边"零无解释缺失"的硬约束来自 [`scripts/check-craft-test-coverage.ts`](../../scripts/check-craft-test-coverage.ts)：每个上游 test 必须满足以下三项之一——(a) 同路径保留；(b) 替换为 Lite 等价测试；(c) 显式绑定到一项已删除的产品能力。
 
 ## 8. 许可证与归属
 
-两个项目均以 **Apache-2.0** 发布。MkAgent 在仓库根目录提供 [`NOTICE`](../../NOTICE)，按上游要求保留归属；[`docs/feature-matrix.md`](./feature-matrix.md) 以可读文本记录保留/删除范围。源码与 release 产物（DMG/ZIP/NSIS/AppImage、manifest、blockmap、checksum）现在统一放在 `MkThingsHQ/mkagent`，不再维护仅存放产物的镜像仓库。
+两个项目均以 **Apache-2.0** 发布。MkAgent 在仓库根目录提供 [`NOTICE`](../../NOTICE)，按上游要求保留归属；[`docs/featues.md`](./featues.md) 以可读文本记录保留/删除范围。源码与 release 产物（DMG/ZIP/NSIS/AppImage、manifest、blockmap、checksum）现在统一放在 `MkThingsHQ/mkagent`，不再维护仅存放产物的镜像仓库。
 
 ## 9. 重跑本审计
 

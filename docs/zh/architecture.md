@@ -1,6 +1,6 @@
 # 架构
 
-MkAgent 是一个 Bun monorepo，三种客户端共用同一套经过鉴权的 WebSocket RPC 协议。唯一注册的 backend 是 `pi`。
+MkAgent 是一个 Bun monorepo，三种客户端共用同一套经过鉴权的 WebSocket RPC 协议。唯一注册的 backend 是 `pi`。直接集成的是 `@earendil-works/pi-coding-agent`；`pi-agent-core` 与 `pi-ai` 是更底层的依赖，不是应用层会话 API。
 
 ## 分层拓扑
 
@@ -62,7 +62,7 @@ MkAgent 是一个 Bun monorepo，三种客户端共用同一套经过鉴权的 W
 
 - `packages/server-core` 负责 transport、handler、`SessionManager` 与跨平台服务,内含子目录: `bootstrap/`、`domain/`、`handlers/`、`model-fetchers/`、`runtime/`、`services/`、`sessions/`、`transport/`、`utils/`、`webui/`。
 - `packages/shared` 负责协议 DTO(`@mkagent/shared/protocol`)、配置、凭证、Skills、提示词、backend registry、workspace 存储与 Pi 客户端。
-- `packages/pi-agent-server` 在独立 Bun 子进程(`packages/pi-agent-server/dist/index.js`)中运行 Pi,通过 JSONL 通信。开发与打包产物共用同一 SDK;`bun run server:build:subprocess` 负责打包。
+- `packages/pi-agent-server` 在独立 Bun 子进程(`packages/pi-agent-server/dist/index.js`)中调用 `@earendil-works/pi-coding-agent` 的 `createAgentSession(...)`,通过 JSONL 通信。开发与打包产物共用同一 SDK 边界;`bun run server:build:subprocess` 负责打包。
 - `packages/ui` 与 `packages/session-tools-core` 提供共享渲染与会话级工具。Electron、WebUI、CLI 都复用它们,和平台无关。
 
 ## Backend registry
@@ -93,11 +93,11 @@ Pi 子进程与主进程隔离:
 ## 打包面
 
 - Desktop 应用:macOS arm64 / x64(DMG + ZIP)、Windows x64(NSIS)、Linux x64(AppImage)。构建入口 `bun run electron:dist[:dev][:mac|:win|:linux]`。
-- Headless server:每平台 Bun 二进制,放在 `apps/cli` 与 `packages/server`;通过 `bun run scripts/build-server.ts` 构建。
+- Headless server:每个平台的编译 Bun archive;通过 `bun run scripts/build-server.ts` 构建。
 - CLI:`bun run cli:build` 输出 `dist/mkagent`。
 - Pi 子进程:`bun run server:build:subprocess` 输出 `packages/pi-agent-server/dist/index.js`。
 
-主仓库 `MkThingsHQ/mkagent` 直接在 GitHub Releases 中发布 DMG/ZIP/NSIS/AppImage，以及 `latest-mac.yml` / `latest.yml` / `latest-linux.yml` manifest 与 blockmap。`electron-updater` 读取这些公开 manifest，客户端不带任何 GitHub token。
+主仓库 `MkThingsHQ/mkagent` 直接在 GitHub Releases 中发布 DMG/ZIP/NSIS/AppImage、headless-server archive、Bun CLI archive、manifest、blockmap、checksum 和 release notes。`electron-updater` 读取公开 manifest，客户端不带任何 GitHub token。
 
 ## 刻意不存在的部分
 

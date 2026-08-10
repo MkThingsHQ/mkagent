@@ -2076,8 +2076,8 @@
       "sha256": "8b21a99da2b31e49290bdc671f475e5f6db5c2cdcd22af61f9a64527f019ceaf",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
-    "docs/zh/feature-matrix.md": {
-      "sha256": "e0bac6a0c9383399f785a003f900d388be4caebe4e640c81170a3f3630e11499",
+    "docs/zh/featues.md": {
+      "sha256": "530f20992b0641d5c7a395335a3e097de1ec34a01cb88d57a0ccbed36a9a55ac",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/network-proxy.md": {
@@ -2248,8 +2248,8 @@
       "sha256": "ee7c4e24732d992b28ef0df5b75ac16b0d603426dc81e9c5c3ced659041572f2",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
-    "docs/feature-matrix.md": {
-      "sha256": "7114f2bb3e432aa913c1357560621a71bac4b860ae1d90e2d0feb22031fc3905",
+    "docs/featues.md": {
+      "sha256": "e5246048ac52c5bd529354c24ae42229d97053d61bed54b6ddc956b419cfa222",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/network-proxy.md": {

@@ -1,6 +1,6 @@
 # MkAgent vs. Craft Agents — current comparison
 
-> Snapshot taken on **2026-07-30** against the MkAgent `main` branch working tree (HEAD `47d09e5 feat: Add Chinese documentation`) and the upstream tag [`craft-ai-agents/craft-agents-oss` `v0.11.2` / `a60ebc1a5a7c`](https://github.com/craft-ai-agents/craft-agents-oss). MkAgent ships a single `main` branch; there is no `dev/agent-memory` line. Numbers come from the on-disk working trees and prior validated builds, not from new network measurements; rebuild both repositories from the recorded commits before re-running this audit.
+> Snapshot taken on **2026-08-10** against MkAgent `main` at `00c0df4` and the upstream tag [`craft-ai-agents/craft-agents-oss` `v0.11.2` / `a60ebc1a5a7c`](https://github.com/craft-ai-agents/craft-agents-oss). Numbers are repository snapshots, not live release metrics. Re-run the commands in the final section after changing either baseline; the current checkout has a pre-existing `README.md` lineage-manifest warning if that file is modified without refreshing the manifest.
 
 This document explains, with evidence, what MkAgent keeps from Craft Agents, what it physically removes, and how those choices change the artifact you ship. MkAgent is the "Lite" derivative built on the same architecture and renderer; the table below is the canonical answer to "what's actually different?".
 
@@ -203,7 +203,7 @@ These are the sizes you actually ship to users, taken from the on-disk dev build
 
 ## 6. Feature surface
 
-The matrix below extends [`docs/feature-matrix.md`](./feature-matrix.md) with explicit numbers from the audit and pointing at concrete file evidence.
+The matrix below extends [`docs/featues.md`](./featues.md) with explicit numbers from the audit and pointing at concrete file evidence.
 
 | Area | MkAgent | Craft Agents |
 |---|---|---|
@@ -247,13 +247,13 @@ The matrix below extends [`docs/feature-matrix.md`](./feature-matrix.md) with ex
 | `bun run typecheck:all` | passes; `apps/online-docs` is excluded from the workspace by `workspaces` globs in MkAgent and skipped in Craft | passes | both green |
 | `bun run lint` | `lint:craft-ui-sync`, `lint:craft-test-coverage`, `lint:electron`, `lint:shared`, `lint:ui` pass; **20 React Hook `exhaustive-deps` warnings retained** from upstream | adds `lint:ipc-sends`, `lint:tool-name-checks`, `lint:i18n:coverage`, `lint:i18n:strings`; **45 Craft-origin React Hook warnings** | MkAgent's lint scope is narrower |
 | `bun run audit:craft-reuse` | 96 % same-path, 59 % byte-identical, 0 missing-without-explanation | (not applicable) | green |
-| `bun run lint:craft-test-coverage` | 246 kept / 6 substituted / 121 dropped-for-product-boundary / **0 missing-without-explanation** | (not applicable) | green |
+| `bun run lint:craft-test-coverage` | 246 kept / 5 substituted / 122 dropped-for-product-boundary / **0 missing-without-explanation** | (not applicable) | green |
 
-The MkAgent-side lifts (zero "missing test without explanation") come from [`scripts/check-craft-test-coverage.ts`](../../scripts/check-craft-test-coverage.ts), which enforces that every Craft test is one of: (a) same-path kept, (b) replaced with a Lite equivalent, (c) explicitly tied to a removed product area.
+The MkAgent-side lifts (zero "missing test without explanation") come from [`scripts/check-craft-test-coverage.ts`](../scripts/check-craft-test-coverage.ts), which enforces that every Craft test is one of: (a) same-path kept, (b) replaced with a Lite equivalent, (c) explicitly tied to a removed product area.
 
 ## 8. License & attribution
 
-Both projects are released under **Apache-2.0**. MkAgent ships [`NOTICE`](../NOTICE) on the repo root with the attribution upstream required, and [`docs/feature-matrix.md`](./feature-matrix.md) records the kept/removed capabilities in human-readable form. Source and release artifacts (DMG/ZIP/NSIS/AppImage, manifests, blockmaps, and checksums) now share the `MkThingsHQ/mkagent` repository; no release-only mirror is used.
+Both projects are released under **Apache-2.0**. MkAgent ships [`NOTICE`](../NOTICE) on the repo root with the attribution upstream required, and [`docs/featues.md`](./featues.md) records the kept/removed capabilities in human-readable form. Source and release artifacts (DMG/ZIP/NSIS/AppImage, manifests, blockmaps, and checksums) now share the `MkThingsHQ/mkagent` repository; no release-only mirror is used.
 
 ## 9. Re-running this audit
 
@@ -272,4 +272,4 @@ git checkout a60ebc1a5a7cb0a6af7a77d5eed0512c5fc07658
 ls -lah node_modules/@anthropic-ai/claude-agent-sdk-darwin-arm64/claude   # 217 MB binary
 ```
 
-If you need updated DMG / NSIS / AppImage numbers, build both products from their recorded commits with the same `electron-builder.yml` flags, then reuse [`scripts/build-server.ts`](../../scripts/build-server.ts) and the per-platform `apps/electron/scripts/build-dmg.sh` to write installers.
+If you need updated DMG / NSIS / AppImage numbers, build both products from their recorded commits with the same `electron-builder.yml` flags, then reuse [`scripts/build-server.ts`](../scripts/build-server.ts) and the per-platform `apps/electron/scripts/build-dmg.sh` to write installers.
