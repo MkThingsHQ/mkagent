@@ -78,6 +78,13 @@ describe('parseArgs', () => {
 
   it('--mode sets mode', () => expect(parseArgs(['bun', 'index.ts', '--mode', 'safe', 'run']).mode).toBe('safe'))
   it('defaults mode to empty', () => expect(parseArgs(['bun', 'index.ts', 'run']).mode).toBe(''))
+  it('--source accumulates into array', () => {
+    const args = parseArgs(['bun', 'index.ts', '--source', 'craft-kb', '--source', 'github', 'run'])
+    expect(args.sources).toEqual(['craft-kb', 'github'])
+  })
+  it('defaults sources to empty array', () => {
+    expect(parseArgs(['bun', 'index.ts', 'run']).sources).toEqual([])
+  })
   it('--output-format sets outputFormat', () => expect(parseArgs(['bun', 'index.ts', '--output-format', 'stream-json', 'run']).outputFormat).toBe('stream-json'))
   it('rejects an unsupported output format', () => expect(() => parseArgs(['bun', 'index.ts', '--output-format', 'xml', 'run'])).toThrow('text or stream-json'))
   it('rejects invalid timeout values', () => expect(() => parseArgs(['bun', 'index.ts', '--timeout', '0', 'ping'])).toThrow('positive number'))

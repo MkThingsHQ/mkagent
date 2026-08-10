@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/hooks/useTheme'
 import type { ThemeOverrides } from '@config/theme'
 import { useSetAtom, useStore, useAtomValue, useAtom } from 'jotai'
-import type { Session, Workspace, SessionEvent, Message, FileAttachment, StoredAttachment, PermissionRequest, SetupNeeds, NewChatActionParams, ContentBadge, LlmConnectionWithStatus, PermissionModeState } from '../shared/types'
+import type { Session, Workspace, SessionEvent, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, SetupNeeds, NewChatActionParams, ContentBadge, LlmConnectionWithStatus, PermissionModeState } from '../shared/types'
 import type { SessionDraft, DraftAttachmentRef } from '@mkagent/shared/config'
 import type { SessionOptions, SessionOptionUpdates } from './hooks/useSessionOptions'
 import { defaultSessionOptions, mergeSessionOptions } from './hooks/useSessionOptions'
@@ -52,6 +52,7 @@ import {
   type SessionMeta,
   type BackgroundTask,
 } from '@/atoms/sessions'
+import { sourcesAtom } from '@/atoms/sources'
 import { skillsAtom } from '@/atoms/skills'
 import {
   showBackgroundFinishedChipAtom,
@@ -349,6 +350,8 @@ export default function App() {
   const [menuNewChatTrigger, setMenuNewChatTrigger] = useState(0)
   // Permission requests per session (queue to handle multiple concurrent requests)
   const [pendingPermissions, setPendingPermissions] = useState<Map<string, PermissionRequest[]>>(new Map())
+  // Credential requests per session (queue to handle multiple concurrent requests)
+  const [pendingCredentials, setPendingCredentials] = useState<Map<string, CredentialRequest[]>>(new Map())
   // Draft composer state per session (text + attachment refs), preserved across mode
   // switches, conversation changes, and app restarts. Using a ref avoids re-renders
   // during typing; attachments are stored as lightweight refs (path + name) and
@@ -374,7 +377,8 @@ export default function App() {
   // Notifications enabled state (from app settings)
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
 
-  // Skills used for badge extraction
+  // Sources and skills used for badge extraction
+  const sources = useAtomValue(sourcesAtom)
   const skills = useAtomValue(skillsAtom)
 
   // Compute if app is fully ready (all data loaded)
@@ -875,6 +879,15 @@ export default function App() {
             }
             break
           }
+          case 'credential_request': {
+            setPendingCredentials(prevCreds => {
+              const next = new Map(prevCreds)
+              const existingQueue = next.get(sessionId) || []
+              next.set(sessionId, [...existingQueue, effect.request])
+              return next
+            })
+            break
+          }
           case 'restore_input': {
             // Queued messages were removed from chat on abort — restore their text to the input field.
             // Append to existing draft (user may have started typing) rather than overwrite.
@@ -1313,12 +1326,12 @@ export default function App() {
         )
       }
 
-      // Step 3: Extract badges from retained Skill mentions with embedded icons
+      // Step 3: Extract badges from Source/Skill mentions with embedded icons
       // Badges are self-contained for display in UserMessageBubble and viewer
       // Merge with any externally provided badges (e.g., from EditPopover context badges)
       // Use workspace slug (not UUID) for skill qualification - SDK expects "workspaceSlug:skillSlug"
       const mentionBadges: ContentBadge[] = windowWorkspaceSlug
-        ? extractBadges(message, skills, windowWorkspaceSlug)
+        ? extractBadges(message, skills, sources, windowWorkspaceSlug)
         : []
       const badges: ContentBadge[] = [...(externalBadges || []), ...mentionBadges]
 
@@ -1402,7 +1415,7 @@ export default function App() {
         ]
       }))
     }
-  }, [sessionOptions, updateSessionById, skills, windowWorkspaceId])
+  }, [sessionOptions, updateSessionById, skills, sources, windowWorkspaceId, windowWorkspaceSlug])
 
   /**
    * Unified handler for all session option changes.
@@ -1604,6 +1617,27 @@ export default function App() {
     }
   }, [])
 
+  const handleRespondToCredential = useCallback(async (
+    sessionId: string,
+    requestId: string,
+    response: CredentialResponse,
+  ) => {
+    const success = await window.electronAPI.respondToCredential(sessionId, requestId, response)
+
+    // Whether the agent accepted the response or disappeared meanwhile, remove
+    // the answered prompt so the composer cannot remain stuck on stale input.
+    setPendingCredentials(prev => {
+      const next = new Map(prev)
+      const queue = next.get(sessionId) || []
+      const remainingQueue = queue.slice(1)
+      if (remainingQueue.length === 0) next.delete(sessionId)
+      else next.set(sessionId, remainingQueue)
+      return next
+    })
+
+    return success
+  }, [])
+
   // Centralized link interceptor: classifies file types and decides whether to
   // show an in-app preview overlay or open externally. Replaces the old
   // handleOpenFile/handleOpenUrl that always opened in external apps.
@@ -1740,7 +1774,8 @@ export default function App() {
       // (prevents memory growth on repeated workspace switches)
       sessionDraftsRef.current.clear()
 
-      // 7. Reset skills to prevent a stale flash during workspace switch.
+      // 7. Reset sources and skills to prevent a stale flash during workspace switch.
+      store.set(sourcesAtom, [])
       store.set(skillsAtom, [])
 
       // 8. Clear session atoms BEFORE workspace switch
@@ -1787,6 +1822,7 @@ export default function App() {
     workspaceDefaultLlmConnection,
     refreshLlmConnections,
     pendingPermissions,
+    pendingCredentials,
     getDraft,
     getDraftAttachmentRefs,
     hydrateDraftAttachments,
@@ -1804,6 +1840,7 @@ export default function App() {
     onSetActiveViewingSession: handleSetActiveViewingSession,
     onDeleteSession: handleDeleteSession,
     onRespondToPermission: handleRespondToPermission,
+    onRespondToCredential: handleRespondToCredential,
     // File/URL handlers
     onOpenFile: handleOpenFile,
     onOpenUrl: handleOpenUrl,
@@ -1830,6 +1867,7 @@ export default function App() {
     workspaceDefaultLlmConnection,
     refreshLlmConnections,
     pendingPermissions,
+    pendingCredentials,
     getDraft,
     getDraftAttachmentRefs,
     hydrateDraftAttachments,
@@ -1846,6 +1884,7 @@ export default function App() {
     handleSetActiveViewingSession,
     handleDeleteSession,
     handleRespondToPermission,
+    handleRespondToCredential,
     handleOpenFile,
     handleOpenUrl,
     handleSelectWorkspace,

@@ -6,6 +6,7 @@
  *
  * Mention types:
  * - Skills:  [skill:slug] or [skill:workspaceId:slug]
+ * - Sources: [source:slug]
  * - Files:   [file:path]
  * - Folders: [folder:path]
  */
@@ -34,6 +35,8 @@ export interface ParsedMentions {
   skills: string[]
   /** Invalid skill slugs mentioned but not found in availableSkillSlugs */
   invalidSkills: string[]
+  /** Source slugs mentioned via [source:slug] */
+  sources: string[]
   /** File paths mentioned via [file:path] */
   files: string[]
   /** Folder paths mentioned via [folder:path] */
@@ -58,15 +61,25 @@ export interface ParsedMentions {
 export function parseMentions(
   text: string,
   availableSkillSlugs: string[],
+  availableSourceSlugs: string[] = [],
 ): ParsedMentions {
   const result: ParsedMentions = {
     skills: [],
     invalidSkills: [],
+    sources: [],
     files: [],
     folders: [],
   }
 
   let match: RegExpExecArray | null
+
+  const sourcePattern = /\[source:([\w-]+)\]/g
+  while ((match = sourcePattern.exec(text)) !== null) {
+    const slug = match[1]!
+    if (availableSourceSlugs.includes(slug) && !result.sources.includes(slug)) {
+      result.sources.push(slug)
+    }
+  }
 
   // Match skill mentions: [skill:slug] or [skill:workspaceId:slug]
   // The pattern captures the last component (slug) after any number of colons
@@ -116,6 +129,7 @@ export function parseMentions(
  */
 export function stripAllMentions(text: string): string {
   return text
+    .replace(/\[source:([\w-]+)\]/g, '$1')
     // Replace [skill:slug] or [skill:workspaceId:slug] with just the slug
     .replace(new RegExp(`\\[skill:(?:${WS_ID_CHARS}+:)?([\\w-]+)\\]`, 'g'), '$1')
     // Note: [file:...] and [folder:...] are NOT stripped — they are content
@@ -145,6 +159,14 @@ export function resolveSkillMentions(
       const name = skillNames.get(slug) || slug
       return `[Mentioned skill: ${name} (slug: ${slug})]`
     }
+  )
+}
+
+/** Resolve source mentions to semantic markers without losing sentence context. */
+export function resolveSourceMentions(text: string): string {
+  return text.replace(
+    /\[source:([\w-]+)\]/g,
+    (_match, slug: string) => `[Mentioned source: ${slug}]`
   )
 }
 

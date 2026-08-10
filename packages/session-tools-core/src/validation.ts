@@ -200,7 +200,27 @@ export const SkillMetadataSchema = z.object({
   globs: z.array(z.string()).optional(),
   alwaysAllow: z.array(z.string()).optional(),
   icon: z.string().optional(),
+  requiredSources: z.array(z.string()).optional(),
 }).passthrough();
+
+export const SOURCE_CONFIG_REQUIRED_FIELDS = ['slug', 'name', 'type'];
+export const SOURCE_TYPES = ['mcp', 'api', 'local'] as const;
+
+export function validateSourceConfigBasic(config: unknown): ValidationResult {
+  if (typeof config !== 'object' || config === null) {
+    return invalidResult('config', 'Config must be an object');
+  }
+  const errors: ValidationIssue[] = [];
+  const data = config as Record<string, unknown>;
+  for (const field of SOURCE_CONFIG_REQUIRED_FIELDS) {
+    if (!(field in data)) errors.push({ path: field, message: `Missing required field: ${field}` });
+  }
+  if ('type' in data && !SOURCE_TYPES.includes(data.type as typeof SOURCE_TYPES[number])) {
+    errors.push({ path: 'type', message: `Invalid type: ${String(data.type)}. Must be one of: ${SOURCE_TYPES.join(', ')}` });
+  }
+  if (typeof data.slug === 'string') errors.push(...validateSlug(data.slug).errors);
+  return { valid: errors.length === 0, errors, warnings: [] };
+}
 
 /**
  * Validate skill SKILL.md content (without filesystem access).

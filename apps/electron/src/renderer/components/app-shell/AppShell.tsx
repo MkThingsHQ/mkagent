@@ -12,6 +12,9 @@ import {
   Zap,
   Inbox,
   Cake,
+  DatabaseZap,
+  Globe,
+  FolderOpen,
 } from "lucide-react"
 import { TopBar } from "./TopBar"
 import { SquarePenRounded } from "../icons/SquarePenRounded"
@@ -43,9 +46,10 @@ import { useFocusZone } from "@/hooks/keyboard"
 import { useFocusContext } from "@/context/FocusContext"
 import { getSessionTitle } from "@/utils/session"
 import { useSetAtom } from "jotai"
-import type { Session, Workspace, FileAttachment, PermissionRequest, LoadedSkill, PermissionMode } from "../../../shared/types"
+import type { Session, Workspace, FileAttachment, PermissionRequest, LoadedSource, LoadedSkill, PermissionMode } from "../../../shared/types"
 import { sessionMetaMapAtom, type SessionMeta } from "@/atoms/sessions"
 import { skillsAtom } from "@/atoms/skills"
+import { sourcesAtom } from "@/atoms/sources"
 import { panelStackAtom, panelCountAtom, focusedPanelIdAtom, focusedSessionIdAtom, focusNextPanelAtom, focusPrevPanelAtom, parseSessionIdFromRoute } from "@/atoms/panel-stack"
 import { useContainerWidth } from "@/hooks/useContainerWidth"
 import * as storage from "@/lib/local-storage"
@@ -56,13 +60,17 @@ import {
   useNavigationState,
   isSessionsNavigation,
   isSettingsNavigation,
+  isSourcesNavigation,
   isSkillsNavigation,
 } from "@/contexts/NavigationContext"
 import type { SettingsSubpage } from "../../../shared/types"
 import { SkillsListPanel } from "./SkillsListPanel"
+import { SourcesListPanel } from "./SourcesListPanel"
+import { McpIcon } from "@/components/icons/McpIcon"
+import { clearSourceIconCaches } from "@/lib/icon-cache"
 import { PanelHeader } from "./PanelHeader"
 import { FabNewChat } from "./FabNewChat"
-import { EditPopover, getEditConfig } from "@/components/ui/EditPopover"
+import { EditPopover, getEditConfig, type EditContextKey } from "@/components/ui/EditPopover"
 import SettingsNavigator from "@/pages/settings/SettingsNavigator"
 import {
   PANEL_GAP,
@@ -241,6 +249,7 @@ function AppShellContent({
   }, [navState])
 
   const sessionFilter = sessionsContext?.filter ?? null
+  const sourceFilter = isSourcesNavigation(navState) ? (navState.filter ?? null) : null
 
   // Search state for session list
   const [searchActive, setSearchActive] = React.useState(false)
@@ -312,10 +321,17 @@ function AppShellContent({
   React.useEffect(() => {
     setSkillsAtom(skills)
   }, [skills, setSkillsAtom])
+  // Sources state (workspace-scoped)
+  const [sources, setSources] = React.useState<LoadedSource[]>([])
+  const setSourcesAtom = useSetAtom(sourcesAtom)
+  React.useEffect(() => {
+    setSourcesAtom(sources)
+  }, [sources, setSourcesAtom])
   const activeWorkspace = workspaces.find(w => w.id === activeWorkspaceId)
 
   // Enabled permission modes for Shift+Tab cycling (min 2 modes)
   const [enabledModes, setEnabledModes] = React.useState<PermissionMode[]>(['safe', 'ask', 'allow-all'])
+  const [localMcpEnabled, setLocalMcpEnabled] = React.useState(true)
 
   // Load workspace settings for permission-mode cycling on workspace change
   React.useEffect(() => {
@@ -326,6 +342,7 @@ function AppShellContent({
         if (settings.cyclablePermissionModes && settings.cyclablePermissionModes.length >= 2) {
           setEnabledModes(settings.cyclablePermissionModes)
         }
+        setLocalMcpEnabled(settings.localMcpEnabled ?? true)
       }
     }).catch((err) => {
       console.error('[Chat] Failed to load workspace settings:', err)
@@ -360,6 +377,15 @@ function AppShellContent({
 
   // Subscribe to live skill updates (when skills are added/removed dynamically)
   React.useEffect(() => {
+    const cleanup = window.electronAPI.onSourcesChanged((workspaceId, updatedSources) => {
+      if (workspaceId !== activeWorkspaceId) return
+      clearSourceIconCaches()
+      setSources(updatedSources || [])
+    })
+    return cleanup
+  }, [activeWorkspaceId])
+
+  React.useEffect(() => {
     const cleanup = window.electronAPI.onSkillsChanged((workspaceId, updatedSkills) => {
       if (workspaceId !== activeWorkspaceId) return
       setSkills(updatedSkills || [])
@@ -375,6 +401,11 @@ function AppShellContent({
     if (!activeWorkspaceId) return
     navigate(routes.view.skills(skill.slug))
   }, [activeWorkspaceId, navigate])
+
+  const handleSourceSelect = React.useCallback((source: LoadedSource) => {
+    if (!activeWorkspaceId) return
+    navigate(routes.view.sources({ sourceSlug: source.config.slug }))
+  }, [activeWorkspaceId])
 
   // Focus zone management
   const { focusZone, focusNextZone, focusPreviousZone } = useFocusContext()
@@ -614,6 +645,18 @@ function AppShellContent({
     ? sessionMetaMap.get(session.selected)?.workingDirectory
     : undefined
   React.useEffect(() => {
+    if (!activeWorkspaceId) {
+      setSources([])
+      return
+    }
+    window.electronAPI.getSources(activeWorkspaceId).then((loaded) => {
+      setSources(loaded || [])
+    }).catch(err => {
+      console.error('[Chat] Failed to load sources:', err)
+    })
+  }, [activeWorkspaceId])
+
+  React.useEffect(() => {
     if (!activeWorkspaceId) return
     window.electronAPI.getSkills(activeWorkspaceId, activeSessionWorkingDirectory).then((loaded) => {
       setSkills(loaded || [])
@@ -678,6 +721,16 @@ function AppShellContent({
   const flaggedCount = activeSessionMetas.filter(s => s.isFlagged).length
   const archivedCount = workspaceSessionMetas.filter(s => s.isArchived).length
 
+  const sourceTypeCounts = useMemo(() => {
+    const counts = { api: 0, mcp: 0, local: 0 }
+    for (const source of sources) {
+      if (source.config.type === 'api' || source.config.type === 'mcp' || source.config.type === 'local') {
+        counts[source.config.type] += 1
+      }
+    }
+    return counts
+  }, [sources])
+
   // Filter session metadata by the retained built-in views.
   const filteredSessionMetas = useMemo(() => {
     if (!sessionFilter) return []
@@ -708,20 +761,30 @@ function AppShellContent({
     return onDeleteSession(sessionId, skipConfirmation)
   }, [session.selected, setSession, onDeleteSession])
 
+  const handleSessionSourcesChange = React.useCallback(async (sessionId: string, sourceSlugs: string[]) => {
+    try {
+      await window.electronAPI.sessionCommand(sessionId, { type: 'setSources', sourceSlugs })
+    } catch (err) {
+      console.error('[Chat] Failed to set session sources:', err)
+    }
+  }, [])
+
   // Extend the Craft context with retained MkAgent capabilities only.
   const appShellContextValue = React.useMemo<AppShellContextType>(() => ({
     ...contextValue,
     onDeleteSession: handleDeleteSession,
+    enabledSources: sources,
     skills,
     activeSessionWorkingDirectory,
     enabledModes,
+    onSessionSourcesChange: handleSessionSourcesChange,
     rightSidebarButton: null,
     isCompactMode: isAutoCompact,
     sessionListSearchQuery: searchActive ? searchQuery : undefined,
     isSearchModeActive: searchActive,
     chatDisplayRef,
     onChatMatchInfoChange: handleChatMatchInfoChange,
-  }), [contextValue, handleDeleteSession, skills, activeSessionWorkingDirectory, enabledModes, isAutoCompact, searchActive, searchQuery, handleChatMatchInfoChange])
+  }), [contextValue, handleDeleteSession, sources, skills, activeSessionWorkingDirectory, enabledModes, handleSessionSourcesChange, isAutoCompact, searchActive, searchQuery, handleChatMatchInfoChange])
 
   // Persist sidebar visibility to localStorage
   React.useEffect(() => {
@@ -764,6 +827,22 @@ function AppShellContent({
 
   const handleArchivedClick = useCallback(() => {
     navigate(routes.view.archived())
+  }, [])
+
+  const handleSourcesClick = useCallback(() => {
+    navigate(routes.view.sources())
+  }, [])
+
+  const handleSourcesApiClick = useCallback(() => {
+    navigate(routes.view.sourcesApi())
+  }, [])
+
+  const handleSourcesMcpClick = useCallback(() => {
+    navigate(routes.view.sourcesMcp())
+  }, [])
+
+  const handleSourcesLocalClick = useCallback(() => {
+    navigate(routes.view.sourcesLocal())
   }, [])
 
   // Handler for skills view
@@ -863,6 +942,20 @@ function AppShellContent({
     }
   }, [activeWorkspace])
 
+  const handleDeleteSource = useCallback(async (sourceSlug: string) => {
+    if (!activeWorkspace) return
+    try {
+      await window.electronAPI.deleteSource(activeWorkspace.id, sourceSlug)
+      toast.success(t('toast.deletedSource', { slug: sourceSlug }))
+      if (isSourcesNavigation(navState) && navState.details?.sourceSlug === sourceSlug) {
+        navigate(routes.view.sources())
+      }
+    } catch (error) {
+      console.error('[Chat] Failed to delete source:', error)
+      toast.error(t('toast.failedToDeleteSource'))
+    }
+  }, [activeWorkspace, navState, t])
+
   // Respond to menu bar "New Chat" trigger
   const menuTriggerRef = useRef(menuNewChatTrigger)
   useEffect(() => {
@@ -883,10 +976,11 @@ function AppShellContent({
     { id: 'nav:allSessions', type: 'nav', action: handleAllSessionsClick },
     { id: 'nav:flagged', type: 'nav', action: handleFlaggedClick },
     { id: 'nav:archived', type: 'nav', action: handleArchivedClick },
+    { id: 'nav:sources', type: 'nav', action: handleSourcesClick },
     { id: 'nav:skills', type: 'nav', action: handleSkillsClick },
     { id: 'nav:settings', type: 'nav', action: () => handleSettingsClick() },
     { id: 'nav:whats-new', type: 'nav', action: handleWhatsNewClick },
-  ], [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSkillsClick, handleSettingsClick, handleWhatsNewClick])
+  ], [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSourcesClick, handleSkillsClick, handleSettingsClick, handleWhatsNewClick])
 
   // Get props for any sidebar item (unified roving tabindex pattern)
   const getSidebarItemProps = React.useCallback((id: string) => ({
@@ -982,6 +1076,7 @@ function AppShellContent({
 
   // Get title based on the retained navigation states.
   const listTitle = React.useMemo(() => {
+    if (isSourcesNavigation(navState)) return t('sidebar.sources')
     if (isSkillsNavigation(navState)) return t('sidebar.allSkills')
     if (isSettingsNavigation(navState)) return t('sidebar.settings')
     if (sessionFilter?.kind === 'flagged') return t('sidebar.flagged')
@@ -1070,7 +1165,7 @@ function AppShellContent({
                     <TooltipContent side="right">{newChatHotkey}</TooltipContent>
                   </Tooltip>
                 </div>
-                {/* Primary Nav: All Sessions (Flagged, Archived) | Skills | Settings */}
+                {/* Primary Nav: All Sessions (Flagged, Archived) | Sources, Skills | Settings */}
                 {/* pb-4 provides clearance so the last item scrolls above the mask-fade-bottom gradient */}
                 <div className="flex-1 overflow-y-auto min-h-0 mask-fade-bottom pb-4">
                 <LeftSidebar
@@ -1121,7 +1216,44 @@ function AppShellContent({
                         },
                       ],
                     },
-                    { id: 'separator:sessions-skills', type: 'separator' },
+                    { id: 'separator:sessions-sources', type: 'separator' },
+                    {
+                      id: 'nav:sources',
+                      title: t('sidebar.sources'),
+                      label: String(sources.length),
+                      icon: DatabaseZap,
+                      variant: isSourcesNavigation(navState) && !sourceFilter ? 'default' : 'ghost',
+                      onClick: handleSourcesClick,
+                      expandable: true,
+                      expanded: isExpanded('nav:sources'),
+                      onToggle: () => toggleExpanded('nav:sources'),
+                      items: [
+                        {
+                          id: 'nav:sources:api',
+                          title: t('sidebar.apis'),
+                          label: String(sourceTypeCounts.api),
+                          icon: Globe,
+                          variant: sourceFilter?.sourceType === 'api' ? 'default' : 'ghost',
+                          onClick: handleSourcesApiClick,
+                        },
+                        {
+                          id: 'nav:sources:mcp',
+                          title: t('sidebar.mcps'),
+                          label: String(sourceTypeCounts.mcp),
+                          icon: <McpIcon className="h-3.5 w-3.5" />,
+                          variant: sourceFilter?.sourceType === 'mcp' ? 'default' : 'ghost',
+                          onClick: handleSourcesMcpClick,
+                        },
+                        {
+                          id: 'nav:sources:local',
+                          title: t('sidebar.localFolders'),
+                          label: String(sourceTypeCounts.local),
+                          icon: FolderOpen,
+                          variant: sourceFilter?.sourceType === 'local' ? 'default' : 'ghost',
+                          onClick: handleSourcesLocalClick,
+                        },
+                      ],
+                    },
                     {
                       id: 'nav:skills',
                       title: t('sidebar.skills'),
@@ -1179,6 +1311,17 @@ function AppShellContent({
                       onClick={() => setSearchActive(true)}
                     />
                   )}
+                  {isSourcesNavigation(navState) && activeWorkspace && (
+                    <EditPopover
+                      trigger={<HeaderIconButton icon={<Plus className="h-4 w-4" />} tooltip={t('sidebarMenu.addSource')} />}
+                      {...getEditConfig(
+                        sourceFilter?.kind === 'type'
+                          ? `add-source-${sourceFilter.sourceType}` as EditContextKey
+                          : 'add-source',
+                        activeWorkspace.rootPath,
+                      )}
+                    />
+                  )}
                   {isSkillsNavigation(navState) && activeWorkspace && (
                     <EditPopover
                       trigger={<HeaderIconButton icon={<Plus className="h-4 w-4" />} tooltip={t('sidebarMenu.addSkill')} />}
@@ -1190,6 +1333,17 @@ function AppShellContent({
             />
             {/* Content:            />
             {/* Content: SessionList, SourcesListPanel, or SettingsNavigator based on navigation state */}
+            {isSourcesNavigation(navState) && (
+              <SourcesListPanel
+                sources={sources}
+                sourceFilter={sourceFilter}
+                workspaceRootPath={activeWorkspace?.rootPath}
+                onDeleteSource={handleDeleteSource}
+                onSourceClick={handleSourceSelect}
+                selectedSourceSlug={navState.details?.sourceSlug ?? null}
+                localMcpEnabled={localMcpEnabled}
+              />
+            )}
             {isSkillsNavigation(navState) && activeWorkspaceId && (
               /* Skills List */
               <SkillsListPanel

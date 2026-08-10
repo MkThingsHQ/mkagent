@@ -28,6 +28,7 @@ export interface SessionMeta {
   isFlagged?: boolean
   lastReadMessageId?: string
   workingDirectory?: string
+  enabledSourceSlugs?: string[]
   /** ID of the last final (non-intermediate) assistant message - for unread detection */
   lastFinalMessageId?: string
   /**

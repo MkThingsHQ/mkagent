@@ -5,6 +5,8 @@ import { registerAuthHandlers } from './auth'
 import { registerFilesHandlers } from './files'
 import { registerLlmConnectionsHandlers } from './llm-connections'
 import { registerOnboardingHandlers } from './onboarding'
+import { registerOAuthHandlers } from './oauth'
+import { registerResourcesHandlers } from './resources'
 import { registerSessionsHandlers } from './sessions'
 export { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './sessions'
 import { registerServerHandlers } from './server'
@@ -13,6 +15,7 @@ export type { ServerHandlerContext } from '../../bootstrap/headless-start'
 export { getHealthCheck } from './server'
 import { registerSettingsHandlers } from './settings'
 import { registerSkillsHandlers } from './skills'
+import { registerSourcesHandlers } from './sources'
 import { registerSystemCoreHandlers } from './system'
 import { registerWorkspaceCoreHandlers } from './workspace'
 
@@ -25,10 +28,13 @@ export function registerCoreRpcHandlers(
   registerFilesHandlers(server, deps)
   registerLlmConnectionsHandlers(server, deps)
   registerOnboardingHandlers(server, deps)
+  registerOAuthHandlers(server, deps)
+  registerResourcesHandlers(server, deps)
   registerSessionsHandlers(server, deps)
   if (serverCtx) registerServerHandlers(server, deps, serverCtx)
   registerSettingsHandlers(server, deps)
   registerSkillsHandlers(server, deps)
+  registerSourcesHandlers(server, deps)
   registerSystemCoreHandlers(server, deps)
   registerWorkspaceCoreHandlers(server, deps)
 }

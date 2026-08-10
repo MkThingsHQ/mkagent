@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Kbd, KbdGroup } from '@/components/ui/kbd'
 import { cn } from '@/lib/utils'
 import { isMac } from '@/lib/platform'
-type MultiSelectEntityType = 'session' | 'skill'
+type MultiSelectEntityType = 'session' | 'skill' | 'source'
 
 export interface MultiSelectPanelProps {
   /** Number of selected items */

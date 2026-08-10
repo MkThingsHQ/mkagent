@@ -76,6 +76,7 @@ function makeDeps(opts: {
 }): HandlerDeps {
   return {
     sessionManager: {} as HandlerDeps['sessionManager'],
+    oauthFlowStore: {} as HandlerDeps['oauthFlowStore'],
     platform: {
       appRootPath: '',
       resourcesPath: '',

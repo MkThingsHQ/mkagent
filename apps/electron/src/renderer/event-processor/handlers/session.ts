@@ -11,12 +11,14 @@ import type {
   CompleteEvent,
   ErrorEvent,
   TypedErrorEvent,
+  SourcesChangedEvent,
   SessionFlaggedEvent,
   SessionUnflaggedEvent,
   SessionArchivedEvent,
   SessionUnarchivedEvent,
   NameChangedEvent,
   PermissionRequestEvent,
+  CredentialRequestEvent,
   PlanSubmittedEvent,
   StatusEvent,
   InfoEvent,
@@ -30,6 +32,8 @@ import type {
   LLMConnectionChangedEvent,
   UserMessageEvent,
   MessageAnnotationsUpdatedEvent,
+  AuthRequestEvent,
+  AuthCompletedEvent,
   UsageUpdateEvent,
   Effect,
 } from '../types'
@@ -608,6 +612,21 @@ export function handleMessageAnnotationsUpdated(
   }
 }
 
+/** Handle sources_changed - update the session's enabled Sources. */
+export function handleSourcesChanged(
+  state: SessionState,
+  event: SourcesChangedEvent
+): ProcessResult {
+  const { session, streaming } = state
+  return {
+    state: {
+      session: { ...session, enabledSourceSlugs: event.enabledSourceSlugs },
+      streaming,
+    },
+    effects: [],
+  }
+}
+
 /**
  * Handle session_flagged - mark session as flagged
  */
@@ -709,6 +728,17 @@ export function handlePermissionRequest(
   }
 }
 
+/** Handle credential_request - return an effect for the App-level queue. */
+export function handleCredentialRequest(
+  state: SessionState,
+  event: CredentialRequestEvent
+): ProcessResult {
+  return {
+    state,
+    effects: [{ type: 'credential_request', request: event.request }],
+  }
+}
+
 /**
  * Handle plan_submitted - add plan message to session
  */
@@ -723,6 +753,52 @@ export function handlePlanSubmitted(
       session: appendMessage(session, event.message),
       streaming,
     },
+    effects: [],
+  }
+}
+
+/** Add a unified auth request message and pause the visible execution state. */
+export function handleAuthRequest(
+  state: SessionState,
+  event: AuthRequestEvent
+): ProcessResult {
+  const { session } = state
+  return {
+    state: {
+      session: { ...appendMessage(session, event.message), isProcessing: false },
+      streaming: null,
+    },
+    effects: [],
+  }
+}
+
+/** Update the matching auth-request message after OAuth/credential completion. */
+export function handleAuthCompleted(
+  state: SessionState,
+  event: AuthCompletedEvent
+): ProcessResult {
+  const { session, streaming } = state
+  const messages = session.messages.map(message => {
+    if (
+      message.role === 'auth-request'
+      && message.authRequestId === event.requestId
+      && message.authStatus === 'pending'
+    ) {
+      return {
+        ...message,
+        authStatus: event.success
+          ? ('completed' as const)
+          : event.cancelled
+            ? ('cancelled' as const)
+            : ('failed' as const),
+        authError: event.error,
+      }
+    }
+    return message
+  })
+
+  return {
+    state: { session: { ...session, messages }, streaming },
     effects: [],
   }
 }

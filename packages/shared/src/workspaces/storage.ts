@@ -71,6 +71,11 @@ export function getWorkspacePath(workspaceId: string): string {
   return join(DEFAULT_WORKSPACES_DIR, workspaceId);
 }
 
+/** Get the workspace-scoped Sources directory. */
+export function getWorkspaceSourcesPath(rootPath: string): string {
+  return join(rootPath, 'sources');
+}
+
 /**
  * Get path to workspace sessions directory
  * @param rootPath - Absolute path to workspace root folder
@@ -206,8 +211,14 @@ export function loadWorkspace(rootPath: string): LoadedWorkspace | null {
     mkdirSync(skillsPath, { recursive: true });
   }
 
+  const sourcesPath = getWorkspaceSourcesPath(rootPath);
+  if (!existsSync(sourcesPath)) {
+    mkdirSync(sourcesPath, { recursive: true });
+  }
+
   return {
     config,
+    sourceSlugs: listSubdirNames(sourcesPath),
     sessionCount: countSubdirs(getWorkspaceSessionsPath(rootPath)),
   };
 }
@@ -223,6 +234,7 @@ export function getWorkspaceSummary(rootPath: string): WorkspaceSummary | null {
   return {
     slug: config.slug,
     name: config.name,
+    sourceCount: countSubdirs(getWorkspaceSourcesPath(rootPath)),
     sessionCount: countSubdirs(getWorkspaceSessionsPath(rootPath)),
     createdAt: config.createdAt,
     updatedAt: config.updatedAt,
@@ -329,6 +341,7 @@ export function createWorkspaceAtPath(
     // defaultLlmConnection: undefined - falls back to app default
     permissionMode: globalDefaults.workspaceDefaults.permissionMode,
     cyclablePermissionModes: globalDefaults.workspaceDefaults.cyclablePermissionModes,
+    enabledSourceSlugs: [],
     workingDirectory: undefined,
     ...defaults, // User-provided defaults override global defaults
   };
@@ -338,12 +351,14 @@ export function createWorkspaceAtPath(
     name,
     slug,
     defaults: workspaceDefaults,
+    localMcpServers: { enabled: true },
     createdAt: now,
     updatedAt: now,
   };
 
   // Create workspace directory structure
   mkdirSync(rootPath, { recursive: true });
+  mkdirSync(getWorkspaceSourcesPath(rootPath), { recursive: true });
   mkdirSync(getWorkspaceSessionsPath(rootPath), { recursive: true });
   mkdirSync(getWorkspaceSkillsPath(rootPath), { recursive: true });
 
@@ -470,6 +485,16 @@ export function setWorkspaceColorTheme(rootPath: string, themeId: string | undef
   }
 
   saveWorkspaceConfig(rootPath, config);
+}
+
+/**
+ * Resolve whether local stdio MCP servers are enabled.
+ * Environment configuration takes precedence over the workspace setting.
+ */
+export function isLocalMcpEnabled(rootPath: string): boolean {
+  const envValue = process.env.MKAGENT_LOCAL_MCP_ENABLED;
+  if (envValue !== undefined) return envValue.toLowerCase() === 'true';
+  return loadWorkspaceConfig(rootPath)?.localMcpServers?.enabled ?? true;
 }
 
 // ============================================================

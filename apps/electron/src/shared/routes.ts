@@ -71,6 +71,15 @@ export const routes = {
     /** Copy text to clipboard */
     copyToClipboard: (text: string) =>
       `action/copy?text=${encodeURIComponent(text)}` as const,
+
+    /** Start OAuth flow for a source */
+    oauth: (sourceSlug: string) => `action/oauth/${sourceSlug}` as const,
+
+    /** Open add source UI */
+    addSource: () => 'action/add-source' as const,
+
+    /** Delete a source */
+    deleteSource: (sourceSlug: string) => `action/delete-source/${sourceSlug}` as const,
   },
 
   // ============================================
@@ -88,6 +97,24 @@ export const routes = {
     /** Archived view (sessions navigator, archived filter) */
     archived: (sessionId?: string) =>
       sessionId ? `archived/session/${sessionId}` as const : 'archived' as const,
+
+    /** Sources view, optionally filtered by type or focused on one source. */
+    sources: (params?: { sourceSlug?: string; type?: 'api' | 'mcp' | 'local' }) => {
+      const base = params?.type ? `sources/${params.type}` : 'sources'
+      return params?.sourceSlug ? `${base}/source/${params.sourceSlug}` as const : base as 'sources' | `sources/${'api' | 'mcp' | 'local'}`
+    },
+
+    sourcesApi: (sourceSlug?: string) => sourceSlug
+      ? `sources/api/source/${sourceSlug}` as const
+      : 'sources/api' as const,
+
+    sourcesMcp: (sourceSlug?: string) => sourceSlug
+      ? `sources/mcp/source/${sourceSlug}` as const
+      : 'sources/mcp' as const,
+
+    sourcesLocal: (sourceSlug?: string) => sourceSlug
+      ? `sources/local/source/${sourceSlug}` as const
+      : 'sources/local' as const,
 
     /** Skills view (skills navigator). Pass a slug string for a local skill detail view. */
     skills: (skillSlug?: string) => {

@@ -3,8 +3,14 @@ import { useTranslation } from 'react-i18next'
 import { coerceInputText } from '@/lib/input-text'
 import { cn } from '@/lib/utils'
 import { findMentionMatches, parseMentions, type MentionMatch } from '@/lib/mentions'
-import { loadSkillIcon, getSkillIconSync, EMOJI_ICON_PREFIX } from '@/lib/icon-cache'
-import type { LoadedSkill } from '../../../shared/types'
+import {
+  loadSourceIcon,
+  loadSkillIcon,
+  getSourceIconSync,
+  getSkillIconSync,
+  EMOJI_ICON_PREFIX,
+} from '@/lib/icon-cache'
+import type { LoadedSkill, LoadedSource } from '../../../shared/types'
 import type { MentionItemType } from './mention-menu'
 
 // ============================================================================
@@ -53,6 +59,8 @@ export interface RichTextInputProps extends Omit<React.HTMLAttributes<HTMLDivEle
   placeholder?: string | string[]
   /** Available skills for mention parsing */
   skills?: LoadedSkill[]
+  /** Available sources for mention parsing */
+  sources?: LoadedSource[]
   /** Workspace ID for avatars */
   workspaceId?: string
   /** Whether the input is disabled */
@@ -91,6 +99,8 @@ export interface RichTextInputHandle {
 // SVG icons as HTML strings (avoiding react-dom/server which doesn't work in browser)
 const SKILL_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>`
 
+const SOURCE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>`
+
 
 // File icon (document with folded corner) - matches UserMessageBubble style (12x12, text-muted-foreground)
 const FILE_ICON_SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 text-muted-foreground"><path d="M10.5 2.5C12.1569 2.5 13.5 3.84315 13.5 5.5V6.1C13.5 6.4716 13.5 6.6574 13.5246 6.81287C13.6602 7.66865 14.3313 8.33983 15.1871 8.47538C15.3426 8.5 15.5284 8.5 15.9 8.5H16.5C18.1569 8.5 19.5 9.84315 19.5 11.5M9 16H15M9 12H10M10.9645 2.5H10.6678C8.64635 2.5 7.63561 2.5 6.84835 2.85692C5.96507 3.25736 5.25736 3.96507 4.85692 4.84835C4.5 5.63561 4.5 6.64635 4.5 8.66781V14C4.5 17.2875 4.5 18.9312 5.40796 20.0376C5.57418 20.2401 5.75989 20.4258 5.96243 20.592C7.06878 21.5 8.71252 21.5 12 21.5C15.2875 21.5 16.9312 21.5 18.0376 20.592C18.2401 20.4258 18.4258 20.2401 18.592 20.0376C19.5 18.9312 19.5 17.2875 19.5 14V11.0355C19.5 10.0027 19.5 9.48628 19.4176 8.99414C19.2671 8.09576 18.9141 7.24342 18.3852 6.50177C18.0955 6.09549 17.7303 5.73032 17 5C16.2697 4.26968 15.9045 3.90451 15.4982 3.6148C14.7566 3.08595 13.9042 2.7329 13.0059 2.58243C12.5137 2.5 11.9973 2.5 10.9645 2.5Z"/></svg>`
@@ -122,6 +132,7 @@ function renderBadgeHTML(
   type: MentionItemType,
   label: string,
   skill?: LoadedSkill,
+  source?: LoadedSource,
   workspaceId?: string,
   tooltip?: string
 ): string {
@@ -131,6 +142,8 @@ function renderBadgeHTML(
 
   if (type === 'skill' && skill && workspaceId) {
     cachedIconUrl = getSkillIconSync(workspaceId, skill.slug)
+  } else if (type === 'source' && source && workspaceId) {
+    cachedIconUrl = getSourceIconSync(workspaceId, source.config.slug)
   }
 
   if (cachedIconUrl) {
@@ -146,6 +159,8 @@ function renderBadgeHTML(
     // Fall back to generic SVG icon based on type
     if (type === 'skill') {
       iconHtml = `<span class="h-[12px] w-[12px] rounded-[2px] bg-foreground/5 flex items-center justify-center text-foreground/50 shrink-0">${SKILL_ICON_SVG}</span>`
+    } else if (type === 'source') {
+      iconHtml = `<span class="h-[12px] w-[12px] rounded-[2px] bg-foreground/5 flex items-center justify-center text-foreground/50 shrink-0">${SOURCE_ICON_SVG}</span>`
     } else if (type === 'file') {
       // Pick code file or generic file icon based on extension (no container, icon carries its own classes)
       iconHtml = isCodeFile(label) ? CODE_FILE_ICON_SVG : FILE_ICON_SVG
@@ -349,12 +364,14 @@ function setCursorPosition(element: HTMLElement, targetPosition: number): void {
 function textToHTML(
   text: string,
   skills: LoadedSkill[],
+  sources: LoadedSource[],
   workspaceId?: string
 ): string {
   if (!text) return ''
 
   const skillSlugs = skills.map(s => s.slug)
-  const matches = findMentionMatches(text, skillSlugs)
+  const sourceSlugs = sources.map(s => s.config.slug)
+  const matches = findMentionMatches(text, skillSlugs, sourceSlugs)
 
   // Escape HTML in text
   const escapeHTML = (str: string) => str
@@ -384,11 +401,15 @@ function textToHTML(
     // Determine label and data for badge
     let label = match.id
     let skill: LoadedSkill | undefined
+    let source: LoadedSource | undefined
     let tooltip: string | undefined
 
     if (match.type === 'skill') {
       skill = skills.find(s => s.slug === match.id)
       label = skill?.metadata.name || match.id
+    } else if (match.type === 'source') {
+      source = sources.find(s => s.config.slug === match.id)
+      label = source?.config.name || match.id
     } else if (match.type === 'file') {
       // Show filename as badge label, full path as tooltip
       label = match.id.split('/').pop() || match.id
@@ -400,7 +421,7 @@ function textToHTML(
     }
 
     // Render badge with data-mention-text storing the original text
-    const badgeHtml = renderBadgeHTML(match.type, label, skill, workspaceId, tooltip)
+    const badgeHtml = renderBadgeHTML(match.type, label, skill, source, workspaceId, tooltip)
     // Add data-mention-text attribute to store original text for extraction
     const withMentionText = badgeHtml.replace(
       'data-mention="true"',
@@ -425,8 +446,8 @@ function textToHTML(
 // Check if mentions have changed (for determining if we need to re-render HTML)
 // ============================================================================
 
-function getMentionSignature(text: string, skillSlugs: string[]): string {
-  const matches = findMentionMatches(text, skillSlugs)
+function getMentionSignature(text: string, skillSlugs: string[], sourceSlugs: string[]): string {
+  const matches = findMentionMatches(text, skillSlugs, sourceSlugs)
   return matches.map(m => `${m.type}:${m.id}:${m.startIndex}`).join('|')
 }
 
@@ -492,6 +513,7 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
       onChange,
       placeholder,
       skills = [],
+      sources = [],
       workspaceId,
       disabled = false,
       className,
@@ -520,17 +542,21 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
     const pendingCursorRef = React.useRef<number | null>(null)
 
     const skillSlugs = React.useMemo(() => skills.map(s => s.slug), [skills])
+    const sourceSlugs = React.useMemo(() => sources.map(s => s.config.slug), [sources])
 
-    // Preload skill icons
+    // Preload icons for sources and skills
     React.useEffect(() => {
       if (!workspaceId) return
 
+      for (const source of sources) {
+        loadSourceIcon({ config: source.config, workspaceId })
+      }
 
       // Preload skill icons (handles emoji, URL, file, and auto-discovery)
       for (const skill of skills) {
         loadSkillIcon(skill, workspaceId)
       }
-    }, [skills, workspaceId])
+    }, [sources, skills, workspaceId])
 
     // Expose imperative handle
     React.useImperativeHandle(forwardedRef, () => ({
@@ -586,12 +612,12 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
       setHasEditableDomText(Boolean(newText))
 
       // Check if mentions changed - if so, we need to re-render HTML
-      const newSignature = getMentionSignature(newText, skillSlugs)
+      const newSignature = getMentionSignature(newText, skillSlugs, sourceSlugs)
       if (newSignature !== lastMentionSignatureRef.current) {
         lastMentionSignatureRef.current = newSignature
         // Re-render with badges
         isInternalUpdate.current = true
-        const html = textToHTML(newText, skills, workspaceId)
+        const html = textToHTML(newText, skills, sources, workspaceId)
         divRef.current.innerHTML = html || '<br>' // Empty contenteditable needs a BR
         // Restore cursor
         setCursorPosition(divRef.current, cursorPos)
@@ -600,7 +626,7 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
 
       onChange(newText)
       onInput?.(newText, cursorPos)
-    }, [onChange, onInput, skills, skillSlugs, workspaceId])
+    }, [onChange, onInput, skills, sources, skillSlugs, sourceSlugs, workspaceId])
 
     // Handle composition (IME)
     const handleCompositionStart = React.useCallback(() => {
@@ -675,9 +701,9 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
 
       // External value change - update content
       lastValueRef.current = safeValue
-      lastMentionSignatureRef.current = getMentionSignature(safeValue, skillSlugs)
+      lastMentionSignatureRef.current = getMentionSignature(safeValue, skillSlugs, sourceSlugs)
 
-      const html = textToHTML(safeValue, skills, workspaceId)
+      const html = textToHTML(safeValue, skills, sources, workspaceId)
       divRef.current.innerHTML = html || '<br>'
       setHasEditableDomText(Boolean(safeValue))
 
@@ -691,13 +717,13 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
         setCursorPosition(divRef.current, cursorPos)
         pendingCursorRef.current = null // Clear after use
       }
-    }, [safeValue, skills, skillSlugs, workspaceId])
+    }, [safeValue, skills, sources, skillSlugs, sourceSlugs, workspaceId])
 
     // Initialize content on mount
     React.useEffect(() => {
       if (!divRef.current) return
-      lastMentionSignatureRef.current = getMentionSignature(safeValue, skillSlugs)
-      const html = textToHTML(safeValue, skills, workspaceId)
+      lastMentionSignatureRef.current = getMentionSignature(safeValue, skillSlugs, sourceSlugs)
+      const html = textToHTML(safeValue, skills, sources, workspaceId)
       divRef.current.innerHTML = html || '<br>'
       lastValueRef.current = safeValue
       setHasEditableDomText(Boolean(safeValue))
@@ -761,9 +787,9 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
 
     // Check if value contains any mentions (badges) to adjust line height
     const hasMentions = React.useMemo(() => {
-      const mentions = parseMentions(safeValue, skillSlugs)
-      return mentions.skills.length > 0 || mentions.files.length > 0 || mentions.folders.length > 0
-    }, [safeValue, skillSlugs])
+      const mentions = parseMentions(safeValue, skillSlugs, sourceSlugs)
+      return mentions.skills.length > 0 || mentions.sources.length > 0 || mentions.files.length > 0 || mentions.folders.length > 0
+    }, [safeValue, skillSlugs, sourceSlugs])
 
     return (
       <div className="relative">

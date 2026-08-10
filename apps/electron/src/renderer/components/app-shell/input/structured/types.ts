@@ -1,4 +1,4 @@
-import type { PermissionRequest } from '../../../../../shared/types'
+import type { PermissionRequest, CredentialRequest, CredentialResponse } from '../../../../../shared/types'
 import type { AdminApprovalRequestData } from './AdminApprovalRequest'
 
 /**
@@ -9,13 +9,14 @@ export type InputMode = 'freeform' | 'structured'
 /**
  * Types of structured input UIs
  */
-export type StructuredInputType = 'permission' | 'admin_approval'
+export type StructuredInputType = 'permission' | 'credential' | 'admin_approval'
 
 /**
  * Union type for structured input data
  */
 export type StructuredInputData =
   | { type: 'permission'; data: PermissionRequest }
+  | { type: 'credential'; data: CredentialRequest }
   | { type: 'admin_approval'; data: AdminApprovalRequestData }
 
 /**
@@ -23,7 +24,7 @@ export type StructuredInputData =
  */
 export interface StructuredInputState {
   type: StructuredInputType
-  data: PermissionRequest | AdminApprovalRequestData
+  data: PermissionRequest | CredentialRequest | AdminApprovalRequestData
 }
 
 /**
@@ -47,4 +48,7 @@ export interface AdminApprovalResponse {
 /**
  * Union type for all structured responses
  */
-export type StructuredResponse = PermissionResponse | AdminApprovalResponse
+export type StructuredResponse = PermissionResponse | CredentialResponse | AdminApprovalResponse
+
+// Re-export CredentialResponse for convenience
+export type { CredentialResponse }

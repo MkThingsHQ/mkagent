@@ -1,5 +1,6 @@
 import type { ThemeOverrides } from '../config/index.ts';
 import type { LoadedSkill } from '../skills/types.ts';
+import type { LoadedSource } from '../sources/types.ts';
 import { RPC_CHANNELS } from './channels.ts';
 import type {
   BrowserInstanceInfo,
@@ -13,6 +14,7 @@ export interface BroadcastEventMap {
   [RPC_CHANNELS.sessions.EVENT]: [event: SessionEvent];
   [RPC_CHANNELS.sessions.UNREAD_SUMMARY_CHANGED]: [summary: UnreadSummary];
   [RPC_CHANNELS.sessions.FILES_CHANGED]: [sessionId: string];
+  [RPC_CHANNELS.sources.CHANGED]: [workspaceId: string, sources: LoadedSource[]];
   [RPC_CHANNELS.skills.CHANGED]: [workspaceId: string, skills: LoadedSkill[]];
   [RPC_CHANNELS.llmConnections.CHANGED]: [];
   [RPC_CHANNELS.permissions.DEFAULTS_CHANGED]: [value: null];

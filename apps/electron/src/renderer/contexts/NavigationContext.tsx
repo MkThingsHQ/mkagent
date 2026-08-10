@@ -58,16 +58,19 @@ import type {
   Session,
   NavigationState,
   SessionFilter,
+  SourceFilter,
   RightSidebarPanel,
   ContentBadge,
 } from '../../shared/types'
 import {
   isSessionsNavigation,
+  isSourcesNavigation,
   isSettingsNavigation,
   isSkillsNavigation,
   DEFAULT_NAVIGATION_STATE,
 } from '../../shared/types'
 import { sessionMetaMapAtom, type SessionMeta } from '@/atoms/sessions'
+import { sourcesAtom } from '@/atoms/sources'
 import { skillsAtom } from '@/atoms/skills'
 import {
   panelStackAtom,
@@ -86,7 +89,7 @@ export type { Route }
 
 // Re-export navigation state types for consumers
 export type { NavigationState, SessionFilter }
-export { isSessionsNavigation, isSettingsNavigation, isSkillsNavigation }
+export { isSessionsNavigation, isSourcesNavigation, isSettingsNavigation, isSkillsNavigation }
 
 // =============================================================================
 // Context
@@ -111,6 +114,8 @@ interface NavigationContextValue {
   updateRightSidebar: (panel: RightSidebarPanel | undefined) => void
   /** Toggle right sidebar (with optional panel) */
   toggleRightSidebar: (panel?: RightSidebarPanel) => void
+  /** Navigate to a source (or source list), preserving the current type filter */
+  navigateToSource: (sourceSlug?: string) => void
   /** Navigate to a session, preserving the current filter type */
   navigateToSession: (sessionId: string) => void
 }
@@ -161,6 +166,9 @@ export function NavigationProvider({
 
   // Store reference for reading fresh atom values in callbacks (avoids stale closures)
   const store = useStore()
+
+  // Read sources from atom (populated by AppShell)
+  const sources = useAtomValue(sourcesAtom)
 
   // Read skills from atom (populated by AppShell)
   const skills = useAtomValue(skillsAtom)
@@ -569,6 +577,14 @@ export function NavigationProvider({
     [skills]
   )
 
+  const getFirstSourceSlug = useCallback(
+    (filter?: SourceFilter | null): string | null => {
+      if (!filter) return sources[0]?.config.slug ?? null
+      return sources.find(source => source.config.type === filter.sourceType)?.config.slug ?? null
+    },
+    [sources],
+  )
+
   // =========================================================================
   // AUTO-SELECTION (pure computation, no side effects)
   // =========================================================================
@@ -608,6 +624,15 @@ export function NavigationProvider({
         return nextState
       }
 
+      // Sources: auto-select first source in the active type filter.
+      if (isSourcesNavigation(nextState) && !nextState.details && !options?.skipAutoSelect) {
+        const firstSourceSlug = getFirstSourceSlug(nextState.filter)
+        if (firstSourceSlug) {
+          return { ...nextState, details: { type: 'source', sourceSlug: firstSourceSlug } }
+        }
+        return nextState
+      }
+
       // Skills: auto-select first skill
       if (isSkillsNavigation(nextState) && !nextState.details && !options?.skipAutoSelect) {
         const firstSkillSlug = getFirstSkillSlug()
@@ -619,7 +644,7 @@ export function NavigationProvider({
 
       return nextState
     },
-    [store, workspaceId, getLastSelectedSessionId, getFirstSessionId, getFirstSkillSlug]
+    [store, workspaceId, getLastSelectedSessionId, getFirstSessionId, getFirstSourceSlug, getFirstSkillSlug]
   )
 
   // Ref keeps resolveAutoSelection fresh for reconcileFromUrlParams (defined earlier in the file)
@@ -1095,6 +1120,24 @@ export function NavigationProvider({
   // =========================================================================
 
 
+  const navigateToSource = useCallback((sourceSlug?: string) => {
+    if (isSourcesNavigation(navigationState) && navigationState.filter?.kind === 'type') {
+      switch (navigationState.filter.sourceType) {
+        case 'api':
+          navigate(routes.view.sourcesApi(sourceSlug))
+          return
+        case 'mcp':
+          navigate(routes.view.sourcesMcp(sourceSlug))
+          return
+        case 'local':
+          navigate(routes.view.sourcesLocal(sourceSlug))
+          return
+      }
+    }
+    navigate(routes.view.sources(sourceSlug ? { sourceSlug } : undefined))
+  }, [navigationState, navigate])
+
+
   const navigateToSession = useCallback((sessionId: string) => {
     if (!isSessionsNavigation(navigationState)) {
       navigate(routes.view.allSessions(sessionId))
@@ -1144,6 +1187,26 @@ export function NavigationProvider({
     navigateToSession,
   ])
 
+  useEffect(() => {
+    if (suppressAutoSelectRef.current) return
+    if (!isReady || !workspaceId) return
+    if (store.get(panelStackAtom).length === 0) return
+    if (!isSourcesNavigation(navigationState) || navigationState.details) return
+
+    const resolved = resolveAutoSelection(navigationState)
+    if (isSourcesNavigation(resolved) && resolved.details) {
+      navigateToSource(resolved.details.sourceSlug)
+    }
+  }, [
+    isReady,
+    workspaceId,
+    navigationState,
+    resolveAutoSelection,
+    navigateToSource,
+    sources,
+    store,
+  ])
+
   // =========================================================================
   // CONTEXT VALUE
   // =========================================================================
@@ -1160,6 +1223,7 @@ export function NavigationProvider({
         goForward,
         updateRightSidebar,
         toggleRightSidebar,
+        navigateToSource,
         navigateToSession,
       }}
     >

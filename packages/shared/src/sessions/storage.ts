@@ -177,6 +177,7 @@ export async function createSession(
     name?: string;
     workingDirectory?: string;
     permissionMode?: SessionConfig['permissionMode'];
+    enabledSourceSlugs?: string[];
     model?: string;
     llmConnection?: string;
     hidden?: boolean;
@@ -205,6 +206,7 @@ export async function createSession(
     workingDirectory: options?.workingDirectory,
     sdkCwd,
     permissionMode: options?.permissionMode,
+    enabledSourceSlugs: options?.enabledSourceSlugs,
     model: options?.model,
     llmConnection: options?.llmConnection,
     hidden: options?.hidden,
@@ -248,6 +250,7 @@ export async function getOrCreateSessionById(
       lastUsedAt: existing.lastUsedAt,
       sdkCwd: existing.sdkCwd,
       workingDirectory: existing.workingDirectory,
+      enabledSourceSlugs: existing.enabledSourceSlugs,
     };
   }
 
@@ -515,6 +518,7 @@ export async function updateSessionMetadata(
     | 'name'
     | 'lastReadMessageId'
     | 'hasUnread'
+    | 'enabledSourceSlugs'
     | 'workingDirectory'
     | 'sdkCwd'
     | 'permissionMode'
@@ -529,6 +533,7 @@ export async function updateSessionMetadata(
 
   if (updates.isFlagged !== undefined) session.isFlagged = updates.isFlagged;
   if (updates.name !== undefined) session.name = updates.name;
+  if (updates.enabledSourceSlugs !== undefined) session.enabledSourceSlugs = updates.enabledSourceSlugs;
   if (updates.workingDirectory !== undefined) session.workingDirectory = updates.workingDirectory;
   if (updates.sdkCwd !== undefined) session.sdkCwd = updates.sdkCwd;
   if (updates.permissionMode !== undefined) session.permissionMode = updates.permissionMode;

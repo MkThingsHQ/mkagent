@@ -18,7 +18,7 @@ import { Button } from './button'
 import { cn } from '@/lib/utils'
 import { usePlatform } from '@mkagent/ui'
 import type { ContentBadge, Session, CreateSessionOptions } from '../../../shared/types'
-import { useActiveWorkspace, useAppShellContext, useSession, usePendingPermission } from '@/context/AppShellContext'
+import { useActiveWorkspace, useAppShellContext, useSession, usePendingPermission, usePendingCredential } from '@/context/AppShellContext'
 import { useEscapeInterrupt } from '@/context/EscapeInterruptContext'
 import { ChatDisplay } from '../app-shell/ChatDisplay'
 
@@ -70,7 +70,15 @@ export type EditContextKey =
   | 'default-permissions'
   | 'skill-instructions'
   | 'skill-metadata'
+  | 'source-guide'
+  | 'source-config'
+  | 'source-permissions'
+  | 'source-tool-permissions'
   | 'preferences-notes'
+  | 'add-source'
+  | 'add-source-api'   // Filter-specific: user is viewing APIs
+  | 'add-source-mcp'   // Filter-specific: user is viewing MCPs
+  | 'add-source-local' // Filter-specific: user is viewing Local Folders
   | 'add-skill'
   | 'edit-tool-icons'
 
@@ -114,7 +122,7 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
         'The user is on the Settings Screen and pressed the edit button on Workspace Permission settings. ' +
         'Their intent is likely to update the setting immediately unless otherwise specified. ' +
         'The permissions.json file configures Explore mode rules. It can contain: allowedBashPatterns, ' +
-        'blockedTools, blockedCommandHints, and allowedWritePaths. ' +
+        'allowedMcpPatterns, allowedApiEndpoints, blockedTools, and allowedWritePaths. ' +
         'After editing, call config_validate with target "permissions" to verify the changes. ' +
         'Confirm clearly when done.',
     },
@@ -133,7 +141,7 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
       context:
         'The user is editing app-level default permissions (~/.mkagent/permissions/default.json). ' +
         'This file configures Explore mode rules that apply to ALL workspaces. ' +
-        'It can contain: allowedBashPatterns, blockedTools, blockedCommandHints, and allowedWritePaths. ' +
+        'It can contain: allowedBashPatterns, allowedMcpPatterns, allowedApiEndpoints, blockedTools, and allowedWritePaths. ' +
         'Each pattern can be a string or an object with pattern and comment fields. ' +
         'Be careful - these are app-wide defaults. ' +
         'After editing, call config_validate with target "permissions" to verify the changes. ' +
@@ -174,7 +182,7 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
       filePath: `${location}/SKILL.md`,
       context:
         'The user is editing skill metadata in the YAML frontmatter of SKILL.md. ' +
-        'Frontmatter fields: name (required), description (required), globs (optional array), alwaysAllow (optional array), icon (optional string — emoji or URL). ' +
+        'Frontmatter fields: name (required), description (required), globs (optional array), alwaysAllow (optional array), requiredSources (optional array of source slugs), icon (optional string — emoji or URL). ' +
         'Keep the content after the frontmatter unchanged unless specifically requested. ' +
         'After editing, call skill_validate with the skill slug to verify the changes. ' +
         'Confirm clearly when done.',
@@ -183,6 +191,84 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
     displayLabelKey: 'editPopover.label.skillMetadata',
     exampleKey: 'editPopover.example.skillMetadata',
     model: 'fast',
+    systemPromptPreset: 'mini',
+    inlineExecution: true,
+  }),
+
+  // Source editing contexts
+  'source-guide': (location) => ({
+    context: {
+      label: 'Source Documentation',
+      filePath: `${location}/guide.md`,
+      context:
+        'The user is editing source documentation (guide.md). ' +
+        'This file provides context to the AI about how to use this source - rate limits, API patterns, best practices. ' +
+        'Keep content clear and actionable. ' +
+        'Confirm clearly when done.',
+    },
+    example: 'Add rate limit documentation',
+    displayLabelKey: 'editPopover.label.sourceDocumentation',
+    exampleKey: 'editPopover.example.sourceGuide',
+    model: 'fast',
+    systemPromptPreset: 'mini',
+    inlineExecution: true,
+  }),
+
+  'source-config': (location) => ({
+    context: {
+      label: 'Source Configuration',
+      filePath: `${location}/config.json`,
+      context:
+        'The user is editing source configuration (config.json). ' +
+        'Be careful with JSON syntax. Fields include: type, slug, name, tagline, iconUrl, and transport-specific settings (mcp, api, local). ' +
+        'Do NOT modify the slug unless explicitly requested. ' +
+        'After editing, call source_test with the source slug to verify the configuration. ' +
+        'Confirm clearly when done.',
+    },
+    example: 'Update the display name',
+    displayLabelKey: 'editPopover.label.sourceConfiguration',
+    exampleKey: 'editPopover.example.sourceConfig',
+    model: 'default',
+    systemPromptPreset: 'mini',
+    inlineExecution: true,
+  }),
+
+  'source-permissions': (location) => ({
+    context: {
+      label: 'Source Permissions',
+      filePath: `${location}/permissions.json`,
+      context:
+        'The user is editing source-level permissions (permissions.json). ' +
+        'These rules are auto-scoped to this source - write simple patterns without prefixes. ' +
+        'For MCP: use allowedMcpPatterns (e.g., "list", "get"). For API: use allowedApiEndpoints. ' +
+        'After editing, call config_validate with target "permissions" and the source slug to verify the changes. ' +
+        'Confirm clearly when done.',
+    },
+    example: 'Allow list operations in Explore mode',
+    displayLabelKey: 'editPopover.label.sourcePermissions',
+    exampleKey: 'editPopover.example.sourcePermissions',
+    model: 'default',
+    systemPromptPreset: 'mini',
+    inlineExecution: true,
+  }),
+
+  'source-tool-permissions': (location) => ({
+    context: {
+      label: 'Tool Permissions',
+      filePath: `${location}/permissions.json`,
+      context:
+        'The user is viewing the Tools list for an MCP source and wants to modify tool permissions. ' +
+        'Edit the permissions.json file to control which tools are allowed in Explore mode. ' +
+        'Use allowedMcpPatterns to allow specific tools (e.g., ["list_*", "get_*"] for read-only). ' +
+        'Use blockedTools to explicitly block specific tools. ' +
+        'Patterns are auto-scoped to this source. ' +
+        'After editing, call config_validate with target "permissions" and the source slug to verify the changes. ' +
+        'Confirm clearly when done.',
+    },
+    example: 'Only allow read operations (list, get, search)',
+    displayLabelKey: 'editPopover.label.toolPermissions',
+    exampleKey: 'editPopover.example.sourceToolPermissions',
+    model: 'default',
     systemPromptPreset: 'mini',
     inlineExecution: true,
   }),
@@ -207,7 +293,88 @@ const EDIT_CONFIGS: Record<EditContextKey, (location: string) => EditConfig> = {
     inlineExecution: true,
   }),
 
-  // Add Skill context - use overridePlaceholder for an inspiring prompt
+  // Add new source/skill contexts - use overridePlaceholder for inspiring, contextual prompts
+  'add-source': (location) => ({
+    context: {
+      label: 'Add Source',
+      filePath: `${location}/sources/`, // location is the workspace root path
+      context:
+        'The user wants to add a new source to their workspace. ' +
+        'Sources can be MCP servers (HTTP/SSE or stdio), REST APIs, or local filesystems. ' +
+        'Ask clarifying questions if needed: What service? MCP or API? Auth type? ' +
+        'Create the source folder and config.json in the workspace sources directory. ' +
+        'Follow the patterns in ~/.mkagent/docs/sources.md. ' +
+        'After creating the source, call source_test with the source slug to verify the configuration.',
+    },
+    example: 'Connect to my Craft space',
+    overridePlaceholder: 'What would you like to connect?',
+    displayLabelKey: 'editPopover.label.addSource',
+    exampleKey: 'editPopover.example.addSource',
+    overridePlaceholderKey: 'editPopover.placeholder.addSource',
+  }),
+
+  // Filter-specific add-source contexts: user is viewing a filtered list and wants to add that type
+  'add-source-api': (location) => ({
+    context: {
+      label: 'Add API',
+      filePath: `${location}/sources/`,
+      context:
+        'The user is viewing API sources and wants to add a new REST API. ' +
+        'Default to creating an API source (type: "api") unless they specify otherwise. ' +
+        'APIs connect to REST endpoints with authentication (bearer, header, basic, or query). ' +
+        'Ask about the API endpoint URL and auth type. ' +
+        'Create the source folder and config.json in the workspace sources directory. ' +
+        'Follow the patterns in ~/.mkagent/docs/sources.md. ' +
+        'After creating the source, call source_test with the source slug to verify the configuration.',
+    },
+    example: 'Connect to the OpenAI API',
+    overridePlaceholder: 'What API would you like to connect?',
+    displayLabelKey: 'editPopover.label.addApi',
+    exampleKey: 'editPopover.example.addSourceApi',
+    overridePlaceholderKey: 'editPopover.placeholder.addSourceApi',
+  }),
+
+  'add-source-mcp': (location) => ({
+    context: {
+      label: 'Add MCP Server',
+      filePath: `${location}/sources/`,
+      context:
+        'The user is viewing MCP sources and wants to add a new MCP server. ' +
+        'Default to creating an MCP source (type: "mcp") unless they specify otherwise. ' +
+        'MCP servers can use HTTP/SSE transport (remote) or stdio transport (local subprocess). ' +
+        'Ask about the service they want to connect to and whether it\'s a remote URL or local command. ' +
+        'Create the source folder and config.json in the workspace sources directory. ' +
+        'Follow the patterns in ~/.mkagent/docs/sources.md. ' +
+        'After creating the source, call source_test with the source slug to verify the configuration.',
+    },
+    example: 'Connect to Linear',
+    overridePlaceholder: 'What MCP server would you like to connect?',
+    displayLabelKey: 'editPopover.label.addMcpServer',
+    exampleKey: 'editPopover.example.addSourceMcp',
+    overridePlaceholderKey: 'editPopover.placeholder.addSourceMcp',
+  }),
+
+  'add-source-local': (location) => ({
+    context: {
+      label: 'Add Local Folder',
+      filePath: `${location}/sources/`,
+      context:
+        'The user wants to add a local folder source. ' +
+        'First, look up the guide: mcp__craft-agents-docs__SearchCraftAgents({ query: "filesystem" }). ' +
+        'Local folders are bookmarks - use type: "local" with a local.path field. ' +
+        'They use existing Read, Write, Glob, Grep tools - no MCP server needed. ' +
+        'If unclear, ask about the folder path they want to connect. ' +
+        'Create the source folder and config.json in the workspace sources directory. ' +
+        'Follow the patterns in ~/.mkagent/docs/sources.md. ' +
+        'After creating the source, call source_test with the source slug to verify the configuration.',
+    },
+    example: 'Connect to my Obsidian vault',
+    overridePlaceholder: 'What folder would you like to connect?',
+    displayLabelKey: 'editPopover.label.addLocalFolder',
+    exampleKey: 'editPopover.example.addSourceLocal',
+    overridePlaceholderKey: 'editPopover.placeholder.addSourceLocal',
+  }),
+
   'add-skill': (location) => ({
     context: {
       label: 'Add Skill',
@@ -456,7 +623,7 @@ export function EditPopover({
   }
 
   // Use App context for session management (same code path as main chat)
-  const { onCreateSession, onSendMessage, onRespondToPermission } = useAppShellContext()
+  const { onCreateSession, onSendMessage, onRespondToPermission, onRespondToCredential } = useAppShellContext()
 
   // Session ID for inline execution (created on first message)
   const [inlineSessionId, setInlineSessionId] = useState<string | null>(null)
@@ -465,8 +632,9 @@ export function EditPopover({
   // Pass empty string when no session yet - atom returns null for unknown IDs
   const inlineSession = useSession(inlineSessionId || '')
 
-  // Pending permission requests for inline session (same flow as main chat)
+  // Pending permission/credential requests for inline session (same flow as main chat)
   const pendingPermission = usePendingPermission(inlineSessionId || '')
+  const pendingCredential = usePendingCredential(inlineSessionId || '')
 
   // Model state for ChatDisplay (starts with prop value, can be changed by user)
   const [currentModel, setCurrentModel] = useState(model || 'haiku')
@@ -755,6 +923,8 @@ export function EditPopover({
                   onModelChange={setCurrentModel}
                   pendingPermission={pendingPermission}
                   onRespondToPermission={onRespondToPermission}
+                  pendingCredential={pendingCredential}
+                  onRespondToCredential={onRespondToCredential}
                   compactMode={true}
                   placeholder={placeholder}
                   emptyStateLabel={displayLabel || context.label}

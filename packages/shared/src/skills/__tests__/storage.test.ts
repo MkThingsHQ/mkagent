@@ -45,7 +45,7 @@ const REAL_GLOBAL_SKILLS_DIR = join(homedir(), '.agents', 'skills');
 function createSkill(
   skillsDir: string,
   slug: string,
-  opts: { name?: string; description?: string; globs?: string[]; content?: string; icon?: string } = {}
+  opts: { name?: string; description?: string; globs?: string[]; content?: string; icon?: string; requiredSources?: string[] } = {}
 ): string {
   const skillDir = join(skillsDir, slug);
   mkdirSync(skillDir, { recursive: true });
@@ -55,9 +55,12 @@ function createSkill(
   const content = opts.content ?? `Instructions for ${slug}`;
   const globs = opts.globs ? `\nglobs:\n${opts.globs.map(g => `  - "${g}"`).join('\n')}` : '';
   const icon = opts.icon ? `\nicon: "${opts.icon}"` : '';
+  const requiredSources = opts.requiredSources
+    ? `\nrequiredSources:\n${opts.requiredSources.map(source => `  - "${source}"`).join('\n')}`
+    : '';
   const skillMd = `---
 name: "${name}"
-description: "${description}"${globs}${icon}
+description: "${description}"${globs}${icon}${requiredSources}
 ---
 
 ${content}
@@ -166,6 +169,15 @@ describe('loadSkill', () => {
 
     expect(skill).not.toBeNull();
     expect(skill!.metadata.globs).toEqual(['*.tsx', '*.css']);
+  });
+
+  it('should normalize requiredSources metadata', () => {
+    createSkill(join(workspaceRoot, 'skills'), 'source-skill', {
+      requiredSources: ['linear', ' github ', 'linear'],
+    });
+
+    expect(loadSkill(workspaceRoot, 'source-skill')?.metadata.requiredSources)
+      .toEqual(['linear', 'github']);
   });
 
   it('should set iconPath when icon file exists', () => {

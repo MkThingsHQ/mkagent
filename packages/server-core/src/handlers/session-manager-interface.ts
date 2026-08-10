@@ -8,7 +8,9 @@ import type {
 import type { PermissionMode } from '@mkagent/shared/agent/mode-types'
 import type { ThinkingLevel } from '@mkagent/shared/agent/thinking-levels'
 import type {
+  AuthResult,
   CreateSessionOptions,
+  CredentialResponse,
   FileAttachment,
   PermissionModeState,
   PermissionResponseOptions,
@@ -51,6 +53,7 @@ export interface ISessionManager {
   setSessionPermissionMode(sessionId: string, mode: PermissionMode): void
   setSessionThinkingLevel(sessionId: string, level: ThinkingLevel): void
   updateWorkingDirectory(sessionId: string, path: string): void
+  setSessionSources(sessionId: string, sourceSlugs: string[]): Promise<void>
   setSessionConnection(sessionId: string, connectionSlug: string): Promise<void>
   updateSessionModel(
     sessionId: string,
@@ -93,6 +96,7 @@ export interface ISessionManager {
     alwaysAllow: boolean,
     options?: PermissionResponseOptions,
   ): boolean
+  respondToCredential(sessionId: string, requestId: string, response: CredentialResponse): Promise<boolean>
   getSessionPermissionModeState(sessionId: string): PermissionModeState | null
 
   setPendingPlanExecution(
@@ -132,4 +136,5 @@ export interface ISessionManager {
 
   reinitializeAuth(connectionSlug?: string): Promise<void>
   refreshConnectionRuntime(connectionSlug: string): Promise<void>
+  completeAuthRequest(sessionId: string, result: AuthResult): Promise<void>
 }

@@ -514,7 +514,7 @@ export function getConfigDomainBashRedirect(
 export type PreToolUseCheckResult =
   | { type: 'allow' }
   | { type: 'modify'; input: Record<string, unknown> }
-  | { type: 'block'; reason: string }
+  | { type: 'block'; reason: string; source?: 'prerequisite' }
   | {
       type: 'prompt';
       promptType: 'bash' | 'file_write' | 'browser' | 'network' | 'admin_approval';
@@ -529,6 +529,7 @@ export type PreToolUseCheckResult =
       commandHash?: string;
       approvalTtlSeconds?: number;
     }
+  | { type: 'source_activation_needed'; sourceSlug: string; sourceExists: boolean }
   | { type: 'call_llm_intercept'; input: Record<string, unknown> }
   | { type: 'spawn_session_intercept'; input: Record<string, unknown> };
 
@@ -555,8 +556,16 @@ export interface PreToolUseInput {
   dataFolderPath?: string;
   /** Working directory override (for skill resolution) */
   workingDirectory?: string;
+  /** Currently active source slugs */
+  activeSourceSlugs: string[];
+  /** All known source slugs, including inactive sources */
+  allSourceSlugs: string[];
+  /** Whether the caller can activate an inactive source */
+  hasSourceActivation: boolean;
   /** PermissionManager for session-scoped whitelists */
   permissionManager: PermissionManagerLike;
+  /** PrerequisiteManager for source and skill guide checks */
+  prerequisiteManager?: PrerequisiteManagerLike;
   /** Backend metadata (e.g. Pi forwards intent / displayName via input.metadata) */
   backendMetadata?: { intent?: string; displayName?: string };
   /** RTK Bash-rewrite context (undefined when toggle is off or rtk binary missing) */
@@ -584,6 +593,9 @@ export interface PrerequisiteManagerLike {
   checkPrerequisites(toolName: string): PrerequisiteCheckResult;
   trackBashSkillRead(input: Record<string, unknown>): boolean;
 }
+
+/** Built-in MCP servers are not user-configured sources. */
+const BUILT_IN_MCP_SERVERS = new Set(['session', 'craft-agents-docs']);
 
 /** File write tools that require permission in ask mode */
 const FILE_WRITE_TOOLS = new Set(['Write', 'Edit', 'MultiEdit', 'NotebookEdit']);
@@ -625,7 +637,11 @@ export function runPreToolUseChecks(ctx: PreToolUseInput): PreToolUseCheckResult
     plansFolderPath,
     dataFolderPath,
     workingDirectory,
+    activeSourceSlugs,
+    allSourceSlugs,
+    hasSourceActivation,
     permissionManager,
+    prerequisiteManager,
     backendMetadata,
     onDebug,
   } = ctx;
@@ -633,6 +649,7 @@ export function runPreToolUseChecks(ctx: PreToolUseInput): PreToolUseCheckResult
   // Build permissions context for custom permissions.json rules
   const permissionsContext: PermissionsContext = {
     workspaceRootPath,
+    activeSourceSlugs,
   };
 
   // Canonical mode source of truth for this session.
@@ -661,6 +678,44 @@ export function runPreToolUseChecks(ctx: PreToolUseInput): PreToolUseCheckResult
     const reasonWithContext = withPermissionModeContext(modeResult.reason, sessionId, effectivePermissionMode);
     onDebug?.(`Permission mode ${effectivePermissionMode}: blocking ${toolName} — ${reasonWithContext}`);
     return { type: 'block', reason: reasonWithContext };
+  }
+
+  // ============================================================
+  // 2. SOURCE BLOCKING (inactive MCP sources)
+  // ============================================================
+  if (toolName.startsWith('mcp__')) {
+    const parts = toolName.split('__');
+    const sourceSlug = parts[1];
+    if (
+      parts.length >= 3 &&
+      sourceSlug &&
+      !BUILT_IN_MCP_SERVERS.has(sourceSlug) &&
+      !activeSourceSlugs.includes(sourceSlug)
+    ) {
+      const sourceExists = allSourceSlugs.includes(sourceSlug);
+      onDebug?.(
+        `Source "${sourceSlug}" not active (exists=${sourceExists}, hasActivation=${hasSourceActivation})`
+      );
+      return { type: 'source_activation_needed', sourceSlug, sourceExists };
+    }
+  }
+
+  // ============================================================
+  // 3. PREREQUISITE CHECK (source guide and skill instructions)
+  // ============================================================
+  if (prerequisiteManager) {
+    if (toolName === 'Bash' && prerequisiteManager.trackBashSkillRead(input)) {
+      // Reading a pending skill through Bash satisfies that prerequisite.
+    } else {
+      const prerequisite = prerequisiteManager.checkPrerequisites(toolName);
+      if (!prerequisite.allowed) {
+        return {
+          type: 'block',
+          reason: prerequisite.blockReason!,
+          source: 'prerequisite',
+        };
+      }
+    }
   }
 
   // ============================================================

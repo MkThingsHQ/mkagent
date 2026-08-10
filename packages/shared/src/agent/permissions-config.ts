@@ -5,10 +5,13 @@ import { isValidPermissionsFile } from '../config/validators.ts';
 import { debug } from '../utils/debug.ts';
 import { readJsonFileSync, safeJsonParse } from '../utils/files.ts';
 import { getBundledAssetsDir } from '../utils/paths.ts';
+import { getSourcePath } from '../sources/storage.ts';
 import {
   PermissionsConfigSchema,
   SAFE_MODE_CONFIG,
   type BlockedCommandHintRule,
+  type ApiEndpointRule,
+  type CompiledApiEndpointRule,
   type CompiledBashPattern,
   type CompiledBlockedCommandHint,
   type PermissionPaths,
@@ -17,6 +20,8 @@ import {
 
 export {
   PermissionsConfigSchema,
+  type ApiEndpointRule,
+  type CompiledApiEndpointRule,
   type CompiledBashPattern,
   type PermissionPaths,
   type PermissionsConfigFile,
@@ -29,6 +34,8 @@ export interface PatternWithComment {
 
 export interface PermissionsCustomConfig {
   allowedBashPatterns: PatternWithComment[];
+  allowedMcpPatterns: string[];
+  allowedApiEndpoints: ApiEndpointRule[];
   allowedWritePaths: string[];
   blockedCommandHints: BlockedCommandHintRule[];
 }
@@ -37,6 +44,8 @@ export interface MergedPermissionsConfig {
   blockedTools: Set<string>;
   readOnlyBashPatterns: CompiledBashPattern[];
   blockedCommandHints: CompiledBlockedCommandHint[];
+  readOnlyMcpPatterns: RegExp[];
+  allowedApiEndpoints: CompiledApiEndpointRule[];
   allowedWritePaths: string[];
   displayName: string;
   shortcutHint: string;
@@ -45,6 +54,7 @@ export interface MergedPermissionsConfig {
 
 export interface PermissionsContext {
   workspaceRootPath: string;
+  activeSourceSlugs?: string[];
 }
 
 let permissionsInitialized = false;
@@ -110,6 +120,8 @@ export function ensureDefaultPermissions(): void {
 function emptyConfig(): PermissionsCustomConfig {
   return {
     allowedBashPatterns: [],
+    allowedMcpPatterns: [],
+    allowedApiEndpoints: [],
     allowedWritePaths: [],
     blockedCommandHints: [],
   };
@@ -125,6 +137,8 @@ export function parsePermissionsJson(content: string): PermissionsCustomConfig {
       typeof value === 'string' ? value : value.pattern;
     return {
       allowedBashPatterns: (result.data.allowedBashPatterns ?? []).map(normalize),
+      allowedMcpPatterns: (result.data.allowedMcpPatterns ?? []).map(normalizePath),
+      allowedApiEndpoints: result.data.allowedApiEndpoints ?? [],
       allowedWritePaths: (result.data.allowedWritePaths ?? []).map(normalizePath),
       blockedCommandHints: result.data.blockedCommandHints ?? [],
     };
@@ -151,6 +165,10 @@ export function getWorkspacePermissionsPath(workspaceRootPath: string): string {
   return join(workspaceRootPath, 'permissions.json');
 }
 
+export function getSourcePermissionsPath(workspaceRootPath: string, sourceSlug: string): string {
+  return join(getSourcePath(workspaceRootPath, sourceSlug), 'permissions.json');
+}
+
 export function loadDefaultPermissions(): PermissionsCustomConfig | null {
   const path = join(getAppPermissionsDir(), 'default.json');
   return existsSync(path) ? parsePermissionsJson(readFileSync(path, 'utf-8')) : null;
@@ -163,10 +181,28 @@ export function loadWorkspacePermissionsConfig(
   return existsSync(path) ? parsePermissionsJson(readFileSync(path, 'utf-8')) : null;
 }
 
+export function loadSourcePermissionsConfig(
+  workspaceRootPath: string,
+  sourceSlug: string,
+): PermissionsCustomConfig | null {
+  const path = getSourcePermissionsPath(workspaceRootPath, sourceSlug);
+  return existsSync(path) ? parsePermissionsJson(readFileSync(path, 'utf-8')) : null;
+}
+
 export function loadRawWorkspacePermissions(
   workspaceRootPath: string
 ): PermissionsConfigFile | null {
   const path = getWorkspacePermissionsPath(workspaceRootPath);
+  if (!existsSync(path)) return null;
+  const result = PermissionsConfigSchema.safeParse(readJsonFileSync(path));
+  return result.success ? result.data : null;
+}
+
+export function loadRawSourcePermissions(
+  workspaceRootPath: string,
+  sourceSlug: string,
+): PermissionsConfigFile | null {
+  const path = getSourcePermissionsPath(workspaceRootPath, sourceSlug);
   if (!existsSync(path)) return null;
   const result = PermissionsConfigSchema.safeParse(readJsonFileSync(path));
   return result.success ? result.data : null;
@@ -183,6 +219,21 @@ export function saveWorkspacePermissions(
     'utf-8'
   );
   permissionsConfigCache.invalidateWorkspace(workspaceRootPath);
+}
+
+export function saveSourcePermissions(
+  workspaceRootPath: string,
+  sourceSlug: string,
+  config: PermissionsConfigFile,
+): void {
+  const sourcePath = getSourcePath(workspaceRootPath, sourceSlug);
+  mkdirSync(sourcePath, { recursive: true });
+  writeFileSync(
+    getSourcePermissionsPath(workspaceRootPath, sourceSlug),
+    `${JSON.stringify(config, null, 2)}\n`,
+    'utf-8',
+  );
+  permissionsConfigCache.invalidateSource(workspaceRootPath, sourceSlug);
 }
 
 function compileRegex(pattern: string): RegExp | null {
@@ -204,6 +255,14 @@ function applyConfig(target: MergedPermissionsConfig, config: PermissionsCustomC
     const regex = compileRegex(entry.pattern);
     if (regex) target.readOnlyBashPatterns.push({ regex, source: entry.pattern, comment: entry.comment });
   }
+  for (const pattern of config.allowedMcpPatterns) {
+    const regex = compileRegex(pattern);
+    if (regex) target.readOnlyMcpPatterns.push(regex);
+  }
+  for (const rule of config.allowedApiEndpoints) {
+    const pathPattern = compileRegex(rule.path);
+    if (pathPattern) target.allowedApiEndpoints.push({ method: rule.method, pathPattern });
+  }
   target.allowedWritePaths.push(...config.allowedWritePaths);
   for (const hint of config.blockedCommandHints) {
     const compiled = compileHint(hint);
@@ -211,16 +270,33 @@ function applyConfig(target: MergedPermissionsConfig, config: PermissionsCustomC
   }
 }
 
+function applySourceConfig(
+  target: MergedPermissionsConfig,
+  config: PermissionsCustomConfig,
+  sourceSlug: string,
+): void {
+  const withoutMcp = { ...config, allowedMcpPatterns: [] };
+  applyConfig(target, withoutMcp);
+  for (const pattern of config.allowedMcpPatterns) {
+    const regex = compileRegex(`mcp__${sourceSlug}__.*${pattern}`);
+    if (regex) target.readOnlyMcpPatterns.push(regex);
+  }
+}
+
 class PermissionsConfigCache {
   private merged = new Map<string, MergedPermissionsConfig>();
 
   getMergedConfig(context: PermissionsContext): MergedPermissionsConfig {
-    const cached = this.merged.get(context.workspaceRootPath);
+    const activeSources = [...(context.activeSourceSlugs ?? [])].sort();
+    const cacheKey = `${context.workspaceRootPath}::${activeSources.join(',')}`;
+    const cached = this.merged.get(cacheKey);
     if (cached) return cached;
     const result: MergedPermissionsConfig = {
       blockedTools: new Set(SAFE_MODE_CONFIG.blockedTools),
       readOnlyBashPatterns: [...SAFE_MODE_CONFIG.readOnlyBashPatterns],
       blockedCommandHints: [...(SAFE_MODE_CONFIG.blockedCommandHints ?? [])],
+      readOnlyMcpPatterns: [...(SAFE_MODE_CONFIG.readOnlyMcpPatterns ?? [])],
+      allowedApiEndpoints: [...(SAFE_MODE_CONFIG.allowedApiEndpoints ?? [])],
       allowedWritePaths: [],
       displayName: SAFE_MODE_CONFIG.displayName,
       shortcutHint: SAFE_MODE_CONFIG.shortcutHint,
@@ -234,7 +310,11 @@ class PermissionsConfigCache {
     const workspace = loadWorkspacePermissionsConfig(context.workspaceRootPath);
     if (defaults) applyConfig(result, defaults);
     if (workspace) applyConfig(result, workspace);
-    this.merged.set(context.workspaceRootPath, result);
+    for (const sourceSlug of activeSources) {
+      const source = loadSourcePermissionsConfig(context.workspaceRootPath, sourceSlug);
+      if (source) applySourceConfig(result, source, sourceSlug);
+    }
+    this.merged.set(cacheKey, result);
     return result;
   }
 
@@ -243,7 +323,13 @@ class PermissionsConfigCache {
   }
 
   invalidateWorkspace(workspaceRootPath: string): void {
-    this.merged.delete(workspaceRootPath);
+    for (const key of this.merged.keys()) {
+      if (key.startsWith(`${workspaceRootPath}::`)) this.merged.delete(key);
+    }
+  }
+
+  invalidateSource(workspaceRootPath: string, _sourceSlug: string): void {
+    this.invalidateWorkspace(workspaceRootPath);
   }
 
   clear(): void {

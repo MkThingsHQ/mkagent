@@ -10,6 +10,7 @@ import type {
   CredentialId,
   StoredCredential,
 } from './types.ts';
+import { credentialIdToAccount } from './types.ts';
 
 export class CredentialManager {
   private backends: CredentialBackend[] = [];
@@ -91,9 +92,83 @@ export class CredentialManager {
     await this.ensureInitialized();
     const results = new Map<string, CredentialId>();
     for (const backend of this.backends) {
-      for (const id of await backend.list(filter)) results.set(`${id.type}:${id.connectionSlug}`, id);
+      for (const id of await backend.list(filter)) {
+        if (filter?.type && id.type !== filter.type) continue;
+        if (filter?.connectionSlug && id.connectionSlug !== filter.connectionSlug) continue;
+        if (filter?.workspaceId && id.workspaceId !== filter.workspaceId) continue;
+        if (filter?.sourceId && id.sourceId !== filter.sourceId) continue;
+        results.set(credentialIdToAccount(id), id);
+      }
     }
     return [...results.values()];
+  }
+
+  async getWorkspaceOAuth(workspaceId: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: number;
+    clientId?: string;
+  } | null> {
+    const credential = await this.get({ type: 'workspace_oauth', workspaceId });
+    if (!credential) return null;
+    return {
+      accessToken: credential.value,
+      refreshToken: credential.refreshToken,
+      expiresAt: credential.expiresAt,
+      clientId: credential.clientId,
+    };
+  }
+
+  async getClaudeOAuthCredentials(): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: number;
+    source?: 'native' | 'cli';
+  } | null> {
+    const credential = await this.get({ type: 'claude_oauth' });
+    if (!credential) return null;
+    return {
+      accessToken: credential.value,
+      refreshToken: credential.refreshToken,
+      expiresAt: credential.expiresAt,
+      source: credential.source,
+    };
+  }
+
+  async setClaudeOAuthCredentials(credentials: {
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: number;
+    source?: 'native' | 'cli';
+  }): Promise<void> {
+    await this.set({ type: 'claude_oauth' }, {
+      value: credentials.accessToken,
+      refreshToken: credentials.refreshToken,
+      expiresAt: credentials.expiresAt,
+      source: credentials.source,
+    });
+  }
+
+  async setWorkspaceOAuth(workspaceId: string, credentials: {
+    accessToken: string;
+    refreshToken?: string;
+    expiresAt?: number;
+    clientId?: string;
+  }): Promise<void> {
+    await this.set({ type: 'workspace_oauth', workspaceId }, {
+      value: credentials.accessToken,
+      refreshToken: credentials.refreshToken,
+      expiresAt: credentials.expiresAt,
+      clientId: credentials.clientId,
+    });
+  }
+
+  async deleteWorkspaceCredentials(workspaceId: string): Promise<void> {
+    await this.delete({ type: 'workspace_oauth', workspaceId });
+    const sourceCredentials = await this.list({ workspaceId });
+    for (const id of sourceCredentials) {
+      await this.delete(id);
+    }
   }
 
   async getLlmApiKey(connectionSlug: string): Promise<string | null> {
@@ -148,7 +223,7 @@ export class CredentialManager {
     await this.deleteLlmOAuth(connectionSlug);
   }
 
-  async hasLlmCredentials(connectionSlug: string, authType: LlmAuthType): Promise<boolean> {
+  async hasLlmCredentials(connectionSlug: string, authType: LlmAuthType, _providerType?: string): Promise<boolean> {
     if (authType === 'none') return true;
     if (authType === 'oauth') return Boolean(await this.getLlmOAuth(connectionSlug));
     return Boolean(await this.getLlmApiKey(connectionSlug));

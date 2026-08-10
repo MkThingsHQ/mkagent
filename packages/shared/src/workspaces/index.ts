@@ -19,6 +19,7 @@ export {
   ensureDefaultWorkspacesDir,
   ensureDefaultWorkspace,
   getWorkspacePath,
+  getWorkspaceSourcesPath,
   getWorkspaceSessionsPath,
   getWorkspaceSkillsPath,
   // Config operations
@@ -34,6 +35,7 @@ export {
   deleteWorkspaceFolder,
   isValidWorkspace,
   renameWorkspaceFolder,
+  isLocalMcpEnabled,
   // Auto-discovery
   discoverWorkspacesInDefaultLocation,
   // Constants

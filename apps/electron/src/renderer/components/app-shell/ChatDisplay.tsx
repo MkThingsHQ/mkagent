@@ -42,7 +42,7 @@ import {
 } from "@mkagent/ui"
 import { useFocusZone } from "@/hooks/keyboard"
 import { useTheme } from "@/hooks/useTheme"
-import type { Session, Message, FileAttachment, StoredAttachment, PermissionRequest, LoadedSkill } from "../../../shared/types"
+import type { Session, Message, FileAttachment, StoredAttachment, PermissionRequest, CredentialRequest, CredentialResponse, LoadedSource, LoadedSkill } from "../../../shared/types"
 import type { PermissionMode } from "@mkagent/shared/agent/modes"
 import type { ThinkingLevel } from "@mkagent/shared/agent/thinking-levels"
 import {
@@ -61,7 +61,9 @@ import {
   type AssistantTurn,
   type UserTurn,
   type SystemTurn,
+  type AuthRequestTurn,
 } from "@mkagent/ui"
+import { MemoizedAuthRequestCard } from "@/components/chat/AuthRequestCard"
 import { ChatInputZone, type StructuredInputState, type StructuredResponse, type PermissionResponse, type AdminApprovalResponse } from "./input"
 import type { RichTextInputHandle } from "@/components/ui/rich-text-input"
 import { useBackgroundTasks } from "@/hooks/useBackgroundTasks"
@@ -123,6 +125,7 @@ function isStackedActivityTool(activity: ActivityItem): boolean {
 function getTurnKey(turn: Turn): string {
   if (turn.type === 'user') return `user-${turn.message.id}`
   if (turn.type === 'system') return `system-${turn.message.id}`
+  if (turn.type === 'auth-request') return `auth-${turn.message.id}`
   return `turn-${turn.turnId}-${turn.timestamp}`
 }
 
@@ -151,6 +154,10 @@ interface ChatDisplayProps {
     alwaysAllow: boolean,
     options?: import('../../../shared/types').PermissionResponseOptions
   ) => void
+  /** Pending credential request for this session */
+  pendingCredential?: CredentialRequest
+  /** Callback to respond to credential request */
+  onRespondToCredential?: (sessionId: string, requestId: string, response: CredentialResponse) => void
   // Thinking level (session-level setting)
   /** Current thinking level ('off', 'think', 'max') */
   thinkingLevel?: ThinkingLevel
@@ -171,6 +178,11 @@ interface ChatDisplayProps {
   attachmentsValue?: FileAttachment[]
   /** Callback when attachment draft changes (add, remove, clear on send) */
   onAttachmentsChange?: (attachments: FileAttachment[]) => void
+  // Source selection
+  /** Available sources (enabled only) */
+  sources?: LoadedSource[]
+  /** Callback when source selection changes */
+  onSourcesChange?: (slugs: string[]) => void
   // Skill selection (for @mentions)
   /** Available skills for @mention autocomplete */
   skills?: LoadedSkill[]
@@ -425,6 +437,8 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   disabled = false,
   pendingPermission,
   onRespondToPermission,
+  pendingCredential,
+  onRespondToCredential,
   // Thinking level
   thinkingLevel = 'medium',
   onThinkingLevelChange,
@@ -437,6 +451,9 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   onInputChange,
   attachmentsValue,
   onAttachmentsChange,
+  // Sources
+  sources,
+  onSourcesChange,
   // Skills (for @mentions)
   skills,
   workspaceId,
@@ -1316,6 +1333,12 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
         false,
         { rememberForMinutes: adminResponse.rememberForMinutes }
       )
+    } else if (response.type === 'credential' && pendingCredential && onRespondToCredential) {
+      onRespondToCredential(
+        pendingCredential.sessionId,
+        pendingCredential.requestId,
+        response as CredentialResponse
+      )
     }
   }
 
@@ -1337,8 +1360,11 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
       }
       return { type: 'permission', data: pendingPermission }
     }
+    if (pendingCredential) {
+      return { type: 'credential', data: pendingCredential }
+    }
     return undefined
-  }, [pendingPermission])
+  }, [pendingPermission, pendingCredential])
 
   // Memoize turn grouping - avoids O(n) iteration on every render/keystroke
   const allTurns = React.useMemo(() => {
@@ -1623,6 +1649,31 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
                       )
                     }
 
+                    // Auth-request turns - render inline auth UI
+                    // mt-2 matches ResponseCard spacing for visual consistency
+                    if (turn.type === 'auth-request') {
+                      // Interactive only if no user message follows
+                      const isAuthInteractive = !turns.slice(index + 1).some(t => t.type === 'user')
+                      return (
+                        <div
+                          key={turnKey}
+                          ref={el => { if (el) turnRefs.current.set(turnKey, el); else turnRefs.current.delete(turnKey) }}
+                          className={cn(
+                            "mt-2 rounded-lg transition-all duration-200",
+                            isCurrentMatch && "ring-2 ring-info ring-offset-2 ring-offset-background",
+                            isAnyMatch && !isCurrentMatch && "ring-1 ring-info/30"
+                          )}
+                        >
+                          <MemoizedAuthRequestCard
+                            message={turn.message}
+                            sessionId={session.id}
+                            onRespondToCredential={onRespondToCredential}
+                            isInteractive={isAuthInteractive}
+                          />
+                        </div>
+                      )
+                    }
+
                     // Check if this is the last response (for Accept Plan button visibility)
                     const isLastResponse = index === turns.length - 1 || !turns.slice(index + 1).some(t => t.type === 'user')
 
@@ -1674,6 +1725,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
                                 model: session.model,
                                 permissionMode: session.permissionMode,
                                 workingDirectory: session.workingDirectory,
+                                enabledSourceSlugs: session.enabledSourceSlugs,
                               }
                             )
                             navigate(routes.view.allSessions(child.id), { newPanel: resolveBranchNewPanelOption(options) })
@@ -1873,6 +1925,9 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
               onInputChange,
               attachmentsValue,
               onAttachmentsChange,
+              sources,
+              enabledSourceSlugs: session.enabledSourceSlugs,
+              onSourcesChange,
               skills,
               workspaceId,
               workingDirectory,

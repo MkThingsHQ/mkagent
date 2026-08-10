@@ -16,7 +16,11 @@ describe('MkAgent system prompt', () => {
     const prompt = getSystemPrompt('', undefined, '/tmp/workspace', undefined, 'default', 'MkAgent Backend', false)
     expect(prompt).toContain('MkAgent')
     expect(prompt).toContain('rg')
-    expect(prompt).not.toContain('Sources')
+    expect(prompt).toContain('## External Sources')
+    expect(prompt).toContain('/tmp/workspace/sources/{slug}/')
+    expect(prompt).toContain('## Source Management Tools')
+    expect(prompt).toContain('mcp__sources__{slug}__{tool}')
+    expect(prompt).toContain('## Source Templates')
     expect(prompt).not.toContain('Automations')
   })
 

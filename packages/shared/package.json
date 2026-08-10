@@ -17,14 +17,21 @@
     "./agent/modes": "./src/agent/mode-types.ts",
     "./agent/mode-types": "./src/agent/mode-types.ts",
     "./agent/thinking-levels": "./src/agent/thinking-levels.ts",
+    "./auth/callback-page": "./src/auth/callback-page.ts",
+    "./auth/callback-server": "./src/auth/callback-server.ts",
+    "./auth/chatgpt-oauth-config": "./src/auth/chatgpt-oauth-config.ts",
+    "./auth/types": "./src/auth/types.ts",
     "./config": "./src/config/index.ts",
     "./docs": "./src/docs/index.ts",
     "./docs/doc-links": "./src/docs/doc-links.ts",
     "./config/types": "./src/config/types.ts",
     "./credentials": "./src/credentials/index.ts",
     "./auth": "./src/auth/index.ts",
+    "./mcp": "./src/mcp/index.ts",
     "./prompts": "./src/prompts/index.ts",
     "./sessions": "./src/sessions/index.ts",
+    "./sources": "./src/sources/index.ts",
+    "./sources/types": "./src/sources/types.ts",
     "./skills": "./src/skills/index.ts",
     "./workspaces": "./src/workspaces/index.ts",
     "./utils": "./src/utils/index.ts",
@@ -46,7 +53,8 @@
     "./mentions": "./src/mentions/index.ts",
     "./skills/types": "./src/skills/types.ts",
     "./protocol": "./src/protocol/index.ts",
-    "./i18n": "./src/i18n/index.ts"
+    "./i18n": "./src/i18n/index.ts",
+    "./resources": "./src/resources/index.ts"
   },
   "dependencies": {
     "@mkagent/core": "workspace:*",
@@ -66,6 +74,8 @@
     "@earendil-works/pi-coding-agent": "0.80.6"
   },
   "peerDependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.197",
+    "@modelcontextprotocol/sdk": ">=1.29.0",
     "zod": ">=4.0.0"
   },
   "devDependencies": {

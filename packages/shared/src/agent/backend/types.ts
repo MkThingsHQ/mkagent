@@ -16,8 +16,12 @@ import type { AgentEvent } from '@mkagent/core/types';
 import type { FileAttachment } from '../../utils/files.ts';
 import type { ThinkingLevel } from '../thinking-levels.ts';
 import type { PermissionMode } from '../mode-manager.ts';
+import type { LoadedSource } from '../../sources/types.ts';
+import type { AuthRequest } from '../session-scoped-tools.ts';
+import type { McpClientPool } from '../../mcp/mcp-pool.ts';
 import type { Workspace } from '../../config/storage.ts';
 import type { SessionConfig as Session } from '../../sessions/storage.ts';
+import type { SourceManager } from '../core/source-manager.ts';
 
 // Import AbortReason and RecoveryMessage from core module (single source of truth)
 import { AbortReason, type RecoveryMessage } from '../core/index.ts';
@@ -78,6 +82,15 @@ export type PermissionCallback = (request: {
  * Called when agent submits a plan for user review.
  */
 export type PlanCallback = (planPath: string) => void;
+
+/** Called when a source requires authentication. */
+export type AuthCallback = (request: AuthRequest) => void;
+
+/** Called when a source is activated, deactivated, or modified. */
+export type SourceChangeCallback = (slug: string, source: LoadedSource | null) => void;
+
+/** Request activation of an inactive source. */
+export type SourceActivationCallback = (sourceSlug: string) => Promise<boolean>;
 
 // ============================================================
 // Lifecycle Types
@@ -155,6 +168,9 @@ export interface CoreBackendConfig {
    */
   envOverrides?: Record<string, string>;
 
+  /** Centralized MCP client pool for source tool execution. */
+  mcpPool?: McpClientPool;
+
   /** Callback when SDK session ID is captured/updated */
   onSdkSessionIdUpdate?: (sdkSessionId: string) => void;
 
@@ -206,6 +222,14 @@ export interface CoreBackendConfig {
   /** Enable 1M context window for current Opus models. Default: true. Set false to use 200K and conserve usage limits. */
   enable1MContext?: boolean;
 
+  /** Pre-computed source configurations for initial backend setup. */
+  initialSources?: {
+    enabledSources: LoadedSource[];
+    mcpServers: Record<string, SdkMcpServerConfig>;
+    apiServers: Record<string, unknown>;
+    enabledSlugs: string[];
+  };
+
 }
 
 // ============================================================
@@ -221,6 +245,23 @@ export interface ChatOptions {
   /** Override thinking level for this message only */
   thinkingOverride?: ThinkingLevel;
 }
+
+/** SDK-compatible MCP server configuration. */
+export type SdkMcpServerConfig =
+  | {
+      type: 'http' | 'sse';
+      url: string;
+      headers?: Record<string, string>;
+      bearerTokenEnvVar?: string;
+    }
+  | {
+      type: 'stdio';
+      command: string;
+      args?: string[];
+      env?: Record<string, string>;
+      envVars?: string[];
+      cwd?: string;
+    };
 
 /**
  * Core backend interface - all AI providers must implement this.
@@ -390,6 +431,28 @@ export interface AgentBackend {
   /** Whether this backend supports session branching */
   readonly supportsBranching: boolean;
 
+  // ============================================================
+  // Source Management
+  // ============================================================
+
+  setSourceServers(
+    mcpServers: Record<string, SdkMcpServerConfig>,
+    apiServers: Record<string, unknown>,
+    intendedSlugs?: string[]
+  ): void | Promise<void>;
+
+  getActiveSourceSlugs(): string[];
+
+  getCurrentTurnUserMessage(): string | null;
+
+  setPendingSourceActivationRestart(pending: { sourceSlug: string; userMessage: string }): void;
+
+  getAllSources(): LoadedSource[];
+
+  setAllSources(sources: LoadedSource[]): void;
+
+  markSourceUnseen(sourceSlug: string): void;
+
   /**
    * Get a bound summarize callback for passing to API tool builders.
    */
@@ -410,6 +473,9 @@ export interface AgentBackend {
 
   /** Set session ID */
   setSessionId(sessionId: string | null): void;
+
+  /** Get SourceManager for advanced source state queries. */
+  getSourceManager(): SourceManager;
 
   /** Generate a session title from user message */
   generateTitle(message: string, options?: { language?: string }): Promise<string | null>;
@@ -440,11 +506,20 @@ export interface AgentBackend {
   /** Called when agent submits a plan */
   onPlanSubmitted: PlanCallback | null;
 
+  /** Called when a source requires authentication. */
+  onAuthRequest: AuthCallback | null;
+
+  /** Called when source configuration changes. */
+  onSourceChange: SourceChangeCallback | null;
+
   /** Called when permission mode changes */
   onPermissionModeChange: ((mode: PermissionMode) => void) | null;
 
   /** Called with debug messages */
   onDebug: ((message: string) => void) | null;
+
+  /** Called when a tool targets an inactive source. */
+  onSourceActivationRequest: SourceActivationCallback | null;
 
   /**
    * Called when backend-specific authentication is required.

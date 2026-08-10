@@ -10,6 +10,7 @@
  */
 import { describe, it, expect, beforeEach } from 'bun:test';
 import type { SpawnSessionRequest, SpawnSessionResult } from '../base-agent.ts';
+import { createSpawnSessionTool } from '../spawn-session-tool.ts';
 import { TestAgent, createMockBackendConfig } from './test-utils.ts';
 
 class SpawnTestAgent extends TestAgent {
@@ -59,6 +60,21 @@ describe('spawn_session thinkingLevel forwarding', () => {
   it('passes through undefined when thinkingLevel is omitted', async () => {
     await agent.invokeSpawn({ prompt: 'hi' });
     expect(captured[0]?.thinkingLevel).toBeUndefined();
+  });
+
+  it('forwards enabled Sources to onSpawnSession', async () => {
+    await agent.invokeSpawn({ prompt: 'hi', enabledSourceSlugs: ['github', 'linear'] });
+    expect(captured[0]?.enabledSourceSlugs).toEqual(['github', 'linear']);
+  });
+
+  it('exposes enabled Sources in the public tool schema', () => {
+    const spawnTool = createSpawnSessionTool({
+      sessionId: 'test-session',
+      getSpawnSessionFn: () => undefined,
+    });
+
+    expect(spawnTool.parameters.enabledSourceSlugs).toBeDefined();
+    expect(spawnTool.description).toContain('connections, models, and sources');
   });
 
   it('does not drop thinkingLevel when other optional fields are also set', async () => {

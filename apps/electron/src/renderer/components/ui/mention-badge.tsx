@@ -2,7 +2,8 @@ import * as React from 'react'
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SkillAvatar } from '@/components/ui/skill-avatar'
-import type { LoadedSkill } from '../../../shared/types'
+import { SourceAvatar } from '@/components/ui/source-avatar'
+import type { LoadedSkill, LoadedSource } from '../../../shared/types'
 import type { MentionItemType } from './mention-menu'
 
 // ============================================================================
@@ -14,6 +15,8 @@ export interface MentionBadgeProps {
   label: string
   /** Skill data for skill mentions */
   skill?: LoadedSkill
+  /** Source data for source mentions */
+  source?: LoadedSource
   /** Workspace ID for skill avatar */
   workspaceId?: string
   /** Called when the remove button is clicked */
@@ -36,6 +39,7 @@ export function MentionBadge({
   type,
   label,
   skill,
+  source,
   workspaceId,
   onRemove,
   className,
@@ -52,6 +56,9 @@ export function MentionBadge({
       {/* Icon based on type */}
       {type === 'skill' && skill && (
         <SkillAvatar skill={skill} size="xs" workspaceId={workspaceId} />
+      )}
+      {type === 'source' && source && (
+        <SourceAvatar source={source} size="xs" />
       )}
 
       {/* Label */}
@@ -83,6 +90,7 @@ export interface ParsedMention {
   type: MentionItemType
   label: string
   skill?: LoadedSkill
+  source?: LoadedSource
 }
 
 export interface ActiveMentionBadgesProps {
@@ -118,6 +126,7 @@ export function ActiveMentionBadges({
           type={mention.type}
           label={mention.label}
           skill={mention.skill}
+          source={mention.source}
           workspaceId={workspaceId}
           onRemove={onRemove ? () => onRemove(mention.id, mention.type) : undefined}
         />

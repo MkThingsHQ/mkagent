@@ -9,6 +9,7 @@ import { PrerequisiteManager } from '../prerequisite-manager.ts';
 let mockExistsPaths = new Set<string>();
 const WORKSPACE_ROOT = '/test/workspace';
 const BROWSER_DOC_PATH = resolve(join(homedir(), '.mkagent', 'docs', 'browser-tools.md'));
+const sourceGuidePath = (slug: string) => resolve(WORKSPACE_ROOT, 'sources', slug, 'guide.md');
 
 describe('PrerequisiteManager', () => {
   let manager: PrerequisiteManager;
@@ -60,6 +61,33 @@ describe('PrerequisiteManager', () => {
       mockExistsPaths.add(BROWSER_DOC_PATH);
       expect(manager.checkPrerequisites('browser_tool').allowed).toBe(false);
       expect(manager.checkPrerequisites('browser_tool').allowed).toBe(false);
+    });
+  });
+
+  describe('Source guides', () => {
+    it('blocks MCP source tools until guide.md is read', () => {
+      const guidePath = sourceGuidePath('linear');
+      mockExistsPaths.add(guidePath);
+      expect(manager.checkPrerequisites('mcp__linear__createIssue').allowed).toBe(false);
+      manager.trackReadTool({ file_path: guidePath });
+      expect(manager.checkPrerequisites('mcp__linear__createIssue').allowed).toBe(true);
+    });
+
+    it('blocks API source tools until guide.md is read', () => {
+      const guidePath = sourceGuidePath('github');
+      mockExistsPaths.add(guidePath);
+      expect(manager.checkPrerequisites('api_github').allowed).toBe(false);
+    });
+
+    it('exempts built-in session and docs MCP servers', () => {
+      mockExistsPaths.add(sourceGuidePath('session'));
+      mockExistsPaths.add(sourceGuidePath('craft-agents-docs'));
+      expect(manager.checkPrerequisites('mcp__session__source_test').allowed).toBe(true);
+      expect(manager.checkPrerequisites('mcp__craft-agents-docs__search').allowed).toBe(true);
+    });
+
+    it('allows source tools when no guide exists', () => {
+      expect(manager.checkPrerequisites('mcp__linear__search').allowed).toBe(true);
     });
   });
 

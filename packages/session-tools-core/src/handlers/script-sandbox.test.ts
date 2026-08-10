@@ -33,11 +33,14 @@ describe('script_sandbox', () => {
     return {
       sessionId: 'sandbox-session',
       workspacePath: rootDir,
+      sourcesPath: join(rootDir, 'sources'),
       skillsPath: join(rootDir, 'skills'),
       plansFolderPath: join(sessionDir, 'plans'),
       callbacks: {
         onPlanSubmitted: () => {},
+        onAuthRequest: () => {},
       },
+      loadSourceConfig: () => null,
       fs: {
         exists: () => false,
         readFile: () => '',

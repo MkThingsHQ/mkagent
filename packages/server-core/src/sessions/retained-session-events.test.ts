@@ -36,6 +36,9 @@ describe('retained session event behavior', () => {
     managed.agent = {
       isProcessing: () => false,
       updateRuntimeConfig: async () => true,
+      getSummarizeCallback: () => async () => null,
+      setAllSources: () => {},
+      setSourceServers: async () => {},
       redirect: () => false,
       chat: async function* () {
         for (const event of events) yield event

@@ -1,5 +1,6 @@
 import type { PlatformServices } from '../runtime/platform'
 import type { ISessionManager } from './session-manager-interface'
+import type { IOAuthFlowStore } from './oauth-flow-store-interface'
 import type { IBrowserPaneManager } from './browser-pane-manager-interface'
 import type { IWindowManager } from './window-manager-interface'
 
@@ -14,6 +15,7 @@ import type { IWindowManager } from './window-manager-interface'
  */
 export interface HandlerDeps<
   TSessionManager extends ISessionManager = ISessionManager,
+  TOAuthFlowStore extends IOAuthFlowStore = IOAuthFlowStore,
   TWindowManager extends IWindowManager = IWindowManager,
   TBrowserPaneManager extends IBrowserPaneManager = IBrowserPaneManager,
 > {
@@ -21,5 +23,6 @@ export interface HandlerDeps<
   platform: PlatformServices
   windowManager?: TWindowManager
   browserPaneManager?: TBrowserPaneManager
+  oauthFlowStore: TOAuthFlowStore
   onThemePreferencesChanged?: (preferences: { mode: string; colorTheme: string; font: string }) => void
 }

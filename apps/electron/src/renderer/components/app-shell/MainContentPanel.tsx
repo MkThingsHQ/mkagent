@@ -17,6 +17,7 @@ import {
   useNavigationState,
   isSessionsNavigation,
   isSettingsNavigation,
+  isSourcesNavigation,
   isSkillsNavigation,
 } from '@/contexts/NavigationContext'
 import {
@@ -25,9 +26,11 @@ import {
   useSelectedIds,
   useSelectionCount,
 } from '@/hooks/useSession'
-import { skillSelection } from '@/hooks/useEntitySelection'
+import { sourceSelection, skillSelection } from '@/hooks/useEntitySelection'
 import { ChatPage } from '@/pages'
 import SkillInfoPage from '@/pages/SkillInfoPage'
+import SourceInfoPage from '@/pages/SourceInfoPage'
+import { navigate, routes } from '@/lib/navigate'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
 
 export interface MainContentPanelProps {
@@ -57,6 +60,9 @@ export function MainContentPanel({
   const isSkillMultiSelectActive = skillSelection.useIsMultiSelectActive()
   const skillSelectionCount = skillSelection.useSelectionCount()
   const { clearMultiSelect: clearSkillSelection } = skillSelection.useSelection()
+  const isSourceMultiSelectActive = sourceSelection.useIsMultiSelectActive()
+  const sourceSelectionCount = sourceSelection.useSelectionCount()
+  const { clearMultiSelect: clearSourceSelection } = sourceSelection.useSelection()
 
   const handleBatchArchive = useCallback(() => {
     selectedIds.forEach(sessionId => onArchiveSession(sessionId))
@@ -74,6 +80,38 @@ export function MainContentPanel({
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
         <SettingsPageComponent />
+      </Panel>,
+    )
+  }
+
+  if (isSourcesNavigation(navState)) {
+    if (isSourceMultiSelectActive) {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <MultiSelectPanel
+            count={sourceSelectionCount}
+            entityType="source"
+            onClearSelection={clearSourceSelection}
+          />
+        </Panel>,
+      )
+    }
+    if (navState.details?.type === 'source') {
+      return wrapWithStoplight(
+        <Panel variant="grow" className={className}>
+          <SourceInfoPage
+            sourceSlug={navState.details.sourceSlug}
+            workspaceId={activeWorkspaceId || ''}
+            onDelete={() => navigate(routes.view.sources())}
+          />
+        </Panel>,
+      )
+    }
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <div className="flex items-center justify-center h-full text-muted-foreground">
+          <p className="text-sm">{t('sourcesList.noSourcesConfigured')}</p>
+        </div>
       </Panel>,
     )
   }

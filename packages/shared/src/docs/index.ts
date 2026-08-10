@@ -98,6 +98,7 @@ export const APP_ROOT = CONFIG_DIR;
  */
 export const DOC_REFS = {
   appRoot: APP_ROOT,
+  sources: `${APP_ROOT}/docs/sources.md`,
   permissions: `${APP_ROOT}/docs/permissions.md`,
   skills: `${APP_ROOT}/docs/skills.md`,
   themes: `${APP_ROOT}/docs/themes.md`,
@@ -160,6 +161,18 @@ export function initializeDocs(): void {
 
 // Export the lazy getter for external access
 export { getBundledDocs };
+
+// Re-export source guide parsing and domain helpers.
+export {
+  parseSourceGuide,
+  getSourceGuide,
+  getSourceGuideForDomain,
+  getSourceKnowledge,
+  extractDomainFromSource,
+  extractDomainFromUrl,
+  type ParsedSourceGuide,
+  type SourceGuideFrontmatter,
+} from './source-guides.ts';
 
 // Re-export doc links (for UI help popovers)
 export {

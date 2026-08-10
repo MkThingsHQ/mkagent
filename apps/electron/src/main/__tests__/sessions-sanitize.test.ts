@@ -42,6 +42,16 @@ describe('sanitizeForTitle', () => {
     })
   })
 
+  describe('source mentions', () => {
+    it('strips [source:slug] format', () => {
+      expect(sanitizeForTitle('[source:github] check PRs')).toBe('check PRs')
+    })
+
+    it('strips source with hyphens', () => {
+      expect(sanitizeForTitle('[source:my-source] query data')).toBe('query data')
+    })
+  })
+
   describe('file mentions', () => {
     it('strips [file:/path/to/file]', () => {
       expect(sanitizeForTitle('[file:/Users/me/project/index.ts] refactor this')).toBe('refactor this')

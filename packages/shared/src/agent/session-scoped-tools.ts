@@ -1,5 +1,15 @@
 import { getSessionPlansPath } from '../sessions/storage.ts';
 
+export type {
+  AuthRequest,
+  AuthRequestType,
+  CredentialAuthRequest,
+  GoogleOAuthAuthRequest,
+  McpOAuthAuthRequest,
+  MicrosoftOAuthAuthRequest,
+  SlackOAuthAuthRequest,
+} from '@mkagent/session-tools-core';
+
 export type { BrowserPaneFns } from './browser-tools.ts';
 export {
   getSessionScopedToolCallbacks,

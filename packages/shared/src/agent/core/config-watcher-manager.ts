@@ -3,13 +3,17 @@ import {
   createConfigWatcher,
   type ConfigWatcherCallbacks,
 } from '../../config/watcher.ts';
+import type { LoadedSource } from '../../sources/types.ts';
 import type { LoadedSkill } from '../../skills/types.ts';
 import { debug } from '../../utils/debug.ts';
 
 export interface ConfigWatcherManagerCallbacks {
+  onSourceChange?: (slug: string, source: LoadedSource | null) => void;
+  onSourcesListChange?: (sources: LoadedSource[]) => void;
   onSkillChange?: (slug: string, skill: LoadedSkill | null) => void;
   onSkillsListChange?: (skills: LoadedSkill[]) => void;
   onWorkspacePermissionsChange?: (workspaceId: string) => void;
+  onSourcePermissionsChange?: (sourceSlug: string) => void;
   onDefaultPermissionsChange?: () => void;
   onValidationError?: (file: string, errors: string[]) => void;
 }
@@ -42,6 +46,14 @@ export class ConfigWatcherManager {
     }
 
     const watcherCallbacks: ConfigWatcherCallbacks = {
+      onSourceChange: (slug, source) => {
+        this.log(`Source changed: ${slug} ${source ? 'updated' : 'deleted'}`);
+        this.callbacks.onSourceChange?.(slug, source);
+      },
+      onSourcesListChange: sources => {
+        this.log(`Sources list changed: ${sources.length} sources`);
+        this.callbacks.onSourcesListChange?.(sources);
+      },
       onSkillChange: (slug, skill) => {
         this.log(`Skill changed: ${slug} ${skill ? 'updated' : 'deleted'}`);
         this.callbacks.onSkillChange?.(slug, skill);
@@ -53,6 +65,10 @@ export class ConfigWatcherManager {
       onWorkspacePermissionsChange: workspaceId => {
         this.log(`Workspace permissions changed: ${workspaceId}`);
         this.callbacks.onWorkspacePermissionsChange?.(workspaceId);
+      },
+      onSourcePermissionsChange: sourceSlug => {
+        this.log(`Source permissions changed: ${sourceSlug}`);
+        this.callbacks.onSourcePermissionsChange?.(sourceSlug);
       },
       onDefaultPermissionsChange: () => {
         this.log('Default permissions changed');

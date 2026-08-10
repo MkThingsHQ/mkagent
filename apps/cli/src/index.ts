@@ -17,6 +17,7 @@ export interface CliArgs {
   sendTimeout: number
   command: string
   rest: string[]
+  sources: string[]
   mode: string
   name?: string
   outputFormat: string
@@ -48,6 +49,7 @@ export function parseArgs(argv: string[]): CliArgs {
     sendTimeout: 300_000,
     command: '',
     rest: [],
+    sources: [],
     mode: '',
     outputFormat: 'text',
     noCleanup: false,
@@ -67,6 +69,7 @@ export function parseArgs(argv: string[]): CliArgs {
       case '--timeout': args.timeout = Number(takeValue(input, index++, value)); break
       case '--tls-ca': args.tlsCa = takeValue(input, index++, value); break
       case '--send-timeout': args.sendTimeout = Number(takeValue(input, index++, value)); break
+      case '--source': args.sources.push(takeValue(input, index++, value)); break
       case '--mode': args.mode = takeValue(input, index++, value); break
       case '--name': args.name = takeValue(input, index++, value); break
       case '--output-format': args.outputFormat = takeValue(input, index++, value); break
@@ -313,6 +316,7 @@ async function commandRun(args: CliArgs): Promise<void> {
 
     const session = await client.invoke(RPC_CHANNELS.sessions.CREATE, workspaceId, {
       permissionMode: args.mode || 'allow-all',
+      enabledSourceSlugs: args.sources.length > 0 ? args.sources : undefined,
     }) as { id: string }
     sessionId = session.id
     if (args.model) {
@@ -347,6 +351,7 @@ async function commandSession(client: CliRpcClient, args: CliArgs): Promise<unkn
   if (action === 'create') {
     return client.invoke(RPC_CHANNELS.sessions.CREATE, workspaceId, {
       name: args.name ?? (args.rest.join(' ') || undefined),
+      enabledSourceSlugs: args.sources.length > 0 ? args.sources : undefined,
     })
   }
   const sessionId = args.rest.shift()
@@ -408,6 +413,11 @@ async function commandConnections(client: CliRpcClient, args: CliArgs): Promise<
   throw new Error(`Unknown connections action: ${action}`)
 }
 
+async function commandSources(client: CliRpcClient, args: CliArgs): Promise<unknown> {
+  const workspaceId = await resolveWorkspace(client, args.workspace)
+  return client.invoke(RPC_CHANNELS.sources.GET, workspaceId)
+}
+
 async function commandConfig(client: CliRpcClient, args: CliArgs): Promise<unknown> {
   const action = args.rest.shift()
   if (action !== 'validate') throw new Error('Only config validate is supported')
@@ -458,6 +468,7 @@ Commands:
   send <session-id> <prompt>
   cancel <session-id>
   connections [list|add|test|delete|default]
+  sources                                List configured sources
   config validate
   ping | health | versions
   invoke <channel> [json-args...]
@@ -467,6 +478,7 @@ Options:
   --url <ws-url> --token <token> --workspace <id> --json
   --timeout <ms> --send-timeout <ms> --tls-ca <path>
   --mode <mode> --output-format <text|stream-json> --no-cleanup
+  --source <slug>                        Enable source (repeatable)
   --server-entry <path> --workspace-dir <path>
   --provider <preset> --model <id> --api-key <key> --base-url <url>
   --protocol <openai-completions|anthropic-messages>
@@ -498,6 +510,7 @@ export async function main(argv: string[] = process.argv): Promise<void> {
         result = await client.invoke(RPC_CHANNELS.sessions.GET)
         break
       case 'connections': result = await commandConnections(client, args); break
+      case 'sources': result = await commandSources(client, args); break
       case 'config': result = await commandConfig(client, args); break
       case 'invoke': result = await commandInvoke(client, args); break
       case 'listen': return commandListen(client, args)

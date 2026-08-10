@@ -12,6 +12,14 @@ import {
   skillNeedsIconDownload,
 } from '../skills/storage.ts';
 import type { LoadedSkill } from '../skills/types.ts';
+import {
+  downloadSourceIcon,
+  loadSource,
+  loadSourceGuide,
+  loadWorkspaceSources,
+  sourceNeedsIconDownload,
+} from '../sources/storage.ts';
+import type { LoadedSource, SourceGuide } from '../sources/types.ts';
 import { expandPath } from '../utils/paths.ts';
 import { getWorkspacePath } from '../workspaces/storage.ts';
 import { CONFIG_DIR } from './paths.ts';
@@ -28,6 +36,7 @@ import type { PresetTheme, ThemeOverrides } from './theme.ts';
 import {
   validateConfig,
   validatePreferences,
+  validateSource,
   type ValidationResult,
 } from './validators.ts';
 
@@ -44,10 +53,14 @@ export interface ConfigWatcherCallbacks {
   onConfigChange?: (config: StoredConfig) => void;
   onPreferencesChange?: (preferences: UserPreferences) => void;
   onLlmConnectionsChange?: (connections: LlmConnection[]) => void;
+  onSourceChange?: (slug: string, source: LoadedSource | null) => void;
+  onSourceGuideChange?: (slug: string, guide: SourceGuide) => void;
+  onSourcesListChange?: (sources: LoadedSource[]) => void;
   onSkillChange?: (slug: string, skill: LoadedSkill | null) => void;
   onSkillsListChange?: (skills: LoadedSkill[]) => void;
   onDefaultPermissionsChange?: () => void;
   onWorkspacePermissionsChange?: (workspaceId: string) => void;
+  onSourcePermissionsChange?: (sourceSlug: string) => void;
   onSessionMetadataChange?: (sessionId: string, header: SessionHeader) => void;
   onAppThemeChange?: (theme: ThemeOverrides | null) => void;
   onPresetThemesListChange?: (themes: PresetTheme[]) => void;
@@ -228,6 +241,57 @@ export class ConfigWatcher {
       permissionsConfigCache.invalidateWorkspace(this.workspacePath);
       this.callbacks.onWorkspacePermissionsChange?.(this.workspaceId);
       return;
+    }
+    if (normalized.startsWith('sources/')) {
+      const [, slug, file] = normalized.split('/');
+      if (!slug) return;
+
+      if (!file) {
+        this.callbacks.onSourceChange?.(slug, loadSource(this.workspacePath, slug));
+        this.callbacks.onSourcesListChange?.(loadWorkspaceSources(this.workspacePath));
+        return;
+      }
+
+      if (file === 'permissions.json') {
+        permissionsConfigCache.invalidateSource(this.workspacePath, slug);
+        this.callbacks.onSourcePermissionsChange?.(slug);
+        return;
+      }
+
+      if (file === 'guide.md') {
+        const guide = loadSourceGuide(this.workspacePath, slug);
+        if (guide) this.callbacks.onSourceGuideChange?.(slug, guide);
+        this.callbacks.onSourceChange?.(slug, loadSource(this.workspacePath, slug));
+        return;
+      }
+
+      if (file === 'config.json') {
+        const configPath = join(this.workspacePath, 'sources', slug, 'config.json');
+        if (!existsSync(configPath)) {
+          this.callbacks.onSourceChange?.(slug, null);
+          return;
+        }
+
+        const validation = validateSource(this.workspacePath, slug);
+        if (!validation.valid) {
+          this.callbacks.onValidationError?.(`sources/${slug}/config.json`, validation);
+          return;
+        }
+
+        const source = loadSource(this.workspacePath, slug);
+        this.callbacks.onSourceChange?.(slug, source);
+        if (source && source.config.icon && sourceNeedsIconDownload(this.workspacePath, slug, source.config)) {
+          void downloadSourceIcon(this.workspacePath, slug, source.config.icon)
+            .then(() => this.callbacks.onSourceChange?.(slug, loadSource(this.workspacePath, slug)))
+            .catch(error => {
+              this.callbacks.onError?.(
+                `sources/${slug}/icon`,
+                error instanceof Error ? error : new Error(String(error)),
+              );
+            });
+        }
+        return;
+      }
     }
     if (normalized.startsWith('skills/')) {
       const slug = normalized.split('/')[1];

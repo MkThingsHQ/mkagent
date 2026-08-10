@@ -41,6 +41,7 @@ describe('settings default thinking RPC handlers', () => {
 
     const deps: HandlerDeps = {
       sessionManager: {} as HandlerDeps['sessionManager'],
+      oauthFlowStore: {} as HandlerDeps['oauthFlowStore'],
       platform: {
         appRootPath: '',
         resourcesPath: '',

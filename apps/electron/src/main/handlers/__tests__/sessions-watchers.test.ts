@@ -53,6 +53,7 @@ describe('sessions file watchers', () => {
           return null
         },
       } as unknown as HandlerDeps['sessionManager'],
+      oauthFlowStore: {} as HandlerDeps['oauthFlowStore'],
       platform: {
         appRootPath: '',
         resourcesPath: '',

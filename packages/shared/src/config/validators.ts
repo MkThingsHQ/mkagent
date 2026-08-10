@@ -7,6 +7,8 @@ import {
   getAppPermissionsDir,
   getWorkspacePermissionsPath,
 } from '../agent/permissions-config.ts';
+import { getWorkspaceSourcesPath } from '../workspaces/storage.ts';
+import { EntityColorSchema } from '../colors/validate.ts';
 import { CONFIG_DIR } from './paths.ts';
 
 export interface ValidationIssue {
@@ -97,6 +99,136 @@ function merge(...results: ValidationResult[]): ValidationResult {
   const errors = results.flatMap(result => result.errors);
   const warnings = results.flatMap(result => result.warnings);
   return { valid: errors.length === 0, errors, warnings };
+}
+
+const SourceTypeSchema = z.enum(['mcp', 'api', 'local']);
+
+const McpSourceConfigSchema = z.object({
+  transport: z.enum(['http', 'sse', 'stdio']).optional(),
+  url: z.string().url().optional(),
+  authType: z.enum(['oauth', 'bearer', 'none']).optional(),
+  clientId: z.string().optional(),
+  command: z.string().optional(),
+  args: z.array(z.string()).optional(),
+  env: z.record(z.string(), z.string()).optional(),
+  headers: z.record(z.string(), z.string()).optional(),
+  headerNames: z.array(z.string()).optional(),
+}).refine(
+  data => data.transport === 'stdio'
+    ? Boolean(data.command)
+    : Boolean(data.url && data.authType),
+  {
+    message: 'MCP config requires either (url + authType) for HTTP/SSE or (command) for stdio transport',
+  }
+);
+
+const ApiOAuthConfigSchema = z.object({
+  authorizationUrl: z.string().url(),
+  tokenUrl: z.string().url(),
+  clientId: z.string().min(1),
+  clientSecret: z.string().optional(),
+  scopes: z.array(z.string()).optional(),
+  audience: z.string().optional(),
+  extraParams: z.record(z.string(), z.string()).optional(),
+});
+
+const ApiSourceConfigSchema = z.object({
+  baseUrl: z.string().url(),
+  authType: z.enum(['bearer', 'header', 'query', 'basic', 'oauth', 'none']),
+  headerName: z.string().optional(),
+  headerNames: z.array(z.string()).optional(),
+  queryParam: z.string().optional(),
+  authScheme: z.string().optional(),
+  defaultHeaders: z.record(z.string(), z.string()).optional(),
+  testEndpoint: z.object({
+    method: z.enum(['GET', 'POST']),
+    path: z.string(),
+    body: z.record(z.string(), z.unknown()).optional(),
+    headers: z.record(z.string(), z.string()).optional(),
+  }).optional(),
+  googleService: z.enum(['gmail', 'calendar', 'drive', 'docs', 'sheets', 'youtube', 'searchconsole']).optional(),
+  googleScopes: z.array(z.string()).optional(),
+  googleOAuthClientId: z.string().optional(),
+  googleOAuthClientSecret: z.string().optional(),
+  slackService: z.enum(['messaging', 'channels', 'users', 'files', 'full']).optional(),
+  slackUserScopes: z.array(z.string()).optional(),
+  microsoftService: z.enum(['outlook', 'microsoft-calendar', 'onedrive', 'teams', 'sharepoint']).optional(),
+  microsoftScopes: z.array(z.string()).optional(),
+  oauth: ApiOAuthConfigSchema.optional(),
+});
+
+const LocalSourceConfigSchema = z.object({
+  path: z.string().min(1),
+  format: z.string().optional(),
+});
+
+export const FolderSourceConfigSchema = z.object({
+  id: z.string().min(1),
+  name: z.string().min(1),
+  slug: z.string().regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
+  enabled: z.boolean(),
+  provider: z.string().min(1),
+  type: SourceTypeSchema,
+  mcp: McpSourceConfigSchema.optional(),
+  api: ApiSourceConfigSchema.optional(),
+  local: LocalSourceConfigSchema.optional(),
+  brand: z.object({ color: EntityColorSchema.optional() }).optional(),
+  icon: z.string().optional(),
+  isAuthenticated: z.boolean().optional(),
+  connectionStatus: z.enum(['connected', 'needs_auth', 'failed', 'untested', 'local_disabled']).optional(),
+  connectionError: z.string().optional(),
+  lastTestedAt: z.number().int().min(0).optional(),
+  createdAt: z.number().int().min(0).optional(),
+  updatedAt: z.number().int().min(0).optional(),
+}).refine(data => {
+  switch (data.type) {
+    case 'mcp': return Boolean(data.mcp);
+    case 'api': return Boolean(data.api);
+    case 'local': return Boolean(data.local);
+  }
+}, { message: 'Config must include type-specific configuration (mcp, api, or local)' });
+
+export function validateSourceConfig(config: unknown): ValidationResult {
+  const result = FolderSourceConfigSchema.safeParse(config);
+  return result.success
+    ? { valid: true, errors: [], warnings: [] }
+    : fromZod('config.json', result.error);
+}
+
+export function validateSourceConfigContent(jsonString: string): ValidationResult {
+  const parsed = parseJson(jsonString, 'config.json');
+  if (parsed.result) return parsed.result;
+  return validateSourceConfig(parsed.data);
+}
+
+export function validateSource(workspaceRoot: string, slug: string): ValidationResult {
+  const sourceDir = join(getWorkspaceSourcesPath(workspaceRoot), slug);
+  const configPath = join(sourceDir, 'config.json');
+  if (!existsSync(sourceDir)) {
+    return { valid: false, errors: [issue(`sources/${slug}/config.json`, `Source folder '${slug}' does not exist`)], warnings: [] };
+  }
+  if (!existsSync(configPath)) {
+    return { valid: false, errors: [issue(`sources/${slug}/config.json`, 'config.json not found')], warnings: [] };
+  }
+  const result = validateSourceConfigContent(readFileSync(configPath, 'utf-8'));
+  const guidePath = join(sourceDir, 'guide.md');
+  if (!existsSync(guidePath)) {
+    result.warnings.push({
+      file: `sources/${slug}/guide.md`,
+      path: '',
+      message: 'guide.md not found (recommended for usage guidelines)',
+      severity: 'warning',
+    });
+  }
+  return result;
+}
+
+export function validateAllSources(workspaceRoot: string): ValidationResult {
+  const sourcesDir = getWorkspaceSourcesPath(workspaceRoot);
+  if (!existsSync(sourcesDir)) return { valid: true, errors: [], warnings: [] };
+  return merge(...readdirSync(sourcesDir)
+    .filter(entry => statSync(join(sourcesDir, entry)).isDirectory())
+    .map(slug => validateSource(workspaceRoot, slug)));
 }
 
 export const SkillMetadataSchema = z.object({
@@ -220,6 +352,7 @@ export function validateAll(_workspaceId?: string, workspaceRoot?: string): Vali
   return merge(
     validateConfig(),
     validatePreferences(),
+    workspaceRoot ? validateAllSources(workspaceRoot) : { valid: true, errors: [], warnings: [] },
     workspaceRoot ? validateAllSkills(workspaceRoot) : { valid: true, errors: [], warnings: [] },
     workspaceRoot ? validateAllPermissions(workspaceRoot) : validateDefaultPermissions(),
     validateToolIcons()
@@ -234,18 +367,25 @@ export function formatValidationResult(result: ValidationResult): string {
 }
 
 export interface ConfigFileDetection {
-  type: 'config' | 'preferences' | 'permissions' | 'skill' | 'theme' | 'tool-icons';
+  type: 'config' | 'preferences' | 'permissions' | 'source' | 'skill' | 'theme' | 'tool-icons';
   path: string;
   slug?: string;
+  /** Workspace-relative display path used in validation errors. */
+  displayFile?: string;
 }
 
 export function detectConfigFileType(filePath: string, workspaceRootPath: string): ConfigFileDetection | null {
   const absolute = resolve(filePath);
   const workspace = resolve(workspaceRootPath);
-  if (absolute === join(workspace, 'permissions.json')) return { type: 'permissions', path: absolute };
+  if (absolute === join(workspace, 'permissions.json')) return { type: 'permissions', path: absolute, displayFile: 'permissions.json' };
+  const sourcePath = relative(join(workspace, 'sources'), absolute).replaceAll('\\', '/');
+  const sourceMatch = sourcePath.match(/^([^/]+)\/config\.json$/);
+  if (sourceMatch?.[1]) return { type: 'source', path: absolute, slug: sourceMatch[1], displayFile: `sources/${sourceMatch[1]}/config.json` };
+  const sourcePermissionsMatch = sourcePath.match(/^([^/]+)\/permissions\.json$/);
+  if (sourcePermissionsMatch?.[1]) return { type: 'permissions', path: absolute, slug: sourcePermissionsMatch[1], displayFile: `sources/${sourcePermissionsMatch[1]}/permissions.json` };
   const skillPath = relative(join(workspace, 'skills'), absolute).replaceAll('\\', '/');
   const match = skillPath.match(/^([^/]+)\/SKILL\.md$/);
-  return match?.[1] ? { type: 'skill', path: absolute, slug: match[1] } : null;
+  return match?.[1] ? { type: 'skill', path: absolute, slug: match[1], displayFile: `skills/${match[1]}/SKILL.md` } : null;
 }
 
 export function detectAppConfigFileType(filePath: string): ConfigFileDetection | null {
@@ -266,6 +406,7 @@ export function validateConfigFileContent(
     case 'config': return validateTheme(content, detection.path, StoredConfigSchema);
     case 'preferences': return validateTheme(content, detection.path, UserPreferencesSchema);
     case 'permissions': return validatePermissionsContent(content, detection.path);
+    case 'source': return validateSourceConfigContent(content);
     case 'skill': return validateSkillContent(content, detection.slug ?? 'skill');
     case 'theme': return validateThemeOverrideContent(content, detection.path);
     case 'tool-icons': return validateToolIconsContent(content);

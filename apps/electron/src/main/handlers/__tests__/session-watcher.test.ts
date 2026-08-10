@@ -71,6 +71,7 @@ function createTestHarness(sessionPaths: Map<string, string>) {
       waitForInit: async () => {},
       getSessions: () => [],
     } as unknown as HandlerDeps['sessionManager'],
+    oauthFlowStore: {} as HandlerDeps['oauthFlowStore'],
     platform: {
       appRootPath: '',
       resourcesPath: '',

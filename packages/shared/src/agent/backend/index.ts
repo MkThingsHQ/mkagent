@@ -4,6 +4,7 @@ export type {
   BackendConfig,
   BackendHostRuntimeContext,
   BackendRuntimeUpdate,
+  AuthCallback,
   ChatOptions,
   CoreBackendConfig,
   LlmAuthType,
@@ -11,6 +12,9 @@ export type {
   PermissionCallback,
   PermissionRequestType,
   PlanCallback,
+  SourceActivationCallback,
+  SourceChangeCallback,
+  SdkMcpServerConfig,
   PostInitResult,
   RecoveryMessage,
 } from './types.ts';

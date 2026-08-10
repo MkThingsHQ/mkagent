@@ -23,6 +23,7 @@ import type {
   BackendConfig,
   BackendRuntimeUpdate,
   ChatOptions,
+  SdkMcpServerConfig,
 } from './backend/types.ts';
 import { AbortReason } from './backend/types.ts';
 import { getBackendRuntime } from './backend/internal/driver-types.ts';
@@ -40,6 +41,8 @@ import type { Workspace } from '../config/storage.ts';
 // Event adapter
 import { PiEventAdapter } from './backend/pi/event-adapter.ts';
 import { EventQueue } from './backend/event-queue.ts';
+import { SourceActivationDrainController } from './source-activation-drain.ts';
+import type { McpClientPool } from '../mcp/mcp-pool.ts';
 
 // System prompt for MkAgent context
 import { getSystemPrompt } from '../prompts/system.ts';
@@ -279,6 +282,10 @@ export class PiAgent extends BaseAgent {
   // Cached session tool context (lazy-created on first session tool call)
   private _sessionToolContext: SessionToolContext | null = null;
   private backgroundEventSink: ((event: AgentEvent) => void) | null = null;
+
+  private get mcpPool(): McpClientPool | undefined {
+    return this.config.mcpPool;
+  }
 
   // RPC request counter for unique IDs
   private rpcIdCounter: number = 0;
@@ -529,6 +536,17 @@ export class PiAgent extends BaseAgent {
     });
     this.debug(`Registered ${sessionToolDefs.length} session tools with subprocess`);
 
+    this.registerPoolToolsWithSubprocess();
+
+  }
+
+  /** Register pool-managed MCP/API proxy tools with the Pi subprocess. */
+  private registerPoolToolsWithSubprocess(): void {
+    if (!this.mcpPool || !this.subprocess) return;
+    const proxyDefs = this.mcpPool.getProxyToolDefs();
+    if (!proxyDefs.length) return;
+    this.send({ type: 'register_tools', tools: proxyDefs });
+    this.debug(`Registered ${proxyDefs.length} MCP source tools from pool with subprocess`);
   }
 
   /** Build Pi's provider-aware credential. */
@@ -899,6 +917,16 @@ export class PiAgent extends BaseAgent {
     // The event adapter expects typed PiAgentEvent/AgentSessionEvent objects,
     // but since we're receiving plain JSON, we cast through unknown.
     for (const agentEvent of this.adapter.adaptEvent(adaptedEvent as any)) {
+      if (agentEvent.type === 'tool_start' && agentEvent.toolName === 'Read') {
+        this.prerequisiteManager.trackReadTool(agentEvent.input as Record<string, unknown>);
+      }
+      if (
+        agentEvent.type === 'info' &&
+        typeof agentEvent.message === 'string' &&
+        agentEvent.message.startsWith('Compacted')
+      ) {
+        this.resetPrerequisiteState();
+      }
       if (!this._isProcessing && this.backgroundEventSink && (
         agentEvent.type === 'task_backgrounded' ||
         agentEvent.type === 'task_progress' ||
@@ -979,7 +1007,11 @@ export class PiAgent extends BaseAgent {
       plansFolderPath,
       dataFolderPath,
       workingDirectory: this.config.session?.workingDirectory,
+      activeSourceSlugs: [...this.sourceManager.getActiveSlugs()],
+      allSourceSlugs: this.sourceManager.getAllSources().map(source => source.config.slug),
+      hasSourceActivation: Boolean(this.onSourceActivationRequest),
       permissionManager: this.permissionManager,
+      prerequisiteManager: this.prerequisiteManager,
       rtkContext,
       onDebug: (msg) => this.debug(`PreToolUse(sessionId=${sessionId}): ${msg}`),
     });
@@ -1005,6 +1037,72 @@ export class PiAgent extends BaseAgent {
           reason: checkResult.reason,
         })}`);
         this.send({ type: 'pre_tool_use_response', requestId, action: 'block', reason: checkResult.reason });
+        return;
+      }
+
+      case 'source_activation_needed': {
+        const { sourceSlug, sourceExists } = checkResult;
+        this.debug(`PreToolUse(sessionId=${sessionId}): Source "${sourceSlug}" not active, attempting activation...`);
+
+        if (!this.onSourceActivationRequest) {
+          const reason = sourceExists
+            ? `Source "${sourceSlug}" is not active. Activate it by @mentioning it in your message or via the source icon at the bottom of the input field.`
+            : `Source "${sourceSlug}" is not available yet. It needs to be created and configured first.`;
+          this.send({ type: 'pre_tool_use_response', requestId, action: 'block', reason });
+          return;
+        }
+
+        try {
+          const activated = await this.onSourceActivationRequest(sourceSlug);
+          if (!activated) {
+            const reason = sourceExists
+              ? `Source "${sourceSlug}" is not active. Activate it by @mentioning it in your message or via the source icon at the bottom of the input field.`
+              : `Source "${sourceSlug}" is not available yet. It needs to be created and configured first.`;
+            this.send({ type: 'pre_tool_use_response', requestId, action: 'block', reason });
+            return;
+          }
+          this.eventQueue.enqueue({
+            type: 'source_activated',
+            sourceSlug,
+            originalMessage: this.getCurrentTurnUserMessage() ?? '',
+          });
+        } catch (error) {
+          const reason = sourceExists
+            ? `Source "${sourceSlug}" could not be activated: ${error instanceof Error ? error.message : String(error)}`
+            : `Source "${sourceSlug}" is not available yet. It needs to be created and configured first.`;
+          this.send({ type: 'pre_tool_use_response', requestId, action: 'block', reason });
+          return;
+        }
+
+        const postResult = runPreToolUseChecks({
+          toolName,
+          input,
+          sessionId,
+          permissionMode: this.permissionManager.getPermissionMode(),
+          workspaceRootPath: rootPath,
+          workspaceId: workspaceSlug,
+          plansFolderPath,
+          dataFolderPath,
+          workingDirectory: this.config.session?.workingDirectory,
+          activeSourceSlugs: [...this.sourceManager.getActiveSlugs()],
+          allSourceSlugs: this.sourceManager.getAllSources().map(source => source.config.slug),
+          hasSourceActivation: Boolean(this.onSourceActivationRequest),
+          permissionManager: this.permissionManager,
+          prerequisiteManager: this.prerequisiteManager,
+          rtkContext,
+          onDebug: msg => this.debug(`PreToolUse(sessionId=${sessionId}): ${msg}`),
+        });
+
+        if (postResult.type === 'modify') {
+          this.send({ type: 'pre_tool_use_response', requestId, action: 'modify', input: postResult.input });
+        } else if (postResult.type === 'block' || postResult.type === 'source_activation_needed') {
+          const reason = postResult.type === 'block'
+            ? postResult.reason
+            : `Source "${postResult.sourceSlug}" is still unavailable after activation.`;
+          this.send({ type: 'pre_tool_use_response', requestId, action: 'block', reason });
+        } else {
+          this.send({ type: 'pre_tool_use_response', requestId, action: 'allow' });
+        }
         return;
       }
 
@@ -1081,6 +1179,16 @@ export class PiAgent extends BaseAgent {
     toolName: string;
     args: Record<string, unknown>;
   }): Promise<void> {
+    const prerequisite = this.prerequisiteManager.checkPrerequisites(request.toolName);
+    if (!prerequisite.allowed) {
+      this.send({
+        type: 'tool_execute_response',
+        requestId: request.requestId,
+        result: { content: prerequisite.blockReason!, isError: true },
+      });
+      return;
+    }
+
     try {
       const result = await this.routeToolCall(request.toolName, request.args);
       this.send({
@@ -1122,6 +1230,10 @@ export class PiAgent extends BaseAgent {
       return this.executeSessionTool(strippedName, args);
     }
 
+    if (this.mcpPool?.isProxyTool(toolName)) {
+      return this.mcpPool.callTool(toolName, args);
+    }
+
     // Unknown tool
     return {
       content: `Unknown proxy tool: ${toolName}`,
@@ -1146,6 +1258,7 @@ export class PiAgent extends BaseAgent {
         setLastPlanFilePath(sessionId, planPath);
         this.onPlanSubmitted?.(planPath);
       },
+      onAuthRequest: request => this.onAuthRequest?.(request),
     });
 
     // Attach session self-management bindings (lazy getters from callback registry)
@@ -1624,6 +1737,7 @@ export class PiAgent extends BaseAgent {
     if (sessionId) {
       mergeSessionScopedToolCallbacks(sessionId, {
         onPlanSubmitted: (planPath) => this.onPlanSubmitted?.(planPath),
+        onAuthRequest: request => this.onAuthRequest?.(request),
         queryFn: (request) => this.queryLlm(request),
       });
     }
@@ -1696,6 +1810,7 @@ export class PiAgent extends BaseAgent {
       ];
       const volatileParts = [
         `<session_state permission_mode="${promptModeDiagnostics.permissionMode}" />`,
+        this.sourceManager.formatSourceState(),
       ];
 
       // Process attachments
@@ -1751,8 +1866,30 @@ export class PiAgent extends BaseAgent {
         images: images.length > 0 ? images : undefined,
       });
 
+      const sourceActivationDrain = new SourceActivationDrainController('fire-on-non-tool-result');
       for await (const event of this.eventQueue.drain()) {
+        const preFire = sourceActivationDrain.shouldFireBeforeEvent(event);
+        if (preFire) {
+          this.debug(`source_test activated "${preFire.sourceSlug}", drained sibling tool_results, restarting turn`);
+          yield preFire;
+          this.forceAbort(AbortReason.SourceActivated);
+          return;
+        }
+
+        if (sourceActivationDrain.observe(event, () => this.consumePendingSourceActivationRestart())) {
+          yield event;
+          continue;
+        }
+
         yield event;
+      }
+
+      const sourceActivationFireAtEnd = sourceActivationDrain.shouldFireAtBoundary();
+      if (sourceActivationFireAtEnd) {
+        this.debug(`source_test activated "${sourceActivationFireAtEnd.sourceSlug}", stream ended with pending restart, restarting turn`);
+        yield sourceActivationFireAtEnd;
+        this.forceAbort(AbortReason.SourceActivated);
+        return;
       }
     } catch (error) {
       if (error instanceof Error && error.message.includes('abort')) {
@@ -1853,6 +1990,15 @@ export class PiAgent extends BaseAgent {
     } else {
       this.debug(`Thinking level updated but no subprocess to forward to: ${previousLevel} → ${level}`);
     }
+  }
+
+  override async setSourceServers(
+    mcpServers: Record<string, SdkMcpServerConfig>,
+    apiServers: Record<string, unknown>,
+    intendedSlugs?: string[]
+  ): Promise<void> {
+    await super.setSourceServers(mcpServers, apiServers, intendedSlugs);
+    this.registerPoolToolsWithSubprocess();
   }
 
   // ============================================================

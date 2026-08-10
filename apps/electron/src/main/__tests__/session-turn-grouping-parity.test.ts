@@ -239,4 +239,49 @@ describe('turn grouping stability across reload', () => {
     expect(errorMsg?.errorOriginal).toBe('ENOTFOUND')
     expect(errorMsg?.errorCanRetry).toBe(true)
   })
+
+  it('auth-request turn: all auth fields survive reload', () => {
+    const messages: Message[] = [
+      createMessage('user', { content: 'Use linear' }),
+      createMessage('auth-request', {
+        content: 'Authentication required',
+        authRequestId: 'req-1',
+        authRequestType: 'credential',
+        authSourceSlug: 'linear',
+        authSourceName: 'Linear',
+        authStatus: 'completed',
+        authCredentialMode: 'bearer',
+        authHeaderName: 'Authorization',
+        authHeaderNames: ['DD-API-KEY'],
+        authLabels: { credential: 'API Token' },
+        authDescription: 'Enter your key',
+        authHint: 'Settings > API',
+        authSourceUrl: 'https://linear.app',
+        authPasswordRequired: false,
+        authEmail: 'user@test.com',
+        authWorkspace: 'my-workspace',
+      }),
+      createMessage('assistant', { content: 'Connected!', turnId: 'turn-7' }),
+    ]
+
+    const reloaded = simulatePersistAndReload(messages)
+    const authMsg = reloaded.find(m => m.role === 'auth-request')
+
+    expect(authMsg).toBeDefined()
+    expect(authMsg?.authRequestId).toBe('req-1')
+    expect(authMsg?.authRequestType).toBe('credential')
+    expect(authMsg?.authSourceSlug).toBe('linear')
+    expect(authMsg?.authSourceName).toBe('Linear')
+    expect(authMsg?.authStatus).toBe('completed')
+    expect(authMsg?.authCredentialMode).toBe('bearer')
+    expect(authMsg?.authHeaderName).toBe('Authorization')
+    expect(authMsg?.authHeaderNames).toEqual(['DD-API-KEY'])
+    expect(authMsg?.authLabels).toEqual({ credential: 'API Token' })
+    expect(authMsg?.authDescription).toBe('Enter your key')
+    expect(authMsg?.authHint).toBe('Settings > API')
+    expect(authMsg?.authSourceUrl).toBe('https://linear.app')
+    expect(authMsg?.authPasswordRequired).toBe(false)
+    expect(authMsg?.authEmail).toBe('user@test.com')
+    expect(authMsg?.authWorkspace).toBe('my-workspace')
+  })
 })

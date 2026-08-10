@@ -19,12 +19,14 @@ import {
   handleComplete,
   handleError,
   handleTypedError,
+  handleSourcesChanged,
   handleSessionFlagged,
   handleSessionUnflagged,
   handleSessionArchived,
   handleSessionUnarchived,
   handleNameChanged,
   handlePermissionRequest,
+  handleCredentialRequest,
   handlePlanSubmitted,
   handleStatus,
   handleInfo,
@@ -38,6 +40,8 @@ import {
   handleConnectionChanged,
   handleUserMessage,
   handleMessageAnnotationsUpdated,
+  handleAuthRequest,
+  handleAuthCompleted,
   handleUsageUpdate,
 } from './handlers/session'
 
@@ -147,6 +151,9 @@ export function processEvent(
     case 'connection_changed':
       return handleConnectionChanged(state, event)
 
+    case 'sources_changed':
+      return handleSourcesChanged(state, event)
+
     case 'session_flagged':
       return handleSessionFlagged(state, event)
 
@@ -165,6 +172,9 @@ export function processEvent(
     case 'permission_request':
       return handlePermissionRequest(state, event)
 
+    case 'credential_request':
+      return handleCredentialRequest(state, event)
+
     case 'plan_submitted':
       return handlePlanSubmitted(state, event)
 
@@ -173,6 +183,16 @@ export function processEvent(
 
     case 'message_annotations_updated':
       return handleMessageAnnotationsUpdated(state, event)
+
+    case 'auth_request':
+      return handleAuthRequest(state, event)
+
+    case 'auth_completed':
+      return handleAuthCompleted(state, event)
+
+    case 'source_activated':
+      // Server-side owns the automatic retry; this event is UI feedback only.
+      return { state, effects: [] }
 
     case 'usage_update':
       return handleUsageUpdate(state, event)
