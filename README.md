@@ -9,8 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MkThingsHQ/mkagent/blob/main/LICENSE"><img src="https://img.shields.io/github/license/MkThingsHQ/mkagent" alt="License" /></a>
-  <a href="https://github.com/MkThingsHQ/mkagent/stargazers"><img src="https://img.shields.io/github/stars/MkThingsHQ/mkagent" alt="GitHub stars" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-Apache--2.0-blue.svg" alt="Apache License 2.0" /></a>
   <a href="https://bun.sh"><img src="https://img.shields.io/badge/Bun-1.3.14%2B-f9f1e1?logo=bun&amp;logoColor=000" alt="Bun 1.3.14 or later" /></a>
   <a href="https://www.electronjs.org"><img src="https://img.shields.io/badge/Electron-39-47848F?logo=electron&amp;logoColor=white" alt="Electron 39" /></a>
 </p>
@@ -24,9 +23,10 @@
   <a href="https://github.com/MkThingsHQ/mkagent/issues">Report a bug</a>
 </p>
 
-MkAgent helps developers run long-lived AI coding sessions from Desktop, WebUI, or CLI while
-keeping every workspace under their control. It is powered by the
-[Pi](https://github.com/badlogic/pi-mono) agent runtime and combines persistent local workspaces,
+MkAgent is an open-source, local-first AI agent workspace for anyone who wants more control over
+their AI work. Download and use it through Desktop, WebUI, or CLI, or extend its open-source
+foundation to build your own desktop agent product. Powered by the
+[Pi](https://github.com/badlogic/pi-mono) agent runtime, it combines persistent local workspaces,
 model flexibility, browser tools, and document tools in one application.
 Application state stays under your local data directory, and credentials are stored through the
 operating system credential manager.
@@ -63,7 +63,7 @@ See the [feature matrix](./docs/feature-matrix.md) for the exact supported produ
 | Interface | Best for | Command |
 | --- | --- | --- |
 | Desktop | Full local experience and browser pane | `bun run electron:dev` |
-| WebUI | Browser access to the headless MkAgent server | `bun run server:prod` |
+| WebUI | Browser access to the headless server | `bun run server:prod` |
 | CLI | Scripting, remote control, and terminal workflows | `bun run apps/cli/src/index.ts --help` |
 
 ## Getting started
