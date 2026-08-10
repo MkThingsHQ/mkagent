@@ -2341,7 +2341,7 @@
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
     },
     "scripts/collect-release-assets.ts": {
-      "sha256": "098cf86d0c9357c113869fda6b5c38ff510f1355cc90423b70dab20315b6b507",
+      "sha256": "edc5a8d6a7e0e1600690f3dde42664a768c1ac6dc9ec008fbd9237b4404bb64b",
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
     },
     "scripts/check-i18n-usage.ts": {

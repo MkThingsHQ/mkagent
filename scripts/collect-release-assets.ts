@@ -111,7 +111,7 @@ const required = [
   `MkAgent-${versionArg}-x64.dmg`,
   `MkAgent-${versionArg}-x64.zip`,
   `MkAgent-${versionArg}-x64.exe`,
-  `MkAgent-${versionArg}-x64.AppImage`,
+  `MkAgent-${versionArg}-x86_64.AppImage`,
   "latest-mac.yml",
   "latest.yml",
   "latest-linux.yml",
