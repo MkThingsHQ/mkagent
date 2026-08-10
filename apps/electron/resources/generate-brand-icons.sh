@@ -9,14 +9,9 @@
 # Defaults:
 #   - Positional source defaults to apps/electron/resources/source.png
 #   - In-app menu mark source (ICON_MARK_SOURCE or 2nd positional arg)
-#     defaults to the app icon source. When the mark source IS the full app
-#     icon (large green background plate with a robot inside), the script
-#     extracts the robot via colour-keying + connected-component selection
-#     and repaints it in the brand green. When the mark source is already
-#     an isolated transparent PNG, the script just centers it on a 256×256
-#     canvas. So you can either: (a) drop a hand-crafted `mark-source.png`
-#     next to `source.png` for full control, or (b) let the default robot
-#     extraction kick in.
+#     defaults to apps/electron/resources/mark-source.png. MkAgent imports
+#     both canonical sources directly from Echo, while generated files retain
+#     MkAgent's existing filenames and application-facing labels.
 #
 # PNG sources preserve their alpha channel by default. Prepare the PNG with
 # the desired macOS transparent outer padding before running this script.
@@ -159,25 +154,23 @@ magick "$RESOURCES_DIR/source.png" -alpha on -resize 256x256 "$REPO_ROOT/apps/el
 write_png_embedded_svg "$REPO_ROOT/apps/electron/src/renderer/assets/mkagent_app_icon.svg" "$REPO_ROOT/apps/electron/src/renderer/assets/mkagent_app_icon.png" "MkAgent app icon" "256"
 
 echo "Generating renderer mark asset..."
-# For MkAgent the in-app menu mark is the robot
-# head/body extracted from the app icon, repainted in the brand green so it
-# reads cleanly on any background.
+# MkAgent reuses Echo's standalone robot-head mark for the in-app menu.
 #
 # Source selection priority:
 #   1. ICON_MARK_SOURCE env var
 #   2. 2nd positional arg
-#   3. apps/electron/resources/source.png (the app icon)
+#   3. apps/electron/resources/mark-source.png (the Echo mark)
 #
 # Behavior:
-#   - If the mark source is the *full* app icon (transparent padding around a
-#     green rounded-rect with a robot inside), we strip the green background
+#   - If the mark source is a legacy full app icon (transparent padding around
+#     a green rounded-rect with a robot inside), we strip the green background
 #     by colour-keying then keep only the significant connected components
 #     (body + eyes) and repaint them in the brand green.
-#   - If the mark source is already an isolated mark (no large green
+#   - If the mark source is already an isolated mark (the normal Echo source),
 #     background plate detected), we just trim to bbox + center on 256x256.
 MARK_PNG="$REPO_ROOT/apps/electron/src/renderer/assets/mkagent_mark.png"
 MARK_SVG="$REPO_ROOT/apps/electron/src/renderer/assets/mkagent_mark.svg"
-MARK_SOURCE_INPUT="${ICON_MARK_SOURCE:-${2:-$RESOURCES_DIR/source.png}}"
+MARK_SOURCE_INPUT="${ICON_MARK_SOURCE:-${2:-$RESOURCES_DIR/mark-source.png}}"
 if [[ "$MARK_SOURCE_INPUT" != /* ]]; then
   MARK_SOURCE_INPUT="$PWD/$MARK_SOURCE_INPUT"
 fi
@@ -275,6 +268,22 @@ Path(os.environ["MARK_TARGET"]).parent.mkdir(parents=True, exist_ok=True)
 canvas.save(os.environ["MARK_TARGET"])
 PY
 write_png_embedded_svg "$MARK_SVG" "$MARK_PNG" "MkAgent mark" "256"
+
+echo "Generating OAuth callback branding asset..."
+magick "$RESOURCES_DIR/source.png" -alpha on -resize 128x128 "$TMP_DIR/mkagent-mark-128.png"
+cat > "$TMP_DIR/update-branding.cjs" <<'EOF'
+const fs = require("fs");
+
+const path = "packages/shared/src/branding.ts";
+const dataUri = process.env.BRANDING_DATA_URI;
+let source = fs.readFileSync(path, "utf8");
+source = source.replace(
+  /export const MKAGENT_MARK_IMAGE_DATA_URI = (?:'data:image\/png;base64,[^']*'|);/,
+  `export const MKAGENT_MARK_IMAGE_DATA_URI = '${dataUri}';`,
+);
+fs.writeFileSync(path, source);
+EOF
+BRANDING_DATA_URI="data:image/png;base64,$(base64 < "$TMP_DIR/mkagent-mark-128.png" | tr -d '\n')" bun "$TMP_DIR/update-branding.cjs"
 
 echo "Copying Electron resources to dist..."
 (
