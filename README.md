@@ -5,7 +5,7 @@
 <h1 align="center">MkAgent</h1>
 
 <p align="center">
-  A local-first AI agent workspace for Desktop, WebUI, and CLI.
+  A local-first, Pi-powered AI agent workspace for Desktop, WebUI, and CLI.
 </p>
 
 <p align="center">
@@ -31,7 +31,7 @@ model flexibility, browser tools, and document tools in one application.
 Application state stays under your local data directory, and credentials are stored through the
 operating system credential manager.
 
-[![MkAgent local-first AI agent workspace](https://mkagent.app/og.png)](https://mkagent.app)
+[![MkAgent local-first, Pi-powered AI agent workspace](./docs/assets/mkagent-homepage.png)](https://mkagent.app)
 
 ## Features
 
@@ -169,9 +169,15 @@ affiliated with or endorsed by the upstream project. See [NOTICE](./NOTICE) for 
 ## Author
 
 [OpenFox](https://mksaas.link/fox-x) is an independent developer building products and developer
-tools under [MkThingsHQ](https://github.com/MkThingsHQ). Other projects include
-[TanStarter](https://tanstarter.dev/), [Mkdirs](https://github.com/MkThingsHQ/mkdirs), and
-[MkDocs](https://github.com/open-fox/mkdocs).
+tools. His products include:
+
+- [MkAgent](https://mkagent.app) — A local-first, Pi-powered AI agent workspace for Desktop, WebUI,
+  and CLI.
+- [TanStarter](https://tanstarter.dev) — Ship Faster with TanStack, Cost Less with Cloudflare.
+- [MkSaaS](https://mksaas.com) — Make Your AI SaaS Product in a Weekend.
+- [MkImage](https://mkimage.ai) — Make Any Images Possible.
+- [Mkdirs](https://mkdirs.com) — Launch AI-powered directory in 30 minutes.
+- [MkDollar](https://mkdollar.com) — The all-in-one platform to help you make first dollar online.
 
 ## License
 

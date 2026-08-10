@@ -2,7 +2,7 @@
   "name": "mkagent",
   "version": "0.1.0",
   "license": "Apache-2.0",
-  "description": "Cross-platform local agent for Desktop, WebUI, and CLI",
+  "description": "Local-first, Pi-powered AI agent workspace for Desktop, WebUI, and CLI",
   "type": "module",
   "private": true,
   "trustedDependencies": [
