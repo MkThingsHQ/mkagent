@@ -17,5 +17,5 @@ Add user-visible changes here before running `bun run release:prepare <version>`
 - Local skills, browser tools, document tools, permissions, themes, and workspace settings.
 - Local session search, flags, archives, import, export, and branching.
 
-[Unreleased]: https://github.com/open-fox/mkagent-public/releases
-[0.1.0]: https://github.com/open-fox/mkagent-public/releases/tag/v0.1.0
+[Unreleased]: https://github.com/MkThingsHQ/mkagent/releases
+[0.1.0]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.1.0

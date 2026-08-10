@@ -18,7 +18,7 @@
 ## 首次配置
 
 ```bash
-git clone https://github.com/open-fox/mkagent.git
+git clone --recurse-submodules https://github.com/MkThingsHQ/mkagent.git
 cd mkagent
 bun install --frozen-lockfile
 bun run open-connector:prepare

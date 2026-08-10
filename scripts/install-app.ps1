@@ -1,10 +1,10 @@
 # MkAgent Windows Installer
-# Usage: download this script from the private source repository, inspect it, then run it.
+# Usage: download this script from the source repository, inspect it, then run it.
 
 & {
 $ErrorActionPreference = "Stop"
 
-$VERSIONS_URL = "https://github.com/open-fox/mkagent-public/releases/latest/download"
+$VERSIONS_URL = "https://github.com/MkThingsHQ/mkagent/releases/latest/download"
 $DOWNLOAD_DIR = "$env:TEMP\mkagent-install"
 $APP_NAME = "MkAgent"
 
@@ -111,7 +111,7 @@ if (-not $filename) {
     $filename = "MkAgent-$version-$arch.exe"
 }
 
-$installerUrl = "$VERSIONS_URL/latest/$filename"
+$installerUrl = "$VERSIONS_URL/$filename"
 
 Write-Info "Expected sha512: $($checksum.Substring(0, 20))..."
 

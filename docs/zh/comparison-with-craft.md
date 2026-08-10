@@ -236,7 +236,7 @@ Craft 注册的第二个 backend 是 `claude-agent-sdk`，自带的 Claude Code 
 | OpenConnector `v1.3.5` Providers/Actions/Runs 控制台 + 五个固定 Pi 工具 | ✅（仅 Electron Desktop） | ❌ |
 | 权限（Explore/safe、Ask、Execute/allow-all）+ 权限询问 | ✅ | ✅ |
 | 网络代理 | ✅ | ✅ |
-| 通过 `electron-updater` 从 GitHub Releases 自动更新 | ✅（指向 `open-fox/mkagent-public`） | ✅（指向 `https://agents.craft.do/electron/latest`） |
+| 通过 `electron-updater` 从 GitHub Releases 自动更新 | ✅（指向 `MkThingsHQ/mkagent`） | ✅（指向 `https://agents.craft.do/electron/latest`） |
 | Sentry（`@sentry/electron` + `@sentry/react`）；以 `SENTRY_ELECTRON_INGEST_URL` 为门控 | ✅ | ✅ |
 | Document tools（PDF / DOCX / XLSX / PPTX / 图片 / iCal / doc-diff / MarkItDown），基于 `uv` Python 包装 | ✅（自带 per-platform `uv`；开发期可从 PATH 回退） | ✅（自带 per-platform `uv`） |
 | Mini chat、`EditPopover`、mini model、标题与摘要 | ✅ | ✅ |
@@ -275,7 +275,7 @@ MkAgent 那边"零无解释缺失"的硬约束来自 [`scripts/check-craft-test-
 
 ## 8. 许可证与归属
 
-两个项目均以 **Apache-2.0** 发布。MkAgent 在仓库根目录提供 [`NOTICE`](../../NOTICE)，按上游要求保留归属；[`docs/feature-matrix.md`](./feature-matrix.md) 以可读文本记录保留/删除范围。`mkagent-public`（<https://github.com/open-fox/mkagent-public>）只托管 release 产物（DMG/ZIP/NSIS/AppImage、manifest、blockmap、checksum），不包含源码。
+两个项目均以 **Apache-2.0** 发布。MkAgent 在仓库根目录提供 [`NOTICE`](../../NOTICE)，按上游要求保留归属；[`docs/feature-matrix.md`](./feature-matrix.md) 以可读文本记录保留/删除范围。源码与 release 产物（DMG/ZIP/NSIS/AppImage、manifest、blockmap、checksum）现在统一放在 `MkThingsHQ/mkagent`，不再维护仅存放产物的镜像仓库。
 
 ## 9. 重跑本审计
 

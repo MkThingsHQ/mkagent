@@ -234,7 +234,7 @@ The matrix below extends [`docs/feature-matrix.md`](./feature-matrix.md) with ex
 | OpenConnector `v1.3.5` Providers/Actions/Runs console + five fixed Pi tools | ✅ (Electron Desktop only) | ❌ |
 | Permissions (Explore/safe, Ask, Execute/allow-all) + permission prompts | ✅ | ✅ |
 | Network proxy | ✅ | ✅ |
-| Auto-update via `electron-updater` against GitHub Releases | ✅ (against `open-fox/mkagent-public`) | ✅ (against `https://agents.craft.do/electron/latest`) |
+| Auto-update via `electron-updater` against GitHub Releases | ✅ (against `MkThingsHQ/mkagent`) | ✅ (against `https://agents.craft.do/electron/latest`) |
 | Sentry (`@sentry/electron` + `@sentry/react`); gated by `SENTRY_ELECTRON_INGEST_URL` | ✅ | ✅ |
 | Document tools (PDF / DOCX / XLSX / PPTX / image / iCal / doc-diff / MarkItDown) with `uv`-based Python wrappers | ✅ (bundled per-platform `uv`; PATH fallback in development) | ✅ (bundled per-platform `uv`) |
 | Mini chat, `EditPopover`, mini model, titles, summaries | ✅ | ✅ |
@@ -273,7 +273,7 @@ The MkAgent-side lifts (zero "missing test without explanation") come from [`scr
 
 ## 8. License & attribution
 
-Both projects are released under **Apache-2.0**. MkAgent ships [`NOTICE`](../NOTICE) on the repo root with the attribution upstream required, and [`docs/feature-matrix.md`](./feature-matrix.md) records the kept/removed capabilities in human-readable form. The `mkagent-public` mirror at <https://github.com/open-fox/mkagent-public> is release-artifact only (DMG/ZIP/NSIS/AppImage, manifest, blockmap, checksums) and does not contain source.
+Both projects are released under **Apache-2.0**. MkAgent ships [`NOTICE`](../NOTICE) on the repo root with the attribution upstream required, and [`docs/feature-matrix.md`](./feature-matrix.md) records the kept/removed capabilities in human-readable form. Source and release artifacts (DMG/ZIP/NSIS/AppImage, manifests, blockmaps, and checksums) now share the `MkThingsHQ/mkagent` repository; no release-only mirror is used.
 
 ## 9. Re-running this audit
 
