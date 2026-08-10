@@ -97,7 +97,7 @@ Pi 子进程与主进程隔离:
 - CLI:`bun run cli:build` 输出 `dist/mkagent`。
 - Pi 子进程:`bun run server:build:subprocess` 输出 `packages/pi-agent-server/dist/index.js`。
 
-`mkagent-public`(public 仅 release 仓库)接收 DMG/ZIP/NSIS/AppImage 以及 `latest-mac.yml` / `latest.yml` / `latest-linux.yml` manifest 与 blockmap。`electron-updater` 读取这些 manifest,客户端不带任何 GitHub token。
+主仓库 `MkThingsHQ/mkagent` 直接在 GitHub Releases 中发布 DMG/ZIP/NSIS/AppImage，以及 `latest-mac.yml` / `latest.yml` / `latest-linux.yml` manifest 与 blockmap。`electron-updater` 读取这些公开 manifest，客户端不带任何 GitHub token。
 
 ## 刻意不存在的部分
 

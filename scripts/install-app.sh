@@ -2,7 +2,7 @@
 
 set -e
 
-VERSIONS_URL="https://github.com/open-fox/mkagent-public/releases/latest/download"
+VERSIONS_URL="https://github.com/MkThingsHQ/mkagent/releases/latest/download"
 DOWNLOAD_DIR="$HOME/.mkagent/downloads"
 
 # Colors for output
@@ -351,7 +351,7 @@ ELECTRON_CACHE_ALT="$HOME/.cache/@mkagent"
 # Verify AppImage exists
 if [ ! -f "$APPIMAGE_PATH" ]; then
     echo "Error: MkAgent not found at $APPIMAGE_PATH"
-    echo "Reinstall from https://github.com/open-fox/mkagent-public/releases/latest"
+    echo "Reinstall from https://github.com/MkThingsHQ/mkagent/releases/latest"
     exit 1
 fi
 

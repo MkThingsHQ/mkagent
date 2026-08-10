@@ -83,7 +83,7 @@ function updateLineageManifest(paths: string[]): void {
     manifest.mkOnly[relativePath] = {
       sha256,
       reason:
-        "MkAgent-specific release metadata required by the public artifact workflow",
+        "MkAgent-specific release metadata required by the release workflow",
     };
   }
   writeFileSync(path, `${JSON.stringify(manifest, null, 2)}\n`);
@@ -159,7 +159,7 @@ function prepare(input: string | undefined): void {
   let nextChangelog = `${changelog.slice(0, changelog.indexOf(unreleasedHeading))}${unreleasedHeading}\n\n${unreleasedHeading.includes("placeholder") ? "" : "Add user-visible changes here before running `bun run release:prepare <version>`.\n"}\n## [${version}] - ${today}\n\n${unreleased}\n${changelog.slice(nextHeadingIndex)}`;
   nextChangelog = nextChangelog.replace(
     /^\[Unreleased\]:.*$/m,
-    `[Unreleased]: https://github.com/open-fox/mkagent-public/releases\n[${version}]: https://github.com/open-fox/mkagent-public/releases/tag/v${version}`,
+    `[Unreleased]: https://github.com/MkThingsHQ/mkagent/releases\n[${version}]: https://github.com/MkThingsHQ/mkagent/releases/tag/v${version}`,
   );
 
   const notePath = join(releaseNotesDir, `${version}.md`);

@@ -398,19 +398,19 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/assets/mkagent_mark.svg": {
-      "sha256": "7bb8ec12338135b8e0cc8a58d2e4537e2a91bbde5e781555a71520afb1febbbb",
+      "sha256": "d6d83873eefbabb442b6671e14eb3238d520f7772edcaf8b9e21c9745cdf9b69",
       "reason": "MkAgent trademark-safe replacement asset"
     },
     "apps/electron/src/renderer/assets/mkagent_app_icon.png": {
-      "sha256": "c457157142f6a00b79efe7444a4b1c189e5562b44840aca1a5a0b0eb31ecfb17",
+      "sha256": "8ef2d656c2eb9bbef8d0d8abb646e1ded0e4143046434866d541aaf9e3da6dc5",
       "reason": "MkAgent trademark-safe replacement asset"
     },
     "apps/electron/src/renderer/assets/mkagent_app_icon.svg": {
-      "sha256": "52ed0a7e6a1327b243ac5a130a59513d1e8a08c17ac1593eaf3a62f4d29f9626",
+      "sha256": "3d1b70b6c3ce090706ee71b4b6e8af1104e5ba6567486ce632b6dcd0ee064b68",
       "reason": "MkAgent trademark-safe replacement asset"
     },
     "apps/electron/src/renderer/assets/mkagent_mark.png": {
-      "sha256": "e092bbd03418e180d35b5860e4b700818f8e4a5abd7e09e7cce73ae6f1825835",
+      "sha256": "7ab54137b8b7ab251a521ea1903a02dcb7f27598beabff8dca1d4a3fcd75906b",
       "reason": "MkAgent trademark-safe replacement asset"
     },
     "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx": {

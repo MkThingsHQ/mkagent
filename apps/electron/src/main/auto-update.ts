@@ -3,7 +3,7 @@
  *
  * Handles checking for updates, downloading, and installing via the standard
  * electron-updater library. Updates are published as GitHub Releases in
- * open-fox/mkagent-public and configured by electron-builder's app-update.yml.
+ * MkThingsHQ/mkagent and configured by electron-builder's app-update.yml.
  *
  * Platform behavior:
  * - macOS: Downloads zip, extracts and swaps app bundle atomically
@@ -33,6 +33,12 @@ import type { EventSink } from '@mkagent/server-core/transport'
 const PLATFORM = platform()
 const IS_MAC = PLATFORM === 'darwin'
 const IS_WINDOWS = PLATFORM === 'win32'
+const AUTO_UPDATE_ENABLED = process.env.MKAGENT_AUTO_UPDATE_ENABLED !== 'false'
+const AUTO_UPDATE_DISABLED_MESSAGE = 'Automatic updates are unavailable for unsigned macOS builds. Download the latest release from https://github.com/MkThingsHQ/mkagent/releases/latest.'
+
+function assertAutoUpdateEnabled(): void {
+  if (!AUTO_UPDATE_ENABLED) throw new Error(AUTO_UPDATE_DISABLED_MESSAGE)
+}
 
 // Get the update cache directory path (for file watcher fallback on macOS)
 // electron-updater uses these paths:
@@ -326,6 +332,7 @@ function checkForExistingDownload(): { exists: boolean; version?: string } {
  * @param options.autoDownload - If false, only checks without downloading (for manual "Check Now")
  */
 export async function checkForUpdates(options: CheckOptions = {}): Promise<UpdateInfo> {
+  assertAutoUpdateEnabled()
   const { autoDownload = true } = options
 
   // Temporarily override autoDownload for this check if needed
@@ -381,6 +388,7 @@ export async function checkForUpdates(options: CheckOptions = {}): Promise<Updat
  * Then relaunches the app automatically.
  */
 export async function installUpdate(): Promise<void> {
+  assertAutoUpdateEnabled()
   if (updateInfo.downloadState !== 'ready') {
     throw new Error('No update ready to install')
   }
@@ -443,6 +451,10 @@ export interface UpdateOnLaunchResult {
  * - Auto-downloads if update available
  */
 export async function checkForUpdatesOnLaunch(): Promise<UpdateOnLaunchResult> {
+  if (!AUTO_UPDATE_ENABLED) {
+    autoUpdateLog.info('Skipping automatic update check for an unsigned macOS build')
+    return { action: 'skipped', reason: 'unsigned-macos' }
+  }
   autoUpdateLog.info('Checking for updates on launch...')
 
   const info = await checkForUpdates({ autoDownload: true })

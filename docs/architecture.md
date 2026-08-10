@@ -97,7 +97,7 @@ Abort, model switching, thinking-level change, permission responses, and session
 - CLI: `bun run cli:build` produces `dist/mkagent`.
 - Pi subprocess: `bun run server:build:subprocess` produces `packages/pi-agent-server/dist/index.js`.
 
-`mkagent-public` (the public release artifact repo) receives DMG/ZIP/NSIS/AppImage plus `latest-mac.yml` / `latest-linux.yml` / `latest.yml` manifests and blockmaps. `electron-updater` reads those manifests and never embeds a GitHub token in the client.
+The main `MkThingsHQ/mkagent` repository publishes DMG/ZIP/NSIS/AppImage assets plus `latest-mac.yml` / `latest-linux.yml` / `latest.yml` manifests and blockmaps in GitHub Releases. `electron-updater` reads those public manifests and never embeds a GitHub token in the client.
 
 ## What is intentionally absent
 

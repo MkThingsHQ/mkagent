@@ -15,7 +15,7 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "README.md": {
-      "sha256": "7b8edeeca8dc8360b0c05e0f4de8d1cd092c2dc364fbc1b386bc1be07a5e9adb",
+      "sha256": "06eb2d0d34c4785f6acdcf0ef627bbad97ad4c4afd6021e851c5b03a5a0c1fa5",
       "reason": "Craft documentation adapted to the retained MkAgent feature set and product identifiers"
     },
     "apps/cli/package.json": {
@@ -43,7 +43,7 @@
       "reason": "Craft CLI reduced to retained commands and the Pi-only MkAgent runtime"
     },
     "apps/electron/electron-builder.yml": {
-      "sha256": "9c7ed1af993a5098c93a9359e1fff33d6a3d19dbf17f677f83fe306cca771dac",
+      "sha256": "4de85383450b855e6e64f5e2b725a3c0d1c8c15e6513954b0f2e59673e87a993",
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/electron/eslint-rules/no-direct-navigation-state.cjs": {
@@ -163,23 +163,23 @@
       "reason": "Craft documentation adapted to the retained MkAgent feature set and product identifiers"
     },
     "apps/electron/resources/icon.icns": {
-      "sha256": "326b3367ea99f4bb437db7592fd0151fd71ce9269029f37c7be7acc0551c6121",
+      "sha256": "8c898867eccc0f728b342b9c3a46bc42549a2e637a6875c1250f4b6dad746598",
       "reason": "Craft packaged resource adapted to MkAgent branding or the retained Lite asset set"
     },
     "apps/electron/resources/icon.ico": {
-      "sha256": "8b4b5f1b13589180755990c2cd418dd1e29045bc615c51ad62162b0455f51ac6",
+      "sha256": "53d574484742a05e619425c8ef02e4d9765496c43971e9913fd2b687ad1155cd",
       "reason": "Craft packaged resource adapted to MkAgent branding or the retained Lite asset set"
     },
     "apps/electron/resources/icon.icon/Assets/icon.svg": {
-      "sha256": "a92bf723f4d7eb43e3d0299cc5fdeb25751102085b79a2c7f2356e4aa0ac9d10",
+      "sha256": "e819759606becd7af443ac503e58351103d016d2ed82ea5c979f98f950878db5",
       "reason": "Craft packaged resource adapted to MkAgent branding or the retained Lite asset set"
     },
     "apps/electron/resources/icon.png": {
-      "sha256": "de705fb33a414bca938395bc2783b208d298074e5ad81ca7cadd9101d120e9fd",
+      "sha256": "a6fa7f89c455da3494fa53715a78f109c592dd9140241768c7f002f0b039bb7c",
       "reason": "Craft packaged resource adapted to MkAgent branding or the retained Lite asset set"
     },
     "apps/electron/resources/icon.svg": {
-      "sha256": "a92bf723f4d7eb43e3d0299cc5fdeb25751102085b79a2c7f2356e4aa0ac9d10",
+      "sha256": "e819759606becd7af443ac503e58351103d016d2ed82ea5c979f98f950878db5",
       "reason": "Craft packaged resource adapted to MkAgent branding or the retained Lite asset set"
     },
     "apps/electron/resources/permissions/default.json": {
@@ -211,7 +211,7 @@
       "reason": "Craft packaged resource adapted to MkAgent branding or the retained Lite asset set"
     },
     "apps/electron/resources/source.png": {
-      "sha256": "cbbfb99bb6766319e10d95ff30491e3e19830e41b99a06ccc63d6dc03f80984e",
+      "sha256": "c7d8043bb1c5e8ac66ae04ec7d8dc10b6c8b32231f3d5bc9467c98fda3e7f496",
       "reason": "Craft packaged resource adapted to MkAgent branding or the retained Lite asset set"
     },
     "apps/electron/resources/themes/default.json": {
@@ -291,7 +291,7 @@
       "reason": "Craft Sources desktop integration restored with MkAgent renderer state, routes, Browser behavior, and product branding preserved."
     },
     "apps/electron/src/main/auto-update.ts": {
-      "sha256": "dc00e653a3bcb3d65b9f270ecc990261c2b0c50c833e7b63ad3e34a12b3546b1",
+      "sha256": "1cbb162ddc0fe8dd2c40b6d24a12927924106192d1a35e59447e062490105492",
       "reason": "Craft Sources desktop integration restored with MkAgent renderer state, routes, Browser behavior, and product branding preserved."
     },
     "apps/electron/src/main/browser-cdp.ts": {
@@ -847,23 +847,23 @@
       "reason": "Craft Sources WebUI protocol support restored through the existing MkAgent web adapter."
     },
     "apps/webui/src/public/apple-touch-icon.png": {
-      "sha256": "0f1ef51d10bc45dae698657eec4d8508f73929f4413f3f5ce91ec99ac8ff2580",
+      "sha256": "5482a924f44e047e35d43b192167a0521baf3068cf78482c8307f33112f9913e",
       "reason": "Craft Sources WebUI protocol support restored through the existing MkAgent web adapter."
     },
     "apps/webui/src/public/favicon.ico": {
-      "sha256": "19e80497b2455d9db28e57cd2e96db40b5a34e1be1dedfbf80ca6c6ddade2b47",
+      "sha256": "acf6f7ce2679df06133e94c965dad1e50f4e5318487b475ce79c3ec9b4977851",
       "reason": "Craft Sources WebUI protocol support restored through the existing MkAgent web adapter."
     },
     "apps/webui/src/public/favicon.svg": {
-      "sha256": "a92bf723f4d7eb43e3d0299cc5fdeb25751102085b79a2c7f2356e4aa0ac9d10",
+      "sha256": "e819759606becd7af443ac503e58351103d016d2ed82ea5c979f98f950878db5",
       "reason": "Craft Sources WebUI protocol support restored through the existing MkAgent web adapter."
     },
     "apps/webui/src/public/icon-192.png": {
-      "sha256": "499a1f7ab49aaeed79e15837553605f6d1abfe7f4d1baca804555af7a7aed6d3",
+      "sha256": "8ed238fa2e773390eb4a87241d7bc36988c8fb98c4c0f0dcb8b51e9aa32e072e",
       "reason": "Craft Sources WebUI protocol support restored through the existing MkAgent web adapter."
     },
     "apps/webui/src/public/icon-512.png": {
-      "sha256": "de7818fa9d94ebbd152faa495521831f2a732f32caac6134b301e4d86333438c",
+      "sha256": "1ac2d9282ff2a91eb3cb07fee8ea71e9f56bda14411ec1564acfc231d8373e52",
       "reason": "Craft Sources WebUI protocol support restored through the existing MkAgent web adapter."
     },
     "apps/webui/src/public/manifest.json": {
@@ -887,7 +887,7 @@
       "reason": "Craft documentation adapted to the retained MkAgent feature set and product identifiers"
     },
     "package.json": {
-      "sha256": "5a81607d5742d9c2c02fd347b7f4d4333ff08551c9cc4275daded4382175f47f",
+      "sha256": "99794bb6120cbe3bfda30290b6772a7f3f08ed99f7a9dc41c03e21d356da3926",
       "reason": "Craft Sources runtime dependencies and validation scripts restored within the existing MkAgent package layout."
     },
     "packages/core/README.md": {
@@ -1639,7 +1639,7 @@
       "reason": "Craft source auth types restored with MkAgent package names and retained LLM auth boundary."
     },
     "packages/shared/src/branding.ts": {
-      "sha256": "1a067b03d88fd91c6a7e2dfda28e6541ff9965828eb800618616e95396245911",
+      "sha256": "d7753d78939f5a681fa48def21545cb6a4a03a15a99129562485d48b8a7e9fc2",
       "reason": "Craft callback branding is replaced with the embedded MkAgent mark"
     },
     "packages/shared/src/config/__tests__/default-thinking-level.test.ts": {
@@ -2083,7 +2083,7 @@
       "reason": "Craft quality automation adapted for MkAgent localization validation"
     },
     "scripts/electron-build-main.ts": {
-      "sha256": "84172e725f3bf7c2e2d5330b322bdd478a853b6961e384cb6554af3e2f02a79d",
+      "sha256": "1fdae72506dde2e1006299db854a40baf3298da19e9a4057c06ea9766cf4d177",
       "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
     },
     "scripts/electron-build-resources.ts": {
@@ -2095,21 +2095,21 @@
       "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
     },
     "scripts/install-app.ps1": {
-      "sha256": "7d0dd8e19886b4cdd3ca368b9a3c3aaa9e45c986939b179e143b93f783474cca",
+      "sha256": "ddf42ed1a68081f657f3ce37ee308e4f45f53fd3ebf5e8f24ba01036a9635e57",
       "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
     },
     "scripts/install-app.sh": {
-      "sha256": "da72613c27d70a954b0233a4d401289dd4682af11d73b9a8a5d4161a9b9d354e",
+      "sha256": "1c6ed682d47531005d81d3d24473bbae20739f4acf8add9c70adec86e4334b9d",
       "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
     }
   },
   "mkOnly": {
     ".github/workflows/ci.yml": {
-      "sha256": "b8b8065f48bb1e73c63d5cdd0920b9ca7fd3255bc0274bb79dac8918e30511b9",
+      "sha256": "df6e1cad551e2b51d0b27817c718e49b61690b179ca396966b5d397184b26bbd",
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
     ".github/workflows/release.yml": {
-      "sha256": "e65a2b3e485ed540c7b4c360858db2add91a961b7e6c02ebb144627e0beaee14",
+      "sha256": "828c063e5728321f7737b2bf06ba41bfcd1f686ec7a782d0af432eec35511f77",
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
     ".github/workflows/upstream-drift.yml": {
@@ -2117,11 +2117,11 @@
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
     "CHANGELOG.md": {
-      "sha256": "67d1987bfd7155dd5f7fbd0820d4c228bf06f2711a4cbba1ea9eaec70596806d",
+      "sha256": "2a454243d0778aecf5fae6c0cf1a8bf10508174e3b98168214297cb7e89e4a3d",
       "reason": "MkAgent-specific release metadata required by the public artifact workflow"
     },
     "apps/electron/resources/generate-brand-icons.sh": {
-      "sha256": "3798fbe02aa033b33444268d0fa2e44e6e24c1596b06cc6201b81bd2f6c92923",
+      "sha256": "b3b1484bafbb3a6c135791b854f49c53e4ece9ab610b7edf80681ed16e305f64",
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
     "apps/electron/resources/release-notes/0.1.0.md": {
@@ -2129,7 +2129,7 @@
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
     "apps/electron/resources/tool-icons/mkagent.svg": {
-      "sha256": "a92bf723f4d7eb43e3d0299cc5fdeb25751102085b79a2c7f2356e4aa0ac9d10",
+      "sha256": "e819759606becd7af443ac503e58351103d016d2ed82ea5c979f98f950878db5",
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
     "apps/electron/scripts/validate-assets.ts": {
@@ -2141,19 +2141,19 @@
       "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
     },
     "apps/electron/src/renderer/assets/mkagent_app_icon.png": {
-      "sha256": "c457157142f6a00b79efe7444a4b1c189e5562b44840aca1a5a0b0eb31ecfb17",
+      "sha256": "8ef2d656c2eb9bbef8d0d8abb646e1ded0e4143046434866d541aaf9e3da6dc5",
       "reason": "MkAgent trademark-safe replacement asset"
     },
     "apps/electron/src/renderer/assets/mkagent_app_icon.svg": {
-      "sha256": "52ed0a7e6a1327b243ac5a130a59513d1e8a08c17ac1593eaf3a62f4d29f9626",
+      "sha256": "3d1b70b6c3ce090706ee71b4b6e8af1104e5ba6567486ce632b6dcd0ee064b68",
       "reason": "MkAgent trademark-safe replacement asset"
     },
     "apps/electron/src/renderer/assets/mkagent_mark.png": {
-      "sha256": "e092bbd03418e180d35b5860e4b700818f8e4a5abd7e09e7cce73ae6f1825835",
+      "sha256": "7ab54137b8b7ab251a521ea1903a02dcb7f27598beabff8dca1d4a3fcd75906b",
       "reason": "MkAgent trademark-safe replacement asset"
     },
     "apps/electron/src/renderer/assets/mkagent_mark.svg": {
-      "sha256": "7bb8ec12338135b8e0cc8a58d2e4537e2a91bbde5e781555a71520afb1febbbb",
+      "sha256": "d6d83873eefbabb442b6671e14eb3238d520f7772edcaf8b9e21c9745cdf9b69",
       "reason": "MkAgent trademark-safe replacement asset"
     },
     "apps/electron/src/renderer/components/icons/MkAgentAppIcon.tsx": {
@@ -2173,7 +2173,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/architecture.md": {
-      "sha256": "249c101a091712816bd0f10d5493775139450f2f595e6747d00f2e98f4279201",
+      "sha256": "72391d66b3dd80957d95f3b9156f562064129845ef2d7990327f59adbf9b2af4",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/attachments.md": {
@@ -2185,7 +2185,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/comparison-with-craft.md": {
-      "sha256": "843d5b0c972b26689c8e5128bbbeb63f56a34f35f8889020607844e390e199e2",
+      "sha256": "14b4ff2fc5bae6268813aeaa63b1d1ecef7d75d8c3db27817305d6d651698480",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/connections.md": {
@@ -2197,7 +2197,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/development.md": {
-      "sha256": "03164fac7dc28e1b3047d334c9b5d8afd0b4bfaca7d5935ec60a903441256240",
+      "sha256": "cc0624ccabefd0032f1ad254ff48a56a54207e7065241e89f1d9e2de3fd9f953",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/document-tools.md": {
@@ -2209,7 +2209,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/migration/README.md": {
-      "sha256": "cf52c5685f6c8441988f43ea22608f2ea768ccd5d27512cdcae59b62b2254df9",
+      "sha256": "7d4efbdf4fa36b5110ae7d3e7abc6b315c794717d53ecd1cb230c3f299f33e11",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/migration/migration-audit.md": {
@@ -2221,11 +2221,11 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/migration/migration-mvp.md": {
-      "sha256": "09cd7abfb22d2502fa30a452dd7f0081831aa739c592744e6e39790b87db5245",
+      "sha256": "7365b4b93d68462095fa76a763235f43171460e83b6eca7acc683749826452d7",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/migration/migration-plan.md": {
-      "sha256": "332b00924fa339c566217f84555fbb9b65aa0cc6aac7da04c03b82280853ef7d",
+      "sha256": "6ab7f87b7453e02df79d4af376c707cff31ebce673ee6506f6536f1bafdd036f",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/migration/migration-ui.md": {
@@ -2253,7 +2253,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/releases.md": {
-      "sha256": "df3749387791a0a8d810287aeb75b7faafa45bbc16d2b374e61453f6d0f9199f",
+      "sha256": "ca7437499a0e00786e4886385e42212bcebe7f9523b57ec304de937ec192e3ca",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/sessions.md": {
@@ -2281,7 +2281,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/architecture.md": {
-      "sha256": "7d3b79f6900f94ad2ef9c8b07d13177e3496d02f05224ebab062b9c4bc4346fb",
+      "sha256": "096efea8ce2df1c3e2514609b801f19dd27a094cf756aa5c02edaa8f53ce5daf",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/attachments.md": {
@@ -2297,7 +2297,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/comparison-with-craft.md": {
-      "sha256": "6a69fcbdc18469f1402a96a639f496bda9ac4b2a8977596bdf58ca1cdb9c55ff",
+      "sha256": "8d79ad99fc57e48a457119ff9729dfd530afc576e614b8f6200a61a5a4b0a8ec",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/connections.md": {
@@ -2309,7 +2309,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/development.md": {
-      "sha256": "7e9bbdf6530333405a356c538fe29ad00b29bcbcfe5a3824214278d0148ed983",
+      "sha256": "205f95f2a6e6b83686198fba8a3112a225a32341390216e6f46e5a11ad1d8ebb",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/document-tools.md": {
@@ -2333,7 +2333,7 @@
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/releases.md": {
-      "sha256": "cd81e75469dbd5fe54ddce74ddfd6d1aa10896fd9403c82498d872d31ed92eb5",
+      "sha256": "a3a8308aff88879ed1105b54f10e2211f42111ab374ae2ef2a5adceae523efff",
       "reason": "MkAgent product-boundary, migration, or operating documentation"
     },
     "docs/zh/sessions.md": {
@@ -2489,12 +2489,20 @@
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
     },
     "scripts/craft-ui-overrides.json": {
-      "sha256": "7d8478c71038a82fca824b606fc38db7ea19c7c1fa0a6d0336c05087514fadf2",
+      "sha256": "5a59c5bdc056c5b09c2f466161ff087e0075cce306a19d677db03d606d1be44e",
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
     },
     "scripts/release.ts": {
-      "sha256": "82edeaf12dacd3df6c77197f06acc57616884eecbcaf6c49e702e560acd3d108",
+      "sha256": "1774d385dc3a7caf061094e5c282216a57b99f2ea8e84de10d6789b0aae1ff02",
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
+    },
+    "apps/electron/resources/mark-source.png": {
+      "sha256": "7ab54137b8b7ab251a521ea1903a02dcb7f27598beabff8dca1d4a3fcd75906b",
+      "reason": "MkAgent brand source asset used to generate platform icons"
+    },
+    "scripts/run-tests.ts": {
+      "sha256": "e67b6dccb64331d2dac769e143b92d116944297734826b8ad1092034bbe78d4c",
+      "reason": "MkAgent test discovery excludes generated artifacts and vendored submodule tests from CI"
     }
   },
   "deleted": {

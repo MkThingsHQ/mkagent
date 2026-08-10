@@ -438,9 +438,9 @@ bun run validate:ci
 ### 12.2 自动更新
 
 - 保留 craft 的 `electron-updater` 状态机、检查/下载/进度/安装/退出恢复和多窗口快照逻辑。
-- 源码仓库固定为 private `open-fox/mkagent`；公开发布仓库固定为 public `open-fox/mkagent-public`。
+- 源码与 release 产物统一存放在 public `MkThingsHQ/mkagent`。
 - private 仓库的 GitHub Actions 构建签名后的安装包、`latest*.yml`/blockmap/checksum，再使用最小权限 secret 发布到 public 仓库。
-- Electron updater 使用 GitHub provider，owner 为 `open-fox`、repo 为 `mkagent-public`；客户端不包含 PAT、`GITHUB_TOKEN` 或其他长期令牌。
+- Electron updater 使用 GitHub provider，owner 为 `MkThingsHQ`、repo 为 `mkagent`；客户端不包含 PAT、`GITHUB_TOKEN` 或其他长期令牌。
 - 客户端只接受匹配平台/架构、签名和 channel 的产物；更新失败不影响正常启动。
 - 不使用 `agents.craft.do` 或任何上游更新地址。
 
@@ -601,7 +601,7 @@ CI 至少包含：
 ## 17. 最终确认的实施决策
 
 1. Views 的 MVP 只提供内置筛选，不开放用户自定义编辑；保留底层 schema/evaluator。
-2. GitHub 源码仓库为 private `open-fox/mkagent`，公开安装包与更新仓库为 public `open-fox/mkagent-public`；客户端不内嵌 GitHub token。
+2. GitHub 源码、公开安装包与更新 manifest 统一放在 public `MkThingsHQ/mkagent`；客户端不内嵌 GitHub token。
 3. Sentry 功能保留并与 craft 接入方式对齐；只有配置 mkagent 自有 DSN 时启用。
 4. Electron appId/macOS bundle identifier 暂用 `app.mkagent.desktop`，版权主体和签名账号使用明确标记的中性占位值，正式发布前再替换。
 5. 保留分支/后台会话需要的本地 `send_agent_message` 和 spawn session 工具，裁掉 Projects、Sources、labels/status 和外部 Messaging 耦合。
