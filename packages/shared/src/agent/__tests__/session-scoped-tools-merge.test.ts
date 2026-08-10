@@ -59,4 +59,19 @@ describe('session-scoped tool callback merge', () => {
     expect(merged?.browserPaneFns).toBe(browserPaneFns);
     expect(merged?.queryFn).toBe(queryFn);
   });
+
+  it('preserves the desktop OpenConnector bridge across turn callback merges', () => {
+    const openConnectorToolBridge = {
+      listTools: async () => [],
+      callTool: async () => ({ content: 'ok', isError: false }),
+    };
+    registerSessionScopedToolCallbacks(sessionId, { openConnectorToolBridge });
+
+    const queryFn = async () => ({ text: 'ok', model: 'test' });
+    mergeSessionScopedToolCallbacks(sessionId, { queryFn });
+
+    const merged = getSessionScopedToolCallbacks(sessionId);
+    expect(merged?.openConnectorToolBridge).toBe(openConnectorToolBridge);
+    expect(merged?.queryFn).toBe(queryFn);
+  });
 });

@@ -1,6 +1,6 @@
 # 架构
 
-MkAgent 是一个 Bun monorepo，三种客户端共用同一套经过鉴权的 WebSocket RPC 协议。唯一注册的 backend 是 `pi`。
+MkAgent 是一个 Bun monorepo，三种客户端共用同一套经过鉴权的 WebSocket RPC 协议。唯一注册的 backend 是 `pi`。OpenConnector 是单独的 Desktop sidecar，不是另一个 agent backend。
 
 ## 分层拓扑
 
@@ -9,9 +9,9 @@ MkAgent 是一个 Bun monorepo，三种客户端共用同一套经过鉴权的 W
 | apps/electron       apps/webui         apps/cli           |
 |   Electron             浏览器            RPC 客户端        |
 |   (Browser 面板、      adapter(通过      (连接已运行的      |
-|   Sentry、自动         头部握手加载      server,或在        |
-|   更新、IPC)           同一份 React)     --run 模式下       |
-|        \                              启动一次性 server)  |
+|   OpenConnector、      头部握手加载      server,或在        |
+|   Sentry、自动         同一份 React)     --run 模式下       |
+|   更新、IPC)                          启动一次性 server)  |
 +---------|----------------|--------------------|-------------+
           v                v                    v
    Browser adapter  ──>  preload Client API  ──> RPC client
@@ -50,13 +50,28 @@ MkAgent 是一个 Bun monorepo，三种客户端共用同一套经过鉴权的 W
 +-----------------------------------------------------------+
 ```
 
-三种客户端操作同一份 workspace 与 JSONL 会话,不存在客户端特有的存储。
+三种客户端操作同一份 workspace 与 JSONL 会话。OpenConnector 是明确的存储例外：它的数据库、连接与自动生成的 secrets 位于 `$CONFIG_DIR/connectors/open-connector/`，并且只供 Electron 使用。
 
 ## Apps
 
-- `apps/electron` 内嵌本地 server,通过 preload 暴露 Client API,负责窗口、Browser 面板、代理集成、自动更新与 Sentry。
+- `apps/electron` 内嵌本地 server,通过 preload 暴露 Client API,负责窗口、Browser 面板、OpenConnector sidecar/控制台、代理集成、自动更新与 Sentry。
 - `apps/webui` 通过浏览器 adapter 加载同一份 React 应用。headless server 同时托管其静态资源与经过鉴权的附件端点。
 - `apps/cli` 使用同一套 RPC 方法,可以连接到已运行的 server,也可以在 `--run` 时启动一次性本地实例。
+
+## Desktop 专用 OpenConnector 边界
+
+Electron 会在 loopback 上启动固定为 `v1.3.5` 的 OpenConnector runtime，并嵌入其 Providers/Actions/Runs Web 控制台。Pi 会话 bridge 只从这个 sidecar 发现五个固定工具。WebUI、headless server 与 CLI 都不会注册这条路径。
+
+```text
+Electron main
+  ├─ 嵌入: Providers / Actions / Runs 控制台
+  ├─ 启动: vendor/open-connector sidecar (127.0.0.1)
+  │           ├─ 已鉴权 HTTP 控制台
+  │           └─ 已鉴权 MCP endpoint
+  └─ 把五个 mcp__open_connector__* 工具桥接到 Desktop Pi 会话
+```
+
+sidecar 的 MCP transport 只是这条固定 bridge 的实现细节。MkAgent 仍然没有通用 Source registry、用户可配置的 MCP pool，也没有 Craft 的 session/bridge MCP server。详见 [`open-connector.md`](./open-connector.md)。
 
 ## 共享 package
 
@@ -93,6 +108,7 @@ Pi 子进程与主进程隔离:
 ## 打包面
 
 - Desktop 应用:macOS arm64 / x64(DMG + ZIP)、Windows x64(NSIS)、Linux x64(AppImage)。构建入口 `bun run electron:dist[:dev][:mac|:win|:linux]`。
+- OpenConnector sidecar:`vendor/open-connector` 固定为 `v1.3.5`;Electron 资源构建会准备其生产 runtime 与 Web 控制台,并复制到 Desktop 安装包。
 - Headless server:每平台 Bun 二进制,放在 `apps/cli` 与 `packages/server`;通过 `bun run scripts/build-server.ts` 构建。
 - CLI:`bun run cli:build` 输出 `dist/mkagent`。
 - Pi 子进程:`bun run server:build:subprocess` 输出 `packages/pi-agent-server/dist/index.js`。
@@ -101,4 +117,4 @@ Pi 子进程与主进程隔离:
 
 ## 刻意不存在的部分
 
-Craft Agents 自带广泛的 OAuth 与 Sources 集成、Slack/Teams/Lark messaging gateway、基于 Baileys 的 WhatsApp worker、session MCP server、bridge MCP server 和独立 `apps/viewer` Electron 应用。MkAgent 在这一范围内仅保留 ChatGPT 与 Claude 的 LLM OAuth 流程，其余组件仍不打包。Craft 使用的底层 `pi-ai` 依赖虽然包含 OpenRouter 图片生成 API，但 Craft 和 MkAgent 都没有把它注册为 Agent 工具。具体证据与安装包体积差异见 [`comparison-with-craft.md`](./comparison-with-craft.md)。
+Craft Agents 自带广泛的 OAuth 与通用 Sources 集成、Slack/Teams/Lark messaging gateway、基于 Baileys 的 WhatsApp worker、session MCP server、bridge MCP server 和独立 `apps/viewer` Electron 应用。MkAgent 在这一范围内仅保留 ChatGPT 与 Claude 的 LLM OAuth 流程；这些通用 Sources/MCP 组件仍不打包。独立固定版本的 OpenConnector sidecar 不会恢复它们。Craft 使用的底层 `pi-ai` 依赖虽然包含 OpenRouter 图片生成 API，但 Craft 和 MkAgent 都没有把它注册为 Agent 工具。具体对比见 [`comparison-with-craft.md`](./comparison-with-craft.md)；其中安装包体积是日期快照，加入 OpenConnector 打包资源后需要重新测量。

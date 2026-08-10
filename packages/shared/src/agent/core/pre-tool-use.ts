@@ -41,6 +41,7 @@ import {
 import { permissionsConfigCache, type PermissionsContext } from '../permissions-config.ts';
 import type { PrerequisiteCheckResult } from './prerequisite-manager.ts';
 import { rewriteBashWithRtk } from './rtk-rewrite.ts';
+import { OPEN_CONNECTOR_PROXY_PREFIX } from '../../open-connector/agent-tools.ts';
 
 // ============================================================
 // TYPES
@@ -961,6 +962,25 @@ export function shouldPromptInAskMode(
   }
 
   // --- MCP mutations ---
+  if (toolName === `${OPEN_CONNECTOR_PROXY_PREFIX}execute_action`) {
+    const actionId = typeof input.actionId === 'string' && input.actionId.trim()
+      ? input.actionId.trim()
+      : 'unknown action';
+    const connectionName = typeof input.connectionName === 'string' && input.connectionName.trim()
+      ? input.connectionName.trim()
+      : 'default connection';
+    const permissionKey = `${toolName}:${actionId}:${connectionName}`;
+    if (permissionManager.isCommandWhitelisted(permissionKey)) {
+      onDebug?.(`Auto-allowing previously approved OpenConnector action "${actionId}" on "${connectionName}"`);
+      return null;
+    }
+    return {
+      promptType: 'network',
+      description: `OpenConnector action: ${actionId} (${connectionName}). This may create, update, delete, publish, or send data in an external service.`,
+      command: permissionKey,
+    };
+  }
+
   if (toolName.startsWith('mcp__')) {
     // Check if it would be blocked in safe mode (= it's a mutation)
     const safeModeResult = shouldAllowToolInMode(

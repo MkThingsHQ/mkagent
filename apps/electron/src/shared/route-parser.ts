@@ -5,7 +5,7 @@
  * sessions, Skills, and settings still share the same URL-driven panel model.
  */
 
-import type { NavigationState, SessionFilter, RightSidebarPanel } from './types'
+import type { NavigationState, OpenConnectorSection, SessionFilter, RightSidebarPanel } from './types'
 import { isValidSettingsSubpage } from './settings-registry'
 
 export type RouteType = 'action' | 'view'
@@ -17,15 +17,17 @@ export interface ParsedRoute {
   params: Record<string, string>
 }
 
-export type NavigatorType = 'sessions' | 'skills' | 'settings'
+export type NavigatorType = 'sessions' | 'skills' | 'settings' | 'openConnector'
 
 export interface ParsedCompoundRoute {
   navigator: NavigatorType
   sessionFilter?: SessionFilter
+  openConnectorSection?: OpenConnectorSection
   details: { type: string; id: string } | null
 }
 
-const COMPOUND_ROUTE_PREFIXES = ['allSessions', 'flagged', 'archived', 'skills', 'settings']
+const OPEN_CONNECTOR_SECTIONS: OpenConnectorSection[] = ['providers', 'actions', 'runs']
+const COMPOUND_ROUTE_PREFIXES = ['allSessions', 'flagged', 'archived', 'skills', 'settings', 'openConnector']
 
 export function isCompoundRoute(route: string): boolean {
   const firstSegment = route.split('?')[0].split('/')[0]
@@ -36,6 +38,19 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
   const segments = route.split('?')[0].split('/').filter(Boolean)
   if (segments.length === 0) return null
   const first = segments[0]
+
+  if (first === 'openConnector') {
+    if (segments.length === 1) return { navigator: 'openConnector', details: null }
+    const section = segments[1]
+    if (segments.length === 2 && OPEN_CONNECTOR_SECTIONS.includes(section as OpenConnectorSection)) {
+      return {
+        navigator: 'openConnector',
+        openConnectorSection: section as OpenConnectorSection,
+        details: null,
+      }
+    }
+    return null
+  }
 
   if (first === 'settings') {
     const subpage = segments[1]
@@ -72,6 +87,9 @@ export function parseCompoundRoute(route: string): ParsedCompoundRoute | null {
 }
 
 export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
+  if (parsed.navigator === 'openConnector') {
+    return parsed.openConnectorSection ? `openConnector/${parsed.openConnectorSection}` : 'openConnector'
+  }
   if (parsed.navigator === 'settings') {
     return parsed.details ? `settings/${parsed.details.id}` : 'settings'
   }
@@ -83,6 +101,13 @@ export function buildCompoundRoute(parsed: ParsedCompoundRoute): string {
 }
 
 function compoundToParsedRoute(compound: ParsedCompoundRoute): ParsedRoute {
+  if (compound.navigator === 'openConnector') {
+    return {
+      type: 'view',
+      name: 'openConnector',
+      params: compound.openConnectorSection ? { section: compound.openConnectorSection } : {},
+    }
+  }
   if (compound.navigator === 'settings') {
     return compound.details
       ? { type: 'view', name: compound.details.id, params: {} }
@@ -120,6 +145,12 @@ export function parseRoute(route: string): ParsedRoute | null {
 }
 
 function compoundToNavigationState(compound: ParsedCompoundRoute): NavigationState {
+  if (compound.navigator === 'openConnector') {
+    return {
+      navigator: 'openConnector',
+      ...(compound.openConnectorSection ? { section: compound.openConnectorSection } : {}),
+    }
+  }
   if (compound.navigator === 'settings') {
     return {
       navigator: 'settings',
@@ -151,6 +182,9 @@ export function parseRouteToNavigationState(route: string, sidebarParam?: string
 }
 
 export function buildRouteFromNavigationState(state: NavigationState): string {
+  if (state.navigator === 'openConnector') {
+    return state.section ? `openConnector/${state.section}` : 'openConnector'
+  }
   if (state.navigator === 'settings') {
     return state.subpage ? `settings/${state.subpage}` : 'settings'
   }

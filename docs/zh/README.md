@@ -1,6 +1,6 @@
 # MkAgent 文档（中文）
 
-本目录是 MkAgent 用户文档的中文译本，与 [`docs/`](../) 下的英文文档一一对应。MkAgent 是基于 [Craft Agents OSS](https://github.com/craft-ai-agents/craft-agents-oss) `v0.11.2` 派生的本地跨平台 Agent 精简发行版，仅注册 Pi Agent，并通过 Craft 的 OAuth 流程支持 ChatGPT Plus 与 Claude Pro/Max 订阅。MkAgent 不包含 Claude Agent SDK、GitHub Copilot 订阅、外部消息、Automations、Labels、Projects/Kanban、Sources/MCP、Viewer 或图片生成能力。
+本目录是 MkAgent 用户文档的中文译本，与 [`docs/`](../) 下的英文文档一一对应。MkAgent 是基于 [Craft Agents OSS](https://github.com/craft-ai-agents/craft-agents-oss) `v0.11.2` 派生的本地跨平台 Agent 精简发行版，仅注册 Pi Agent，并通过 Craft 的 OAuth 流程支持 ChatGPT Plus 与 Claude Pro/Max 订阅。MkAgent 不包含 Claude Agent SDK、GitHub Copilot 订阅、外部消息、Automations、Labels、Projects/Kanban、Craft 的通用 Sources/MCP 产品、Viewer 或图片生成能力；唯一的 connector 集成是 Desktop 专用的 [OpenConnector](./open-connector.md) sidecar，以及固定的五工具 Pi bridge。
 
 ## 文档导航
 
@@ -18,6 +18,7 @@
 | 功能矩阵 | [feature-matrix.md](./feature-matrix.md) |
 | 网络代理 | [network-proxy.md](./network-proxy.md) |
 | Ollama | [ollama.md](./ollama.md) |
+| OpenConnector | [open-connector.md](./open-connector.md) |
 | 权限 | [permissions.md](./permissions.md) |
 | 发布、更新与遥测 | [releases.md](./releases.md) |
 | 会话 | [sessions.md](./sessions.md) |
@@ -25,6 +26,13 @@
 | 测试 | [testing.md](./testing.md) |
 | 上游同步 | [upstream-sync.md](./upstream-sync.md) |
 | Workspace | [workspaces.md](./workspaces.md) |
+
+## `migration/` 中的配套文档
+
+| 主题 | 文档 |
+| --- | --- |
+| 规划与审计历史 | [migration-audit.md](../migration/migration-audit.md)、[migration-features.md](../migration/migration-features.md)、[migration-mvp.md](../migration/migration-mvp.md)、[migration-plan.md](../migration/migration-plan.md)、[migration-ui.md](../migration/migration-ui.md) |
+| 通俗索引 | [migration/README.md](../migration/README.md) |
 
 ## 翻译约定
 

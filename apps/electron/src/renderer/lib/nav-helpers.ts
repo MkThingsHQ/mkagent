@@ -19,6 +19,7 @@ import type { NavigationState } from '../../shared/types'
  * - sessions: a session is selected
  * - settings: a subpage is selected (bare `settings` route → false)
  * - skills: a detail item is selected
+ * - openConnector: the console is already content-only
  */
 export function isDetailNavState(navState: NavigationState | null): boolean {
   if (!navState) return false
@@ -29,5 +30,7 @@ export function isDetailNavState(navState: NavigationState | null): boolean {
       return navState.subpage !== null
     case 'skills':
       return navState.details !== null
+    case 'openConnector':
+      return true
   }
 }

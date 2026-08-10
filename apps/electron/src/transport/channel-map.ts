@@ -154,6 +154,7 @@ export const CHANNEL_MAP = {
   getLatestReleaseVersion: invoke(RPC_CHANNELS.releaseNotes.GET_LATEST_VERSION),
 
   getCredentialHealth: invoke(RPC_CHANNELS.credentials.HEALTH_CHECK),
+  getOpenConnectorConsole: invoke(RPC_CHANNELS.openConnector.GET_CONSOLE),
   showDeleteSessionConfirmation: invoke(RPC_CHANNELS.auth.SHOW_DELETE_SESSION_CONFIRMATION),
   getSetupNeeds: invoke(RPC_CHANNELS.onboarding.GET_AUTH_STATE, result => result.setupNeeds),
   startClaudeOAuth: invoke(RPC_CHANNELS.onboarding.START_CLAUDE_OAUTH),

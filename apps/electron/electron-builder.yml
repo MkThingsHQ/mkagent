@@ -11,6 +11,7 @@ directories:
 files:
   - dist/**/*
   - "!dist/renderer/src/**"
+  - "!dist/resources/open-connector/**/*"
   - "!**/*.map"
   - package.json
   - vendor/bun/**/*
@@ -21,6 +22,10 @@ extraMetadata:
 extraResources:
   - from: ../../node_modules/@vscode/ripgrep/bin
     to: app/node_modules/@vscode/ripgrep/bin
+  - from: dist/resources/open-connector
+    to: open-connector
+  - from: dist/resources/open-connector/node_modules
+    to: open-connector/node_modules
   - from: ../../LICENSE
     to: LICENSE
   - from: ../../NOTICE

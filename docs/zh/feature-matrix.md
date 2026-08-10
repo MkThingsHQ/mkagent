@@ -11,8 +11,9 @@
 - 会话(create / continue / cancel / resume / search / rename / delete / flag / archive / unread / import-export / branch / multi-window)
 - Skills、mini chat、plan、annotations、follow-up
 - Browser 面板 + `web_search` + `web_fetch`
+- Desktop 专用 OpenConnector `v1.3.5` sidecar、Providers/Actions/Runs 控制台与五个固定 Pi 工具
 - 附件与文档工具
-- 权限(safe / allow-all)、网络代理、主题、英文与简体中文
+- 权限(Explore/safe、Ask、Execute/allow-all)、网络代理、主题、英文与简体中文
 - 自动更新与 Sentry 集成(以 `SENTRY_ELECTRON_INGEST_URL` 为门控)
 
 ## 删除能力
@@ -23,15 +24,17 @@
 - 产品 Automations 与定时任务
 - 会话 labels 与用户自定义 status
 - Projects 与 Kanban
-- Sources(API Source、MCP Source)与 MCP server
+- 通用 Sources(API Source、MCP Source)、用户可配置的 MCP pool 与 Craft 的 session/bridge MCP server；定向 OpenConnector 集成没有恢复这些能力
 - Viewer app、公开分享、远程 workspace
 - 图片生成(`gen_image`)
 
 ## 引用策略
 
-保留模块沿用上游目录布局、公开命名、代码风格与测试。产品专属标识替换为 MkAgent(`@mkagent/*`、`~/.mkagent`、`MKAGENT_*`、`mkagent://`、`app.mkagent.desktop`)。参考仓库只读。
+从 Craft 保留的模块沿用上游目录布局、公开命名、代码风格与测试。产品专属标识替换为 MkAgent(`@mkagent/*`、`~/.mkagent`、`MKAGENT_*`、`mkagent://`、`app.mkagent.desktop`)。OpenConnector 则跟随单独固定的 `vendor/open-connector` submodule。参考仓库只读。
 
 ## 数据锚点
+
+以下数字是 2026-07-30 记录的 Craft 复用审计快照。它们早于 OpenConnector 集成，仅保留作对照；重新运行审计之前，不应把它们当作当前仓库或安装包数据。
 
 | 指标 | MkAgent | 备注 |
 |---|---:|---|

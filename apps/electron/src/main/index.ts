@@ -40,6 +40,7 @@ import { checkForUpdatesOnLaunch, setAutoUpdateEventSink } from './auto-update'
 import { handleDeepLink } from './deep-link'
 import { createApplicationMenu, rebuildMenu, setMenuEventSink } from './menu'
 import { registerThumbnailHandler, registerThumbnailScheme } from './thumbnail-protocol'
+import { getOpenConnectorSidecarService } from './open-connector-sidecar'
 
 setupI18n()
 const persistedUiLanguage = getPersistedUiLanguage()
@@ -168,7 +169,13 @@ async function start() {
     applyPlatformToSubsystems: current => {
       setFetcherPlatform(current)
       setSessionPlatform(current)
-      setSessionRuntimeHooks({ captureException: error => Sentry.captureException(error) })
+      setSessionRuntimeHooks({
+        captureException: error => Sentry.captureException(error),
+        openConnectorToolBridge: {
+          listTools: options => getOpenConnectorSidecarService().listTools(options),
+          callTool: (name, args, options) => getOpenConnectorSidecarService().callTool(name, args, options),
+        },
+      })
       setSearchPlatform(current)
       setImageProcessor(current.imageProcessor)
     },
@@ -273,6 +280,12 @@ app.on('before-quit', event => {
   windowManager?.setAppQuitting(true)
   browserPaneManager?.destroyAll()
   void (async () => {
+    try {
+      await getOpenConnectorSidecarService().stop()
+    } catch (error) {
+      mainLog.error('OpenConnector shutdown failed', error)
+      Sentry.captureException(error)
+    }
     try {
       await stopServer?.()
     } catch (error) {

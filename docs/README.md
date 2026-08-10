@@ -1,6 +1,6 @@
 # MkAgent documentation (English)
 
-MkAgent is a cross-platform local Lite distribution derived from [Craft Agents OSS](https://github.com/craft-ai-agents/craft-agents-oss) `v0.11.2`. It registers the Pi agent backend only and supports ChatGPT Plus and Claude Pro/Max subscriptions through Craft's OAuth flows. It does not include the Claude Agent SDK, GitHub Copilot subscription, external messaging channels, product automations, session labels, projects/Kanban, sources/MCP, the Craft Viewer, or image generation capabilities.
+MkAgent is a cross-platform local Lite distribution derived from [Craft Agents OSS](https://github.com/craft-ai-agents/craft-agents-oss) `v0.11.2`. It registers the Pi agent backend only and supports ChatGPT Plus and Claude Pro/Max subscriptions through Craft's OAuth flows. It does not include the Claude Agent SDK, GitHub Copilot subscription, external messaging channels, product automations, session labels, projects/Kanban, Craft's generic Sources/MCP product, the Craft Viewer, or image generation capabilities. Its sole connector integration is the desktop-only [OpenConnector](./open-connector.md) sidecar with a fixed five-tool Pi bridge.
 
 This directory is the English-language user documentation. A Chinese translation lives under [`zh/`](./zh/README.md) and is kept in sync with the English source.
 
@@ -20,6 +20,7 @@ This directory is the English-language user documentation. A Chinese translation
 | Feature matrix (kept vs. removed) | [feature-matrix.md](./feature-matrix.md) |
 | Network proxy | [network-proxy.md](./network-proxy.md) |
 | Ollama | [ollama.md](./ollama.md) |
+| OpenConnector | [open-connector.md](./open-connector.md) |
 | Permissions | [permissions.md](./permissions.md) |
 | Releases, updates, and telemetry | [releases.md](./releases.md) |
 | Sessions | [sessions.md](./sessions.md) |

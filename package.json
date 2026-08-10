@@ -59,6 +59,7 @@
     "electron:build:main": "bun run scripts/electron-build-main.ts",
     "electron:build:preload": "bun run scripts/electron-build-preload.ts",
     "electron:build:renderer": "bun run scripts/electron-build-renderer.ts",
+    "open-connector:prepare": "bun run scripts/prepare-open-connector.ts",
     "electron:build:resources": "bun run scripts/electron-build-resources.ts",
     "electron:build:assets": "cd apps/electron && bun scripts/copy-assets.ts",
     "electron:build": "bun run electron:build:main && bun run electron:build:preload && bun run electron:build:renderer && bun run electron:build:resources",

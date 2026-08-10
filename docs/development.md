@@ -8,11 +8,12 @@ This page summarizes how to set up an MkAgent development environment and which 
 |---|---|---|
 | Bun | 1.3.14+ | Workspace, runtime, builds (`bun.lock`) |
 | Node | ≥ 18 (Bun ships it for fallbacks) | TypeScript toolchain |
+| npm | version bundled with the selected Node installation | Installs only the pinned `vendor/open-connector` submodule from its `package-lock.json` |
 | Python | 3.12 | Document-tool smoke tests |
 | `uv` | latest compatible for development; `0.10.6` in desktop release builds | Runs document-tool smoke tests and prepares assets; packaged artifacts bundle their target-platform binary |
 | Git | any modern version | `pre-commit`-style checks via husky are opt-in |
 
-`bun` is the only workspace linker; npm/yarn are not used to install dependencies because `bun.lock` is the source of truth.
+`bun` is the only top-level workspace linker and `bun.lock` remains the MkAgent dependency source of truth. npm is used only inside the independently locked `vendor/open-connector` submodule; yarn is not used.
 
 ## First-time setup
 
@@ -20,6 +21,7 @@ This page summarizes how to set up an MkAgent development environment and which 
 git clone --recurse-submodules https://github.com/MkThingsHQ/mkagent.git
 cd mkagent
 bun install --frozen-lockfile
+bun run open-connector:prepare
 bun run validate:dev
 ```
 
@@ -44,6 +46,7 @@ docs/                  # English-language documentation
 docs/zh/               # Chinese translation
 scripts/               # Dev / build / lint / audit
 migration/             # Migration plan, audit, UI history
+vendor/open-connector/ # OpenConnector v1.3.5 Git submodule (Desktop sidecar)
 ```
 
 `apps/online-docs` is intentionally outside the workspace globs.
@@ -60,6 +63,7 @@ migration/             # Migration plan, audit, UI history
 | Production headless server (WebUI bundled, Pi built) | `bun run server:prod` |
 | Build the CLI binary | `bun run cli:build` (output: `apps/cli/dist/mkagent`) |
 | Build the Pi subprocess | `bun run server:build:subprocess` |
+| Prepare the pinned OpenConnector runtime and console | `bun run open-connector:prepare` |
 | Build a dev-signed macOS arm64 .app | `bun run electron:dist:dev:mac` |
 | Run all unit + isolated tests | `bun run test` |
 | Validate (typecheck + tests + shared suite + doc tool smoke + lint) | `bun run validate:ci` |
@@ -102,11 +106,15 @@ CONFIG_DIR=/tmp/mkagent-dev bun run server:dev:webui
 | `MKAGENT_SERVER_URL` / `MKAGENT_TLS_CA` | unset | CLI connection options |
 | `MKAGENT_WORKSPACE` | `default` | CLI workspace override |
 | `LLM_API_KEY` / provider env var | unset | CLI self-contained `run` API credential |
+| `MKAGENT_OPEN_CONNECTOR_PORT` | `38991` | Override the loopback port used by the Desktop OpenConnector sidecar |
+
+`bun run electron:dev` and Electron resource builds run `open-connector:prepare` automatically. Run it directly after changing the submodule pointer or when diagnosing the sidecar without starting Electron. OpenConnector data and generated secrets follow `CONFIG_DIR`; see [`open-connector.md`](./open-connector.md).
 
 ## Conventions
 
 - Reuse existing package boundaries and naming before adding new abstractions.
 - Reference checkouts (`craft-agents-oss`, `echo`, `xagent`) are read-only; never commit changes to them.
+- `vendor/open-connector` is a pinned product submodule, not a reference checkout. Review and validate a version change before updating its recorded pointer.
 - Every module change ships with its tests and a documentation update.
 - Run `git diff --check` before commit and confirm the changed files are only what you intended.
 

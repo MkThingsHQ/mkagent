@@ -20,6 +20,7 @@ import { getSessionSafeAllowedToolNames } from '@mkagent/session-tools-core';
 import { FEATURE_FLAGS } from '../feature-flags.ts';
 import { CONFIG_DIR } from '../config/paths.ts';
 import { isBrowserToolNameOrAlias } from './browser-tool-names.ts';
+import { OPEN_CONNECTOR_READ_ONLY_PROXY_TOOL_NAMES } from '../open-connector/agent-tools.ts';
 import type { PermissionsContext, MergedPermissionsConfig } from './permissions-config.ts';
 import {
   validateBashCommand,
@@ -1949,6 +1950,10 @@ export function shouldAllowToolInMode(
 
   // Handle MCP tools - allow read-only, block write operations
   if (toolName.startsWith('mcp__')) {
+    if (OPEN_CONNECTOR_READ_ONLY_PROXY_TOOL_NAMES.has(toolName)) {
+      return { allowed: true };
+    }
+
     // Always allow documentation tools (read-only, always available)
     if (toolName.startsWith('mcp__mkagent-docs__')) {
       return { allowed: true };

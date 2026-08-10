@@ -27,7 +27,7 @@
 MkAgent helps developers run long-lived AI coding sessions from Desktop, WebUI, or CLI while
 keeping every workspace under their control. It is powered by the
 [Pi](https://github.com/badlogic/pi-mono) agent runtime and combines persistent local workspaces,
-model flexibility, browser tools, and document tools in one application.
+model flexibility, browser and document tools, and a desktop connector console in one application.
 Application state stays under your local data directory, and credentials are stored through the
 operating system credential manager.
 
@@ -44,6 +44,8 @@ operating system credential manager.
   follow-ups, and run multiple windows.
 - **Built-in tools** — browse the web, work with attachments, render Markdown and code, and inspect
   or transform common document formats.
+- **OpenConnector integration** — browse providers and Actions, manage connections, and inspect runs
+  through a pinned desktop sidecar with a focused Pi tool bridge.
 - **Explicit control** — choose Explore, Ask, or Execute permission modes, configure a network
   proxy, and switch between English and Simplified Chinese.
 
@@ -57,12 +59,13 @@ See the [feature matrix](./docs/feature-matrix.md) for the exact supported produ
   interface and typed application code.
 - [Vite](https://vite.dev/) and [Tailwind CSS](https://tailwindcss.com/) — Renderer tooling and styling.
 - [Pi](https://github.com/badlogic/pi-mono) — Agent runtime, model providers, sessions, and tool execution.
+- [OpenConnector](https://github.com/oomol-lab/open-connector) — Pinned desktop connector sidecar.
 
 ## Interfaces
 
 | Interface | Best for | Command |
 | --- | --- | --- |
-| Desktop | Full local experience and browser pane | `bun run electron:dev` |
+| Desktop | Full local experience, browser pane, and OpenConnector | `bun run electron:dev` |
 | WebUI | Browser access to the headless MkAgent server | `bun run server:prod` |
 | CLI | Scripting, remote control, and terminal workflows | `bun run apps/cli/src/index.ts --help` |
 
@@ -72,16 +75,22 @@ See the [feature matrix](./docs/feature-matrix.md) for the exact supported produ
 
 - [Bun](https://bun.sh) 1.3.14 or later
 - Node.js 18 or later
-- Git
+- Git with submodule support
 - Python 3.12 and [`uv`](https://docs.astral.sh/uv/) for the complete document-tool test suite
 
 ### Run the Desktop app
 
 ```bash
-git clone https://github.com/MkThingsHQ/mkagent.git
+git clone --recurse-submodules https://github.com/MkThingsHQ/mkagent.git
 cd mkagent
 bun install --frozen-lockfile
 bun run electron:dev
+```
+
+If the repository was cloned without submodules, initialize the pinned OpenConnector source first:
+
+```bash
+git submodule update --init --recursive
 ```
 
 MkAgent creates its default workspace at `~/.mkagent/workspaces/default`. The configuration root can
@@ -95,6 +104,7 @@ be isolated for development or testing with `CONFIG_DIR=/path/to/directory`.
 | `bun run electron:start` | Build and launch Electron once |
 | `bun run server:prod` | Build and start the headless server with WebUI |
 | `bun run cli:build` | Build the CLI bundle |
+| `bun run open-connector:prepare` | Prepare the pinned OpenConnector runtime and console |
 | `bun run test` | Run unit and isolated tests |
 | `bun run validate:ci` | Run the full type, test, document-tool, and localization gate |
 
@@ -118,6 +128,7 @@ packages/
   server/                Headless server
   pi-agent-server/       Pi agent subprocess
   session-tools-core/    Plans, Skills, browser, and session tools
+vendor/open-connector/   Pinned desktop connector sidecar
 ```
 
 Read the [architecture guide](./docs/architecture.md) for runtime boundaries, process ownership, and
@@ -134,7 +145,7 @@ The complete documentation is available in [English](./docs/README.md) and
 | Models | [Connections](./docs/connections.md), [Ollama](./docs/ollama.md) |
 | Work | [Workspaces](./docs/workspaces.md), [sessions](./docs/sessions.md), [Skills](./docs/skills.md) |
 | Tools | [Browser](./docs/browser.md), [attachments](./docs/attachments.md), [document tools](./docs/document-tools.md) |
-| Runtime | [CLI](./docs/cli.md), [permissions](./docs/permissions.md), [network proxy](./docs/network-proxy.md) |
+| Runtime | [CLI](./docs/cli.md), [OpenConnector](./docs/open-connector.md), [permissions](./docs/permissions.md), [network proxy](./docs/network-proxy.md) |
 | Project | [Feature matrix](./docs/feature-matrix.md), [releases](./docs/releases.md), [upstream synchronization](./docs/upstream-sync.md) |
 
 ## Contributing

@@ -10,13 +10,22 @@ MkAgent derives its architecture, UI, and runtime from [Craft Agents OSS](https:
 | Tag | `v0.11.2` |
 | Commit | `a60ebc1a5a7cb0a6af7a77d5eed0512c5fc07658` |
 
+OpenConnector has an independent baseline and is not sourced from Craft:
+
+| Item | Value |
+|---|---|
+| Repository | `oomol-lab/open-connector` |
+| Tag | `v1.3.5` |
+| MkAgent path | `vendor/open-connector` Git submodule |
+| Product surface | Electron-only sidecar, console, and five fixed Pi tools |
+
 When upstream publishes a new tag worth evaluating:
 
 1. Record the new tag and commit: `git -C ../craft-agents-oss rev-parse HEAD && git -C ../craft-agents-oss describe --tags --always`.
 2. Add the commit to this document so the "current baseline" stays a single source of truth.
 3. Move through the steps below using the new commit.
 
-Reference checkouts (`../craft-agents-oss`, `../echo`, `../xagent`) stay read-only during MkAgent work.
+Reference checkouts (`../craft-agents-oss`, `../echo`, `../xagent`) stay read-only during MkAgent work. Echo may be consulted for OpenConnector lifecycle patterns, but its application code is not an upstream to merge. Updating OpenConnector means reviewing a new OpenConnector release, moving the MkAgent submodule pointer intentionally, and preserving the fixed tool/permission contract described in [`open-connector.md`](./open-connector.md).
 
 ## Sync procedure
 
@@ -44,6 +53,7 @@ Reference checkouts (`../craft-agents-oss`, `../echo`, `../xagent`) stay read-on
   │      outside scope     → keep MkAgent Lite                        │
   │                                                                  │
   │ 5. Validate                                                       │
+  │    bun run open-connector:prepare                                 │
   │    bun run typecheck:all                                          │
   │    bun run lint                                                   │
   │    bun run validate:ci                                            │
@@ -76,7 +86,7 @@ Adding upstream-only features starts with the Lite question first; only features
 Two source-of-truth files record which MkAgent files deviate from Craft:
 
 - `scripts/craft-source-overrides.json` (tracking all `apps/`, `packages/` source files)
-- `scripts/craft-ui-overrides.json` (renderer-focused subset, 386 entries)
+- `scripts/craft-ui-overrides.json` (renderer-focused subset)
 
 After any sync, both files **must** be regenerated and reviewed. The intent is that `audit:craft-reuse` only passes because the deviation is justified, not because the hash table was bumped to match.
 
@@ -85,7 +95,7 @@ After any sync, both files **must** be regenerated and reviewed. The intent is t
 - Claude Agent SDK backend and the `claude-agent-sdk*` packages; keep the retained Claude OAuth flow routed through Pi
 - GitHub Copilot, generic/Sources OAuth, and their SDKs
 - External messaging gateway and workers
-- Sources, MCP server, bridge MCP server, MCP-related UI
+- Craft's generic Sources product, API/MCP Source configuration, user-configurable MCP pool, session/bridge MCP servers, and related UI. The pinned OpenConnector sidecar is the sole narrow exception; it must not grow into generic Sources/MCP restoration.
 - Image generation models and `gen_image`
 - Public sharing, Viewer app
 - Product automations and the scheduler UI
@@ -102,4 +112,5 @@ These are recorded as Lite-boundary deletions in [`comparison-with-craft.md`](./
 | `lint:craft-test-coverage` shows a "missing" tag | A Craft test moved or was added without classification | update the seam classification in `scripts/check-craft-test-coverage.ts` |
 | Type error in `apps/electron/src/main` only after a sync | Upstream introduced a new env var or platform helper | confirm it survives the Lite seam; document before commit |
 | Renderer asset 404 in packaged build | New Craft asset added without updating `scripts/copy-assets.ts` | add the asset to the copy list and rebuild |
+| OpenConnector console reports that its runtime is unavailable | The submodule, locked dependencies, generated registries, or web console is missing | run `bun run open-connector:prepare`, then rebuild Electron resources |
 | `electron:build` succeeds but `MkAgent Helper` lacks a Claude/Sources plugin | Confirm `appId` is `app.mkagent.desktop` and `@mkagent/*` is the only scope in `extraResources` | check `apps/electron/electron-builder.yml` |

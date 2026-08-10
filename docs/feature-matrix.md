@@ -11,8 +11,9 @@ This document records MkAgent's intentional product boundary relative to the ups
 - Sessions (create, continue, cancel, resume, search, rename, delete, flag, archive, unread, import/export, branch, multi-window)
 - Skills, mini chat, plans, annotations, follow-ups
 - Browser pane + `web_search` + `web_fetch`
+- Desktop-only OpenConnector `v1.3.5` sidecar, Providers/Actions/Runs console, and five fixed Pi tools
 - Attachments and document tools
-- Permissions (safe / allow-all), network proxy, themes, English and Simplified Chinese
+- Permissions (Explore/safe, Ask, Execute/allow-all), network proxy, themes, English and Simplified Chinese
 - Auto-update and Sentry integration (gated by `SENTRY_ELECTRON_INGEST_URL`)
 
 ## Removed
@@ -23,15 +24,17 @@ This document records MkAgent's intentional product boundary relative to the ups
 - Product automations and schedulers
 - Session labels and user-defined statuses
 - Projects and Kanban
-- Sources (API Source, MCP Source) and MCP servers
+- Generic Sources (API Source, MCP Source), user-configurable MCP pools, and Craft's session/bridge MCP servers; the dedicated OpenConnector integration does not restore them
 - Viewer app, public sharing, and remote workspaces
 - Image generation (`gen_image`)
 
 ## Reference policy
 
-Retained modules follow the upstream directory layout, public names, coding style, and tests. Product-specific identifiers are changed to MkAgent (`@mkagent/*`, `~/.mkagent`, `MKAGENT_*`, `mkagent://`, `app.mkagent.desktop`). Reference repositories are read-only.
+Craft-derived retained modules follow the upstream directory layout, public names, coding style, and tests. Product-specific identifiers are changed to MkAgent (`@mkagent/*`, `~/.mkagent`, `MKAGENT_*`, `mkagent://`, `app.mkagent.desktop`). OpenConnector follows its separately pinned `vendor/open-connector` submodule. Reference repositories are read-only.
 
 ## Numerical anchors
+
+These figures are the recorded 2026-07-30 Craft-reuse audit snapshot. They predate the OpenConnector integration and are retained for comparison; rerun the audit before treating them as current repository or package measurements.
 
 | Metric | MkAgent | Notes |
 |---|---:|---|

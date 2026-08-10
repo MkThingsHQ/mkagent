@@ -16,6 +16,7 @@
  */
 
 import type { SettingsSubpage } from './settings-registry'
+import type { OpenConnectorSection } from './types'
 import type { PermissionMode } from '@mkagent/shared/agent/mode-types'
 
 // Helper to build query strings from params
@@ -94,6 +95,10 @@ export const routes = {
       if (!skillSlug) return 'skills' as const
       return `skills/skill/${skillSlug}` as const
     },
+
+    /** OpenConnector local console view */
+    openConnector: (section?: OpenConnectorSection) =>
+      section ? `openConnector/${section}` as const : 'openConnector' as const,
 
     /** Settings view (settings navigator) - uses SettingsSubpage from registry */
     settings: (subpage?: SettingsSubpage) =>

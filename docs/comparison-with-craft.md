@@ -1,12 +1,12 @@
 # MkAgent vs. Craft Agents — current comparison
 
-> Snapshot taken on **2026-07-30** against the MkAgent `main` branch working tree (HEAD `47d09e5 feat: Add Chinese documentation`) and the upstream tag [`craft-ai-agents/craft-agents-oss` `v0.11.2` / `a60ebc1a5a7c`](https://github.com/craft-ai-agents/craft-agents-oss). MkAgent ships a single `main` branch; there is no `dev/agent-memory` line. Numbers come from the on-disk working trees and prior validated builds, not from new network measurements; rebuild both repositories from the recorded commits before re-running this audit.
+> Numerical snapshot taken on **2026-07-30** against the MkAgent `main` working tree (HEAD `47d09e5 feat: Add Chinese documentation`) and the upstream tag [`craft-ai-agents/craft-agents-oss` `v0.11.2` / `a60ebc1a5a7c`](https://github.com/craft-ai-agents/craft-agents-oss). Capability sections have since been updated for the desktop-only OpenConnector `v1.3.5` integration, but LOC, test counts, and installer sizes below remain the recorded pre-OpenConnector snapshot. Rebuild and remeasure before treating those numbers as current; this document makes no claim about active branch topology.
 
 This document explains, with evidence, what MkAgent keeps from Craft Agents, what it physically removes, and how those choices change the artifact you ship. MkAgent is the "Lite" derivative built on the same architecture and renderer; the table below is the canonical answer to "what's actually different?".
 
 ## 1. Repository & source line count
 
-Both repositories are Bun monorepos with the same workspace layout (`apps/{electron,webui,cli}` + `packages/{core,shared,ui,server-core,server,pi-agent-server,session-tools-core}`). MkAgent reuses that layout, drops two product-only packages from Craft (`messaging-gateway`, `messaging-whatsapp-worker`), removes the entire `apps/viewer` app, and never instantiates Craft's session-MCP/bridge-MCP servers.
+Both repositories are Bun monorepos with the same workspace layout (`apps/{electron,webui,cli}` + `packages/{core,shared,ui,server-core,server,pi-agent-server,session-tools-core}`). MkAgent reuses that layout, drops two product-only packages from Craft (`messaging-gateway`, `messaging-whatsapp-worker`), removes the entire `apps/viewer` app, and never instantiates Craft's session-MCP/bridge-MCP servers. Separately, MkAgent pins OpenConnector `v1.3.5` as `vendor/open-connector`; it is not a restored Craft package.
 
 | Metric | MkAgent | Craft Agents | Notes |
 |---|---:|---:|---|
@@ -24,7 +24,7 @@ Both repositories are Bun monorepos with the same workspace layout (`apps/{elect
 
 | Path | MkAgent | Craft Agents |
 |---|---|---|
-| `apps/electron` | ✅ (shared renderer + preload + Browser pane + Sentry + auto-update) | ✅ (same) |
+| `apps/electron` | ✅ (shared renderer + preload + Browser pane + OpenConnector console/sidecar + Sentry + auto-update) | ✅ (same base app, without MkAgent's OpenConnector integration) |
 | `apps/webui` | ✅ (loads the same renderer through a browser adapter) | ✅ (same) |
 | `apps/cli` | ✅ (`run`, `session`, `workspace`, `send`, …) | ✅ (same surface plus extra Sources/Automations sub-commands, which MkAgent does **not** expose) |
 | `apps/viewer` | ❌ (deleted) | ✅ (Electron Viewer app for sharing sessions publicly) |
@@ -39,6 +39,7 @@ Both repositories are Bun monorepos with the same workspace layout (`apps/{elect
 | `packages/messaging-whatsapp-worker` | ❌ (deleted) | ✅ (Baileys-backed WhatsApp worker) |
 | `packages/session-mcp-server` | ❌ (deleted) | ✅ (TypeScript MCP server bundled as `resources/session-mcp-server/`) |
 | `resources/bridge-mcp-server/` | ❌ (deleted) | ✅ (bundled, ~13 MB TypeScript MCP server) |
+| `vendor/open-connector` | ✅ (`v1.3.5` submodule; Electron-only bundled sidecar) | ❌ |
 | `resources/scripts/` + `resources/bin/` | ✅ (`markitdown`, PDF, XLSX, DOCX, PPTX, image, iCal, doc-diff wrappers + Python scripts + bundled **per-platform `uv`**) | ✅ (same wrappers and per-platform `uv` layout) |
 
 ## 3. Backend / runtime boundary
@@ -47,13 +48,13 @@ Both repositories are Bun monorepos with the same workspace layout (`apps/{elect
 |---|---|---|
 | Registered `AgentBackend`s | `pi` only | `pi`, `claude-agent-sdk`, plus optional **Copilot / gateway** subscriptions |
 | Auth model | API key + custom endpoints + Ollama + **ChatGPT/Claude subscription OAuth**, all through Pi | API-key + custom + **OAuth (Anthropic, OpenAI, GitHub Copilot, Google Workspace, Slack, Microsoft)** + subscription flows + gateway |
-| Subprocess model | `packages/pi-agent-server` runs as a Bun subprocess; communicates over JSONL on stdio | Pi subprocess (same) **plus** SDK subprocess (`@anthropic-ai/claude-agent-sdk-binary`, ~217 MB native `claude` binary per platform arch) **plus** bridge/session MCP servers **plus** WhatsApp worker subprocess |
+| Subprocess model | `packages/pi-agent-server` runs as a Bun subprocess over JSONL; Electron additionally starts the bundled OpenConnector `v1.3.5` loopback sidecar | Pi subprocess (same) **plus** SDK subprocess (`@anthropic-ai/claude-agent-sdk-binary`, ~217 MB native `claude` binary per platform arch) **plus** bridge/session MCP servers **plus** WhatsApp worker subprocess |
 | Built-in transports | OpenAI-compatible, Anthropic-compatible, Ollama (Pi `0.80.6`) | Same, plus Anthropic SDK direct mode and Copilot SDK mode |
 | Image generation | ❌ (deleted; image attachments still supported) | ✅ (`gen_image` model + tool) |
 
 ## 4. Agent tools (what the model can actually call)
 
-Both products expose tools to the LLM through three channels: (a) Pi SDK built-ins wired in `packages/pi-agent-server/src/index.ts` `builtinDefs`, (b) web tools declared in the same file (`createSearchTool` + `createWebFetchTool`), and (c) session-level tools registered through the main process via `register_tools` and exposed to the model with the `mcp__session__<name>` prefix (see `packages/session-tools-core/src/tool-defs.ts`). Craft additionally surfaces tools from its `mcpPool` (Sources / bridge / session MCP). MkAgent has no `mcpPool` — the `registerPoolToolsWithSubprocess()` call is physically removed (`packages/shared/src/agent/pi-agent.ts`).
+Both products expose tools to the LLM through three base channels: (a) Pi SDK built-ins wired in `packages/pi-agent-server/src/index.ts` `builtinDefs`, (b) web tools declared in the same file (`createSearchTool` + `createWebFetchTool`), and (c) session-level tools registered through the main process via `register_tools` and exposed to the model with the `mcp__session__<name>` prefix (see `packages/session-tools-core/src/tool-defs.ts`). MkAgent Desktop appends five fixed `mcp__open_connector__*` definitions to that same registration message through its dedicated sidecar bridge. This is not an `mcpPool`: Craft additionally surfaces arbitrary configured Sources through its `mcpPool`, while MkAgent still has no pool and no `registerPoolToolsWithSubprocess()` call.
 
 ### 4.1 Pi SDK built-in tools (identical)
 
@@ -124,7 +125,21 @@ Craft Agents registers an `mcpPool` and forwards its proxy tool definitions thro
 | `session-mcp-server` (Craft-bundled session MCP) | ❌ | ✅ | TypeScript MCP server under `resources/session-mcp-server/` |
 | Per-source credential prompts and OAuth flows | ❌ | ✅ | Backed by `source_credential_prompt` and the four `source_*_oauth_trigger` tools listed above |
 
-### 4.5 Claude backend tools (exist only in Craft)
+### 4.5 Dedicated OpenConnector tools (MkAgent Desktop only)
+
+The Electron bridge validates the tool list returned by the pinned OpenConnector `v1.3.5` sidecar and rejects a missing or unexpected name. These tools are not advertised by MkAgent WebUI, the headless server, or the CLI, and they do not make arbitrary MCP servers configurable.
+
+| Model-visible tool | MkAgent Desktop | Other MkAgent clients | Craft | Behavior |
+|---|:---:|:---:|:---:|---|
+| `mcp__open_connector__list_apps` | ✅ | ❌ | ❌ | Read-only provider/app discovery |
+| `mcp__open_connector__list_connections` | ✅ | ❌ | ❌ | Read-only connection discovery |
+| `mcp__open_connector__search_actions` | ✅ | ❌ | ❌ | Read-only action search |
+| `mcp__open_connector__get_action_guide` | ✅ | ❌ | ❌ | Read-only action/input guide |
+| `mcp__open_connector__execute_action` | ✅ | ❌ | ❌ | External mutation path; blocked in `safe`, permission-prompted in Ask mode, bypassed only by explicit `allow-all` |
+
+See [`open-connector.md`](./open-connector.md) for the console, data path, secrets, and retry behavior.
+
+### 4.6 Claude backend tools (exist only in Craft)
 
 Craft Agents' second registered backend, `claude-agent-sdk`, brings Claude-Code-style tools that Pi does not define. MkAgent has no Claude backend, so none of these exist in MkAgent. The Claude backend binding is physically removed — `packages/shared/src/agent/backend/internal/drivers/` does not carry a `claude-agent-sdk` driver — and even if a tool name appeared in the system prompt, MkAgent has no execution path for it.
 
@@ -135,25 +150,26 @@ Craft Agents' second registered backend, `claude-agent-sdk`, brings Claude-Code-
 | `MultiEdit` | claude-agent-sdk | ❌ | ✅ |
 | Claude SDK-native `Read` / `Write` / `Edit` / `Bash` / `Grep` / `Glob` / `WebFetch` / `WebSearch` | claude-agent-sdk | ❌ | ✅ |
 
-### 4.6 Effective tool count per agent turn
+### 4.7 Effective tool count per agent turn
 
-Counting only the tools the model can invoke at run time, with no user-configured Source configured:
+Counting only tools the model can invoke at run time, with no user-configured Craft Source and with the bundled sidecar available on MkAgent Desktop:
 
 | Source of tools | MkAgent | Craft |
 |---|---:|---:|
 | Pi SDK built-ins (§4.1) | 7 | 7 |
 | Web tools (§4.2) | 2 | 2 |
 | Session (`mcp__session__*`) | 15 | 27 |
+| Dedicated OpenConnector bridge (§4.5) | 5 on Desktop; 0 on WebUI/headless/CLI | 0 |
 | Source / MCP pool (`mcpPool`) | 0 | 0 (Craft grows this dynamically per configured Source) |
 | Claude SDK tools | 0 | variable per session |
-| **Default baseline** | **24** | **36** |
+| **Default baseline** | **29 on Desktop; 24 on WebUI/headless/CLI** | **36** |
 
-The 12 dropped `mcp__session__*` tools map one-to-one onto the Lite boundary deletion list (Sources, MCP, OAuth, labels, statuses, messaging, task conductor, template renderer); the rest of the difference is the second registered backend.
+The 12 dropped `mcp__session__*` tools still map one-to-one onto the Lite boundary deletion list (generic Sources/MCP, OAuth, labels, statuses, messaging, task conductor, template renderer). The five OpenConnector tools are a separate, fixed desktop-only bridge, not a reversal of those deletions.
 
 
 ## 5. Installer / package size (the headline numbers)
 
-These are the sizes you actually ship to users, taken from the on-disk dev build at `apps/electron/release/<arch>/MkAgent.app` and the upstream `craft-agents-oss` checkout that the audit script read. **None** of these include code-signing overhead (MkAgent dev build sets `MKAGENT_DEV_RUNTIME=1`; release builds with `CSC_IDENTITY_AUTO_DISCOVERY=false` are unsigned/ad-hoc). For a Craft Agents reference, the `claude-agent-sdk-darwin-arm64/claude` binary alone (`217 MB`) was measured directly from `node_modules`.
+These are the recorded **pre-OpenConnector** sizes from the on-disk dev build at `apps/electron/release/<arch>/MkAgent.app` and the upstream `craft-agents-oss` checkout that the audit script read. They no longer represent the current MkAgent Desktop package because the OpenConnector runtime and web console are now bundled. **None** include code-signing overhead (the recorded MkAgent dev build set `MKAGENT_DEV_RUNTIME=1`; release builds with `CSC_IDENTITY_AUTO_DISCOVERY=false` are unsigned/ad-hoc). For a Craft Agents reference, the `claude-agent-sdk-darwin-arm64/claude` binary alone (`217 MB`) was measured directly from `node_modules`.
 
 ### 4.1 macOS arm64 (`MkAgent.app` / `Craft-Agents-arm64.app`)
 
@@ -180,6 +196,7 @@ These are the sizes you actually ship to users, taken from the on-disk dev build
 | `@anthropic-ai/claude-agent-sdk` thin core + per-platform binary shim | ❌ | ✅ | ~3.5 MB core + ~217 MB binary per arch |
 | `bridge-mcp-server/` (Craft's MCP bridge) | ❌ | ✅ | ~13 MB |
 | `session-mcp-server/` (Craft's session MCP) | ❌ | ✅ | ~50 KB TypeScript |
+| OpenConnector `v1.3.5` runtime + web console (`dist/resources/open-connector`) | ✅ (Desktop only) | ❌ | Not measured in this snapshot |
 | WhatsApp worker (`packages/messaging-whatsapp-worker/dist/worker.cjs`) with bundled Baileys | ❌ | ✅ | ~8 MB worker + transitive Baileys deps |
 | `resources/scripts/*.py` (PDF, DOCX, XLSX, PPTX, image, iCal, doc-diff, MarkItDown wrappers) | ✅ (same files) | ✅ | ~110 KB Python; both versions keep them |
 | `resources/bin/*-tool` shell wrappers | ✅ (same) | ✅ | trivial |
@@ -199,7 +216,7 @@ These are the sizes you actually ship to users, taken from the on-disk dev build
 | `bun run apps/cli` pure-CLI mode (no Electron) | `bun run cli:build` → ~1 MB `dist/mkagent` package; same on Craft | ~1 MB (CLI payload itself is identical) |
 | First document-tool run with a cold `uv` cache | May download Python 3.12 and declared script dependencies on demand | Same |
 
-¹ **Caveat.** DMG / NSIS / AppImage numbers above are **inferred** from the unpacked `.app` sizes and the `electron-builder.yml` `files` / `extraResources` rules; they are not freshly built side-by-side. Both release pipelines fetch or copy a target-platform `uv` binary. Craft additionally brings the ~217 MB Claude SDK binary; MkAgent skips that backend payload, not `uv`.
+¹ **Caveat.** DMG / NSIS / AppImage numbers above are **inferred pre-OpenConnector values** from the old unpacked `.app` sizes and the `electron-builder.yml` `files` / `extraResources` rules; they are not freshly built side-by-side and do not include the new OpenConnector payload. Both release pipelines fetch or copy a target-platform `uv` binary. Craft additionally brings the ~217 MB Claude SDK binary; MkAgent skips that backend payload, not `uv`. Rebuild all target formats before publishing a new size comparison.
 
 ## 6. Feature surface
 
@@ -214,7 +231,8 @@ The matrix below extends [`docs/feature-matrix.md`](./feature-matrix.md) with ex
 | Sessions: create / continue / cancel / resume / flag / archive / unread / search / import / export / branch / multi-window | ✅ | ✅ |
 | Skills (global / workspace / project), mini chat, plan, annotations, follow-up | ✅ | ✅ |
 | Browser pane + `web_search` + `web_fetch` | ✅ | ✅ |
-| Permissions (safe / allow-all) + permission prompts | ✅ | ✅ |
+| OpenConnector `v1.3.5` Providers/Actions/Runs console + five fixed Pi tools | ✅ (Electron Desktop only) | ❌ |
+| Permissions (Explore/safe, Ask, Execute/allow-all) + permission prompts | ✅ | ✅ |
 | Network proxy | ✅ | ✅ |
 | Auto-update via `electron-updater` against GitHub Releases | ✅ (against `MkThingsHQ/mkagent`) | ✅ (against `https://agents.craft.do/electron/latest`) |
 | Sentry (`@sentry/electron` + `@sentry/react`); gated by `SENTRY_ELECTRON_INGEST_URL` | ✅ | ✅ |
@@ -227,7 +245,7 @@ The matrix below extends [`docs/feature-matrix.md`](./feature-matrix.md) with ex
 | ChatGPT Plus OAuth subscription | ✅ (Pi) | ✅ (Pi) |
 | GitHub Copilot SDK + OAuth subscription | ❌ | ✅ |
 | External messaging gateway + WhatsApp / Slack / Lark workers | ❌ | ✅ |
-| Sources (API Source, MCP Source, MCP pool), Source OAuth flows | ❌ | ✅ |
+| Generic Sources (API Source, MCP Source, user-configurable MCP pool), Source OAuth flows | ❌; the fixed OpenConnector bridge is not a generic Source | ✅ |
 | Session MCP server, bridge MCP server | ❌ | ✅ |
 | Viewer (separate Electron app for shared sessions) | ❌ | ✅ |
 | Public sharing, remote workspace federation/transfer | ❌ | ✅ |
@@ -240,6 +258,8 @@ The matrix below extends [`docs/feature-matrix.md`](./feature-matrix.md) with ex
 
 ## 7. Test, typecheck and lint coverage delta
 
+The counts below are also from the 2026-07-30 snapshot and therefore exclude the newer OpenConnector sidecar, tool-contract, permission, and Electron integration tests.
+
 | Gate | MkAgent | Craft Agents | Result |
 |---|---|---|---|
 | `bun run test` (main suite) | 3,078 pass / 11 platform-conditional skip | (similar order of magnitude; full count TBD on fresh checkout) | both green |
@@ -249,7 +269,7 @@ The matrix below extends [`docs/feature-matrix.md`](./feature-matrix.md) with ex
 | `bun run audit:craft-reuse` | 96 % same-path, 59 % byte-identical, 0 missing-without-explanation | (not applicable) | green |
 | `bun run lint:craft-test-coverage` | 246 kept / 6 substituted / 121 dropped-for-product-boundary / **0 missing-without-explanation** | (not applicable) | green |
 
-The MkAgent-side lifts (zero "missing test without explanation") come from [`scripts/check-craft-test-coverage.ts`](../../scripts/check-craft-test-coverage.ts), which enforces that every Craft test is one of: (a) same-path kept, (b) replaced with a Lite equivalent, (c) explicitly tied to a removed product area.
+The MkAgent-side lifts (zero "missing test without explanation") come from [`scripts/check-craft-test-coverage.ts`](../scripts/check-craft-test-coverage.ts), which enforces that every Craft test is one of: (a) same-path kept, (b) replaced with a Lite equivalent, (c) explicitly tied to a removed product area.
 
 ## 8. License & attribution
 
@@ -272,4 +292,4 @@ git checkout a60ebc1a5a7cb0a6af7a77d5eed0512c5fc07658
 ls -lah node_modules/@anthropic-ai/claude-agent-sdk-darwin-arm64/claude   # 217 MB binary
 ```
 
-If you need updated DMG / NSIS / AppImage numbers, build both products from their recorded commits with the same `electron-builder.yml` flags, then reuse [`scripts/build-server.ts`](../../scripts/build-server.ts) and the per-platform `apps/electron/scripts/build-dmg.sh` to write installers.
+If you need updated DMG / NSIS / AppImage numbers, build both products from their recorded commits with the same `electron-builder.yml` flags, then reuse [`scripts/build-server.ts`](../scripts/build-server.ts) and the per-platform `apps/electron/scripts/build-dmg.sh` to write installers.

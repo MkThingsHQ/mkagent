@@ -24,6 +24,7 @@ const LOCAL_NAMESPACES = [
   RPC_CHANNELS.git,
   RPC_CHANNELS.gitbash,
   RPC_CHANNELS.browserPane,
+  RPC_CHANNELS.openConnector,
 ] as const;
 
 const localValues: string[] = LOCAL_NAMESPACES.flatMap(namespace => Object.values(namespace));

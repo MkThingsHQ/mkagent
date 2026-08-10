@@ -12,6 +12,9 @@ import {
   Zap,
   Inbox,
   Cake,
+  Cable,
+  TerminalSquare,
+  Activity,
 } from "lucide-react"
 import { TopBar } from "./TopBar"
 import { SquarePenRounded } from "../icons/SquarePenRounded"
@@ -43,7 +46,7 @@ import { useFocusZone } from "@/hooks/keyboard"
 import { useFocusContext } from "@/context/FocusContext"
 import { getSessionTitle } from "@/utils/session"
 import { useSetAtom } from "jotai"
-import type { Session, Workspace, FileAttachment, PermissionRequest, LoadedSkill, PermissionMode } from "../../../shared/types"
+import type { Session, Workspace, FileAttachment, PermissionRequest, LoadedSkill, PermissionMode, OpenConnectorSection } from "../../../shared/types"
 import { sessionMetaMapAtom, type SessionMeta } from "@/atoms/sessions"
 import { skillsAtom } from "@/atoms/skills"
 import { panelStackAtom, panelCountAtom, focusedPanelIdAtom, focusedSessionIdAtom, focusNextPanelAtom, focusPrevPanelAtom, parseSessionIdFromRoute } from "@/atoms/panel-stack"
@@ -57,6 +60,7 @@ import {
   isSessionsNavigation,
   isSettingsNavigation,
   isSkillsNavigation,
+  isOpenConnectorNavigation,
 } from "@/contexts/NavigationContext"
 import type { SettingsSubpage } from "../../../shared/types"
 import { SkillsListPanel } from "./SkillsListPanel"
@@ -771,6 +775,10 @@ function AppShellContent({
     navigate(routes.view.skills())
   }, [])
 
+  const handleOpenConnectorClick = useCallback((section: OpenConnectorSection = 'providers') => {
+    navigate(routes.view.openConnector(section))
+  }, [])
+
   // Handler for settings view. With no arg → bare `settings` route (navigator-only
   // in compact mode, App fallback on desktop). With an arg → `settings/<subpage>`.
   const handleSettingsClick = useCallback((subpage?: SettingsSubpage) => {
@@ -884,9 +892,13 @@ function AppShellContent({
     { id: 'nav:flagged', type: 'nav', action: handleFlaggedClick },
     { id: 'nav:archived', type: 'nav', action: handleArchivedClick },
     { id: 'nav:skills', type: 'nav', action: handleSkillsClick },
+    { id: 'nav:openConnector', type: 'nav', action: () => handleOpenConnectorClick() },
+    { id: 'nav:openConnector:providers', type: 'nav', action: () => handleOpenConnectorClick('providers') },
+    { id: 'nav:openConnector:actions', type: 'nav', action: () => handleOpenConnectorClick('actions') },
+    { id: 'nav:openConnector:runs', type: 'nav', action: () => handleOpenConnectorClick('runs') },
     { id: 'nav:settings', type: 'nav', action: () => handleSettingsClick() },
     { id: 'nav:whats-new', type: 'nav', action: handleWhatsNewClick },
-  ], [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSkillsClick, handleSettingsClick, handleWhatsNewClick])
+  ], [handleAllSessionsClick, handleFlaggedClick, handleArchivedClick, handleSkillsClick, handleOpenConnectorClick, handleSettingsClick, handleWhatsNewClick])
 
   // Get props for any sidebar item (unified roving tabindex pattern)
   const getSidebarItemProps = React.useCallback((id: string) => ({
@@ -982,12 +994,21 @@ function AppShellContent({
 
   // Get title based on the retained navigation states.
   const listTitle = React.useMemo(() => {
+    if (isOpenConnectorNavigation(navState)) {
+      if (navState.section === 'actions') return t('sidebar.openConnectorActions')
+      if (navState.section === 'runs') return t('sidebar.openConnectorRuns')
+      return t('sidebar.openConnectorProviders')
+    }
     if (isSkillsNavigation(navState)) return t('sidebar.allSkills')
     if (isSettingsNavigation(navState)) return t('sidebar.settings')
     if (sessionFilter?.kind === 'flagged') return t('sidebar.flagged')
     if (sessionFilter?.kind === 'archived') return t('sidebar.archived')
     return t('sidebar.allSessions')
   }, [navState, t, sessionFilter])
+
+  const isOpenConnectorMode = isOpenConnectorNavigation(navState)
+  const openConnectorSection = isOpenConnectorMode ? navState.section ?? 'providers' : null
+  const effectiveNavigatorWidth = isOpenConnectorMode ? 0 : sessionListWidth
 
   return (
     <AppShellProvider value={appShellContextValue}>
@@ -1131,7 +1152,41 @@ function AppShellContent({
                       onClick: handleSkillsClick,
                       contextMenu: { type: 'skills', onAddSkill: openAddSkill },
                     },
-                    { id: 'separator:skills-settings', type: 'separator' },
+                    { id: 'separator:skills-openConnector', type: 'separator' },
+                    {
+                      id: 'nav:openConnector',
+                      title: t('sidebar.openConnector'),
+                      icon: Cable,
+                      variant: isOpenConnectorMode && navState.section == null ? 'default' : 'ghost',
+                      onClick: () => handleOpenConnectorClick(),
+                      expandable: true,
+                      expanded: isExpanded('nav:openConnector'),
+                      onToggle: () => toggleExpanded('nav:openConnector'),
+                      items: [
+                        {
+                          id: 'nav:openConnector:providers',
+                          title: t('sidebar.openConnectorProviders'),
+                          icon: Cable,
+                          variant: openConnectorSection === 'providers' ? 'default' : 'ghost',
+                          onClick: () => handleOpenConnectorClick('providers'),
+                        },
+                        {
+                          id: 'nav:openConnector:actions',
+                          title: t('sidebar.openConnectorActions'),
+                          icon: TerminalSquare,
+                          variant: openConnectorSection === 'actions' ? 'default' : 'ghost',
+                          onClick: () => handleOpenConnectorClick('actions'),
+                        },
+                        {
+                          id: 'nav:openConnector:runs',
+                          title: t('sidebar.openConnectorRuns'),
+                          icon: Activity,
+                          variant: openConnectorSection === 'runs' ? 'default' : 'ghost',
+                          onClick: () => handleOpenConnectorClick('runs'),
+                        },
+                      ],
+                    },
+                    { id: 'separator:openConnector-settings', type: 'separator' },
                     {
                       id: 'nav:settings',
                       title: t('sidebar.settings'),
@@ -1164,7 +1219,7 @@ function AppShellContent({
           sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : (isSidebarVisible ? sidebarWidth : 0)}
           navigatorSlot={
             <div
-              style={{ width: isAutoCompact ? '100%' : sessionListWidth }}
+              style={{ width: isAutoCompact ? '100%' : effectiveNavigatorWidth }}
               className="h-full flex flex-col min-w-0 relative z-panel"
             >
             <PanelHeader
@@ -1266,7 +1321,7 @@ function AppShellContent({
             )}
             </div>
           }
-          navigatorWidth={isAutoCompact ? sessionListWidth : (effectiveSidebarAndNavigatorHidden ? 0 : sessionListWidth)}
+          navigatorWidth={isAutoCompact ? effectiveNavigatorWidth : (effectiveSidebarAndNavigatorHidden ? 0 : effectiveNavigatorWidth)}
           isSidebarAndNavigatorHidden={effectiveSidebarAndNavigatorHidden}
           isRightSidebarVisible={false}
           isCompact={isAutoCompact}
@@ -1274,7 +1329,7 @@ function AppShellContent({
         />
 
         {/* Sidebar Resize Handle (absolute, hidden in focused mode) */}
-        {!effectiveSidebarAndNavigatorHidden && (
+        {!effectiveSidebarAndNavigatorHidden && effectiveNavigatorWidth > 0 && (
         <div
           ref={resizeHandleRef}
           onMouseDown={(e) => { e.preventDefault(); setIsResizing('sidebar') }}
@@ -1325,7 +1380,7 @@ function AppShellContent({
             bottom: PANEL_STACK_VERTICAL_OVERFLOW,
             left:
               (isSidebarVisible ? sidebarWidth + PANEL_GAP : PANEL_EDGE_INSET) +
-              sessionListWidth +
+              effectiveNavigatorWidth +
               (PANEL_GAP / 2) -
               PANEL_SASH_HALF_HIT_WIDTH,
             transition: isResizing === 'session-list' ? undefined : 'left 0.15s ease-out',

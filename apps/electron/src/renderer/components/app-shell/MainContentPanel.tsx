@@ -18,6 +18,7 @@ import {
   isSessionsNavigation,
   isSettingsNavigation,
   isSkillsNavigation,
+  isOpenConnectorNavigation,
 } from '@/contexts/NavigationContext'
 import {
   useSessionSelection,
@@ -26,7 +27,7 @@ import {
   useSelectionCount,
 } from '@/hooks/useSession'
 import { skillSelection } from '@/hooks/useEntitySelection'
-import { ChatPage } from '@/pages'
+import { ChatPage, OpenConnectorPage } from '@/pages'
 import SkillInfoPage from '@/pages/SkillInfoPage'
 import { getSettingsPageComponent } from '@/pages/settings/settings-pages'
 
@@ -68,6 +69,14 @@ export function MainContentPanel({
       {content}
     </StoplightProvider>
   )
+
+  if (isOpenConnectorNavigation(navState)) {
+    return wrapWithStoplight(
+      <Panel variant="grow" className={className}>
+        <OpenConnectorPage section={navState.section} />
+      </Panel>,
+    )
+  }
 
   if (isSettingsNavigation(navState)) {
     const SettingsPageComponent = getSettingsPageComponent(navState.subpage ?? 'app')
