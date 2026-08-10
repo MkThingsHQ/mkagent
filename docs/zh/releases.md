@@ -1,6 +1,6 @@
 # 发布、更新与遥测
 
-私有源仓库负责构建 macOS DMG/ZIP、Windows NSIS、Linux AppImage、各平台 headless server 与基于 Bun 的 CLI bundle。公开下载页是 [open-fox/mkagent-public](https://github.com/open-fox/mkagent-public/releases/latest)。发布环境需要 Apple 与 Windows 签名凭证，以及一个仅能向该仓库写 Release 的最小权限 token。
+开源仓库中的版本 tag 会触发 macOS DMG/ZIP、Windows NSIS、Linux AppImage、各平台 headless server 与基于 Bun 的 CLI bundle 构建。源码与可下载产物现在统一放在 [MkThingsHQ/mkagent](https://github.com/MkThingsHQ/mkagent/releases/latest)。发布环境需要 Apple 与 Windows 签名凭证；workflow 使用仓库范围的 GitHub Actions token 发布。
 
 ## 发布流水线
 
@@ -15,13 +15,13 @@
                                                        │
                                                        ▼
                   上传安装包 + manifest + blockmap + checksum
-                            到 open-fox/mkagent-public(仅 release 仓库)
+                          到 MkThingsHQ/mkagent GitHub Releases
                                                        │
                                                        ▼
-                              electron-updater 读取 public 仓库
+                              electron-updater 读取同一仓库
 ```
 
-`mkagent-public` 是下载门户：Git 历史只放落地页、许可证及贡献/安全说明。安装包、manifest（如 `latest-mac.yml`、`latest.yml`、`latest-linux.yml`）、blockmap、checksum 和版本说明都放在 GitHub Releases 中，不提交进 Git。
+安装包、manifest（如 `latest-mac.yml`、`latest.yml`、`latest-linux.yml`）、blockmap、checksum 和版本说明统一放在主仓库的 GitHub Releases 中，不提交进 Git；不再使用单独的 release-only 仓库。
 
 ## 版本与 Changelog 规范
 
@@ -58,13 +58,13 @@ git push origin main v0.2.0
 
 ## 更新
 
-Electron 通过 `electron-updater` 命中 `open-fox/mkagent-public` 上的 GitHub Releases API。客户端不含 GitHub token;只需要 manifest 文件作为认证。
+Electron 通过 `electron-updater` 命中 `MkThingsHQ/mkagent` 上的 GitHub Releases API。公开仓库及其更新 manifest 不需要客户端携带 GitHub token。
 
 | 字段         | 设置位置                                                     |
 | ------------ | ------------------------------------------------------------ |
 | `appId`      | `apps/electron/electron-builder.yml` → `app.mkagent.desktop` |
 | Provider     | `github`                                                     |
-| Owner / repo | `open-fox` / `mkagent-public`                                |
+| Owner / repo | `MkThingsHQ` / `mkagent`                                     |
 | Manifest     | 由 electron-builder 在 release 时自动生成                    |
 
 降级需要手动装老版本;自动更新只会往前走。
@@ -87,16 +87,15 @@ Sentry 沿用 desktop 默认行为。除非构建时设置了 `SENTRY_ELECTRON_I
 
 ## GitHub 发布环境
 
-在私有源码仓创建受保护的 Actions environment `release`，并设置以下 environment secrets：
+在仓库中创建受保护的 Actions environment `release`，并设置以下 environment secrets：
 
 | Secret                                                     | 用途                                                                                     |
 | ---------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
 | `CSC_LINK`、`CSC_KEY_PASSWORD`                             | Developer ID 证书及密码                                                                  |
 | `APPLE_ID`、`APPLE_APP_SPECIFIC_PASSWORD`、`APPLE_TEAM_ID` | Apple 公证                                                                               |
 | `WIN_CSC_LINK`、`WIN_CSC_KEY_PASSWORD`                     | Windows Authenticode 证书及密码                                                          |
-| `MKAGENT_PUBLIC_RELEASE_TOKEN`                             | 只授权 `open-fox/mkagent-public` 且具有 `Contents: Read and write` 的 fine-grained token |
 
-workflow 会先创建 draft Release，上传并核对完整产物矩阵，全部成功后才发布为 Latest。失败后可重跑并更新 draft，但不会覆盖已经发布的版本。
+workflow 使用具有 `contents: write` 权限的仓库范围 `GITHUB_TOKEN` 创建 draft Release，上传并核对完整产物矩阵，全部成功后才发布为 Latest。失败后可重跑并更新 draft，但不会覆盖已经发布的版本。
 
 ## 发布前 checklist
 
@@ -115,4 +114,4 @@ bun run cli:build
 bun run server:build:subprocess
 ```
 
-只有上面所有命令在 tag commit 上通过才能发布。Apple、Windows 和公开仓凭据配置完成前不要创建 tag；正式版会主动失败，不会退化成无签名安装包。
+只有上面所有命令在 tag commit 上通过才能发布。Apple 与 Windows 签名凭据配置完成前不要创建 tag；正式版会主动失败，不会退化成无签名安装包。

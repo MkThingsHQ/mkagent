@@ -28,8 +28,8 @@ extraResources:
 
 publish:
   provider: github
-  owner: open-fox
-  repo: mkagent-public
+  owner: MkThingsHQ
+  repo: mkagent
 
 asar: false
 

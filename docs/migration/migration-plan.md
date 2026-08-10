@@ -16,8 +16,8 @@
 ### 阶段 0：Git、远程仓库和产品基线
 
 - 初始化 `main` 分支的新 Git 历史。
-- 若目标不存在，使用当前 `gh` 身份创建 private `open-fox/mkagent`，配置为 `origin`。
-- 创建 public `open-fox/mkagent-public`，只托管签名安装包、更新清单和校验文件，不发布源码。
+- 若目标不存在，使用当前 `gh` 身份创建 public `MkThingsHQ/mkagent`，配置为 `origin`。
+- 使用 public `MkThingsHQ/mkagent` 同时托管源码，并通过 GitHub Releases 存放签名安装包、更新清单和校验文件。
 - 添加只读 `upstream`：`https://github.com/craft-ai-agents/craft-agents-oss.git`。
 - 首批提交建立 `LICENSE`、`NOTICE`、README、产品边界、上游基线记录和功能矩阵。
 - 创建 `product.manifest.json`，集中声明：
@@ -142,10 +142,10 @@
   - 各平台 headless server
   - Bun CLI package/bin
 - 打包包含 Pi server、Bun runtime、ripgrep、Browser、文档工具、uv、权限、主题、文档、图标和许可证。
-- private `open-fox/mkagent` 的 Release workflow 构建并签名产物，再使用专用最小权限 secret 发布到 public `open-fox/mkagent-public`。
+- `MkThingsHQ/mkagent` 的 Release workflow 构建并签名产物，再使用仓库范围的 `GITHUB_TOKEN` 发布到当前仓库的 GitHub Releases。
 - Electron updater 配置 public GitHub provider：
   - owner：`open-fox`
-  - repo：`mkagent-public`
+  - repo：`mkagent`
   - 客户端不包含 GitHub token
   - 发布清单、blockmap 和校验文件与安装包同版本
 - Sentry严格按 craft 当前机制迁移：
@@ -194,8 +194,8 @@
 ## 5. 已锁定默认值
 
 - 新 Git 历史，不迁移已有产品数据。
-- private 源码仓库：`open-fox/mkagent`，缺失时自动创建。
-- public 更新仓库：`open-fox/mkagent-public`，缺失时自动创建。
+- public 源码仓库：`MkThingsHQ/mkagent`，缺失时自动创建。
+- public 源码与更新仓库：`MkThingsHQ/mkagent`；不再自动创建额外的 release-only 仓库。
 - 上游基线：craft `v0.11.2` / `a60ebc1a5a7c`。
 - 默认 workspace：`default`。
 - appId/bundle id：`app.mkagent.desktop`。

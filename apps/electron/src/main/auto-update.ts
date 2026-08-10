@@ -3,7 +3,7 @@
  *
  * Handles checking for updates, downloading, and installing via the standard
  * electron-updater library. Updates are published as GitHub Releases in
- * open-fox/mkagent-public and configured by electron-builder's app-update.yml.
+ * MkThingsHQ/mkagent and configured by electron-builder's app-update.yml.
  *
  * Platform behavior:
  * - macOS: Downloads zip, extracts and swaps app bundle atomically

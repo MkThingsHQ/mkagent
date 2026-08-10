@@ -40,13 +40,12 @@ jobs:
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       WINDOWS_CERTIFICATE: ${{ secrets.WIN_CSC_LINK }}
       WINDOWS_PASSWORD: ${{ secrets.WIN_CSC_KEY_PASSWORD }}
-      PUBLIC_TOKEN: ${{ secrets.MKAGENT_PUBLIC_RELEASE_TOKEN }}
     steps:
       - name: Require stable-release credentials
         shell: bash
         run: |
           missing=0
-          for name in APPLE_CERTIFICATE APPLE_PASSWORD APPLE_ID APPLE_APP_PASSWORD APPLE_TEAM_ID WINDOWS_CERTIFICATE WINDOWS_PASSWORD PUBLIC_TOKEN; do
+          for name in APPLE_CERTIFICATE APPLE_PASSWORD APPLE_ID APPLE_APP_PASSWORD APPLE_TEAM_ID WINDOWS_CERTIFICATE WINDOWS_PASSWORD; do
             if [ -z "${!name}" ]; then
               echo "::error::Missing release environment secret: $name"
               missing=1
@@ -145,6 +144,8 @@ jobs:
     needs: [build, cli]
     runs-on: ubuntu-latest
     environment: release
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: oven-sh/setup-bun@v2
@@ -161,24 +162,26 @@ jobs:
         run: bun run scripts/collect-release-assets.ts artifacts release-assets "${VERSION#v}"
       - name: Create draft release and upload all assets
         env:
-          GH_TOKEN: ${{ secrets.MKAGENT_PUBLIC_RELEASE_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
         shell: bash
         run: |
           notes="apps/electron/resources/release-notes/${TAG#v}.md"
-          state="$(gh release view "$TAG" --repo open-fox/mkagent-public --json isDraft --jq .isDraft 2>/dev/null || true)"
+          state="$(gh release view "$TAG" --repo "$RELEASE_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null || true)"
           if [ "$state" = "false" ]; then
-            echo "::error::Public release $TAG is already published and cannot be replaced"
+            echo "::error::Release $TAG is already published and cannot be replaced"
             exit 1
           fi
           if [ -z "$state" ]; then
-            gh release create "$TAG" --repo open-fox/mkagent-public --target main --title "MkAgent $TAG" --notes-file "$notes" --draft
+            gh release create "$TAG" --repo "$RELEASE_REPOSITORY" --target main --title "MkAgent $TAG" --notes-file "$notes" --draft
           else
-            gh release edit "$TAG" --repo open-fox/mkagent-public --title "MkAgent $TAG" --notes-file "$notes"
+            gh release edit "$TAG" --repo "$RELEASE_REPOSITORY" --title "MkAgent $TAG" --notes-file "$notes"
           fi
-          gh release upload "$TAG" release-assets/* --repo open-fox/mkagent-public --clobber
+          gh release upload "$TAG" release-assets/* --repo "$RELEASE_REPOSITORY" --clobber
       - name: Publish release after successful upload
         env:
-          GH_TOKEN: ${{ secrets.MKAGENT_PUBLIC_RELEASE_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_REPOSITORY: ${{ github.repository }}
           TAG: ${{ github.ref_name }}
-        run: gh release edit "$TAG" --repo open-fox/mkagent-public --draft=false --latest
+        run: gh release edit "$TAG" --repo "$RELEASE_REPOSITORY" --draft=false --latest

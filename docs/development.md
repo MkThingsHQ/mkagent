@@ -17,7 +17,7 @@ This page summarizes how to set up an MkAgent development environment and which 
 ## First-time setup
 
 ```bash
-git clone https://github.com/open-fox/mkagent.git
+git clone --recurse-submodules https://github.com/MkThingsHQ/mkagent.git
 cd mkagent
 bun install --frozen-lockfile
 bun run validate:dev
