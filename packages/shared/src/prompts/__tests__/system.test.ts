@@ -5,6 +5,9 @@ mock.module('../../config/preferences.ts', () => ({
   getCoAuthorPreference: () => includeCoAuthor,
   formatPreferencesForPrompt: () => '',
 }))
+mock.module('../../config/storage.ts', () => ({
+  getBrowserToolEnabled: () => true,
+}))
 
 import { getMiniAgentSystemPrompt, getSystemPrompt } from '../system.ts'
 

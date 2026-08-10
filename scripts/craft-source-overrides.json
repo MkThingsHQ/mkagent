@@ -1215,7 +1215,7 @@
       "reason": "Craft session tool module reduced to retained Lite tools and safety boundaries"
     },
     "packages/session-tools-core/src/runtime/sandbox-env.test.ts": {
-      "sha256": "64e85cc7f3a77c1dfa03746f197ea9212fa34e06287b07816e8395ec1ae86975",
+      "sha256": "7c05a2155e8ca346d653776d9f45b6e53d0e80ce647c6a88d4f3c139967a3f5e",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "packages/session-tools-core/src/runtime/sandbox-env.ts": {
@@ -1675,7 +1675,7 @@
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/prompts/__tests__/system.test.ts": {
-      "sha256": "37754e86e30d17069a14fd0d5a19ca72af017051a2a640de82c19f47bf7c0864",
+      "sha256": "5150207db596c1ce86f06a3fda1088094d838c93c7a7e3fbdbb2b724288f02ce",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "packages/shared/src/prompts/print-system-prompt.ts": {
@@ -1819,7 +1819,7 @@
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "packages/shared/tests/mode-manager.test.ts": {
-      "sha256": "72cbf9991183e0e27f17f9bb4bd67582ade35ace9f60d0080f9687c7a1bcf484",
+      "sha256": "0227eaae3b29f5ce3acc6de539ae2db25c01867448919eb19fc0a48321296109",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "packages/shared/tests/models-pi.test.ts": {
@@ -2361,7 +2361,7 @@
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
     },
     "scripts/run-tests.ts": {
-      "sha256": "e67b6dccb64331d2dac769e143b92d116944297734826b8ad1092034bbe78d4c",
+      "sha256": "ce98c4de7999d7061bbafbe91d2331bb521968cb5c87ba5a2d27843e0c3f281a",
       "reason": "MkAgent test discovery excludes generated artifacts and vendored submodule tests from CI"
     },
     "packages/shared/src/agent/core/__tests__/config-dir-paths.test.ts": {

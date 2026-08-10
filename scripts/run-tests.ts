@@ -11,8 +11,15 @@ if (tracked.exitCode !== 0) {
 }
 
 const files = tracked.stdout.toString().split('\0').filter(Boolean)
-const tests = files.filter(file => /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(file))
-const isolatedTests = files.filter(file => file.endsWith('.isolated.ts'))
+const SERIAL_TESTS = new Set([
+  'packages/shared/src/agent/__tests__/pi-conversation-flow.integration.test.ts',
+])
+const tests = files.filter(
+  file => /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(file) && !SERIAL_TESTS.has(file),
+)
+const isolatedTests = files.filter(
+  file => file.endsWith('.isolated.ts') || SERIAL_TESTS.has(file),
+)
 
 function runTests(testFiles: string[]): void {
   if (testFiles.length === 0) return
