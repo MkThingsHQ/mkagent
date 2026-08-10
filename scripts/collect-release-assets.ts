@@ -61,14 +61,30 @@ for (const [name, paths] of grouped) {
       allFiles.map((file) => [(file as { url?: string }).url, file]),
     ).values(),
   ];
-  if (uniqueFiles.length !== 2)
+  const expectedMacUrls = [
+    `MkAgent-${versionArg}-arm64.dmg`,
+    `MkAgent-${versionArg}-arm64.zip`,
+    `MkAgent-${versionArg}-x64.dmg`,
+    `MkAgent-${versionArg}-x64.zip`,
+  ];
+  const macUrls = new Set(
+    uniqueFiles.map((file) => (file as { url?: string }).url),
+  );
+  const missingMacUrls = expectedMacUrls.filter((url) => !macUrls.has(url));
+  if (
+    uniqueFiles.length !== expectedMacUrls.length ||
+    missingMacUrls.length > 0
+  )
     throw new Error(
-      `expected two macOS update entries, found ${uniqueFiles.length}`,
+      `invalid macOS update entries: expected ${expectedMacUrls.join(", ")}; ` +
+        `found ${[...macUrls].join(", ")}`,
     );
   const first = manifests[0]!;
   const preferred =
-    uniqueFiles.find((file) => (file as { arch?: string }).arch === "arm64") ??
-    uniqueFiles[0];
+    uniqueFiles.find(
+      (file) =>
+        (file as { url?: string }).url === `MkAgent-${versionArg}-arm64.zip`,
+    ) ?? uniqueFiles[0];
   writeFileSync(
     destination,
     yaml.dump(
