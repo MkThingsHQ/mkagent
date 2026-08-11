@@ -54,7 +54,11 @@ async function readCraftFile(file: string): Promise<Buffer> {
   return Buffer.from(proc.stdout)
 }
 
-const isAuditedFile = (file: string) => file !== 'scripts/craft-source-overrides.json'
+// Product documentation is maintained independently from the Craft-derived
+// source lineage. Keep it out of both the comparison set and the manifest
+// checks so documentation edits do not require source-reuse bookkeeping.
+const isAuditedFile = (file: string) =>
+  file !== 'scripts/craft-source-overrides.json' && !file.startsWith('docs/')
 
 const normalizeCraft = (source: string) => source
   .replaceAll('@craft-agent/', '@mkagent/')
