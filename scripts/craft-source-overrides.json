@@ -39,7 +39,7 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "README.md": {
-      "sha256": "0c5e533ee1046315d8220ccfeb678aea54dd23a96729dbce19698ecaa7a003db",
+      "sha256": "1fc7ce1e87d06ab82295a542862ff9472c2a98037040c38a08c7b3996a12cabe",
       "reason": "Craft documentation adapted to the retained MkAgent feature set and product identifiers"
     },
     "apps/cli/package.json": {
@@ -1988,6 +1988,10 @@
     }
   },
   "mkOnly": {
+    "README.zh.md": {
+      "sha256": "7cf908c038a94551995228f2d774bc007210a2ea30e99a3273c925084c2b4064",
+      "reason": "Simplified Chinese MkAgent project overview maintained alongside the English README"
+    },
     "packages/shared/src/auth/__tests__/llm-oauth.test.ts": {
       "sha256": "d31df220858de7f87a46b73c934a9ff2391732af9b29573ba064a82f82443b7a",
       "reason": "Regression coverage for retained Craft LLM OAuth configuration, branding, and connection-scoped secure credential storage"

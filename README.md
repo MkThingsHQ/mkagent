@@ -17,6 +17,7 @@
 <p align="center">
   <a href="https://mkagent.app">Website</a> ·
   <a href="./docs/README.md">Documentation</a> ·
+  <a href="./README.zh.md">中文 README</a> ·
   <a href="./docs/zh/README.md">中文文档</a> ·
   <a href="#getting-started">Quick Start</a> ·
   <a href="https://mksaas.link/discord">Community</a> ·
