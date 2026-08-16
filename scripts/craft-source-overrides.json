@@ -363,8 +363,8 @@
       "reason": "Craft Electron runtime adapted for the retained Lite runtime and removed product channels"
     },
     "apps/electron/src/main/index.ts": {
-      "sha256": "864f2c238d8ea9fda5cf680146b35b0013d31e76449c4004cb16a313fdc36284",
-      "reason": "Craft Electron runtime adapted to forward app theme preference broadcasts to auxiliary browser windows"
+      "sha256": "ad9e61a25b8168102e1f93bd54adc631d23a286d164ea5ec8646f7c54077a581",
+      "reason": "Craft Electron runtime adapted to forward app theme preference broadcasts to auxiliary browser windows; native dialog bridge aligned with Craft"
     },
     "apps/electron/src/main/logger.ts": {
       "sha256": "0bf1e637ddd50a9610922870520e04349ca117bc194e8058029630d43367cedf",

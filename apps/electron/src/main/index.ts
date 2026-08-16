@@ -219,8 +219,20 @@ async function start() {
   ipcMain.on('__get-workspace-id', event => { event.returnValue = windowManager!.getWorkspaceForWindow(event.sender.id) ?? getWorkspaces()[0]!.id })
   ipcMain.on('__get-ws-port', event => { event.returnValue = instance.port })
   ipcMain.on('__get-ws-token', event => { event.returnValue = instance.token })
-  ipcMain.handle('__dialog:showMessageBox', (event, options) => dialog.showMessageBox(BrowserWindow.fromWebContents(event.sender)!, options))
-  ipcMain.handle('__dialog:showOpenDialog', (event, options) => dialog.showOpenDialog(BrowserWindow.fromWebContents(event.sender)!, options).then(result => result.filePaths))
+  ipcMain.handle('__dialog:showMessageBox', async (event, spec) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+      || BrowserWindow.getFocusedWindow()
+      || BrowserWindow.getAllWindows()[0]
+    const result = await dialog.showMessageBox(win, spec)
+    return { response: result.response }
+  })
+  ipcMain.handle('__dialog:showOpenDialog', async (event, spec) => {
+    const win = BrowserWindow.fromWebContents(event.sender)
+      || BrowserWindow.getFocusedWindow()
+      || BrowserWindow.getAllWindows()[0]
+    const result = await dialog.showOpenDialog(win, spec)
+    return { canceled: result.canceled, filePaths: result.filePaths }
+  })
   ipcMain.handle('__i18n:changeLanguage', async (_event, language: unknown) => {
     if (typeof language === 'string' && SUPPORTED_LANGUAGE_CODES.includes(language as LanguageCode)) {
       await i18n.changeLanguage(language)
