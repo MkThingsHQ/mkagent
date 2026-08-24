@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>MkAgent · 交互式架构图</title>
+  <style>
+    :root {
+      --paper: #f6f7f5;
+      --panel: #ffffff;
+      --panel-strong: #eef2ef;
+      --ink: #17201f;
+      --muted: #60706d;
+      --line: #cdd7d3;
+      --teal: #0f6b61;
+      --teal-soft: #dceee9;
+      --amber: #d77b12;
+      --amber-soft: #fff0d5;
+      --violet: #7055a8;
+      --violet-soft: #eee9f8;
+      --blue: #266987;
+      --blue-soft: #e1eff5;
+      --danger: #a34c44;
+      --shadow: 0 18px 50px rgba(21, 47, 42, .09);
+      --display: "Avenir Next", Avenir, "Segoe UI", system-ui, sans-serif;
+      --body: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      --mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --paper: #101615;
+        --panel: #17201f;
+        --panel-strong: #1e2b29;
+        --ink: #edf4f1;
+        --muted: #9aaca8;
+        --line: #344541;
+        --teal: #58c3b2;
+        --teal-soft: #173e38;
+        --amber: #ffb34e;
+        --amber-soft: #422f17;
+        --violet: #b79bdd;
+        --violet-soft: #352b47;
+        --blue: #7fc2dc;
+        --blue-soft: #183643;
+        --danger: #e19085;
+        --shadow: 0 20px 60px rgba(0, 0, 0, .28);
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --paper: #101615; --panel: #17201f; --panel-strong: #1e2b29; --ink: #edf4f1;
+      --muted: #9aaca8; --line: #344541; --teal: #58c3b2; --teal-soft: #173e38;
+      --amber: #ffb34e; --amber-soft: #422f17; --violet: #b79bdd; --violet-soft: #352b47;
+      --blue: #7fc2dc; --blue-soft: #183643; --danger: #e19085; --shadow: 0 20px 60px rgba(0,0,0,.28);
+    }
+
+    :root[data-theme="light"] {
+      --paper: #f6f7f5; --panel: #ffffff; --panel-strong: #eef2ef; --ink: #17201f;
+      --muted: #60706d; --line: #cdd7d3; --teal: #0f6b61; --teal-soft: #dceee9;
+      --amber: #d77b12; --amber-soft: #fff0d5; --violet: #7055a8; --violet-soft: #eee9f8;
+      --blue: #266987; --blue-soft: #e1eff5; --danger: #a34c44; --shadow: 0 18px 50px rgba(21,47,42,.09);
+    }
+
+    * { box-sizing: border-box; }
+    html { background: var(--paper); }
+    body { margin: 0; color: var(--ink); background: var(--paper); font-family: var(--body); }
+    button { font: inherit; }
+    button:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+
+    .page { width: min(1540px, 100%); margin: 0 auto; padding: 28px; display: grid; gap: 22px; }
+    .masthead { display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: start; }
+    .brandline { display: flex; gap: 16px; align-items: center; }
+    .mark { width: 54px; height: 54px; display: grid; place-items: center; border-radius: 16px; background: var(--teal); box-shadow: inset 0 0 0 1px rgba(255,255,255,.18); }
+    .bot { width: 34px; height: 26px; position: relative; border: 3px solid #f1e4d1; border-radius: 10px; background: #121717; }
+    .bot::before, .bot::after { content: ""; position: absolute; width: 6px; height: 6px; top: 7px; border: 2px solid #ffb348; border-radius: 50%; box-shadow: 0 0 8px rgba(255,179,72,.75); }
+    .bot::before { left: 5px; } .bot::after { right: 5px; }
+    h1 { margin: 0; font-family: var(--display); font-size: clamp(28px, 4vw, 46px); line-height: .98; letter-spacing: -.045em; text-wrap: balance; }
+    .kicker { margin: 0 0 7px; color: var(--teal); font: 700 12px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; }
+    .lede { margin: 12px 0 0 70px; max-width: 66ch; color: var(--muted); font-size: 15px; line-height: 1.65; }
+    .header-actions { display: flex; gap: 8px; }
+    .icon-button, .control { border: 1px solid var(--line); color: var(--ink); background: var(--panel); cursor: pointer; }
+    .icon-button { width: 42px; height: 42px; border-radius: 50%; display: grid; place-items: center; font-size: 18px; }
+    .icon-button:hover, .control:hover { border-color: var(--teal); }
+
+    .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; padding: 10px; border: 1px solid var(--line); background: var(--panel); box-shadow: var(--shadow); }
+    .control-group { display: flex; flex-wrap: wrap; gap: 7px; align-items: center; }
+    .control { min-height: 38px; padding: 8px 12px; border-radius: 6px; font-size: 13px; font-weight: 650; }
+    .control[aria-pressed="true"] { color: #fff; background: var(--teal); border-color: var(--teal); }
+    :root[data-theme="dark"] .control[aria-pressed="true"] { color: #09221e; }
+    .play { color: var(--amber); border-color: color-mix(in srgb, var(--amber) 48%, var(--line)); }
+    .toolbar-label { padding-inline: 4px; color: var(--muted); font: 700 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+
+    .workspace { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 16px; align-items: stretch; }
+    .diagram-shell { min-width: 0; border: 1px solid var(--line); background: var(--panel); box-shadow: var(--shadow); overflow: hidden; }
+    .diagram-head { min-height: 58px; padding: 13px 16px; display: flex; justify-content: space-between; gap: 16px; align-items: center; border-bottom: 1px solid var(--line); }
+    .diagram-head strong { font-family: var(--display); letter-spacing: -.02em; }
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: 11px; }
+    .legend span { display: inline-flex; gap: 5px; align-items: center; }
+    .legend i { width: 16px; height: 3px; border-radius: 2px; background: var(--teal); }
+    .legend .event { background: var(--amber); background-image: linear-gradient(90deg,var(--amber) 55%,transparent 55%); background-size: 6px 3px; }
+    .legend .boundary { height: 9px; background: transparent; border: 1px dashed var(--violet); }
+    .canvas-scroll { overflow: auto; overscroll-behavior-inline: contain; background-image: radial-gradient(circle at 1px 1px, color-mix(in srgb, var(--line) 48%, transparent) 1px, transparent 0); background-size: 24px 24px; }
+    .canvas { width: 1120px; height: 720px; position: relative; isolation: isolate; }
+
+    .zone { position: absolute; z-index: 0; border: 1px dashed var(--line); background: color-mix(in srgb, var(--panel-strong) 55%, transparent); pointer-events: none; }
+    .zone span { position: absolute; top: -9px; left: 14px; padding: 2px 7px; color: var(--muted); background: var(--panel); font: 700 10px/1.3 var(--mono); letter-spacing: .08em; text-transform: uppercase; }
+    .zone.clients { left: 22px; top: 38px; width: 250px; height: 646px; }
+    .zone.host { left: 292px; top: 38px; width: 480px; height: 646px; border-color: color-mix(in srgb, var(--violet) 58%, var(--line)); }
+    .zone.outside { left: 792px; top: 38px; width: 306px; height: 646px; }
+
+    #edges { position: absolute; inset: 0; z-index: 1; width: 1120px; height: 720px; pointer-events: none; overflow: visible; }
+    .edge { fill: none; stroke: var(--teal); stroke-width: 2; opacity: .78; marker-end: url(#arrow); transition: opacity .2s, stroke-width .2s, filter .2s; }
+    .edge.event { stroke: var(--amber); stroke-dasharray: 7 6; marker-end: url(#arrow-event); }
+    .edge.storage { stroke: var(--violet); marker-end: url(#arrow-storage); }
+    .edge.inactive { opacity: .08; }
+    .edge.active { opacity: 1; stroke-width: 4; filter: drop-shadow(0 0 5px color-mix(in srgb, var(--amber) 60%, transparent)); }
+    .edge-label { font: 10px var(--mono); fill: var(--muted); paint-order: stroke; stroke: var(--panel); stroke-width: 5px; stroke-linejoin: round; }
+    .edge-label.inactive { opacity: .12; }
+
+    .node { position: absolute; z-index: 2; width: 202px; min-height: 82px; padding: 11px 12px 10px; text-align: left; color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 8px 20px rgba(26,51,46,.07); cursor: pointer; transition: transform .18s, opacity .18s, border-color .18s, box-shadow .18s; }
+    .node:hover { transform: translateY(-2px); border-color: var(--teal); }
+    .node[data-kind="runtime"] { border-left: 4px solid var(--teal); }
+    .node[data-kind="protocol"] { border-left: 4px solid var(--blue); }
+    .node[data-kind="agent"] { border-left: 4px solid var(--amber); }
+    .node[data-kind="storage"] { border-left: 4px solid var(--violet); }
+    .node.inactive { opacity: .18; filter: saturate(.25); }
+    .node.active { border-color: var(--amber); box-shadow: 0 0 0 3px var(--amber-soft), 0 10px 28px rgba(215,123,18,.18); transform: translateY(-3px); }
+    .node.selected { border-color: var(--teal); box-shadow: 0 0 0 3px var(--teal-soft); }
+    .node-top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+    .node-title { font-family: var(--display); font-weight: 750; font-size: 15px; letter-spacing: -.015em; }
+    .node-code { color: var(--muted); font: 10px/1.2 var(--mono); }
+    .node-desc { display: block; margin-top: 7px; color: var(--muted); font-size: 11px; line-height: 1.4; }
+    .pill { display: inline-flex; margin-top: 8px; padding: 3px 6px; border-radius: 3px; color: var(--teal); background: var(--teal-soft); font: 700 9px/1.1 var(--mono); text-transform: uppercase; }
+    .node[data-kind="agent"] .pill { color: var(--amber); background: var(--amber-soft); }
+    .node[data-kind="storage"] .pill { color: var(--violet); background: var(--violet-soft); }
+    .node[data-kind="protocol"] .pill { color: var(--blue); background: var(--blue-soft); }
+
+    #electron { left: 45px; top: 78px; }
+    #webui { left: 45px; top: 238px; }
+    #cli { left: 45px; top: 398px; }
+    #clientapi { left: 316px; top: 79px; }
+    #auth { left: 316px; top: 226px; }
+    #servercore { left: 545px; top: 226px; }
+    #session { left: 430px; top: 385px; }
+    #shared { left: 316px; top: 545px; }
+    #tools { left: 545px; top: 545px; }
+    #pi { left: 830px; top: 160px; }
+    #provider { left: 830px; top: 316px; }
+    #storage { left: 830px; top: 510px; }
+
+    .inspector { min-width: 0; border: 1px solid var(--line); background: var(--panel); box-shadow: var(--shadow); display: flex; flex-direction: column; }
+    .inspector-head { padding: 15px 16px; border-bottom: 1px solid var(--line); display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .inspector-head span { color: var(--muted); font: 700 10px/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+    .step-count { color: var(--amber) !important; }
+    .inspector-body { padding: 18px; display: grid; align-content: start; gap: 17px; }
+    .inspector h2 { margin: 0; font-family: var(--display); font-size: 25px; letter-spacing: -.035em; }
+    .inspector p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.65; }
+    .fact { display: grid; gap: 7px; }
+    .fact dt { color: var(--muted); font: 700 10px/1 var(--mono); letter-spacing: .09em; text-transform: uppercase; }
+    .fact dd { margin: 0; font-size: 12px; line-height: 1.55; }
+    .evidence { padding: 10px; border-left: 3px solid var(--violet); background: var(--violet-soft); color: var(--ink); font: 10px/1.55 var(--mono); overflow-wrap: anywhere; }
+    .journey { margin-top: auto; padding: 15px 16px; border-top: 1px solid var(--line); background: var(--panel-strong); }
+    .journey strong { display: block; margin-bottom: 7px; font-size: 12px; }
+    .journey p { font-size: 11px; }
+
+    .notes { display: grid; grid-template-columns: 1.25fr 1fr 1fr; gap: 12px; }
+    .note { padding: 16px; border: 1px solid var(--line); background: var(--panel); }
+    .note h3 { margin: 0 0 9px; font-family: var(--display); font-size: 15px; letter-spacing: -.015em; }
+    .note p, .note li { color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .note p { margin: 0; }
+    .note ul { margin: 0; padding-left: 18px; }
+    .statusline { display: flex; gap: 8px; align-items: center; }
+    .statusdot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 0 4px var(--teal-soft); }
+    code { font-family: var(--mono); font-size: .92em; }
+
+    @media (max-width: 980px) {
+      .page { padding: 18px; }
+      .workspace { grid-template-columns: 1fr; }
+      .inspector { min-height: 320px; }
+      .notes { grid-template-columns: 1fr 1fr; }
+      .note:first-child { grid-column: 1 / -1; }
+    }
+    @media (max-width: 620px) {
+      .page { padding: 12px; gap: 14px; }
+      .masthead { grid-template-columns: 1fr auto; }
+      .brandline { gap: 11px; }
+      .mark { width: 46px; height: 46px; border-radius: 13px; }
+      .bot { transform: scale(.86); }
+      h1 { font-size: 29px; }
+      .lede { margin-left: 0; }
+      .toolbar { align-items: stretch; }
+      .control-group { width: 100%; }
+      .control { flex: 1 1 auto; }
+      .diagram-head { align-items: flex-start; flex-direction: column; }
+      .notes { grid-template-columns: 1fr; }
+      .note:first-child { grid-column: auto; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="masthead">
+      <div>
+        <div class="brandline">
+          <div class="mark" aria-hidden="true"><div class="bot"></div></div>
+          <div><p class="kicker">Repository map · 2026-08-24</p><h1>MkAgent 系统架构</h1></div>
+        </div>
+        <p class="lede">三种客户端共享一套鉴权 WebSocket RPC、同一个会话编排核心与同一份本地 workspace。选择入口，观察请求如何穿过进程边界，到达 Pi 与模型提供方。</p>
+      </div>
+      <div class="header-actions">
+        <button class="icon-button" id="themeToggle" type="button" aria-label="切换明暗主题" title="切换明暗主题">◐</button>
+      </div>
+    </header>
+
+    <nav class="toolbar" aria-label="架构图控制">
+      <div class="control-group" aria-label="筛选客户端路径">
+        <span class="toolbar-label">追踪入口</span>
+        <button class="control path-control" type="button" data-path="all" aria-pressed="true">完整拓扑</button>
+        <button class="control path-control" type="button" data-path="desktop" aria-pressed="false">Desktop</button>
+        <button class="control path-control" type="button" data-path="webui" aria-pressed="false">WebUI</button>
+        <button class="control path-control" type="button" data-path="cli" aria-pressed="false">CLI</button>
+      </div>
+      <div class="control-group">
+        <button class="control play" id="playJourney" type="button">▶ 播放一次请求</button>
+        <button class="control" id="resetView" type="button">重置</button>
+      </div>
+    </nav>
+
+    <section class="workspace" aria-label="MkAgent 架构拓扑与节点详情">
+      <div class="diagram-shell">
+        <div class="diagram-head">
+          <strong>运行时拓扑</strong>
+          <div class="legend" aria-label="连线图例">
+            <span><i></i>请求 / 调用</span><span><i class="event"></i>事件回流</span><span><i class="boundary"></i>进程边界</span>
+          </div>
+        </div>
+        <div class="canvas-scroll" tabindex="0" aria-label="可横向滚动的架构图画布">
+          <div class="canvas" id="canvas">
+            <div class="zone clients"><span>Client surfaces</span></div>
+            <div class="zone host"><span>Trusted host runtime</span></div>
+            <div class="zone outside"><span>Subprocess & external</span></div>
+            <svg id="edges" viewBox="0 0 1120 720" aria-hidden="true">
+              <defs>
+                <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--teal)"></path></marker>
+                <marker id="arrow-event" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--amber)"></path></marker>
+                <marker id="arrow-storage" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="var(--violet)"></path></marker>
+              </defs>
+            </svg>
+
+            <button class="node" id="electron" data-kind="runtime" data-paths="desktop" type="button"><span class="node-top"><span class="node-title">Electron Desktop</span><span class="node-code">apps/electron</span></span><span class="node-desc">共享 React UI、窗口与 Browser Pane</span><span class="pill">client + host</span></button>
+            <button class="node" id="webui" data-kind="runtime" data-paths="webui" type="button"><span class="node-top"><span class="node-title">WebUI</span><span class="node-code">apps/webui</span></span><span class="node-desc">浏览器 adapter 加载同一套 React 体验</span><span class="pill">browser</span></button>
+            <button class="node" id="cli" data-kind="runtime" data-paths="cli" type="button"><span class="node-top"><span class="node-title">CLI</span><span class="node-code">apps/cli</span></span><span class="node-desc">连接现有 server，或启动一次性实例</span><span class="pill">terminal</span></button>
+
+            <button class="node" id="clientapi" data-kind="protocol" data-paths="desktop webui" type="button"><span class="node-top"><span class="node-title">Client API</span><span class="node-code">window.MkAgent</span></span><span class="node-desc">preload / browser adapter 的统一调用面</span><span class="pill">typed api</span></button>
+            <button class="node" id="auth" data-kind="protocol" data-paths="desktop webui cli" type="button"><span class="node-top"><span class="node-title">Auth + WS RPC</span><span class="node-code">transport</span></span><span class="node-desc">Bearer → JWT；每帧绑定 workspace</span><span class="pill">ws / wss</span></button>
+            <button class="node" id="servercore" data-kind="runtime" data-paths="desktop webui cli" type="button"><span class="node-top"><span class="node-title">Server Core</span><span class="node-code">packages/server-core</span></span><span class="node-desc">handlers、services、transport 与平台适配</span><span class="pill">bun host</span></button>
+            <button class="node" id="session" data-kind="runtime" data-paths="desktop webui cli" type="button"><span class="node-top"><span class="node-title">SessionManager</span><span class="node-code">sessions/</span></span><span class="node-desc">会话生命周期、权限、事件与恢复</span><span class="pill">orchestrator</span></button>
+            <button class="node" id="shared" data-kind="runtime" data-paths="desktop webui cli" type="button"><span class="node-top"><span class="node-title">Shared Domain</span><span class="node-code">packages/shared</span></span><span class="node-desc">配置、凭证、prompts、Skills 与 Pi registry</span><span class="pill">domain</span></button>
+            <button class="node" id="tools" data-kind="runtime" data-paths="desktop webui cli" type="button"><span class="node-top"><span class="node-title">Session Tools</span><span class="node-code">session-tools-core</span></span><span class="node-desc">plan、skill、browser、convert、mini LLM</span><span class="pill">tool layer</span></button>
+
+            <button class="node" id="pi" data-kind="agent" data-paths="desktop webui cli" type="button"><span class="node-top"><span class="node-title">Pi Agent Server</span><span class="node-code">Bun subprocess</span></span><span class="node-desc">stdio JSONL 隔离；调用 createAgentSession</span><span class="pill">process boundary</span></button>
+            <button class="node" id="provider" data-kind="agent" data-paths="desktop webui cli" type="button"><span class="node-top"><span class="node-title">Model Provider</span><span class="node-code">Pi SDK → HTTPS</span></span><span class="node-desc">OpenAI / Anthropic 兼容端点与 Ollama 等</span><span class="pill">external</span></button>
+            <button class="node" id="storage" data-kind="storage" data-paths="desktop webui cli" type="button"><span class="node-top"><span class="node-title">Local Workspace</span><span class="node-code">~/.mkagent</span></span><span class="node-desc">JSONL sessions、files、settings 与恢复数据</span><span class="pill">local-first</span></button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="inspector" aria-live="polite" aria-label="选中节点详情">
+        <div class="inspector-head"><span>Node inspector</span><span class="step-count" id="stepCount">READY</span></div>
+        <div class="inspector-body">
+          <h2 id="detailTitle">选择一个节点</h2>
+          <p id="detailSummary">点击或用 Tab 聚焦任一节点，查看它负责什么、运行在哪里，以及对应的仓库证据。</p>
+          <dl class="fact"><dt>运行边界</dt><dd id="detailRuntime">—</dd></dl>
+          <dl class="fact"><dt>核心职责</dt><dd id="detailOwns">—</dd></dl>
+          <div class="evidence" id="detailEvidence">docs/architecture.md</div>
+        </div>
+        <div class="journey"><strong id="journeyTitle">默认视图：完整拓扑</strong><p id="journeyText">所有入口共享同一套 RPC 和会话运行时；差异主要在入口适配与平台能力。</p></div>
+      </aside>
+    </section>
+
+    <section class="notes" aria-label="架构结论与范围说明">
+      <article class="note"><h3 class="statusline"><span class="statusdot"></span>一条主链，三种入口</h3><p>Desktop 内嵌本地 server；WebUI 由 headless server 托管；CLI 可连接既有实例或临时拉起 server。进入 RPC 后，三者复用相同的 workspace、SessionManager 和 Pi backend。</p></article>
+      <article class="note"><h3>关键隔离点</h3><ul><li>客户端与 host：鉴权 WebSocket RPC</li><li>host 与 agent：stdio JSONL 子进程</li><li>agent 与模型：Pi SDK 经 HTTPS / 本地端点</li></ul></article>
+      <article class="note"><h3>刻意简化</h3><p>图中把大量 RPC handlers、UI 组件和工具实现折叠成职责节点；没有展开打包、更新、Sentry、OAuth 及具体 provider 变体。</p></article>
+    </section>
+
+    <noscript><p>静态摘要：Electron、WebUI 与 CLI 通过统一的鉴权 WebSocket RPC 访问 Server Core；SessionManager 通过 JSONL 与独立 Pi Agent Server 子进程通信，后者调用模型提供方；会话和工作区数据保存在本机。</p></noscript>
+  </main>
+
+  <script>
+    const nodeInfo = {
+      electron: { title: 'Electron Desktop', summary: '完整的本地桌面壳，同时承担客户端与可信 host。', runtime: 'Electron renderer + preload + main；内嵌一个随机端口的本地 server。', owns: '窗口、Browser Pane、系统对话框、代理、自动更新、Sentry，以及把 Client API 暴露给 renderer。', evidence: 'apps/electron/src/main/index.ts · apps/electron/src/preload/bootstrap.ts' },
+      webui: { title: 'WebUI', summary: '通过浏览器 adapter 复用共享 React 应用。', runtime: '浏览器；静态资源与附件端点由 headless server 同端口托管。', owns: '登录握手、浏览器侧 Client API 适配、共享 UI 的 Web 入口。', evidence: 'apps/webui/src/main.tsx · packages/server-core/src/webui/' },
+      cli: { title: 'CLI', summary: '面向终端与自动化的 RPC 客户端。', runtime: 'Bun CLI；连接运行中的 server，run 模式可启动一次性本地 server。', owns: '命令解析、server discovery / spawn、流式事件输出。', evidence: 'apps/cli/src/index.ts · apps/cli/src/server-spawner.ts' },
+      clientapi: { title: 'Client API', summary: '把平台差异收束到统一、类型化的调用面。', runtime: 'Desktop 中位于 preload；WebUI 中由 browser adapter 提供。', owns: 'RPC invoke / event subscription，以及 Electron 专属 capability 的安全转发。', evidence: 'apps/electron/src/preload/bootstrap.ts · packages/ui/src/' },
+      auth: { title: 'Auth + WS RPC', summary: '所有客户端进入共享运行时的窄腰。', runtime: 'WebSocket / 可选 WSS；默认 127.0.0.1:9100，Desktop 使用动态端口。', owns: 'Bearer token 换短期 JWT；校验后续 frame，并绑定 workspace scope。', evidence: 'packages/server-core/src/transport/ · packages/server-core/src/webui/' },
+      servercore: { title: 'Server Core', summary: '跨平台运行时与 RPC 服务的主体。', runtime: 'Bun host；被 Electron 内嵌，也被 packages/server 复用。', owns: 'transport、handlers、services、model fetchers、平台抽象与 bootstrap。', evidence: 'packages/server-core/src/bootstrap/ · packages/server-core/src/handlers/' },
+      session: { title: 'SessionManager', summary: '会话、事件和工具执行的编排中心。', runtime: '主 Bun 进程内；每个 workspace 共享一套管理器。', owns: '创建/恢复/分支会话，消息与取消，权限响应，文件监听和事件推送。', evidence: 'packages/server-core/src/sessions/ · packages/server-core/src/handlers/rpc/sessions.ts' },
+      shared: { title: 'Shared Domain', summary: '客户端与运行时共同依赖的领域逻辑。', runtime: '平台中立 TypeScript package。', owns: '协议 DTO、配置、凭证、prompts、Skills、workspace 与唯一 pi backend registry。', evidence: 'packages/shared/src/ · packages/shared/src/agent/backend/' },
+      tools: { title: 'Session Tools', summary: '注入到 Pi session 的 MkAgent 工具层。', runtime: '平台中立 package；由 host 提供上下文与 capability。', owns: 'plan、skill、mermaid、convert、browser、session info/list、mini LLM 等。', evidence: 'packages/session-tools-core/src/ · packages/pi-agent-server/src/session-tool-registration.test.ts' },
+      pi: { title: 'Pi Agent Server', summary: '真正创建 Pi agent session 的隔离子进程。', runtime: '独立 Bun subprocess：packages/pi-agent-server/dist/index.js。', owns: '调用 @earendil-works/pi-coding-agent 的 createAgentSession；通过 stdio JSONL 收发 turn 事件与控制命令。', evidence: 'packages/pi-agent-server/src/index.ts · docs/architecture.md#subprocess-boundary' },
+      provider: { title: 'Model Provider', summary: '由 Pi 统一执行的模型连接，而不是多个 MkAgent backend。', runtime: '外部 HTTPS API 或本地 Ollama / 自定义兼容端点。', owns: '模型推理与流式响应；ChatGPT / Claude OAuth 也是连接方式。', evidence: 'packages/shared/src/config/ · packages/pi-agent-server/src/model-resolution.ts' },
+      storage: { title: 'Local Workspace', summary: '所有入口看到同一份本地工作区与会话数据。', runtime: '本机文件系统；凭证另由操作系统 credential manager 保护。', owns: 'sessions、files、settings、Skills、Views，以及 Pi recovery files。', evidence: '~/.mkagent/workspaces/<slug>/sessions/<id>/ · packages/shared/src/workspaces/' }
+    };
+
+    const edgeDefs = [
+      ['electron','clientapi','desktop','IPC / preload','call'],
+      ['webui','clientapi','webui','browser adapter','call'],
+      ['cli','auth','cli','RPC client','call'],
+      ['clientapi','auth','desktop webui','invoke / events','call'],
+      ['auth','servercore','desktop webui cli','JWT frames','call'],
+      ['servercore','session','desktop webui cli','handlers','call'],
+      ['session','shared','desktop webui cli','config + protocol','call'],
+      ['session','tools','desktop webui cli','tool context','call'],
+      ['session','pi','desktop webui cli','JSONL stdio','call'],
+      ['pi','provider','desktop webui cli','Pi SDK','call'],
+      ['provider','pi','desktop webui cli','stream','event'],
+      ['pi','session','desktop webui cli','AgentEvent','event'],
+      ['session','storage','desktop webui cli','persist / recover','storage'],
+      ['shared','storage','desktop webui cli','workspace config','storage']
+    ];
+    const journey = ['electron','clientapi','auth','servercore','session','pi','provider','pi','session','storage'];
+    const nodes = [...document.querySelectorAll('.node')];
+    const svg = document.getElementById('edges');
+    let selectedPath = 'all';
+    let selectedNode = null;
+    let playTimer = null;
+
+    function anchor(el, side) {
+      const c = document.getElementById('canvas').getBoundingClientRect();
+      const r = el.getBoundingClientRect();
+      const x = r.left - c.left, y = r.top - c.top;
+      if (side === 'left') return [x, y + r.height / 2];
+      if (side === 'right') return [x + r.width, y + r.height / 2];
+      if (side === 'top') return [x + r.width / 2, y];
+      return [x + r.width / 2, y + r.height];
+    }
+
+    function route(from, to) {
+      const a = from.getBoundingClientRect(), b = to.getBoundingClientRect();
+      const horizontal = Math.abs((a.left+a.width/2)-(b.left+b.width/2)) >= Math.abs((a.top+a.height/2)-(b.top+b.height/2));
+      const forward = horizontal ? a.left < b.left : a.top < b.top;
+      const p1 = anchor(from, horizontal ? (forward?'right':'left') : (forward?'bottom':'top'));
+      const p2 = anchor(to, horizontal ? (forward?'left':'right') : (forward?'top':'bottom'));
+      if (horizontal) {
+        const bend = Math.max(42, Math.abs(p2[0]-p1[0])*.42) * (forward?1:-1);
+        return { d:`M ${p1[0]} ${p1[1]} C ${p1[0]+bend} ${p1[1]}, ${p2[0]-bend} ${p2[1]}, ${p2[0]} ${p2[1]}`, mid:[(p1[0]+p2[0])/2,(p1[1]+p2[1])/2-7] };
+      }
+      const bend = Math.max(38, Math.abs(p2[1]-p1[1])*.42) * (forward?1:-1);
+      return { d:`M ${p1[0]} ${p1[1]} C ${p1[0]} ${p1[1]+bend}, ${p2[0]} ${p2[1]-bend}, ${p2[0]} ${p2[1]}`, mid:[(p1[0]+p2[0])/2+8,(p1[1]+p2[1])/2] };
+    }
+
+    function drawEdges() {
+      svg.querySelectorAll('.generated').forEach(el => el.remove());
+      edgeDefs.forEach(([fromId,toId,paths,label,kind], index) => {
+        const {d,mid} = route(document.getElementById(fromId), document.getElementById(toId));
+        const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+        path.setAttribute('d',d); path.setAttribute('class',`generated edge ${kind==='event'?'event':''} ${kind==='storage'?'storage':''}`);
+        path.dataset.paths=paths; path.dataset.edge=String(index); svg.appendChild(path);
+        const text = document.createElementNS('http://www.w3.org/2000/svg','text');
+        text.setAttribute('x',mid[0]); text.setAttribute('y',mid[1]); text.setAttribute('class','generated edge-label'); text.dataset.paths=paths; text.textContent=label; svg.appendChild(text);
+      });
+      applyPath(selectedPath);
+    }
+
+    function applies(paths, path) { return path === 'all' || paths.split(' ').includes(path); }
+    function applyPath(path) {
+      selectedPath = path;
+      document.querySelectorAll('.path-control').forEach(btn => btn.setAttribute('aria-pressed', String(btn.dataset.path === path)));
+      nodes.forEach(node => node.classList.toggle('inactive', !applies(node.dataset.paths, path)));
+      document.querySelectorAll('.edge,.edge-label').forEach(edge => edge.classList.toggle('inactive', !applies(edge.dataset.paths, path)));
+      const copy = {
+        all:['默认视图：完整拓扑','所有入口共享同一套 RPC 和会话运行时；差异主要在入口适配与平台能力。'],
+        desktop:['Desktop 路径','Electron 同时是客户端与 host：preload 获取本机 server 的端口和 token，再通过统一 RPC 进入 SessionManager。'],
+        webui:['WebUI 路径','浏览器先完成 HTTP 登录，再携带短期 JWT 建立 WebSocket；静态 UI 与附件端点由 headless server 托管。'],
+        cli:['CLI 路径','CLI 直接使用 RPC client；可连接现有 server，也能为一次 run 启动临时本地实例。']
+      }[path];
+      document.getElementById('journeyTitle').textContent=copy[0]; document.getElementById('journeyText').textContent=copy[1];
+    }
+
+    function inspect(id) {
+      selectedNode=id; nodes.forEach(n => n.classList.toggle('selected',n.id===id));
+      const info=nodeInfo[id];
+      document.getElementById('detailTitle').textContent=info.title;
+      document.getElementById('detailSummary').textContent=info.summary;
+      document.getElementById('detailRuntime').textContent=info.runtime;
+      document.getElementById('detailOwns').textContent=info.owns;
+      document.getElementById('detailEvidence').textContent=info.evidence;
+    }
+
+    function stopJourney() { if(playTimer){ clearTimeout(playTimer); playTimer=null; } nodes.forEach(n=>n.classList.remove('active')); document.querySelectorAll('.edge').forEach(e=>e.classList.remove('active')); document.getElementById('playJourney').textContent='▶ 播放一次请求'; document.getElementById('stepCount').textContent='READY'; }
+    function playJourney() {
+      stopJourney(); applyPath('desktop'); document.getElementById('playJourney').textContent='■ 停止播放';
+      const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches; let step=0;
+      const tick=()=>{
+        nodes.forEach(n=>n.classList.remove('active')); document.querySelectorAll('.edge').forEach(e=>e.classList.remove('active'));
+        const id=journey[step]; const node=document.getElementById(id); node.classList.add('active'); inspect(id);
+        if(step>0){ const a=journey[step-1], b=id; const idx=edgeDefs.findIndex(e=>e[0]===a&&e[1]===b); if(idx>=0) document.querySelector(`.edge[data-edge="${idx}"]`)?.classList.add('active'); }
+        document.getElementById('stepCount').textContent=`${String(step+1).padStart(2,'0')} / ${String(journey.length).padStart(2,'0')}`;
+        step++; if(step<journey.length) playTimer=setTimeout(tick,reduced?40:720); else playTimer=setTimeout(stopJourney,reduced?80:1050);
+      }; tick();
+    }
+
+    nodes.forEach(node=>node.addEventListener('click',()=>inspect(node.id)));
+    document.querySelectorAll('.path-control').forEach(btn=>btn.addEventListener('click',()=>{stopJourney();applyPath(btn.dataset.path)}));
+    document.getElementById('playJourney').addEventListener('click',()=>playTimer?stopJourney():playJourney());
+    document.getElementById('resetView').addEventListener('click',()=>{stopJourney();applyPath('all');nodes.forEach(n=>n.classList.remove('selected'));selectedNode=null;document.getElementById('detailTitle').textContent='选择一个节点';document.getElementById('detailSummary').textContent='点击或用 Tab 聚焦任一节点，查看它负责什么、运行在哪里，以及对应的仓库证据。';document.getElementById('detailRuntime').textContent='—';document.getElementById('detailOwns').textContent='—';document.getElementById('detailEvidence').textContent='docs/architecture.md';});
+    document.getElementById('themeToggle').addEventListener('click',()=>{const root=document.documentElement; const current=root.dataset.theme || (matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'); root.dataset.theme=current==='dark'?'light':'dark';});
+    window.addEventListener('resize',drawEdges,{passive:true});
+    drawEdges();
+  </script>
+</body>
+</html>
