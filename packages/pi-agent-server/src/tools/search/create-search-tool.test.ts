@@ -84,6 +84,31 @@ describe('createSearchTool', () => {
     expect((result.content[0] as any).text).toContain('fallback (DuckDuckGo) failed');
   });
 
+  it('truncates oversized provider errors in the tool result', async () => {
+    const provider: WebSearchProvider = {
+      name: 'OpenAI',
+      async search() {
+        throw new Error(`primary detail ${'x'.repeat(5_000)}`);
+      },
+    };
+    const fallbackProvider: WebSearchProvider = {
+      name: 'DuckDuckGo',
+      async search() {
+        throw new Error(`fallback detail ${'y'.repeat(5_000)}`);
+      },
+    };
+
+    const tool = createSearchTool(provider, fallbackProvider);
+    const result = await tool.execute('tool-5', { query: 'mkagent' });
+    const text = (result.content[0] as any).text as string;
+
+    expect(result.details?.isError).toBe(true);
+    expect(text).toContain('primary detail');
+    expect(text).toContain('fallback detail');
+    expect(text).toContain('…');
+    expect(text.length).toBeLessThan(1_000);
+  });
+
   it('does not recurse fallback when provider is already fallback provider', async () => {
     const ddgProvider: WebSearchProvider = {
       name: 'DuckDuckGo',

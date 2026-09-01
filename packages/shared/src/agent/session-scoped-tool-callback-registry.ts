@@ -15,6 +15,7 @@ export interface SessionScopedToolCallbacks {
   queryFn?: (request: LLMQueryRequest) => Promise<LLMQueryResult>;
   spawnSessionFn?: SpawnSessionFn;
   browserPaneFns?: BrowserPaneFns;
+  archiveSessionFn?: (sessionId: string, archived: boolean) => void | Promise<void>;
   getSessionInfoFn?: (sessionId?: string) => SessionInfo | null;
   listSessionsFn?: (options?: ListSessionsOptions) => ListSessionsResult;
   listBackgroundTasksFn?: (sessionId?: string) => BackgroundTaskInfo[];

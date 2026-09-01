@@ -61,9 +61,9 @@
     "incr-regex-package": "^1.0.4",
     "shell-quote": "^1.8.3",
     "yaml": "^2.8.2",
-    "@earendil-works/pi-agent-core": "0.80.6",
-    "@earendil-works/pi-ai": "0.80.6",
-    "@earendil-works/pi-coding-agent": "0.80.6"
+    "@earendil-works/pi-agent-core": "0.81.1",
+    "@earendil-works/pi-ai": "0.81.1",
+    "@earendil-works/pi-coding-agent": "0.81.1"
   },
   "peerDependencies": {
     "zod": ">=4.0.0"

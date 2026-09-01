@@ -117,6 +117,15 @@ function createConnection(setup: LlmConnectionSetup): LlmConnection {
 
 export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerDeps): void {
   const { sessionManager } = deps
+  const refreshModelsInBackground = (slug: string, context: string) => {
+    try {
+      getModelRefreshService().refreshNow(slug).catch(error => {
+        deps.platform.logger?.warn(`Model refresh after ${context} failed for ${slug}: ${error instanceof Error ? error.message : error}`)
+      })
+    } catch (error) {
+      deps.platform.logger?.warn(`Model refresh service unavailable after ${context}: ${error instanceof Error ? error.message : error}`)
+    }
+  }
 
   server.handle(RPC_CHANNELS.settings.SETUP_LLM_CONNECTION, async (_ctx, setup: LlmConnectionSetup) => {
     try {
@@ -272,6 +281,7 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
         expiresAt: tokens.expiresAt,
       })
       pendingChatGptFlows.delete(args.state)
+      refreshModelsInBackground(flow.connectionSlug, 'ChatGPT auth')
       return { success: true }
     } catch (error) {
       pendingChatGptFlows.delete(args.state)

@@ -299,7 +299,7 @@ export const HELP_LINKS: MenuItemUrl[] = [
     type: 'url',
     id: 'helpAndDocs',
     labelKey: 'menu.helpAndDocs',
-    url: 'https://agents.craft.do/docs',
+    url: 'https://github.com/MkThingsHQ/mkagent/tree/main/docs',
     icon: 'HelpCircle',
   },
 ]

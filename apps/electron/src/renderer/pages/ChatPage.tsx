@@ -19,6 +19,7 @@ import { toast } from 'sonner'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
 import { useAppShellContext, usePendingPermission, useSessionOptionsFor, useSession as useSessionData } from '@/context/AppShellContext'
 import { rendererPerf } from '@/lib/perf'
+import { isAbsolutePath } from '@/lib/drafts'
 import { routes } from '@/lib/navigate'
 import { coerceInputText } from '@/lib/input-text'
 import { deriveSessionMessagesLoadState, formatSessionLoadFailure } from '@/lib/session-load'
@@ -324,7 +325,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       // Resolve bare relative paths against session working directory,
       // or workspace root as a fallback when workingDirectory is not set.
       const resolved = (() => {
-        if (path.startsWith('/') || path.startsWith('~/')) return path
+        if (isAbsolutePath(path) || path.startsWith('~/')) return path
 
         const baseDir = workingDirectory || activeWorkspace?.rootPath
         if (!baseDir) return path
@@ -337,8 +338,8 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       // Smart fallback for missing files in AI output:
       // if the exact path doesn't exist, search nearby for same basename
       // (e.g. markdown/linkify.test.ts -> markdown/__tests__/linkify.test.ts).
-      if (resolved.startsWith('/')) {
-        const lastSlash = resolved.lastIndexOf('/')
+      if (isAbsolutePath(resolved)) {
+        const lastSlash = Math.max(resolved.lastIndexOf('/'), resolved.lastIndexOf('\\'))
         if (lastSlash > 0 && lastSlash < resolved.length - 1) {
           const parentDir = resolved.slice(0, lastSlash)
           const fileName = resolved.slice(lastSlash + 1)

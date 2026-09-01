@@ -94,7 +94,7 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/ui/rich-text-input.tsx": {
-      "sha256": "385ae49bb8687932f2f303a0361f8a5fa026f41124c6d89f9fa47a633cb9adf9",
+      "sha256": "ea324cac9dbc64f693a701be0a3f06064eafcb0279d532c3f16a10b55b5930ff",
       "reason": "Craft rich-text input retains the xagent-proven DOM and IME placeholder visibility fix"
     },
     "apps/electron/src/renderer/components/ui/mention-badge.tsx": {
@@ -130,7 +130,7 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/apisetup/ApiKeyInput.tsx": {
-      "sha256": "0267701516a5237dfb2266f86e1b676dd92558e1d8099416e6c5ade3b13d4506",
+      "sha256": "dd0a687966d17af0c6e94cb8e40a2f8cb1607e5b01d906a9d4b0b333eb593625",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/apisetup/index.ts": {
@@ -162,7 +162,7 @@
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/TopBar.tsx": {
-      "sha256": "d4d302609119373245ea0cb2049c9d2bdef7e18427b9f8a12affef1c40a80b8b",
+      "sha256": "3fa0802cf77dc0735cb30e7239ac18db9ce973025a6eb6659a2d0a8f2fe6f8e5",
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/SessionList.tsx": {
@@ -370,7 +370,7 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/lib/provider-icons.ts": {
-      "sha256": "f4b847b4d228f94d3a841a47f9dbfc694318b740844215484c7a5524b6a13341",
+      "sha256": "fe7aba9231ffdb92f01cbe75cdfdad29c2a9fdc0ba8e3985abe9707df11737f7",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/lib/mentions.ts": {
@@ -426,7 +426,7 @@
       "reason": "Craft settings UI adapted only to retained MkAgent settings"
     },
     "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx": {
-      "sha256": "56660c7f2f95f49d8a65e32f13baeb94994fd5c4c1707c771ace26aa01258b22",
+      "sha256": "d699cda661aaaa784aca471537f42ee100237d3355a0cc29639f6bcd1196944a",
       "reason": "Craft AI settings restores retained Claude and ChatGPT reauthentication while all other removed settings remain absent"
     },
     "apps/electron/src/renderer/pages/settings/index.ts": {
@@ -442,7 +442,7 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/pages/ChatPage.tsx": {
-      "sha256": "25d948183a107e8cc41599b3fab3b809abd56152b69cd249fa88bd1ea905b5e8",
+      "sha256": "75a59deda225ba7111b32cb4c33ca55076dc9486902b9c16cd813e290d84655d",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/pages/SkillInfoPage.tsx": {

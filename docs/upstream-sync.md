@@ -7,8 +7,8 @@ MkAgent derives its architecture, UI, and runtime from [Craft Agents OSS](https:
 | Item | Value |
 |---|---|
 | Repository | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.11.2` |
-| Commit | `a60ebc1a5a7cb0a6af7a77d5eed0512c5fc07658` |
+| Tag | `v0.12.1` |
+| Commit | `d7592c481216e37c95a50dbfe08948a6987e8c74` |
 
 When upstream publishes a new tag worth evaluating:
 
@@ -28,7 +28,7 @@ Reference checkouts (`../craft-agents-oss`, `../echo`, `../xagent`) stay read-on
   │                                                                  │
   │ 2. Update the audit                                               │
   │    bun run audit:craft-reuse                                      │
-  │       → 96 % same-path / 59 % byte-identical expected             │
+  │       → 96 % same-path / 58 % byte-identical expected             │
   │    bun run lint:craft-test-coverage                              │
   │       → 0 missing-without-explanation expected                    │
   │                                                                  │
@@ -76,7 +76,7 @@ Adding upstream-only features starts with the Lite question first; only features
 Two source-of-truth files record which MkAgent files deviate from Craft:
 
 - `scripts/craft-source-overrides.json` (tracking all `apps/`, `packages/` source files)
-- `scripts/craft-ui-overrides.json` (renderer-focused subset, 386 entries)
+- `scripts/craft-ui-overrides.json` (renderer-focused subset, 112 entries)
 
 After any sync, both files **must** be regenerated and reviewed. The intent is that `audit:craft-reuse` only passes because the deviation is justified, not because the hash table was bumped to match.
 

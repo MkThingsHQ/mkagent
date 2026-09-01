@@ -221,7 +221,7 @@ export async function rebuildMenu(): Promise<void> {
       submenu: [
         {
           label: i18n.t("menu.helpAndDocs"),
-          click: () => shell.openExternal('https://mkagent.app/docs')
+          click: () => shell.openExternal('https://github.com/MkThingsHQ/mkagent/tree/main/docs')
         },
         {
           label: i18n.t("menu.keyboardShortcuts"),

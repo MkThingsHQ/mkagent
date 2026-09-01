@@ -7,8 +7,8 @@ MkAgent 的架构、UI 与运行时继承自 [Craft Agents OSS](https://github.c
 | 项 | 值 |
 |---|---|
 | 仓库 | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.11.2` |
-| Commit | `a60ebc1a5a7cb0a6af7a77d5eed0512c5fc07658` |
+| Tag | `v0.12.1` |
+| Commit | `d7592c481216e37c95a50dbfe08948a6987e8c74` |
 
 当上游发布值得评估的新 tag 时:
 
@@ -28,7 +28,7 @@ MkAgent 工作期间,参考 checkout(`../craft-agents-oss`、`../echo`、`../xag
   │                                                                  │
   │ 2. 更新 audit                                                      │
   │    bun run audit:craft-reuse                                      │
-  │       期望:96 % 同路径 / 59 % 逐字一致                            │
+  │       期望:96 % 同路径 / 58 % 逐字一致                            │
   │    bun run lint:craft-test-coverage                              │
   │       期望:无解释缺失 = 0                                         │
   │                                                                  │
@@ -76,7 +76,7 @@ MkAgent 工作期间,参考 checkout(`../craft-agents-oss`、`../echo`、`../xag
 两份源真值文件记录哪些 MkAgent 文件相对 Craft 偏离:
 
 - `scripts/craft-source-overrides.json`(跟踪所有 `apps/`、`packages/` 源文件)
-- `scripts/craft-ui-overrides.json`(renderer 范围内的子集,386 条)
+- `scripts/craft-ui-overrides.json`(renderer 范围内的子集,112 条)
 
 每次同步后,**必须**重新生成并审阅。`audit:craft-reuse` 通过的前提是偏离合理,而**不是**只为了通过检查去 bump 哈希。
 

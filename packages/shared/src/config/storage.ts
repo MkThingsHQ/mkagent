@@ -256,6 +256,35 @@ export function ensureConfigDir(): void {
   ensureToolIcons();
 
   configDirInitialized = true;
+  restoreOpus46ToAnthropicConnections();
+}
+
+/**
+ * One-shot restoration for users whose Opus 4.6 entry was previously migrated
+ * to 4.8. Defaults remain unchanged, and a later deliberate removal sticks.
+ */
+function restoreOpus46ToAnthropicConnections(): void {
+  const config = loadStoredConfig();
+  if (!config) return;
+  const marker = 'opus-4-6-restored-2';
+  if (config.migrationsApplied?.includes(marker)) return;
+
+  const opus46 = getModelById('claude-opus-4-6');
+  if (opus46) {
+    for (const connection of config.llmConnections ?? []) {
+      if (connection.providerType !== 'pi' || connection.piAuthProvider !== 'anthropic') continue;
+      const ids = (connection.models ?? []).map(model => typeof model === 'string' ? model : model.id);
+      if (
+        (ids.includes('pi/claude-opus-4-8') || ids.includes('pi/claude-opus-4-7'))
+        && !ids.includes('pi/claude-opus-4-6')
+      ) {
+        connection.models ??= [];
+        connection.models.push({ ...opus46, id: 'pi/claude-opus-4-6' });
+      }
+    }
+  }
+  config.migrationsApplied = [...(config.migrationsApplied ?? []), marker];
+  saveConfig(config);
 }
 
 export function loadStoredConfig(): StoredConfig | null {

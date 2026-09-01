@@ -1,6 +1,6 @@
 # MkAgent vs. Craft Agents — current comparison
 
-> Snapshot taken on **2026-08-10** against MkAgent `main` at `00c0df4` and the upstream tag [`craft-ai-agents/craft-agents-oss` `v0.11.2` / `a60ebc1a5a7c`](https://github.com/craft-ai-agents/craft-agents-oss). Numbers are repository snapshots, not live release metrics. Re-run the commands in the final section after changing either baseline; the current checkout has a pre-existing `README.md` lineage-manifest warning if that file is modified without refreshing the manifest.
+> Snapshot refreshed on **2026-09-01** against the MkAgent sync worktree based on `242306a` and the upstream tag [`craft-ai-agents/craft-agents-oss` `v0.12.1` / `d7592c481216`](https://github.com/craft-ai-agents/craft-agents-oss). Numbers are repository snapshots, not live release metrics; installer-size figures remain the last measured build artifacts.
 
 This document explains, with evidence, what MkAgent keeps from Craft Agents, what it physically removes, and how those choices change the artifact you ship. MkAgent is the "Lite" derivative built on the same architecture and renderer; the table below is the canonical answer to "what's actually different?".
 
@@ -10,12 +10,12 @@ Both repositories are Bun monorepos with the same workspace layout (`apps/{elect
 
 | Metric | MkAgent | Craft Agents | Notes |
 |---|---:|---:|---|
-| Tracked TypeScript / TSX LOC (`*.ts`,`*.tsx`, excludes `node_modules`,`dist`,`release`,`.git`) | **190,558** | 344,964 | MkAgent source ≈ **55 %** of Craft's |
-| Tracked source files (current `git ls-files`) | 1,163 | ~1,719 | 96 % same-path rate against Craft (`bun run audit:craft-reuse`) |
-| Same-path files normalized to byte-identical | 686 (59 %) | — | Mechanical replacements only: scope (`@mkagent/*` ↔ `@craft-agent/*`), URL scheme (`mkagent://`), config root (`~/.mkagent`), brand strings |
-| Same-path Lite-customized | 430 | — | Lite boundary (e.g. deleted Sources/MCP branch) plus brand |
-| MkAgent-only source files | 47 | — | MkAgent brand assets, `audit:craft-reuse`, lint/CLI scripts, `apps/online-docs`-equivalent leftovers removed |
-| Source files Craft has that MkAgent does not | — | 606 | Removed by the Lite boundary (Claude backend, OAuth, Sources, MCP, Messaging, Viewer, automations, …) |
+| Tracked TypeScript / TSX LOC (`*.ts`,`*.tsx`, excludes `node_modules`,`dist`,`release`,`.git`) | **195,525** | 347,204 | MkAgent source ≈ **56 %** of Craft's |
+| Audited files (`audit:craft-reuse`) | 1,303 | 1,882 | 1,254 common paths; **96.2 %** same-path rate |
+| Same-path files normalized to byte-identical | 753 (58 %) | — | Mechanical replacements only: scope (`@mkagent/*` ↔ `@craft-agent/*`), URL scheme (`mkagent://`), config root (`~/.mkagent`), brand strings |
+| Same-path Lite-customized | 501 | — | Lite boundary (e.g. deleted Sources/MCP branch) plus brand |
+| MkAgent-only audited files | 49 | — | MkAgent brand assets, audit/lint scripts, and derivative-only tests |
+| Audited files Craft has that MkAgent does not | — | 628 | Removed by the Lite boundary (Claude backend, OAuth, Sources, MCP, Messaging, Viewer, automations, …) |
 | Top-level `dependencies` | 55 | 61 | MkAgent drops `@anthropic-ai/claude-agent-sdk`, `@anthropic-ai/sdk`, `@dnd-kit/{dom,helpers}`, `@github/copilot-sdk`, `@modelcontextprotocol/sdk`, plus the messaging OAuth flow packages (the lowered number reflects the Lite backend registry, not a runtime regression) |
 | Top-level `devDependencies` | 33 | 34 | Only meaningful drop is `@aws-sdk/client-s3` (used only for the upstream release upload to S3; MkAgent's `electron-updater` GitHub provider does not need it) |
 | `node_modules/` size on a clean `bun install --frozen-lockfile` | **2.0 GB** | 2.5 GB | The 0.5 GB delta matches the dropped native + SDK bundles below |
@@ -48,7 +48,7 @@ Both repositories are Bun monorepos with the same workspace layout (`apps/{elect
 | Registered `AgentBackend`s | `pi` only | `pi`, `claude-agent-sdk`, plus optional **Copilot / gateway** subscriptions |
 | Auth model | API key + custom endpoints + Ollama + **ChatGPT/Claude subscription OAuth**, all through Pi | API-key + custom + **OAuth (Anthropic, OpenAI, GitHub Copilot, Google Workspace, Slack, Microsoft)** + subscription flows + gateway |
 | Subprocess model | `packages/pi-agent-server` runs as a Bun subprocess; communicates over JSONL on stdio | Pi subprocess (same) **plus** SDK subprocess (`@anthropic-ai/claude-agent-sdk-binary`, ~217 MB native `claude` binary per platform arch) **plus** bridge/session MCP servers **plus** WhatsApp worker subprocess |
-| Built-in transports | OpenAI-compatible, Anthropic-compatible, Ollama (Pi `0.80.6`) | Same, plus Anthropic SDK direct mode and Copilot SDK mode |
+| Built-in transports | OpenAI-compatible, Anthropic-compatible, Ollama (Pi `0.81.1`) | Same, plus Anthropic SDK direct mode and Copilot SDK mode |
 | Image generation | ❌ (deleted; image attachments still supported) | ✅ (`gen_image` model + tool) |
 
 ## 4. Agent tools (what the model can actually call)
@@ -80,12 +80,13 @@ Both repositories import the same helpers from `@earendil-works/pi-coding-agent`
 
 ### 4.3 Session-level `mcp__session__*` tools — the real cut
 
-`SESSION_TOOL_DEFS` in `packages/session-tools-core/src/tool-defs.ts` is the single source of truth. The model sees every entry here with the `mcp__session__` prefix. MkAgent keeps **15** of these; Craft exposes **27**.
+`SESSION_TOOL_DEFS` in `packages/session-tools-core/src/tool-defs.ts` is the single source of truth. The model sees every entry here with the `mcp__session__` prefix. MkAgent keeps **16** of these; Craft exposes **27**.
 
 | Tool (model-visible name) | MkAgent | Craft | What it does / why MkAgent dropped it |
 |---|:---:|:---:|---|
 | `mcp__session__SubmitPlan` | ✅ | ✅ | Plan review; submits a plan file and pauses the turn |
 | `mcp__session__browser_tool` | ✅ | ✅ | Browser pane control |
+| `mcp__session__archive_session` | ✅ | ✅ | Archive or restore another idle session in the same workspace |
 | `mcp__session__call_llm` | ✅ | ✅ | Internal mini-LLM call (titles, summaries, scripts) |
 | `mcp__session__config_validate` | ✅ | ✅ | Validate a workspace `config.json` patch before save |
 | `mcp__session__get_session_info` | ✅ | ✅ | Read session metadata |
@@ -261,14 +262,14 @@ Both projects are released under **Apache-2.0**. MkAgent ships [`NOTICE`](../NOT
 # From the MkAgent checkout
 git rev-parse HEAD              # record MkAgent commit
 bun install --frozen-lockfile
-bun run audit:craft-reuse       # 96 % same-path / 59 % byte-identical
+bun run audit:craft-reuse       # 96 % same-path / 58 % byte-identical
 bun run lint:craft-test-coverage
 bun run typecheck:all
 bun run lint
 bun run validate:ci
 
 # From the upstream Craft Agents checkout
-git checkout a60ebc1a5a7cb0a6af7a77d5eed0512c5fc07658
+git checkout d7592c481216e37c95a50dbfe08948a6987e8c74
 ls -lah node_modules/@anthropic-ai/claude-agent-sdk-darwin-arm64/claude   # 217 MB binary
 ```
 

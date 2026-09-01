@@ -3,6 +3,7 @@ import { zodToJsonSchema } from 'zod-to-json-schema';
 import type { SessionToolContext } from './context.ts';
 import {
   handleConfigValidate,
+  handleArchiveSession,
   handleGetSessionInfo,
   handleListBackgroundTasks,
   handleListSessions,
@@ -97,6 +98,10 @@ export const SpawnSessionSchema = z.object({
     .optional(),
 });
 export const GetSessionInfoSchema = z.object({ sessionId: z.string().optional() });
+export const ArchiveSessionSchema = z.object({
+  sessionId: z.string(),
+  archived: z.boolean().optional(),
+});
 export const ListSessionsSchema = z.object({
   search: z.string().optional(),
   sortBy: z.enum(['recent', 'name']).optional(),
@@ -125,6 +130,7 @@ export const TOOL_DESCRIPTIONS = {
   call_llm: 'Invoke the configured mini model for a focused subtask.',
   spawn_session: 'Create an independent local session using an available Pi connection and model.',
   browser_tool: 'Control the built-in browser with a CLI-like command.',
+  archive_session: 'Archive or unarchive another session in this workspace by ID.',
   get_session_info: 'Get metadata for the current session or a session by ID.',
   list_sessions: 'Search and list active or archived sessions in the current workspace.',
   list_background_tasks: 'List background tasks tracked for a session across turns.',
@@ -170,6 +176,7 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
   { name: 'call_llm', description: TOOL_DESCRIPTIONS.call_llm, inputSchema: CallLlmSchema, executionMode: 'backend', safeMode: 'allow', readOnly: true, handler: null },
   { name: 'spawn_session', description: TOOL_DESCRIPTIONS.spawn_session, inputSchema: SpawnSessionSchema, executionMode: 'backend', safeMode: 'block', handler: null },
   { name: 'browser_tool', description: TOOL_DESCRIPTIONS.browser_tool, inputSchema: BrowserToolSchema, executionMode: 'backend', safeMode: 'allow', handler: null },
+  { name: 'archive_session', description: TOOL_DESCRIPTIONS.archive_session, inputSchema: ArchiveSessionSchema, executionMode: 'registry', safeMode: 'block', handler: handleArchiveSession },
   { name: 'get_session_info', description: TOOL_DESCRIPTIONS.get_session_info, inputSchema: GetSessionInfoSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleGetSessionInfo },
   { name: 'list_sessions', description: TOOL_DESCRIPTIONS.list_sessions, inputSchema: ListSessionsSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleListSessions },
   { name: 'list_background_tasks', description: TOOL_DESCRIPTIONS.list_background_tasks, inputSchema: ListBackgroundTasksSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleListBackgroundTasks },

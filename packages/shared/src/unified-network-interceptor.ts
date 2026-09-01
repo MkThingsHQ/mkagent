@@ -986,6 +986,7 @@ export function createOpenAiSseStrippingStream(): TransformStream<Uint8Array, Ui
     }
 
     let handledToolCalls = false;
+    let strippedEmptyToolCalls = false;
 
     // Buffer tool_call argument deltas (across all choices). All upstream
     // tool_call chunks are suppressed; we emit one consolidated event per
@@ -1004,11 +1005,18 @@ export function createOpenAiSseStrippingStream(): TransformStream<Uint8Array, Ui
     //     those args to the matching phase-1 entry by walking the open calls
     //     in order rather than allocating a new bucket for them.
     for (const choice of choices) {
-      if (!choice?.delta?.tool_calls) continue;
+      const toolCalls = choice?.delta?.tool_calls;
+      if (!Array.isArray(toolCalls) || toolCalls.length === 0) {
+        if (Array.isArray(toolCalls) && choice.delta) {
+          delete choice.delta.tool_calls;
+          strippedEmptyToolCalls = true;
+        }
+        continue;
+      }
       handledToolCalls = true;
 
       const choiceIndex = choice.index ?? 0;
-      for (const tc of choice.delta.tool_calls) {
+      for (const tc of toolCalls) {
         // Resolve the bucket key. If `tc.index` is missing, prefer the most
         // recently opened call in this choice so we don't collide on key 0.
         const fallbackIndex = lastOpenedToolIndexByChoice.get(choiceIndex);
@@ -1089,18 +1097,20 @@ export function createOpenAiSseStrippingStream(): TransformStream<Uint8Array, Ui
       return;
     }
 
+    const forwardStr = strippedEmptyToolCalls ? JSON.stringify(data) : dataStr;
+
     // On finish, flush buffered tool calls with clean args BEFORE emitting finish event
     const hasFinish = choices.some(choice => choice?.finish_reason === 'tool_calls' || choice?.finish_reason === 'stop');
     if (hasFinish) {
       if (bufferingToolCalls) {
         flushTrackedCalls(controller);
       }
-      emitSseLine(dataStr, controller);
+      emitSseLine(forwardStr, controller);
       return;
     }
 
     // Non-tool events pass through
-    emitSseLine(dataStr, controller);
+    emitSseLine(forwardStr, controller);
   }
 
   return new TransformStream<Uint8Array, Uint8Array>({

@@ -90,6 +90,7 @@ export interface SessionToolContext {
   validators?: ValidatorInterface;
   submitFeedback?(feedback: DeveloperFeedback): void;
   updatePreferences?(updates: Record<string, unknown>): void;
+  archiveSession?(sessionId: string, archived: boolean): void | Promise<void>;
   getSessionInfo?(sessionId?: string): SessionInfo | null;
   listSessions?(options?: ListSessionsOptions): ListSessionsResult;
   listBackgroundTasks?(sessionId?: string): BackgroundTaskInfo[];

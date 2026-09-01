@@ -139,7 +139,7 @@ git diff --check
 
 ## 项目沿革
 
-MkAgent 起步于 [Craft Agents OSS](https://github.com/craft-ai-agents/craft-agents-oss) `v0.11.2`（`a60ebc1a5a7c`）中的部分架构和代码，目前拥有独立的 Git 历史与产品边界。MkAgent 与上游项目不存在关联，也未获其认可。归属说明请参阅 [NOTICE](./NOTICE)，当前差异请参阅[对比指南](./docs/zh/comparison-with-craft.md)。
+MkAgent 起步于 [Craft Agents OSS](https://github.com/craft-ai-agents/craft-agents-oss)，当前选择性同步基线为 `v0.12.1`（`d7592c481216`），并保持独立的 Git 历史与产品边界。MkAgent 与上游项目不存在关联，也未获其认可。归属说明请参阅 [NOTICE](./NOTICE)，当前差异请参阅[对比指南](./docs/zh/comparison-with-craft.md)。
 
 ## 作者
 

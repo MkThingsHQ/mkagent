@@ -86,3 +86,21 @@ export function isModelNotFoundError(message: string): boolean {
     (normalized.includes('requested model') && normalized.includes('not') && normalized.includes('exist'))
   );
 }
+
+/**
+ * Stricter model-rejection predicate for contexts where a 400 may instead mean
+ * a rejected hosted tool or request parameter. Ambiguous messages count only
+ * when they name the requested model.
+ */
+export function isModelRejectionError(message: string, modelId: string): boolean {
+  if (!isModelNotFoundError(message)) return false;
+  const normalized = message.toLowerCase();
+  if (
+    normalized.includes('model_not_found')
+    || normalized.includes('no such model')
+    || normalized.includes('requested model')
+  ) {
+    return true;
+  }
+  return modelId.length > 0 && normalized.includes(modelId.toLowerCase());
+}

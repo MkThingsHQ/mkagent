@@ -57,12 +57,27 @@ function setup(llmConnections: any[]) {
     return run.exitCode === 0
   }
 
+  function runEnsureConfigDir(): void {
+    const run = Bun.spawnSync([
+      process.execPath,
+      '--eval',
+      `import { ensureConfigDir } from '${STORAGE_MODULE_PATH}'; ensureConfigDir();`,
+    ], {
+      env: { ...process.env, CONFIG_DIR: configDir },
+      stdout: 'pipe',
+      stderr: 'pipe',
+    })
+    if (run.exitCode !== 0) {
+      throw new Error(`ensureConfigDir subprocess failed:\n${run.stderr.toString()}`)
+    }
+  }
+
   function readConnection(slug: string): any {
     const config = JSON.parse(readFileSync(configPath, 'utf-8'))
     return config.llmConnections.find((c: any) => c.slug === slug)
   }
 
-  return { configDir, configPath, runUpdate, readConnection }
+  return { configDir, configPath, runUpdate, runEnsureConfigDir, readConnection }
 }
 
 function makeConnection(overrides: Record<string, unknown> = {}) {
@@ -141,5 +156,46 @@ describe('updateLlmConnection – Anthropic OAuth identity', () => {
 
     expect(runUpdate('claude-max', { name: 'Renamed Claude Max' })).toBe(true)
     expect(readConnection('claude-max')).toMatchObject({ name: 'Renamed Claude Max', ...identity })
+  })
+})
+
+describe('Opus 4.6 restoration', () => {
+  it('restores Opus 4.6 once to a Pi-routed Anthropic connection', () => {
+    const { configPath, runEnsureConfigDir, readConnection } = setup([
+      makeConnection({
+        slug: 'anthropic',
+        providerType: 'pi',
+        piAuthProvider: 'anthropic',
+        models: [{ id: 'pi/claude-opus-4-8', name: 'Opus 4.8' }],
+      }),
+    ])
+
+    runEnsureConfigDir()
+
+    expect(readConnection('anthropic').models.map((model: any) => model.id ?? model))
+      .toContain('pi/claude-opus-4-6')
+    expect(JSON.parse(readFileSync(configPath, 'utf-8')).migrationsApplied)
+      .toContain('opus-4-6-restored-2')
+  })
+
+  it('does not re-add Opus 4.6 after a deliberate removal', () => {
+    const { configPath, runEnsureConfigDir, readConnection } = setup([
+      makeConnection({
+        slug: 'anthropic',
+        providerType: 'pi',
+        piAuthProvider: 'anthropic',
+        models: [{ id: 'pi/claude-opus-4-8', name: 'Opus 4.8' }],
+      }),
+    ])
+    runEnsureConfigDir()
+
+    const config = JSON.parse(readFileSync(configPath, 'utf-8'))
+    config.llmConnections[0].models = config.llmConnections[0].models
+      .filter((model: any) => (model.id ?? model) !== 'pi/claude-opus-4-6')
+    writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf-8')
+
+    runEnsureConfigDir()
+    expect(readConnection('anthropic').models.map((model: any) => model.id ?? model))
+      .not.toContain('pi/claude-opus-4-6')
   })
 })

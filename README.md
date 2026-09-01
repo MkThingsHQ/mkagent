@@ -159,8 +159,8 @@ Use [GitHub Issues](https://github.com/MkThingsHQ/mkagent/issues) for bugs and f
 ## Project lineage
 
 MkAgent started from selected architecture and code in
-[Craft Agents OSS](https://github.com/craft-ai-agents/craft-agents-oss) `v0.11.2`
-(`a60ebc1a5a7c`) and continues with an independent Git history and product boundary. MkAgent is not
+[Craft Agents OSS](https://github.com/craft-ai-agents/craft-agents-oss) `v0.12.1`
+(`d7592c481216`) and continues with an independent Git history and product boundary. MkAgent is not
 affiliated with or endorsed by the upstream project. See [NOTICE](./NOTICE) for attribution and the
 [comparison guide](./docs/comparison-with-craft.md) for the current differences.
 

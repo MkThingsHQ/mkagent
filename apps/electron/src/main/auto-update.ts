@@ -77,6 +77,8 @@ let __isUpdating = false
 // electron-updater destroys windows between quitAndInstall and before-quit firing,
 // so the regular before-quit save site would see an empty array.
 let beforeUpdateQuitHook: (() => void) | null = null
+let beforeUpdateInstallHook: (() => Promise<void>) | null = null
+let installQuitFailedHook: (() => void) | null = null
 
 /**
  * Register a callback to run inside installUpdate() before quitAndInstall.
@@ -84,6 +86,16 @@ let beforeUpdateQuitHook: (() => void) | null = null
  */
 export function setBeforeUpdateQuitHook(fn: () => void): void {
   beforeUpdateQuitHook = fn
+}
+
+/** Run the full application cleanup before electron-updater hands off. */
+export function setBeforeUpdateInstallHook(fn: () => Promise<void>): void {
+  beforeUpdateInstallHook = fn
+}
+
+/** Recover when quitAndInstall fails after application resources were disposed. */
+export function setInstallQuitFailedHook(fn: () => void): void {
+  installQuitFailedHook = fn
 }
 
 /**
@@ -423,6 +435,12 @@ export async function installUpdate(): Promise<void> {
   }
 
   try {
+    await beforeUpdateInstallHook?.()
+  } catch (err) {
+    autoUpdateLog.error('beforeUpdateInstall cleanup hook failed', err)
+  }
+
+  try {
     // isSilent=false shows the installer UI on Windows if needed (fallback)
     // isForceRunAfter=true ensures the app relaunches after install
     autoUpdater.quitAndInstall(false, true)
@@ -431,6 +449,11 @@ export async function installUpdate(): Promise<void> {
     autoUpdateLog.error('quitAndInstall failed', error)
     updateInfo = { ...updateInfo, downloadState: 'error' }
     broadcastUpdateInfo()
+    try {
+      installQuitFailedHook?.()
+    } catch (hookError) {
+      autoUpdateLog.error('installQuitFailed hook failed', hookError)
+    }
     throw error
   }
 }

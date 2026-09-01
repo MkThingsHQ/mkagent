@@ -8,7 +8,7 @@
 |---|---|---|
 | ChatGPT Plus | `openai-codex` | 复用 Craft ChatGPT OAuth，由 Pi 执行 |
 | Claude Pro/Max | `anthropic` | 复用 Craft Claude OAuth，由 Pi 执行 |
-| Pi provider 预设 | `@earendil-works/pi-ai` 0.80.6 自带的全部 preset(anthropic、openai、google、deepseek、xai、mistral、groq、openrouter 等) | 通过 API key 鉴权 |
+| Pi provider 预设 | `@earendil-works/pi-ai` 0.81.1 自带的全部 preset(anthropic、openai、google、deepseek、xai、mistral、groq、openrouter、moonshotai 等) | 通过 API key 鉴权 |
 | 自定义 `openai-completions` | 用户自行提供 base URL | API key 可选(Ollama 留空) |
 | 自定义 `anthropic-messages` | 用户自行提供 base URL | API key 可选 |
 | 本地 Ollama | `http://127.0.0.1:11434/v1` | 无鉴权,使用 OpenAI-completions 协议 |

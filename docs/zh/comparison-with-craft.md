@@ -1,7 +1,7 @@
 # MkAgent vs Craft Agents 当前差异对比
 
-> 快照时间：**2026-08-10**。
-> 对比基线：**2026-08-10** 的 MkAgent `main`（`00c0df4`）以及上游 tag [`craft-ai-agents/craft-agents-oss` `v0.11.2` / `a60ebc1a5a7c`](https://github.com/craft-ai-agents/craft-agents-oss)。数字是仓库快照，不是实时发布指标。任一基线变化后，应按文末命令重新审计；当前 checkout 存在一个既有的 `README.md` 修改但未刷新血缘 manifest 的提示。
+> 快照刷新时间：**2026-09-01**。
+> 对比基线：基于 `242306a` 的 MkAgent 同步工作区，以及上游 tag [`craft-ai-agents/craft-agents-oss` `v0.12.1` / `d7592c481216`](https://github.com/craft-ai-agents/craft-agents-oss)。数字是仓库快照，不是实时发布指标；安装包大小仍采用上一次实测构件。
 > 数据来源：两个仓库当前 on-disk 的工作区与既有的构建产物（非本轮新抓的网络数据）；重跑前请用记录中的 commit 重新 checkout 两个仓库。
 
 本文用源码与构件证据解释 MkAgent 相对 Craft Agents 保留了什么、物理删除了什么、以及这些选择会怎样改变你最终交付的安装包。MkAgent 是基于同一套架构与 renderer 的"Lite"衍生版；下面的表格是"现在到底哪里不一样"的标准答案。
@@ -12,12 +12,12 @@
 
 | 指标 | MkAgent | Craft Agents | 备注 |
 |---|---:|---:|---|
-| 已跟踪的 TypeScript/TSX 行数（`*.ts`、`*.tsx`，排除 `node_modules`、`dist`、`release`、`.git`） | **190,558** | 344,964 | MkAgent 源码规模约 Craft 的 **55 %** |
-| 当前 `git ls-files` 跟踪的源文件数 | 1,163 | ~1,719 | 与 Craft 同路径率 96 %（`bun run audit:craft-reuse`） |
-| 同路径且归一化后逐字一致 | 686（59 %） | — | 归一化只允许机械替换：`@mkagent/*` ↔ `@craft-agent/*`、`mkagent://` 协议、`~/.mkagent` 配置根目录、品牌字符串 |
-| 同路径但属于 Lite 定制缝 | 430 | — | Lite 边界（如 Sources/MCP 分支被删）+ 品牌替换 |
-| MkAgent 独有源文件 | 47 | — | MkAgent 品牌资产、`audit:craft-reuse`、lint/CLI 脚本；等价于 Craft 的 `apps/online-docs` 文件已移除 |
-| Craft 有而 MkAgent 没有的源文件 | — | 606 | 被 Lite 边界删除（Claude backend、OAuth、Sources、MCP、Messaging、Viewer、automations…） |
+| 已跟踪的 TypeScript/TSX 行数（`*.ts`、`*.tsx`，排除 `node_modules`、`dist`、`release`、`.git`） | **195,525** | 347,204 | MkAgent 源码规模约 Craft 的 **56 %** |
+| 审计文件数（`audit:craft-reuse`） | 1,303 | 1,882 | 同路径 1,254 个；同路径率 **96.2 %** |
+| 同路径且归一化后逐字一致 | 753（58 %） | — | 归一化只允许机械替换：`@mkagent/*` ↔ `@craft-agent/*`、`mkagent://` 协议、`~/.mkagent` 配置根目录、品牌字符串 |
+| 同路径但属于 Lite 定制缝 | 501 | — | Lite 边界（如 Sources/MCP 分支被删）+ 品牌替换 |
+| MkAgent 独有审计文件 | 49 | — | MkAgent 品牌资产、审计/lint 脚本和衍生项目专属测试 |
+| Craft 有而 MkAgent 没有的审计文件 | — | 628 | 被 Lite 边界删除（Claude backend、OAuth、Sources、MCP、Messaging、Viewer、automations…） |
 | `dependencies` 顶层条目 | 55 | 61 | MkAgent 删去 `@anthropic-ai/claude-agent-sdk`、`@anthropic-ai/sdk`、`@dnd-kit/{dom,helpers}`、`@github/copilot-sdk`、`@modelcontextprotocol/sdk`，以及 messaging OAuth 流程相关包；数字下降反映的是 Lite 后端注册表，不是运行时缺失 |
 | `devDependencies` 顶层条目 | 33 | 34 | 唯一有意义的差异是 `@aws-sdk/client-s3`（只在上游 release 上传到 S3 时使用；MkAgent 的 `electron-updater` 走 GitHub Releases，不需要它） |
 | 在干净 `bun install --frozen-lockfile` 下的 `node_modules/` 大小 | **2.0 GB** | 2.5 GB | 0.5 GB 差量与下文删除的 native + SDK bundle 一致 |
@@ -50,7 +50,7 @@
 | 已注册的 `AgentBackend` | 仅 `pi` | `pi`、`claude-agent-sdk`，外加可选的 **Copilot / gateway** 订阅 |
 | 鉴权模型 | API key + 自定义端点 + Ollama + **ChatGPT/Claude 订阅 OAuth**，全部通过 Pi | API key + 自定义 + **OAuth（Anthropic、OpenAI、GitHub Copilot、Google Workspace、Slack、Microsoft）** + 订阅流程 + gateway |
 | 子进程模型 | `packages/pi-agent-server` 作为 Bun 子进程运行；通过 JSONL on stdio 通信 | Pi 子进程（同）**外加** SDK 子进程（`@anthropic-ai/claude-agent-sdk-binary`，每个平台架构约 217 MB 的 native `claude` 二进制）**外加** bridge/session MCP server **外加** WhatsApp worker 子进程 |
-| 内置传输 | OpenAI-兼容、Anthropic-兼容、Ollama（Pi `0.80.6`） | 同上，外加 Anthropic SDK 直连模式与 Copilot SDK 模式 |
+| 内置传输 | OpenAI-兼容、Anthropic-兼容、Ollama（Pi `0.81.1`） | 同上，外加 Anthropic SDK 直连模式与 Copilot SDK 模式 |
 | 图片生成 | ❌（未接入生图工具；图片附件仍支持） | ❌（未注册生图工具；底层 `pi-ai` 依赖包含未接入的 OpenRouter 图片生成 API） |
 
 这里的“图片生成”指 Agent 可调用的产品能力，而不是依赖包是否包含相关 API。MkAgent 与当前对照的 Craft 源码都没有 `gen_image` 的实现或工具注册；两者使用的 `@earendil-works/pi-ai` 依赖虽然提供独立的 `ImagesModel` / `generateImages()` 抽象及 OpenRouter provider，但 Craft 只接入了普通模型目录和对话调用链。`supportsImages` 则表示对话模型能否接收图片附件，属于图片输入/视觉能力，也不代表能够生成图片。
@@ -84,12 +84,13 @@
 
 ### 4.3 会话级 `mcp__session__*` 工具 —— 真正的砍点
 
-`packages/session-tools-core/src/tool-defs.ts` 的 `SESSION_TOOL_DEFS` 是单一来源。模型看到的每个条目都带 `mcp__session__` 前缀。MkAgent 保留 **15** 个，Craft 暴露 **27** 个。
+`packages/session-tools-core/src/tool-defs.ts` 的 `SESSION_TOOL_DEFS` 是单一来源。模型看到的每个条目都带 `mcp__session__` 前缀。MkAgent 保留 **16** 个，Craft 暴露 **27** 个。
 
 | 工具（模型侧名称） | MkAgent | Craft | 作用 / MkAgent 删除原因 |
 |:---:|:---:|:---:|:---|
 | `mcp__session__SubmitPlan` | ✅ | ✅ | 计划评审；提交 plan 文件并暂停当前 turn |
 | `mcp__session__browser_tool` | ✅ | ✅ | 控制 Browser 面板 |
+| `mcp__session__archive_session` | ✅ | ✅ | 归档或恢复同一 workspace 中的另一个空闲会话 |
 | `mcp__session__call_llm` | ✅ | ✅ | 内部 mini-LLM 调用（标题、摘要、脚本） |
 | `mcp__session__config_validate` | ✅ | ✅ | 在保存前校验 workspace `config.json` 补丁 |
 | `mcp__session__get_session_info` | ✅ | ✅ | 读会话元数据 |
@@ -263,14 +264,14 @@ MkAgent 那边"零无解释缺失"的硬约束来自 [`scripts/check-craft-test-
 # 在 MkAgent checkout
 git rev-parse HEAD              # 记下 MkAgent commit
 bun install --frozen-lockfile
-bun run audit:craft-reuse       # 96 % 同路径 / 59 % 逐字一致
+bun run audit:craft-reuse       # 96 % 同路径 / 58 % 逐字一致
 bun run lint:craft-test-coverage
 bun run typecheck:all
 bun run lint
 bun run validate:ci
 
 # 在上游 Craft Agents checkout
-git checkout a60ebc1a5a7cb0a6af7a77d5eed0512c5fc07658
+git checkout d7592c481216e37c95a50dbfe08948a6987e8c74
 ls -lah node_modules/@anthropic-ai/claude-agent-sdk-darwin-arm64/claude   # 217 MB 二进制
 ```
 

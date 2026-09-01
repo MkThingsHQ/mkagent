@@ -36,7 +36,12 @@ import type { HandlerDeps } from './handlers/handler-deps'
 import { mainLog } from './logger'
 import { createElectronPlatform } from './platform'
 import { WindowManager } from './window-manager'
-import { checkForUpdatesOnLaunch, setAutoUpdateEventSink } from './auto-update'
+import {
+  checkForUpdatesOnLaunch,
+  setAutoUpdateEventSink,
+  setBeforeUpdateInstallHook,
+  setInstallQuitFailedHook,
+} from './auto-update'
 import { handleDeepLink } from './deep-link'
 import { createApplicationMenu, rebuildMenu, setMenuEventSink } from './menu'
 import { registerThumbnailHandler, registerThumbnailScheme } from './thumbnail-protocol'
@@ -75,6 +80,22 @@ let eventSink: ReturnType<WindowManager['getRpcEventSink']> = null
 let resolveClientId: ((webContentsId: number) => string | undefined) | null = null
 let pendingDeepLink: string | null = null
 let isQuitting = false
+let quitCleanupPromise: Promise<void> | null = null
+
+function performQuitCleanup(): Promise<void> {
+  if (quitCleanupPromise) return quitCleanupPromise
+  windowManager?.setAppQuitting(true)
+  browserPaneManager?.destroyAll()
+  quitCleanupPromise = (async () => {
+    try {
+      await stopServer?.()
+    } catch (error) {
+      mainLog.error('Desktop shutdown failed', error)
+      Sentry.captureException(error)
+    }
+  })()
+  return quitCleanupPromise
+}
 
 function findDeepLink(args: string[]): string | undefined {
   return args.find(argument => argument.startsWith('mkagent://'))
@@ -214,6 +235,21 @@ async function start() {
   browserPaneManager.onRemoved(id => sink('browser-pane:removed', { to: 'all' }, id))
   browserPaneManager.setSessionPathResolver(id => instance.sessionManager.getSessionPath(id))
   setAutoUpdateEventSink(sink)
+  setBeforeUpdateInstallHook(async () => {
+    isQuitting = true
+    await performQuitCleanup()
+  })
+  setInstallQuitFailedHook(() => {
+    mainLog.error('[auto-update] quitAndInstall failed after cleanup — relaunching')
+    dialog.showMessageBoxSync({
+      type: 'error',
+      title: 'Update failed',
+      message: 'The update could not be installed.',
+      detail: 'MkAgent will restart now. The update will be retried on the next launch.',
+    })
+    app.relaunch()
+    app.exit(0)
+  })
 
   ipcMain.on('__get-web-contents-id', event => { event.returnValue = event.sender.id })
   ipcMain.on('__get-workspace-id', event => { event.returnValue = windowManager!.getWorkspaceForWindow(event.sender.id) ?? getWorkspaces()[0]!.id })
@@ -282,16 +318,8 @@ app.on('before-quit', event => {
   if (isQuitting) return
   event.preventDefault()
   isQuitting = true
-  windowManager?.setAppQuitting(true)
-  browserPaneManager?.destroyAll()
   void (async () => {
-    try {
-      await stopServer?.()
-    } catch (error) {
-      mainLog.error('Desktop shutdown failed', error)
-      Sentry.captureException(error)
-    } finally {
-      app.quit()
-    }
+    await performQuitCleanup()
+    app.quit()
   })()
 })

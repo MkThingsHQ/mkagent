@@ -1,6 +1,8 @@
-import { writeFileSync, readFileSync, unlinkSync, existsSync } from 'node:fs'
+import { writeFileSync, readFileSync, unlinkSync, existsSync, readlinkSync } from 'node:fs'
+import { execFileSync } from 'node:child_process'
 import { uptime as osUptime } from 'node:os'
-import { join } from 'node:path'
+import { join, basename } from 'node:path'
+import { lockHolderMatchesLock, parseTasklistImageName, type LockIdentity } from './lock-identity'
 import { ensureConfigDir, loadStoredConfig, saveConfig } from '@mkagent/shared/config'
 import { CONFIG_DIR } from '@mkagent/shared/config/paths'
 import { setBundledAssetsRoot } from '@mkagent/shared/utils'
@@ -118,10 +120,7 @@ export function generateServerToken(): string {
 
 const LOCK_FILE = join(CONFIG_DIR, '.server.lock')
 
-interface LockPayload {
-  pid: number
-  startedAt: number
-}
+type LockPayload = LockIdentity
 
 function isProcessAlive(pid: number): boolean {
   try {
@@ -130,6 +129,54 @@ function isProcessAlive(pid: number): boolean {
   } catch {
     return false
   }
+}
+
+const PROCESS_PROBE_OPTIONS: import('node:child_process').ExecFileSyncOptionsWithStringEncoding = {
+  encoding: 'utf-8',
+  timeout: 2000,
+  stdio: ['ignore', 'pipe', 'ignore'],
+}
+
+function describeProcessCommand(pid: number): string | null {
+  try {
+    if (process.platform === 'win32') {
+      const output = execFileSync('tasklist', ['/FI', `PID eq ${pid}`, '/NH', '/FO', 'CSV'], PROCESS_PROBE_OPTIONS)
+      return output.trim() || null
+    }
+    const output = execFileSync('ps', ['-p', String(pid), '-o', 'command='], PROCESS_PROBE_OPTIONS)
+    return output.trim() || null
+  } catch {
+    return null
+  }
+}
+
+function getLiveExecName(pid: number): string | null {
+  try {
+    if (process.platform === 'win32') {
+      return parseTasklistImageName(
+        execFileSync('tasklist', ['/FI', `PID eq ${pid}`, '/NH', '/FO', 'CSV'], PROCESS_PROBE_OPTIONS),
+      )
+    }
+    if (process.platform === 'linux') {
+      try {
+        return basename(readlinkSync(`/proc/${pid}/exe`))
+      } catch {
+        // Fall through to ps when /proc is unavailable.
+      }
+    }
+    const output = execFileSync('ps', ['-p', String(pid), '-o', 'comm='], PROCESS_PROBE_OPTIONS).trim()
+    return output ? basename(output) : null
+  } catch {
+    return null
+  }
+}
+
+function lockHolderLooksLikeSameServer(lock: LockPayload): boolean {
+  return lockHolderMatchesLock(
+    lock,
+    lock.execName ? getLiveExecName(lock.pid) : null,
+    lock.execName ? null : describeProcessCommand(lock.pid),
+  )
 }
 
 /**
@@ -145,7 +192,8 @@ function parseLockContent(raw: string): LockPayload | null {
       const parsed = JSON.parse(trimmed) as Record<string, unknown>
       const pid = typeof parsed.pid === 'number' ? parsed.pid : NaN
       const startedAt = typeof parsed.startedAt === 'number' ? parsed.startedAt : 0
-      if (!isNaN(pid)) return { pid, startedAt }
+      const execName = typeof parsed.execName === 'string' && parsed.execName ? parsed.execName : undefined
+      if (!isNaN(pid)) return { pid, startedAt, execName }
     } catch { /* fall through to legacy parse */ }
   }
   // Legacy format: plain PID number
@@ -182,6 +230,8 @@ function acquireServerLock(logger: PlatformServices['logger']): void {
           // recycled the PID and the process is unrelated.
           if (isLockFromPreviousBoot(lock.startedAt)) {
             logger.warn(`[bootstrap] Lock PID ${lock.pid} is alive but lock predates current boot (stale due to PID reuse), overwriting`)
+          } else if (!lockHolderLooksLikeSameServer(lock)) {
+            logger.warn(`[bootstrap] Lock PID ${lock.pid} is alive but is not the lock writer (recycled PID), overwriting`)
           } else {
             throw new Error(
               `Another server instance is already running (PID ${lock.pid}). ` +
@@ -201,7 +251,11 @@ function acquireServerLock(logger: PlatformServices['logger']): void {
     }
   }
 
-  const payload: LockPayload = { pid: process.pid, startedAt: Date.now() }
+  const payload: LockPayload = {
+    pid: process.pid,
+    startedAt: Date.now(),
+    execName: basename(process.execPath),
+  }
   writeFileSync(LOCK_FILE, JSON.stringify(payload), 'utf-8')
 
   // Safety net: release the lock on unexpected exits (SIGKILL, uncaught exceptions, etc.).

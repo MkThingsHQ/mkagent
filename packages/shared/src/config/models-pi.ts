@@ -14,7 +14,7 @@
  */
 
 import { getProviders, getModels } from '@earendil-works/pi-ai/compat';
-import type { KnownProvider, Model, Api } from '@earendil-works/pi-ai';
+import type { Model, Api } from '@earendil-works/pi-ai';
 import type { ModelDefinition } from './models.ts';
 
 // ============================================
@@ -67,19 +67,8 @@ const PI_EXCLUDED_MODEL_PREFIXES: string[] = [
   'gpt-4',
 ];
 
-export function isDeprecatedClaudeOpus46Model(modelId: string): boolean {
-  const lower = modelId.toLowerCase().replace(/^pi\//, '');
-  return lower === 'claude-opus-4-6'
-    || lower === 'claude-opus-4.6'
-    || lower === 'anthropic/claude-opus-4-6'
-    || lower === 'anthropic/claude-opus-4.6'
-    || lower.endsWith('.anthropic.claude-opus-4-6-v1')
-    || lower === 'anthropic.claude-opus-4-6-v1';
-}
-
 function isExcludedPiModel(modelId: string): boolean {
   if (PI_EXCLUDED_MODELS.has(modelId)) return true;
-  if (isDeprecatedClaudeOpus46Model(modelId)) return true;
   return PI_EXCLUDED_MODEL_PREFIXES.some(prefix => modelId.startsWith(prefix));
 }
 
@@ -99,7 +88,7 @@ function isBareBedrockClaudeModel(modelId: string): boolean {
  */
 export function getPiModelsForAuthProvider(piAuthProvider: string): ModelDefinition[] {
   try {
-    const models = getModels(piAuthProvider as KnownProvider);
+    const models = getModels(piAuthProvider as Parameters<typeof getModels>[0]);
     if (models.length > 0) {
       return models
         .filter(m => !isExcludedPiModel(m.id))
@@ -159,7 +148,10 @@ const PI_PROVIDER_DISPLAY: Partial<Record<string, { label: string; placeholder: 
   'vercel-ai-gateway':      { label: 'Vercel AI Gateway',  placeholder: 'Paste your key here...' },
   'huggingface':            { label: 'Hugging Face',       placeholder: 'hf_...' },
   'minimax':                { label: 'Minimax',            placeholder: 'Paste your key here...' },
+  'minimax-cn':             { label: 'Minimax (CN)',       placeholder: 'Paste your key here...' },
   'kimi-coding':            { label: 'Kimi (Coding)',      placeholder: 'sk-kimi-...' },
+  'moonshotai':             { label: 'Moonshot AI',        placeholder: 'sk-...' },
+  'moonshotai-cn':          { label: 'Moonshot AI (CN)',   placeholder: 'sk-...' },
   'zai':                    { label: 'z.ai (GLM)',         placeholder: 'Paste your key here...' },
 };
 

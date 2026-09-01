@@ -77,6 +77,7 @@ import { normalizeThinkingLevel, type ThinkingLevel } from '@mkagent/shared/agen
 import type { PermissionMode } from '@mkagent/shared/agent/mode-types'
 import { buildBackendRuntimeSignature, buildRestartRequiredSignature } from './runtime-config'
 import { rollbackFailedBranchCreation, sanitizeForTitle } from '@mkagent/server-core/domain'
+import { validateArchiveTarget } from './archive-guards'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
@@ -1095,6 +1096,18 @@ export class SessionManager implements ISessionManager {
     const browserPaneFns = this.createBrowserPaneFns(managed)
     mergeSessionScopedToolCallbacks(managed.id, {
       ...(browserPaneFns ? { browserPaneFns } : {}),
+      archiveSessionFn: async (sessionId, archived) => {
+        const target = this.sessions.get(sessionId)
+        const guardError = validateArchiveTarget(
+          target ? { workspaceId: target.workspace.id, isProcessing: target.isProcessing } : undefined,
+          managed.workspace.id,
+          sessionId,
+          archived,
+        )
+        if (guardError) throw new Error(guardError)
+        if (archived) await this.archiveSession(sessionId)
+        else await this.unarchiveSession(sessionId)
+      },
       getSessionInfoFn: (sessionId = managed.id) => {
         const session = this.sessions.get(sessionId)
         if (!session) return null

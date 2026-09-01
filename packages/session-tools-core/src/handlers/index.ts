@@ -22,3 +22,5 @@ export { handleListBackgroundTasks } from './list-background-tasks.ts';
 export type { ListBackgroundTasksArgs } from './list-background-tasks.ts';
 export { handleSendAgentMessage } from './send-agent-message.ts';
 export type { SendAgentMessageArgs } from './send-agent-message.ts';
+export { handleArchiveSession } from './archive-session.ts';
+export type { ArchiveSessionArgs } from './archive-session.ts';

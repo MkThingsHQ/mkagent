@@ -65,6 +65,7 @@ export function getProviderDisplayName(providerType: string, baseUrl?: string | 
     if (url.includes('openrouter.ai')) return 'OpenRouter'
     if (url.includes('ollama')) return 'Ollama'
     if (url.includes('kimi.com')) return 'Kimi'
+    if (url.includes('moonshot.ai') || url.includes('moonshot.cn')) return 'Moonshot AI'
     if (url.includes('minimax.io') || url.includes('minimaxi.com')) return 'Minimax'
     if (url.includes('v0.dev') || url.includes('vercel')) return 'Vercel'
     if (url.includes('manifest.build')) return 'Manifest'
@@ -85,6 +86,7 @@ function detectProviderFromUrl(baseUrl: string): ProviderIconKey | null {
   if (url.includes('v0.dev') || url.includes('vercel')) return 'vercel'
   if (url.includes('generativelanguage.googleapis.com') || url.includes('ai.google')) return 'google'
   if (url.includes('kimi.com')) return 'kimi'
+  if (url.includes('moonshot.ai') || url.includes('moonshot.cn')) return 'kimi'
   if (url.includes('minimax.io') || url.includes('minimaxi.com')) return 'minimax'
   if (url.includes('mistral.ai')) return 'mistral'
   if (url.includes('bedrock')) return 'aws'
@@ -110,6 +112,8 @@ function piAuthProviderToIcon(piAuthProvider: string): ProviderIconKey | null {
     case 'google':
       return 'google'
     case 'kimi-coding':
+    case 'moonshotai':
+    case 'moonshotai-cn':
       return 'kimi'
     case 'minimax':
     case 'minimax-global':

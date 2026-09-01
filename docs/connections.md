@@ -8,7 +8,7 @@ Connections are configured in Settings and stored without plaintext credentials 
 |---|---|---|
 | ChatGPT Plus | `openai-codex` | Craft ChatGPT OAuth; executed by Pi |
 | Claude Pro/Max | `anthropic` | Craft Claude OAuth; executed by Pi |
-| Pi provider preset | any preset bundled with `@earendil-works/pi-ai` 0.80.6 (anthropic, openai, google, deepseek, xai, mistral, groq, openrouter, …) | Auth via API key |
+| Pi provider preset | any preset bundled with `@earendil-works/pi-ai` 0.81.1 (anthropic, openai, google, deepseek, xai, mistral, groq, openrouter, moonshotai, …) | Auth via API key |
 | Custom `openai-completions` | user-supplied base URL | API key optional (Ollama uses empty key) |
 | Custom `anthropic-messages` | user-supplied base URL | API key optional |
 | Local Ollama | `http://127.0.0.1:11434/v1` | No auth, OpenAI-completions protocol |

@@ -262,7 +262,7 @@ export function TopBar({
               <span className="flex-1">{t("settings.permissions.title")}</span>
               <Icons.ExternalLink className="h-3 w-3 text-muted-foreground" />
             </StyledDropdownMenuItem>
-            <StyledDropdownMenuItem onClick={() => window.electronAPI.openUrl('https://mkagent.app/docs')}>
+            <StyledDropdownMenuItem onClick={() => window.electronAPI.openUrl('https://github.com/MkThingsHQ/mkagent/tree/main/docs')}>
               <Icons.ExternalLink className="h-3.5 w-3.5" />
               <span className="flex-1">{t("menu.allDocumentation")}</span>
             </StyledDropdownMenuItem>

@@ -190,6 +190,7 @@ export const PI_PREFERRED_DEFAULTS: Record<string, string[]> = {
   anthropic: [
     'claude-opus-4-8',
     'claude-opus-4-7',
+    'claude-opus-4-6',
     'claude-sonnet-5',
     'claude-sonnet-4-6',
     'claude-haiku-4-5',
@@ -198,6 +199,9 @@ export const PI_PREFERRED_DEFAULTS: Record<string, string[]> = {
   openai: ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.2', 'gpt-5.1'],
   google: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3-flash-preview'],
   deepseek: ['deepseek-v4-pro', 'deepseek-v4-flash'],
+  moonshotai: ['kimi-k3', 'kimi-k2.6'],
+  'moonshotai-cn': ['kimi-k3', 'kimi-k2.6'],
+  'kimi-coding': ['k3', 'kimi-for-coding', 'kimi-for-coding-highspeed'],
 };
 
 export function getDefaultModelsForConnection(

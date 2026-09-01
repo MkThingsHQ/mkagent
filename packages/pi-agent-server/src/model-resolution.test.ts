@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test';
-import { resolvePiModel, isDeniedMiniModelId, isModelNotFoundError } from './model-resolution.ts';
+import { resolvePiModel, isDeniedMiniModelId, isModelNotFoundError, isModelRejectionError } from './model-resolution.ts';
 
 /**
  * Minimal mock of PiModelRegistry.
@@ -257,5 +257,37 @@ describe('isModelNotFoundError', () => {
     expect(isModelNotFoundError('rate limit exceeded')).toBe(false);
     expect(isModelNotFoundError('invalid api key')).toBe(false);
     expect(isModelNotFoundError('')).toBe(false);
+  });
+});
+
+describe('isModelRejectionError', () => {
+  it('matches a Codex refusal that quotes the requested model', () => {
+    expect(
+      isModelRejectionError(
+        "The 'gpt-5.6-sol' model is not supported when using Codex with a ChatGPT account.",
+        'gpt-5.6-sol',
+      ),
+    ).toBe(true);
+  });
+
+  it('does not mistake a hosted-tool refusal for a model rejection', () => {
+    expect(isModelRejectionError("Hosted tool 'web_search' is not supported.", 'gpt-5.6-sol')).toBe(false);
+    expect(isModelRejectionError("The 'web_search_preview' tool is not supported.", 'gpt-5.6-sol')).toBe(false);
+  });
+
+  it('matches unambiguous model-error shapes without requiring the model id', () => {
+    expect(isModelRejectionError('Error code: model_not_found', 'gpt-5.6-sol')).toBe(true);
+    expect(isModelRejectionError('No such model: foo-bar', 'gpt-5.6-sol')).toBe(true);
+    expect(isModelRejectionError('The requested model is not available or does not exist', 'gpt-5.6-sol')).toBe(true);
+  });
+
+  it('matches ambiguous shapes only when the message names the model', () => {
+    expect(isModelRejectionError('The model `GPT-5.6-SOL` does not exist', 'gpt-5.6-sol')).toBe(true);
+    expect(isModelRejectionError('The model `gpt-99` does not exist', 'gpt-5.6-sol')).toBe(false);
+  });
+
+  it('does not match unrelated errors', () => {
+    expect(isModelRejectionError('rate limit exceeded for gpt-5.6-sol', 'gpt-5.6-sol')).toBe(false);
+    expect(isModelRejectionError('', 'gpt-5.6-sol')).toBe(false);
   });
 });

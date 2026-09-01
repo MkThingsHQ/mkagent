@@ -65,4 +65,20 @@ describe('buildCustomEndpointModelDef', () => {
     expect(model.input).toEqual(['text', 'image'])
     expect(model.contextWindow).toBe(262_144)
   })
+
+  it('disables the store parameter for OpenAI-compatible endpoints', () => {
+    const model = buildCustomEndpointModelDef('gpt-model', undefined, undefined, 'openai-completions')
+    expect((model as { compat?: { supportsStore?: boolean } }).compat)
+      .toEqual({ supportsStore: false })
+  })
+
+  it('does not set store compatibility for Anthropic-compatible endpoints', () => {
+    const model = buildCustomEndpointModelDef('claude-model', undefined, undefined, 'anthropic-messages')
+    expect((model as { compat?: unknown }).compat).toBeUndefined()
+  })
+
+  it('does not set store compatibility when the API is unspecified', () => {
+    const model = buildCustomEndpointModelDef('some-model')
+    expect((model as { compat?: unknown }).compat).toBeUndefined()
+  })
 })

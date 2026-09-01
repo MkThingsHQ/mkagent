@@ -5,6 +5,10 @@ export function attachSessionSelfManagementBindings(
   context: SessionToolContext,
   sessionId: string
 ): void {
+  Object.defineProperty(context, 'archiveSession', {
+    get: () => getSessionScopedToolCallbacks(sessionId)?.archiveSessionFn,
+    configurable: true,
+  });
   Object.defineProperty(context, 'listSessions', {
     get: () => getSessionScopedToolCallbacks(sessionId)?.listSessionsFn,
     configurable: true,
