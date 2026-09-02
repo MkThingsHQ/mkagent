@@ -12,6 +12,10 @@ if (tracked.exitCode !== 0) {
 
 const files = tracked.stdout.toString().split('\0').filter(Boolean)
 const SERIAL_TESTS = new Set([
+  // This suite globally mocks ../browser-cdp. In Bun's concurrent multi-file
+  // runner that mock can race with browser-cdp.test.ts and replace the real
+  // implementation for all 19 BrowserCDP cases.
+  'apps/electron/src/main/__tests__/browser-pane-manager.test.ts',
   'packages/shared/src/agent/__tests__/pi-conversation-flow.integration.test.ts',
 ])
 const tests = files.filter(

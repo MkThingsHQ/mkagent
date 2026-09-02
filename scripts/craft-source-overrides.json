@@ -2189,8 +2189,8 @@
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
     },
     "scripts/run-tests.ts": {
-      "sha256": "ce98c4de7999d7061bbafbe91d2331bb521968cb5c87ba5a2d27843e0c3f281a",
-      "reason": "MkAgent test discovery excludes generated artifacts and vendored submodule tests from CI"
+      "sha256": "814fd072b63148ce578b093801ac8d7a7f195d00e75f4eaf43759e1b72acbdd2",
+      "reason": "MkAgent test discovery excludes generated artifacts and isolates suites whose global Bun mocks can race with other tests"
     },
     "packages/shared/src/agent/core/__tests__/config-dir-paths.test.ts": {
       "sha256": "0bd513596bdc12d98c766544f62144ef572bc5be1f7973ce158d61dd86099d40",
