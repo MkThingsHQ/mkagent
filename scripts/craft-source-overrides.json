@@ -75,7 +75,7 @@
       "reason": "Craft documentation adapted to the retained MkAgent feature set and product identifiers"
     },
     "apps/cli/package.json": {
-      "sha256": "53a18774730ea86070dcc8efa221ff6d7eaf4f79a979e7c397b07d03758d58be",
+      "sha256": "bc0535fca3cee74b2fa33d92b9bfd8c578a124411e623109ab90791f28fb3b14",
       "reason": "Craft CLI reduced to retained commands and the Pi-only MkAgent runtime"
     },
     "apps/cli/src/client.ts": {
@@ -115,7 +115,7 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/electron/package.json": {
-      "sha256": "a5ede045f4ebfbc465b253fac4d127a2a4c5327b3a036957b9ee45c9fad666f5",
+      "sha256": "ee93d1eb78971c3214b91bf8f16081ec4b11bb744ad4f32d53d15b8c6f9b2359",
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/electron/resources/bin/doc-diff": {
@@ -863,7 +863,7 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/webui/package.json": {
-      "sha256": "2f8ae67e2101a134c174227558f6841f3c95d2d6f67a47eef252c14529a6130a",
+      "sha256": "b0743436f37aafc58ff1e375d96e86befb7ce824cab63d70a86967181f93aed9",
       "reason": "Craft WebUI adapted to the retained authenticated headless transport"
     },
     "apps/webui/src/adapter/web-api.ts": {
@@ -915,11 +915,11 @@
       "reason": "Craft WebUI adapted to the retained authenticated headless transport"
     },
     "bun.lock": {
-      "sha256": "b6b1e6fd982bc144fa004664d5b71148ab34353900fa3d1582dadbee64524e92",
+      "sha256": "a8517afdc4ec0a835565ab03240a1a96845a622f4d2307c94ae4f70b0da62159",
       "reason": "Craft dependency graph reduced to MkAgent Lite workspaces and retained dependencies"
     },
     "package.json": {
-      "sha256": "57837447fc5e0c942de2362d67ebc174b1970ba4b1a825ead56d3d1d2d4690a3",
+      "sha256": "9729bc437ed1c8e8ae75c5fedb158423bdf8a0c4d91bc098d9ce4f54fb7325e5",
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "packages/core/README.md": {
@@ -927,7 +927,7 @@
       "reason": "Craft documentation adapted to the retained MkAgent feature set and product identifiers"
     },
     "packages/core/package.json": {
-      "sha256": "8f71e2772ea0873af36fb08091105fadc391360e2e1df321e1f6ba0a57d592d9",
+      "sha256": "ef5318ce7722f8d960a37505272122b8fbbc15877ee55073c97aacb9cf2cdf90",
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "packages/core/src/index.ts": {
@@ -955,7 +955,7 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "packages/pi-agent-server/package.json": {
-      "sha256": "d7d02b6d593a99458da4bf278b69deb8b007dda18244f578725aa78e841e77ca",
+      "sha256": "f0f00b09c167d85664190bd953c7c24ab439311ccf3bdbd63317b5c0415ea322",
       "reason": "Craft Pi subprocess adapted to the retained provider and session-tool contract"
     },
     "packages/pi-agent-server/src/index.ts": {
@@ -1007,7 +1007,7 @@
       "reason": "Craft Pi subprocess adapted to the retained provider and session-tool contract"
     },
     "packages/server-core/package.json": {
-      "sha256": "63120f38243f15f627c9791f982efbd7d1eb24e8f17ba4d5e8bf9a211e75d417",
+      "sha256": "52b07bcfd213e29d0f50be531971ddf380f360d9204efa4baa100a29fd165162",
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/server-core/src/bootstrap/headless-start.ts": {
@@ -1155,7 +1155,7 @@
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/server/package.json": {
-      "sha256": "1d2b21a84133ae1dd270555a23f18d4ab9939b3df472870bf299bea2f2e74e55",
+      "sha256": "059a66d630801b417439a32f46a06b74520bca4e8504c19c40279ef643de21f8",
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/server/src/__tests__/smoke.test.ts": {
@@ -1167,7 +1167,7 @@
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/session-tools-core/package.json": {
-      "sha256": "00c820d46ef3ad32d5cb71c3b07381169aa85d6186f11dd96c8b46e22689fafc",
+      "sha256": "bfd03692dc7520ee441969e6bb5d62e80d9974d8a77cb4ded50a5680261b2b49",
       "reason": "Craft session tool module reduced to retained Lite tools and safety boundaries"
     },
     "packages/session-tools-core/src/context.ts": {
@@ -1267,7 +1267,7 @@
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/package.json": {
-      "sha256": "b853631ea81ea2b99d3a6c99574d01d17055466f1f2465d85f3e9eb0a8dd0bb9",
+      "sha256": "88cdc00a1b4a308ef0bc567c95f9ef2086a009120a2352ff9b8f7dc1fbdbde0e",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/__tests__/feature-flags.test.ts": {
@@ -1863,7 +1863,7 @@
       "reason": "Craft shared UI package reduced to components used by retained interfaces"
     },
     "packages/ui/package.json": {
-      "sha256": "f1e683d22220e30d7404eaa59cea67df03d3e70216864afb8ae426eb3b4c4daf",
+      "sha256": "6b18c8d000710d1ed97b12d2cd4e16fbac8b2b29986edf0b414c3ece47ba094f",
       "reason": "Craft shared UI package reduced to components used by retained interfaces"
     },
     "packages/ui/src/components/annotations/block-markers.ts": {
@@ -2057,7 +2057,7 @@
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
     "CHANGELOG.md": {
-      "sha256": "2a454243d0778aecf5fae6c0cf1a8bf10508174e3b98168214297cb7e89e4a3d",
+      "sha256": "78be842236d605c113107857988f31bf64ea7ef02ec3140c3a5ea8dbe44abf05",
       "reason": "MkAgent-specific release metadata required by the release workflow"
     },
     ".github/workflows/upstream-drift.yml": {
@@ -2203,6 +2203,10 @@
     "packages/ui/src/components/chat/__tests__/message-timestamp.test.ts": {
       "sha256": "bb590783c178611baf3447b40343771d2a8f70942764c8fea5daa298a85a725e",
       "reason": "MkAgent regression test covers stable local timestamp formatting for user-message footers"
+    },
+    "apps/electron/resources/release-notes/0.1.1.md": {
+      "sha256": "5019bedeffad9d584e255283599144069dd349492c633e8cd55cfb970e0b4811",
+      "reason": "MkAgent-specific release metadata required by the release workflow"
     }
   },
   "deleted": {

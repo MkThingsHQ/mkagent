@@ -109,7 +109,7 @@
     },
     "apps/cli": {
       "name": "@mkagent/cli",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "bin": {
         "mkagent": "dist/mkagent",
       },
@@ -125,7 +125,7 @@
     },
     "apps/electron": {
       "name": "@mkagent/electron",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "devDependencies": {
         "@mkagent/core": "workspace:*",
         "@mkagent/server-core": "workspace:*",
@@ -169,7 +169,7 @@
     },
     "apps/webui": {
       "name": "@mkagent/webui",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@mkagent/shared": "workspace:*",
         "@mkagent/ui": "workspace:*",
@@ -184,14 +184,14 @@
     },
     "packages/core": {
       "name": "@mkagent/core",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "devDependencies": {
         "@types/uuid": "^11.0.0",
       },
     },
     "packages/pi-agent-server": {
       "name": "@mkagent/pi-agent-server",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "bin": {
         "pi-agent-server": "./dist/index.js",
       },
@@ -211,7 +211,7 @@
     },
     "packages/server": {
       "name": "@mkagent/server",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "bin": {
         "mkagent-server": "src/index.ts",
       },
@@ -228,7 +228,7 @@
     },
     "packages/server-core": {
       "name": "@mkagent/server-core",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@earendil-works/pi-ai": "0.81.1",
         "@mkagent/core": "workspace:*",
@@ -244,7 +244,7 @@
     },
     "packages/session-tools-core": {
       "name": "@mkagent/session-tools-core",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "beautiful-mermaid": "*",
         "gray-matter": "^4.0.3",
@@ -257,7 +257,7 @@
     },
     "packages/shared": {
       "name": "@mkagent/shared",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@earendil-works/pi-agent-core": "0.81.1",
         "@earendil-works/pi-ai": "0.81.1",
@@ -285,7 +285,7 @@
     },
     "packages/ui": {
       "name": "@mkagent/ui",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "dependencies": {
         "@mkagent/core": "workspace:*",
         "@mkagent/shared": "workspace:*",

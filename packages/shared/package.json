@@ -1,6 +1,6 @@
 {
   "name": "@mkagent/shared",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "license": "Apache-2.0",
   "description": "Shared business logic for MkAgent clients and the Pi backend",
   "type": "module",
