@@ -295,7 +295,7 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/electron/scripts/copy-assets.ts": {
-      "sha256": "0cb65ba3fc73b560f1f8d04f17cd1103c4c766458978fb02039ce581356db5bc",
+      "sha256": "1d3497135a4328383d32ea7f84e06c011cd76f19b360fc1015224c317f8b1fd6",
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/electron/src/__tests__/transport.test.ts": {
@@ -2081,7 +2081,7 @@
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
     "apps/electron/scripts/validate-assets.ts": {
-      "sha256": "4afe3c3ce6cbb4d2c27c426339d6ecb6f89365cc44df2386bb699513fadd1daf",
+      "sha256": "7451afc4af4230382332eb919a54f23e6061db456320487a4ef98b3bc03f7bcb",
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
     "apps/electron/src/main/__tests__/deep-link.test.ts": {

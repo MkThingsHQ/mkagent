@@ -1,7 +1,8 @@
-import { existsSync, statSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 
 const appDir = join(import.meta.dir, '..')
+const { version } = JSON.parse(readFileSync(join(appDir, 'package.json'), 'utf8')) as { version: string }
 const targetPlatform = process.env.MKAGENT_TARGET_PLATFORM ?? process.platform
 const targetArch = process.env.MKAGENT_TARGET_ARCH ?? process.arch
 const platformKey = `${targetPlatform}-${targetArch}`
@@ -13,6 +14,7 @@ const required = [
   'dist/interceptor.cjs',
   'dist/renderer/index.html',
   'dist/resources/config-defaults.json',
+  `dist/resources/release-notes/${version}.md`,
   'dist/resources/pi-agent-server/index.js',
   `dist/resources/bin/${platformKey}/uv${executable}`,
   `vendor/bun/bun${executable}`,

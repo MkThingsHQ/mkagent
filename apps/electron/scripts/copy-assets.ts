@@ -29,7 +29,7 @@ const toolNames = ['markitdown', 'pdf-tool', 'xlsx-tool', 'docx-tool', 'pptx-too
 rmSync(destination, { recursive: true, force: true })
 mkdirSync(destination, { recursive: true })
 
-for (const directory of ['permissions', 'themes']) {
+for (const directory of ['permissions', 'release-notes', 'themes']) {
   cpSync(join(source, directory), join(destination, directory), { recursive: true })
 }
 
