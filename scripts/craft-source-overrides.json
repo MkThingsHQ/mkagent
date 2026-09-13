@@ -75,7 +75,7 @@
       "reason": "Craft documentation adapted to the retained MkAgent feature set and product identifiers"
     },
     "apps/cli/package.json": {
-      "sha256": "bc0535fca3cee74b2fa33d92b9bfd8c578a124411e623109ab90791f28fb3b14",
+      "sha256": "607f94c859b6198a4ab4ca6ca1300aa1f9c4c94a9221bef69ca4e71fd4325288",
       "reason": "Craft CLI reduced to retained commands and the Pi-only MkAgent runtime"
     },
     "apps/cli/src/client.ts": {
@@ -111,7 +111,7 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/electron/package.json": {
-      "sha256": "ee93d1eb78971c3214b91bf8f16081ec4b11bb744ad4f32d53d15b8c6f9b2359",
+      "sha256": "8a79a4c52180d47a7982cded6c66871aeb49ff9d2f988dbe76b6106f94f96485",
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/electron/resources/bin/doc-diff": {
@@ -847,7 +847,7 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/webui/package.json": {
-      "sha256": "b0743436f37aafc58ff1e375d96e86befb7ce824cab63d70a86967181f93aed9",
+      "sha256": "bb17193a4e8c18bb7427f1e9c808bcc7c921ad5a8558d31d369b48d6afb3e814",
       "reason": "Craft WebUI adapted to the retained authenticated headless transport"
     },
     "apps/webui/src/adapter/web-api.ts": {
@@ -903,7 +903,7 @@
       "reason": "Craft documentation adapted to the retained MkAgent feature set and product identifiers"
     },
     "packages/core/package.json": {
-      "sha256": "ef5318ce7722f8d960a37505272122b8fbbc15877ee55073c97aacb9cf2cdf90",
+      "sha256": "723a914645a6f1810a07ffec1d437fc39f8144cdc1940fc2cc1fcfdff8b649ce",
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "packages/core/src/index.ts": {
@@ -1103,7 +1103,7 @@
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/server/package.json": {
-      "sha256": "059a66d630801b417439a32f46a06b74520bca4e8504c19c40279ef643de21f8",
+      "sha256": "cff48f0b36bd9ced53d588f667485f51a91cbfc0fabf6cb13154de5a682003d5",
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/server/src/__tests__/smoke.test.ts": {
@@ -1115,7 +1115,7 @@
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/session-tools-core/package.json": {
-      "sha256": "bfd03692dc7520ee441969e6bb5d62e80d9974d8a77cb4ded50a5680261b2b49",
+      "sha256": "a784fcd8c3cdc2016daab98e2fc9c1992da2b3ecaa3ff82c5ab859368e445f6e",
       "reason": "Craft session tool module reduced to retained Lite tools and safety boundaries"
     },
     "packages/session-tools-core/src/context.ts": {
@@ -1751,7 +1751,7 @@
       "reason": "Craft shared UI package reduced to components used by retained interfaces"
     },
     "packages/ui/package.json": {
-      "sha256": "6b18c8d000710d1ed97b12d2cd4e16fbac8b2b29986edf0b414c3ece47ba094f",
+      "sha256": "988260045cbed8d5ee9d914e3bcf863e7deb5cf87eee294b25d2b2df95618bc8",
       "reason": "Craft shared UI package reduced to components used by retained interfaces"
     },
     "packages/ui/src/components/annotations/block-markers.ts": {
@@ -1919,11 +1919,11 @@
       "reason": "Craft v0.13.3 retry lifecycle is adapted to the retained MkAgent renderer state and protocol"
     },
     "bun.lock": {
-      "sha256": "d115c1d843ae08154b8d82b6cd5efffe82ec3b113b4a520d9283234640f8bf92",
+      "sha256": "d3bcab1ea71cd4971b410ba7b2c2dbefb32e3efda6ceb53438c81eaf091a91c1",
       "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
     },
     "package.json": {
-      "sha256": "3c6eaa353250b1c1def48c926e1b0ad32772001c89b40fa3792f1073e15b1863",
+      "sha256": "da91c28fb1a9b3a387d2d73815e9ac3c66530d4f4c4ae9c333d03c1a2379d105",
       "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
     },
     "packages/core/src/types/message.ts": {
@@ -1931,7 +1931,7 @@
       "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
     },
     "packages/pi-agent-server/package.json": {
-      "sha256": "98b8a3eecc8d673e15583b25311b021f76f25b0a12d0c643745c78972164bb62",
+      "sha256": "9bb1fba8fdf0cc9bd6a1adbe6ec3c7861d4eba093da3c5deb4b455a264e5ad00",
       "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
     },
     "packages/pi-agent-server/src/bundle-smoke.test.ts": {
@@ -1963,7 +1963,7 @@
       "reason": "Craft v0.13.3 Pi 0.85.1 runtime behavior is retained with MkAgent OAuth and Lite tool seams"
     },
     "packages/server-core/package.json": {
-      "sha256": "bbb0e3a1c3b9c1a08955f5874b6b0318281a88caf16e2a3933ad5550cce60f7f",
+      "sha256": "6582f236edda3cf5fd9bb8213cf736e56c9d7eabca5350202e89e5cf0a74bcc1",
       "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
     },
     "packages/server-core/src/sessions/SessionManager.ts": {
@@ -1979,7 +1979,7 @@
       "reason": "Craft packaged-runtime hardening is adapted to both Electron and headless MkAgent environment encodings"
     },
     "packages/shared/package.json": {
-      "sha256": "df44f56b9ccc7e6f59d72c1f52c32878755914a7a50945ea5306b36249365eae",
+      "sha256": "3da37d86eba422a3cebf9e2eb116cc66b6f5e9a6db7b3cbc8f894a3d91274d04",
       "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
     },
     "packages/shared/src/agent/__tests__/pi-agent-error-handling.test.ts": {
@@ -2089,7 +2089,7 @@
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
     "CHANGELOG.md": {
-      "sha256": "78be842236d605c113107857988f31bf64ea7ef02ec3140c3a5ea8dbe44abf05",
+      "sha256": "e178eda7b1ab884dfc745ee8babb290bdd0300ecd0e87aae687b5381c6b6e6b6",
       "reason": "MkAgent-specific release metadata required by the release workflow"
     },
     ".github/workflows/upstream-drift.yml": {
@@ -2283,6 +2283,10 @@
     "packages/shared/src/release-notes/index.test.ts": {
       "sha256": "5763fa541a44c3f3a42849186f2f853e67ab80a11e316fba33738c1157aa64f2",
       "reason": "Craft v0.13.3 semver-only release-note discovery is retained so MkAgent ignores pending templates"
+    },
+    "apps/electron/resources/release-notes/0.1.2.md": {
+      "sha256": "5a0a4569fa16fe28a71674b649b3cd06d66b5470d91e3a92d8480a52c66445d9",
+      "reason": "MkAgent-specific release metadata required by the release workflow"
     }
   },
   "deleted": {

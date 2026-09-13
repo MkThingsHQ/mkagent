@@ -8,6 +8,23 @@ All notable changes to MkAgent are documented in this file. The format follows
 
 Add user-visible changes here before running `bun run release:prepare <version>`.
 
+## [0.1.2] - 2026-09-13
+
+### Added
+
+- Added GPT-6 Astra, Claude Opus 5, and Claude Fable 5.1 model options where supported by the configured Pi provider.
+
+### Changed
+
+- Upgraded the Pi runtime to 0.85.1 with automatic retry progress, failed-response recovery, isolated session settings, and bounded utility queries.
+- Improved retry feedback across Desktop and CLI so discarded partial responses are not merged into recovered answers.
+
+### Fixed
+
+- Fixed What's New discovery so draft files cannot hide the latest versioned release notes.
+- Fixed packaged headless runtimes accepting development PATH fallbacks when packaged mode is encoded as `true`.
+- Made atomic configuration writes collision-safe when multiple processes write concurrently.
+
 ## [0.1.1] - 2026-09-02
 
 ### Added
@@ -37,5 +54,6 @@ Add user-visible changes here before running `bun run release:prepare <version>`
 - Local session search, flags, archives, import, export, and branching.
 
 [Unreleased]: https://github.com/MkThingsHQ/mkagent/releases
+[0.1.2]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.1.2
 [0.1.1]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.1.1
 [0.1.0]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.1.0
