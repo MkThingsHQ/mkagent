@@ -322,20 +322,20 @@
       "reason": "Craft onboarding wizard restores the retained OAuth state and actions without Copilot state"
     },
     "apps/electron/src/renderer/event-processor/types.ts": {
-      "sha256": "d7b7e087f95d721c16fe7630c4c404c26c2ae0e42ae6ae8b5e4866b8695edc6e",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+      "sha256": "fe05633bbc85cf8ed41a19a528b893ddae816bff71f405bf433a477f53ab6511",
+      "reason": "Craft v0.13.3 retry event types are adapted to the narrower MkAgent protocol surface"
     },
     "apps/electron/src/renderer/event-processor/processor.ts": {
-      "sha256": "95b00a612de487e7200e22dca626eba7661526bb03d2f2206e02be1372be4c72",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+      "sha256": "cd4f3cdfb04f9aa515e96db12f596d919c6debba88deea2d6a891ecd171ab712",
+      "reason": "Craft v0.13.3 retry and text-discard events are routed through the retained MkAgent event processor"
     },
     "apps/electron/src/renderer/event-processor/index.ts": {
       "sha256": "d21117d69820e7d70aefdfa9a7dedd03ff6ea1a2e01fc271748d159738fa615b",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/event-processor/handlers/session.ts": {
-      "sha256": "2cbfa618e02c997b5cab8d71fbba7cd8ab75cfdf8da83f7a882481f1f395ccd5",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+      "sha256": "53e262c61dba2f29abd03d4711b9d3b2732fad998d2dd37fbbf474e5088d7604",
+      "reason": "Craft v0.13.3 retry lifecycle is adapted to the MkAgent renderer and retained Lite session state"
     },
     "apps/electron/src/renderer/event-processor/handlers/__tests__/conversation-flow.test.ts": {
       "sha256": "c8d766a7782b0990731475001fa377e1162cdc2a05a779a110ddb9fa59273079",
@@ -448,6 +448,18 @@
     "apps/electron/src/renderer/pages/SkillInfoPage.tsx": {
       "sha256": "88eebdbe1ec6e0fc4ce3e93ca8823b4fe87edf057daef8b4c33fdb985da2178b",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/event-processor/handlers/text.ts": {
+      "sha256": "dbe9a078d809a3f36d04b029162d0ad6124f8c885e2c7f0b122cae4a47725a36",
+      "reason": "Craft v0.13.3 failed-attempt text discard prevents retried responses from merging with partial output"
+    },
+    "apps/electron/src/renderer/event-processor/helpers.ts": {
+      "sha256": "4102e427632ada8ecee43168ecc5cadf63ba7cd7939e5ba978a8607a2f3c3cc8",
+      "reason": "Craft v0.13.3 transient retry-status cleanup is retained for MkAgent conversations"
+    },
+    "apps/electron/src/renderer/event-processor/handlers/__tests__/retry-lifecycle.test.ts": {
+      "sha256": "76350493a75f9b9e9c68ab23b54de07cf54ddd20393124c324ea7e15ce10791f",
+      "reason": "Selective Craft v0.13.3 regression coverage for MkAgent retry and failed-text rendering"
     }
   }
 }

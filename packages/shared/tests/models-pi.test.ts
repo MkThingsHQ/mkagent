@@ -41,6 +41,26 @@ describe('models-pi filtering', () => {
     expect(providers.some(provider => provider.key === 'moonshotai-cn' && provider.label === 'Moonshot AI (CN)')).toBe(true);
   });
 
+  it('returns Claude Opus 5 from the Pi SDK catalog for Anthropic and Bedrock', () => {
+    const anthropicIds = getPiModelsForAuthProvider('anthropic').map(m => m.id);
+    expect(anthropicIds).toContain('pi/claude-opus-5');
+
+    // Bedrock exposes Opus 5 only as regional inference profiles (us./eu./global.).
+    const bedrockIds = getPiModelsForAuthProvider('amazon-bedrock').map(m => m.id);
+    expect(bedrockIds).toContain('pi/us.anthropic.claude-opus-5');
+  });
+
+  it('returns the DeepSeek V4 Flash vision model from the Pi SDK catalog', () => {
+    const ids = getPiModelsForAuthProvider('deepseek').map(m => m.id);
+    expect(ids).toContain('pi/deepseek-v4-flash-vision-exp');
+  });
+
+  it('returns GPT-6 Astra from the Pi SDK catalog for OpenAI API keys and ChatGPT accounts', () => {
+    // Added in Pi SDK 0.85.1 for `openai` and `openai-codex` only.
+    expect(getPiModelsForAuthProvider('openai').map(m => m.id)).toContain('pi/gpt-6-astra');
+    expect(getPiModelsForAuthProvider('openai-codex').map(m => m.id)).toContain('pi/gpt-6-astra');
+  });
+
   it('returns Kimi K3 from the Pi SDK catalog for both Moonshot providers', () => {
     const ids = getPiModelsForAuthProvider('moonshotai').map(m => m.id);
     expect(ids).toContain('pi/kimi-k3');

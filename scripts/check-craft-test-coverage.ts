@@ -88,7 +88,7 @@ const intentionalCaseReductions: Record<string, { upstream: number; retained: nu
   'packages/shared/src/agent/backend/__tests__/runtime-resolver.test.ts': { upstream: 10, retained: 8, reason: 'Claude native binary resolution was removed' },
   'packages/shared/src/agent/core/__tests__/pre-tool-use-checks.isolated.ts': { upstream: 69, retained: 18, reason: 'Sources, labels, automations, and their MCP/API guards were removed; retained permission pipeline is covered' },
   'packages/shared/src/agent/core/__tests__/prerequisite-manager.isolated.ts': { upstream: 33, retained: 13, reason: 'Source guide prerequisites were removed; Browser and Skill prerequisites remain covered' },
-  'packages/shared/src/config/__tests__/llm-connections.test.ts': { upstream: 53, retained: 13, reason: 'Direct Anthropic and Bedrock model catalogs were removed; retained Pi and OAuth connection helpers are covered' },
+  'packages/shared/src/config/__tests__/llm-connections.test.ts': { upstream: 53, retained: 14, reason: 'Direct provider catalogs were removed; retained Pi, OAuth, and Craft v0.13.3 model-ranking behavior are covered' },
   'packages/shared/src/config/__tests__/midstream-behavior.test.ts': { upstream: 11, retained: 10, reason: 'Direct Anthropic queue behavior was removed' },
   'packages/shared/src/config/__tests__/model-supports-images.test.ts': { upstream: 8, retained: 7, reason: 'Direct Anthropic catalog behavior was removed' },
   'packages/shared/src/i18n/__tests__/locale-registry.test.ts': { upstream: 15, retained: 11, reason: 'Lite intentionally ships only English and Simplified Chinese' },

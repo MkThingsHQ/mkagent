@@ -7,10 +7,10 @@
  * test below ensures the full request shape propagates end-to-end and fails loudly
  * if someone adds a new LLMQueryRequest field and forgets to plumb it through.
  */
-import { describe, expect, it } from 'bun:test';
+import { describe, expect, it, jest } from 'bun:test';
 import { PiAgent } from '../pi-agent.ts';
 import type { BackendConfig } from '../backend/types.ts';
-import type { LLMQueryRequest, LLMQueryResult } from '../llm-tool.ts';
+import { LLM_QUERY_TIMEOUT_MS, type LLMQueryRequest, type LLMQueryResult } from '../llm-tool.ts';
 import { getCredentialManager } from '../../credentials/index.ts';
 
 function createConfig(overrides: Partial<BackendConfig> = {}): BackendConfig {
@@ -216,6 +216,62 @@ describe('PiAgent.queryLlm — subprocess RPC round-trip', () => {
     expect((agent as any).pendingLlmQueries.size).toBe(0);
 
     agent.destroy();
+  });
+
+  it('clears the host deadline after a successful result', async () => {
+    jest.useFakeTimers();
+    const agent = new PiAgent(createConfig());
+    const { sent } = installFakeSubprocess(agent);
+    try {
+      const pending = agent.queryLlm({ prompt: 'hi' });
+      await flushMicrotasks();
+      const id = sent[0]!.id as string;
+      (agent as any).handleLine(JSON.stringify({
+        type: 'llm_query_result',
+        id,
+        result: { text: 'ok' },
+      }));
+      await pending;
+
+      jest.advanceTimersByTime(LLM_QUERY_TIMEOUT_MS);
+      expect(sent.filter(message => message.type === 'cancel_ephemeral_query')).toHaveLength(0);
+    } finally {
+      agent.destroy();
+      jest.useRealTimers();
+    }
+  });
+
+  it('keeps utility errors scoped to their request id', async () => {
+    const agent = new PiAgent(createConfig());
+    const { sent } = installFakeSubprocess(agent);
+    try {
+      const first = agent.queryLlm({ prompt: 'first' });
+      const firstSettled = first.catch(error => error as Error);
+      const second = agent.queryLlm({ prompt: 'second' });
+      await flushMicrotasks();
+      const firstId = sent[0]!.id as string;
+      const secondId = sent[1]!.id as string;
+
+      (agent as any).handleLine(JSON.stringify({
+        type: 'error',
+        id: firstId,
+        code: 'llm_query_error',
+        message: 'first failed',
+      }));
+      (agent as any).handleLine(JSON.stringify({
+        type: 'llm_query_result',
+        id: secondId,
+        result: { text: 'second ok' },
+      }));
+
+      const firstError = await firstSettled;
+      expect(firstError).toBeInstanceOf(Error);
+      if (!(firstError instanceof Error)) throw new Error('Expected the first query to fail');
+      expect(firstError.message).toContain('first failed');
+      expect(await second).toEqual({ text: 'second ok' });
+    } finally {
+      agent.destroy();
+    }
   });
 
   it('rejects queryLlm with a timeout message when no result arrives in time', async () => {

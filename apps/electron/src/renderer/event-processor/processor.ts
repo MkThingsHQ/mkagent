@@ -13,7 +13,7 @@
  */
 
 import type { SessionState, AgentEvent, ProcessResult } from './types'
-import { handleTextDelta, handleTextComplete } from './handlers/text'
+import { handleTextDelta, handleTextComplete, handleTextDiscard } from './handlers/text'
 import { handleToolStart, handleToolResult, handleTaskBackgrounded, handleShellBackgrounded, handleTaskProgress, handleTaskCompleted } from './handlers/tool'
 import {
   handleComplete,
@@ -27,6 +27,7 @@ import {
   handlePermissionRequest,
   handlePlanSubmitted,
   handleStatus,
+  handleRetry,
   handleInfo,
   handleInterrupted,
   handleTitleGenerated,
@@ -56,6 +57,12 @@ export function processEvent(
   event: AgentEvent
 ): ProcessResult {
   switch (event.type) {
+    case 'text_discard':
+      return { state: handleTextDiscard(state, event), effects: [] }
+
+    case 'retry':
+      return handleRetry(state, event)
+
     case 'text_delta': {
       const newState = handleTextDelta(state, event)
       return { state: newState, effects: [] }

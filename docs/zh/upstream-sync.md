@@ -10,6 +10,21 @@ MkAgent 的架构、UI 与运行时继承自 [Craft Agents OSS](https://github.c
 | Tag | `v0.12.1` |
 | Commit | `d7592c481216e37c95a50dbfe08948a6987e8c74` |
 
+## 最近一次上游评估
+
+| 项 | 值 |
+|---|---|
+| 评估日期 | `2026-09-13` |
+| 上游 Tag | `v0.13.3` |
+| 上游 Commit | `e8963854c3679edcceb105a42537a06749e6cb64` |
+
+审计基线仍保持在 `v0.12.1`：MkAgent 只回迁保留的 Pi/Lite 行为，不会因为
+后续版本主要新增了已裁剪产品功能，就宣称与其逐字节对齐。从 `v0.13.0`
+到 `v0.13.3`，本次保留的同步范围包括打包运行时判断、避免并发冲突的
+原子写入、仅识别语义化版本的 release notes，以及完整的 Pi 0.85.1
+重试、隔离设置与模型目录更新。Pages、Projects、Automations、Sources/MCP、
+Viewer/公开分享、消息系统和 Claude Agent SDK 继续排除。
+
 当上游发布值得评估的新 tag 时:
 
 1. 记录新 tag 与 commit:`git -C ../craft-agents-oss rev-parse HEAD && git -C ../craft-agents-oss describe --tags --always`。

@@ -10,6 +10,22 @@ MkAgent derives its architecture, UI, and runtime from [Craft Agents OSS](https:
 | Tag | `v0.12.1` |
 | Commit | `d7592c481216e37c95a50dbfe08948a6987e8c74` |
 
+## Latest evaluated release
+
+| Item | Value |
+|---|---|
+| Evaluated on | `2026-09-13` |
+| Upstream tag | `v0.13.3` |
+| Upstream commit | `e8963854c3679edcceb105a42537a06749e6cb64` |
+
+The audit baseline remains `v0.12.1`: MkAgent selectively backports retained
+Pi/Lite behavior without claiming byte-level parity with releases dominated by
+excluded product areas. From `v0.13.0` through `v0.13.3`, the retained sync set
+includes packaged-runtime detection, collision-safe atomic writes, semver-only
+release-note discovery, and the complete Pi 0.85.1 retry/settings/model update.
+Pages, Projects, Automations, Sources/MCP, Viewer/public sharing, messaging, and
+the Claude Agent SDK remain excluded.
+
 When upstream publishes a new tag worth evaluating:
 
 1. Record the new tag and commit: `git -C ../craft-agents-oss rev-parse HEAD && git -C ../craft-agents-oss describe --tags --always`.

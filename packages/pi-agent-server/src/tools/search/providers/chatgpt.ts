@@ -35,7 +35,7 @@ import { PI_PREFERRED_DEFAULTS } from '../../../../../shared/src/config/llm-conn
 // shared openai-codex catalog so they track the models the rest of the app offers and can't
 // drift into a stale hardcoded value. The plumbed active model (if any) is tried first.
 const CODEX_SEARCH_MODELS: readonly string[] = PI_PREFERRED_DEFAULTS['openai-codex'] ?? [];
-const FALLBACK_SEARCH_MODEL = CODEX_SEARCH_MODELS[0] ?? 'gpt-5.6-sol';
+const FALLBACK_SEARCH_MODEL = CODEX_SEARCH_MODELS[0] ?? 'gpt-6-astra';
 // Bound the failover chain: the active model plus a few catalog fallbacks. The catalog's
 // tail (o3/gpt-4o era) is the least likely to be accepted by a ChatGPT-plan account, so a
 // longer chain adds sequential 400 round-trips before the DDG fallback, not recovery odds.

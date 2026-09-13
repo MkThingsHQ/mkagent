@@ -64,7 +64,9 @@ function getPlatformRuntimeDir(): string {
 
 function inferPackagedMode(ctx?: ResolveScriptRuntimeContext): boolean {
   if (typeof ctx?.isPackaged === 'boolean') return ctx.isPackaged;
-  return process.env.MKAGENT_IS_PACKAGED === '1';
+  // Electron encodes packaged mode as '1', while the headless server uses
+  // 'true'. Both must block development-only PATH fallback.
+  return process.env.MKAGENT_IS_PACKAGED === '1' || process.env.MKAGENT_IS_PACKAGED === 'true';
 }
 
 function getProcessResourcesPath(): string | undefined {

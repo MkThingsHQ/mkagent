@@ -556,7 +556,11 @@ describe('PiEventAdapter', () => {
       expect(events[0].error.code).toBe('billing_error');
     });
 
-    it('should emit typed_error for rate limit errors', () => {
+    it('parks rate limits, then ends retry UI before releasing the error when no retry runs', () => {
+      // 429 is retryable: the SDK's auto-retry decides what happens next, so the
+      // adapter holds the typed error back (see 'auto-retry recovery'). Even when
+      // retries are disabled, release first emits retry/end as a UI fail-safe,
+      // then the original typed error and normal completion.
       const events = collect(adapter.adaptEvent({
         type: 'message_end',
         message: {
@@ -565,10 +569,14 @@ describe('PiEventAdapter', () => {
           errorMessage: '429 Too many requests - rate limit exceeded',
         },
       } as any));
+      expect(events).toHaveLength(0);
 
-      expect(events).toHaveLength(1);
-      expect(events[0].type).toBe('typed_error');
-      expect(events[0].error.code).toBe('rate_limited');
+      const released = collect(adapter.adaptEvent({ type: 'agent_end', messages: [], willRetry: false } as any));
+      expect(released).toMatchObject([
+        { type: 'retry', phase: 'end' },
+        { type: 'typed_error', error: { code: 'rate_limited' } },
+        { type: 'complete' },
+      ]);
     });
 
     it('should not emit error without errorMessage even if stopReason is error', () => {
@@ -1023,41 +1031,55 @@ describe('PiEventAdapter', () => {
       expect(events).toHaveLength(0);
     });
 
-    it('should emit status for auto_retry_start', () => {
+    it('should emit retry/backoff with reason and delay for auto_retry_start', () => {
       const events = collect(adapter.adaptEvent({
         type: 'auto_retry_start',
         attempt: 2,
         maxAttempts: 3,
+        delayMs: 4_000,
+        errorMessage: 'fetch failed',
       } as any));
 
-      expect(events).toHaveLength(1);
-      expect(events[0]).toMatchObject({
-        type: 'status',
-        message: 'Retrying (attempt 2/3)...',
-      });
+      expect(events).toEqual([{
+        type: 'retry',
+        phase: 'backoff',
+        message: 'fetch failed. Retrying in 4s (attempt 2/3)...',
+      }]);
     });
 
-    it('should emit error for failed auto_retry_end', () => {
+    it('stays silent for a trailing failed auto_retry_end once the turn completed', () => {
+      // On exhaustion the SDK emits agent_end { willRetry: false } first (which
+      // releases the parked error) and auto_retry_end { success: false } after.
+      // Surfacing the same failure twice would show two error bubbles.
       const events = collect(adapter.adaptEvent({
         type: 'auto_retry_end',
         success: false,
         finalError: 'Max retries exceeded',
       } as any));
 
-      expect(events).toHaveLength(1);
-      expect(events[0]).toMatchObject({
-        type: 'error',
-        message: 'Retry failed: Max retries exceeded',
-      });
+      expect(events).toHaveLength(0);
     });
 
-    it('should emit nothing for successful auto_retry_end', () => {
+    it('should emit retry/end without recovery info when successful auto_retry_end has no retry count', () => {
       const events = collect(adapter.adaptEvent({
         type: 'auto_retry_end',
         success: true,
       } as any));
 
-      expect(events).toHaveLength(0);
+      expect(events).toEqual([{ type: 'retry', phase: 'end' }]);
+    });
+
+    it('should emit retry/end then transient recovery info after retries', () => {
+      const events = collect(adapter.adaptEvent({
+        type: 'auto_retry_end',
+        success: true,
+        attempt: 2,
+      } as any));
+
+      expect(events).toEqual([
+        { type: 'retry', phase: 'end' },
+        { type: 'info', message: 'Recovered after 2 retries' },
+      ]);
     });
 
     it('should emit nothing for queue_update', () => {
@@ -1138,6 +1160,270 @@ describe('PiEventAdapter', () => {
       expect(intermediateEvents[0].turnId).toMatch(/^pi-turn-1/);
       expect(toolStartEvents[0].turnId).toMatch(/^pi-turn-1/);
       expect(finalEvents[0].turnId).toMatch(/^pi-turn-1/);
+    });
+  });
+
+  // ============================================================
+  // Auto-retry recovery state machine
+  // ============================================================
+  //
+  // The Pi SDK retries transient provider/transport errors itself
+  // (isRetryableAssistantError → AgentSession._prepareRetry). It emits
+  // agent_end { willRetry: true } BEFORE the retry, then auto_retry_start,
+  // sleeps the backoff and re-runs the turn via agent.continue(). The adapter
+  // used to complete the queue on that first agent_end, so the retried answer
+  // streamed into a closed iterator and the user only saw the raw provider
+  // error. It now parks the classified error and holds the queue open.
+
+  describe('auto-retry recovery', () => {
+    const transientError = (errorMessage: string) => ({
+      type: 'message_end',
+      message: { role: 'assistant', stopReason: 'error', errorMessage },
+    });
+
+    it('success path: emits backoff/active/end around one recovered answer', () => {
+      collect(adapter.adaptEvent({ type: 'turn_start' } as any));
+
+      // 1. Transient provider error — nothing reaches the UI yet.
+      const errEvents = collect(adapter.adaptEvent(
+        transientError('overloaded_error: The API is temporarily overloaded') as any,
+      ));
+      expect(errEvents).toHaveLength(0);
+
+      // 2. agent_end { willRetry: true } — no complete, queue stays open.
+      const heldEnd = collect(adapter.adaptEvent({ type: 'agent_end', messages: [], willRetry: true } as any));
+      expect(heldEnd).toHaveLength(0);
+      expect(adapter.shouldCompleteQueue(true)).toBe(false);
+      expect(adapter.isHoldingTurn).toBe(true);
+
+      // 3. auto_retry_start announces the classified backoff explicitly.
+      const startEvents = collect(adapter.adaptEvent({
+        type: 'auto_retry_start',
+        attempt: 1,
+        maxAttempts: 4,
+        delayMs: 2_000,
+        errorMessage: 'overloaded_error: The API is temporarily overloaded',
+      } as any));
+      expect(startEvents).toEqual([{
+        type: 'retry',
+        phase: 'backoff',
+        message: 'Service Error. Retrying in 2s (attempt 1/4)...',
+      }]);
+      expect(adapter.shouldCompleteQueue(false)).toBe(false);
+
+      // 4. The retried agent_start activates output, then success ends retry UI before recovery info.
+      const active = collect(adapter.adaptEvent({ type: 'agent_start' } as any));
+      expect(active).toEqual([{ type: 'retry', phase: 'active' }]);
+      const text = collect(adapter.adaptEvent({
+        type: 'message_end',
+        message: { role: 'assistant', stopReason: 'stop', content: 'Recovered answer' },
+      } as any));
+      expect(text).toMatchObject([{ type: 'text_complete', text: 'Recovered answer' }]);
+      const recovered = collect(adapter.adaptEvent({ type: 'auto_retry_end', success: true, attempt: 1 } as any));
+      expect(recovered).toEqual([
+        { type: 'retry', phase: 'end' },
+        { type: 'info', message: 'Recovered after 1 retry' },
+      ]);
+
+      const finalEnd = collect(adapter.adaptEvent({ type: 'agent_end', messages: [], willRetry: false } as any));
+      expect(finalEnd).toMatchObject([{ type: 'complete' }]);
+      expect(adapter.shouldCompleteQueue(true)).toBe(true);
+      expect(adapter.isHoldingTurn).toBe(false);
+
+      // The transient error never reached the UI.
+      const all = [...errEvents, ...heldEnd, ...startEvents, ...active, ...text, ...recovered, ...finalEnd];
+      expect(all.filter(e => e.type === 'error' || e.type === 'typed_error')).toHaveLength(0);
+    });
+
+    it('exhaustion path: surfaces the parked error exactly once when the last attempt fails too', () => {
+      collect(adapter.adaptEvent({ type: 'turn_start' } as any));
+
+      // Attempt 0 fails; the SDK announces its (only) retry.
+      collect(adapter.adaptEvent(transientError('fetch failed') as any));
+      collect(adapter.adaptEvent({ type: 'agent_end', messages: [], willRetry: true } as any));
+      const backoff = collect(adapter.adaptEvent({
+        type: 'auto_retry_start', attempt: 1, maxAttempts: 1, delayMs: 2_000, errorMessage: 'fetch failed',
+      } as any));
+      expect(backoff).toEqual([{
+        type: 'retry', phase: 'backoff', message: 'Connection Error. Retrying in 2s (attempt 1/1)...',
+      }]);
+      expect(collect(adapter.adaptEvent({ type: 'agent_start' } as any))).toEqual([
+        { type: 'retry', phase: 'active' },
+      ]);
+
+      // The retried attempt fails as well. agent_end ends retry UI before releasing the held error.
+      expect(collect(adapter.adaptEvent(transientError('fetch failed') as any))).toHaveLength(0);
+      const finalEnd = collect(adapter.adaptEvent({ type: 'agent_end', messages: [], willRetry: false } as any));
+      expect(finalEnd).toMatchObject([
+        { type: 'retry', phase: 'end' },
+        { type: 'typed_error', error: { code: 'network_error', originalError: 'fetch failed' } },
+        { type: 'complete' },
+      ]);
+      expect(adapter.shouldCompleteQueue(true)).toBe(true);
+
+      // …then the trailing auto_retry_end, which must not add a second error bubble.
+      const trailing = collect(adapter.adaptEvent({
+        type: 'auto_retry_end', success: false, attempt: 1, finalError: 'fetch failed',
+      } as any));
+      expect(trailing).toHaveLength(0);
+    });
+
+    it('no retry: agent_end ends retry UI before releasing the parked error and completing', () => {
+      collect(adapter.adaptEvent({ type: 'turn_start' } as any));
+
+      // "socket hang up" is unknown to parseError but retryable per the SDK: it
+      // surfaces as a typed connection error, not a raw transport string.
+      expect(collect(adapter.adaptEvent(transientError('socket hang up') as any))).toHaveLength(0);
+      const end = collect(adapter.adaptEvent({ type: 'agent_end', messages: [], willRetry: false } as any));
+      expect(end).toMatchObject([
+        { type: 'retry', phase: 'end' },
+        { type: 'typed_error', error: { code: 'network_error', originalError: 'socket hang up' } },
+        { type: 'complete' },
+      ]);
+      expect(adapter.shouldCompleteQueue(true)).toBe(true);
+    });
+
+    it('classifies unknown provider-side transients as service errors', () => {
+      collect(adapter.adaptEvent({ type: 'turn_start' } as any));
+      collect(adapter.adaptEvent(transientError('Provider returned error') as any));
+      const end = collect(adapter.adaptEvent({ type: 'agent_end', messages: [], willRetry: false } as any));
+      expect(end).toMatchObject([
+        { type: 'retry', phase: 'end' },
+        { type: 'typed_error', error: { code: 'service_error', originalError: 'Provider returned error' } },
+        { type: 'complete' },
+      ]);
+    });
+
+    it('cancelled retry: auto_retry_end { success: false } while holding releases the error and completes', () => {
+      collect(adapter.adaptEvent({ type: 'turn_start' } as any));
+      collect(adapter.adaptEvent(transientError('fetch failed') as any));
+      collect(adapter.adaptEvent({ type: 'agent_end', messages: [], willRetry: true } as any));
+      expect(collect(adapter.adaptEvent({
+        type: 'auto_retry_start', attempt: 1, maxAttempts: 4, delayMs: 2_000, errorMessage: 'fetch failed',
+      } as any))).toEqual([{
+        type: 'retry', phase: 'backoff', message: 'Connection Error. Retrying in 2s (attempt 1/4)...',
+      }]);
+
+      // session.abort() during the backoff → abortRetry() → "Retry cancelled"; no agent_end follows.
+      // The explicit end event removes transient UI before the held error is surfaced.
+      const cancelled = collect(adapter.adaptEvent({
+        type: 'auto_retry_end', success: false, attempt: 1, finalError: 'Retry cancelled',
+      } as any));
+      expect(cancelled).toMatchObject([
+        { type: 'retry', phase: 'end' },
+        { type: 'typed_error', error: { code: 'network_error' } },
+        { type: 'complete' },
+      ]);
+      // Queue terminates on this non-agent_end event, exactly once.
+      expect(adapter.shouldCompleteQueue(false)).toBe(true);
+      expect(adapter.shouldCompleteQueue(false)).toBe(false);
+      expect(adapter.isHoldingTurn).toBe(false);
+    });
+
+    it('fallback: no auto_retry_start after willRetry drains the parked error', () => {
+      jest.useFakeTimers();
+      try {
+        const enqueued: any[] = [];
+        let completed = false;
+        adapter.setRecoveryFallbackHandlers(
+          (event) => enqueued.push(event),
+          () => { completed = true; },
+        );
+
+        collect(adapter.adaptEvent({ type: 'turn_start' } as any));
+        collect(adapter.adaptEvent(transientError('fetch failed') as any));
+        collect(adapter.adaptEvent({ type: 'agent_end', messages: [], willRetry: true } as any));
+
+        jest.advanceTimersByTime(5_000);
+
+        // Fallback closes retry UI before enqueueing the parked error.
+        expect(enqueued).toMatchObject([
+          { type: 'retry', phase: 'end' },
+          { type: 'typed_error', error: { code: 'network_error' } },
+        ]);
+        expect(completed).toBe(true);
+        expect(adapter.isHoldingTurn).toBe(false);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('fallback: retried run never starts after the announced backoff', () => {
+      jest.useFakeTimers();
+      try {
+        const enqueued: any[] = [];
+        let completed = false;
+        adapter.setRecoveryFallbackHandlers(
+          (event) => enqueued.push(event),
+          () => { completed = true; },
+        );
+
+        collect(adapter.adaptEvent({ type: 'turn_start' } as any));
+        collect(adapter.adaptEvent(transientError('fetch failed') as any));
+        collect(adapter.adaptEvent({ type: 'agent_end', messages: [], willRetry: true } as any));
+        expect(collect(adapter.adaptEvent({
+          type: 'auto_retry_start', attempt: 1, maxAttempts: 4, delayMs: 8_000, errorMessage: 'fetch failed',
+        } as any))).toEqual([{
+          type: 'retry', phase: 'backoff', message: 'Connection Error. Retrying in 8s (attempt 1/4)...',
+        }]);
+
+        // Announced backoff (8 s) + grace (15 s) not yet elapsed: still holding.
+        jest.advanceTimersByTime(8_000 + 14_000);
+        expect(enqueued).toHaveLength(0);
+        expect(completed).toBe(false);
+
+        jest.advanceTimersByTime(1_001);
+        // The backoff fallback ends transient UI before surfacing the held error.
+        expect(enqueued).toMatchObject([
+          { type: 'retry', phase: 'end' },
+          { type: 'typed_error', error: { code: 'network_error' } },
+        ]);
+        expect(completed).toBe(true);
+        expect(adapter.isHoldingTurn).toBe(false);
+      } finally {
+        jest.useRealTimers();
+      }
+    });
+
+    it('non-retryable errors still surface immediately', () => {
+      collect(adapter.adaptEvent({ type: 'turn_start' } as any));
+
+      const events = collect(adapter.adaptEvent(transientError('401 Unauthorized: invalid api key') as any));
+      expect(events).toMatchObject([{ type: 'typed_error', error: { code: 'invalid_api_key' } }]);
+      expect(adapter.isHoldingTurn).toBe(false);
+
+      const end = collect(adapter.adaptEvent({ type: 'agent_end', messages: [], willRetry: false } as any));
+      expect(end).toMatchObject([{ type: 'complete' }]);
+      expect(adapter.shouldCompleteQueue(true)).toBe(true);
+    });
+
+    it('context overflow takes the compaction path, never the retry path', () => {
+      collect(adapter.adaptEvent({ type: 'turn_start' } as any));
+      collect(adapter.adaptEvent(transientError(
+        'Your input exceeds the context window of this model. Please adjust your input and try again. (context_length_exceeded)',
+      ) as any));
+
+      // The SDK never auto-retries overflow (willRetry: false); the overflow
+      // machine holds the queue for compaction instead.
+      const end = collect(adapter.adaptEvent({ type: 'agent_end', messages: [], willRetry: false } as any));
+      expect(end).toHaveLength(0);
+      expect(adapter.shouldCompleteQueue(true)).toBe(false);
+      expect(adapter.isHoldingTurn).toBe(true);
+
+      adapter.resetRecoveryState();
+      expect(adapter.isHoldingTurn).toBe(false);
+    });
+
+    it('startTurn() clears stale recovery state', () => {
+      collect(adapter.adaptEvent({ type: 'turn_start' } as any));
+      collect(adapter.adaptEvent(transientError('fetch failed') as any));
+      collect(adapter.adaptEvent({ type: 'agent_end', messages: [], willRetry: true } as any));
+      expect(adapter.isHoldingTurn).toBe(true);
+
+      adapter.startTurn();
+
+      expect(adapter.isHoldingTurn).toBe(false);
+      expect(adapter.shouldCompleteQueue(true)).toBe(true);
     });
   });
 
@@ -1233,7 +1519,7 @@ describe('PiEventAdapter', () => {
       try {
         const enqueued: any[] = [];
         let completed = false;
-        adapter.setOverflowFallbackHandlers(
+        adapter.setRecoveryFallbackHandlers(
           (event) => enqueued.push(event),
           () => { completed = true; },
         );
@@ -1252,7 +1538,7 @@ describe('PiEventAdapter', () => {
       }
     });
 
-    it('non-overflow regression: rate-limit error preserves existing behavior', () => {
+    it('non-overflow: rate-limit error takes the auto-retry path, not the overflow path', () => {
       collect(adapter.adaptEvent({ type: 'turn_start' } as any));
 
       const events = collect(adapter.adaptEvent({
@@ -1264,13 +1550,17 @@ describe('PiEventAdapter', () => {
         },
       } as any));
 
-      // Rate-limit yields a typed_error (not held) — overflow state stays 'none'
-      // so a subsequent agent_end completes the queue normally.
-      expect(events).toHaveLength(1);
-      expect(events[0].type).toMatch(/^(error|typed_error)$/);
+      // Rate-limit is retryable: the typed error is parked (see 'auto-retry
+      // recovery'), overflow state stays 'none'. An agent_end without
+      // willRetry first ends any retry UI, then releases and completes.
+      expect(events).toHaveLength(0);
 
-      const agentEndEvents = collect(adapter.adaptEvent({ type: 'agent_end' } as any));
-      expect(agentEndEvents).toMatchObject([{ type: 'complete' }]);
+      const agentEndEvents = collect(adapter.adaptEvent({ type: 'agent_end', willRetry: false } as any));
+      expect(agentEndEvents).toMatchObject([
+        { type: 'retry', phase: 'end' },
+        { type: 'typed_error', error: { code: 'rate_limited' } },
+        { type: 'complete' },
+      ]);
       expect(adapter.shouldCompleteQueue(true)).toBe(true);
     });
 

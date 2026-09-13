@@ -11,6 +11,7 @@ import {
   getLlmCredentialKey,
   getMiniModel,
   getSummarizationModel,
+  registerPiModelResolver,
   isCompatProvider,
   isDeniedMiniModelId,
   isLocalConnection,
@@ -21,6 +22,7 @@ import {
   resolveEffectiveConnectionSlug,
   resolveMidStreamBehavior,
 } from '../llm-connections.ts'
+import { getPiModelsForAuthProvider } from '../models-pi.ts'
 
 describe('Pi-only LLM connections', () => {
   it('returns provider-filtered Pi models and a default from that list', () => {
@@ -28,6 +30,27 @@ describe('Pi-only LLM connections', () => {
     const ids = models.map(model => typeof model === 'string' ? model : model.id)
     expect(ids.length).toBeGreaterThan(0)
     expect(ids).toContain(getDefaultModelForConnection('pi', 'anthropic'))
+  })
+
+  it('ranks supported Bedrock inference profiles ahead of retired snapshots', () => {
+    const model = (id: string) => ({
+      id,
+      name: id,
+      shortName: id,
+      description: id,
+      provider: 'pi' as const,
+      contextWindow: 200_000,
+    })
+    registerPiModelResolver(() => [
+      model('pi/us.anthropic.claude-opus-4-5-20251101-v1:0'),
+      model('pi/us.anthropic.claude-opus-4-8'),
+    ])
+
+    try {
+      expect(getDefaultModelForConnection('pi', 'amazon-bedrock')).toBe('pi/us.anthropic.claude-opus-4-8')
+    } finally {
+      registerPiModelResolver(provider => getPiModelsForAuthProvider(provider ?? ''))
+    }
   })
 
   it('identifies native and compatible Pi providers', () => {

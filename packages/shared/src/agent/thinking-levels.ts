@@ -16,7 +16,7 @@
  *   don't accept `xhigh`, the Anthropic SDK silently falls back to `high`.
  * - Pi/OpenAI: reasoning_effort via Pi SDK levels, passed through 1:1 up to `max`.
  *   Pi clamps per model internally, so models without native `max` support
- *   (everything except GPT-5.6 and adaptive Claude) degrade to their own ceiling.
+ *   (everything except GPT-5.6, GPT-6 and adaptive Claude) degrade to their own ceiling.
  */
 
 /**

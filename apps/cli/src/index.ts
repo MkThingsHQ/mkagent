@@ -167,6 +167,10 @@ async function waitForTurn(client: CliRpcClient, sessionId: string, args: CliArg
       } else if (!args.json && typed.type === 'text_delta') {
         receivedTextDelta = true
         process.stdout.write(typed.delta)
+      } else if (!args.json && typed.type === 'text_discard') {
+        process.stdout.write('\n[incomplete response discarded]\n')
+      } else if (!args.json && typed.type === 'retry' && typed.phase === 'backoff') {
+        process.stdout.write(`[${typed.message}]\n`)
       } else if (!args.json && typed.type === 'text_complete' && !receivedTextDelta) {
         process.stdout.write(typed.text)
       } else if (!args.json && typed.type === 'tool_start') {
@@ -176,7 +180,7 @@ async function waitForTurn(client: CliRpcClient, sessionId: string, args: CliArg
       } else if (!args.json && typed.type === 'error') {
         process.stderr.write(`${typed.error}\n`)
       } else if (!args.json && typed.type === 'typed_error') {
-        process.stderr.write(`${typed.error.message}\n`)
+        process.stderr.write(`${[typed.error.title, typed.error.message].filter(Boolean).join(': ')}\n`)
       }
       if (typed.type === 'complete' || typed.type === 'interrupted' || typed.type === 'error' || typed.type === 'typed_error') {
         if (!args.json && args.outputFormat !== 'stream-json') process.stdout.write('\n')
@@ -199,7 +203,7 @@ export function getTurnExitCode(events: SessionEvent[]): number {
   return 0
 }
 
-async function sendAndWait(
+export async function sendAndWait(
   client: CliRpcClient,
   sessionId: string,
   prompt: string,

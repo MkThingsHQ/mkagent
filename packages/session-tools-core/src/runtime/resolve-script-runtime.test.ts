@@ -61,6 +61,30 @@ describe('resolveScriptRuntime', () => {
     }
   });
 
+  it("treats MKAGENT_IS_PACKAGED='true' as packaged mode", () => {
+    const prevPackaged = process.env.MKAGENT_IS_PACKAGED;
+    const prevUv = process.env.MKAGENT_UV;
+    const prevBase = process.env.MKAGENT_RESOURCES_BASE;
+    const prevRoot = process.env.MKAGENT_APP_ROOT;
+    process.env.MKAGENT_IS_PACKAGED = 'true';
+    delete process.env.MKAGENT_UV;
+    delete process.env.MKAGENT_RESOURCES_BASE;
+    delete process.env.MKAGENT_APP_ROOT;
+
+    try {
+      expect(() => resolveScriptRuntime('python3')).toThrow('packaged app');
+    } finally {
+      if (prevPackaged === undefined) delete process.env.MKAGENT_IS_PACKAGED;
+      else process.env.MKAGENT_IS_PACKAGED = prevPackaged;
+      if (prevUv === undefined) delete process.env.MKAGENT_UV;
+      else process.env.MKAGENT_UV = prevUv;
+      if (prevBase === undefined) delete process.env.MKAGENT_RESOURCES_BASE;
+      else process.env.MKAGENT_RESOURCES_BASE = prevBase;
+      if (prevRoot === undefined) delete process.env.MKAGENT_APP_ROOT;
+      else process.env.MKAGENT_APP_ROOT = prevRoot;
+    }
+  });
+
   it('rejects bare MKAGENT_NODE command in packaged mode', () => {
     const prev = process.env.MKAGENT_NODE;
     process.env.MKAGENT_NODE = 'node';

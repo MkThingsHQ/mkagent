@@ -91,7 +91,7 @@ describe('ChatGPTBackendSearchProvider', () => {
     expect(calledHeaders.Authorization).toBe('Bearer my-access-token');
     expect(calledHeaders['chatgpt-account-id']).toBe('acc_12345');
     // No model plumbed → first candidate from the shared openai-codex catalog (#1023).
-    expect(calledBody.model).toBe('gpt-5.6-sol');
+    expect(calledBody.model).toBe('gpt-6-astra');
     expect(calledBody.store).toBe(false);
     expect(calledBody.stream).toBe(true);
     expect(calledBody.instructions).toContain('web search assistant');

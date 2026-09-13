@@ -5,7 +5,7 @@
  * Pure functions that return new state - no side effects.
  */
 
-import type { SessionState, StreamingState, TextDeltaEvent, TextCompleteEvent } from '../types'
+import type { SessionState, StreamingState, TextDeltaEvent, TextCompleteEvent, TextDiscardEvent } from '../types'
 import type { Message } from '../../../shared/types'
 import {
   findStreamingMessage,
@@ -14,6 +14,19 @@ import {
   appendMessage,
   generateMessageId
 } from '../helpers'
+
+/** Discard only the failed attempt's unfinished text, never completed history. */
+export function handleTextDiscard(state: SessionState, event: TextDiscardEvent): SessionState {
+  return {
+    session: {
+      ...state.session,
+      messages: state.session.messages.filter(m => !(
+        m.role === 'assistant' && m.turnId === event.turnId && (m.isStreaming || m.isPending)
+      )),
+    },
+    streaming: state.streaming?.turnId === event.turnId ? null : state.streaming,
+  }
+}
 
 /**
  * Handle text_delta - accumulate streaming content
@@ -25,6 +38,8 @@ export function handleTextDelta(
   state: SessionState,
   event: TextDeltaEvent
 ): SessionState {
+  // Output may have been batched before a retry began. Only an explicit retry
+  // lifecycle event can clear the backoff indicator.
   const { session, streaming } = state
 
   // Accumulate in streaming state

@@ -24,6 +24,7 @@ import { dirname, join } from 'node:path';
 
 const packageDir = dirname(import.meta.dir);
 const bundlePath = join(packageDir, 'dist', 'index.js');
+const blockNetworkPreloadPath = join(import.meta.dir, 'test-fixtures', 'block-network.ts');
 const RUN_TIMEOUT_MS = 30_000;
 
 let scratchDir: string;
@@ -41,10 +42,37 @@ afterAll(() => {
   if (scratchDir) rmSync(scratchDir, { recursive: true, force: true });
 });
 
+/**
+ * Build an allowlisted subprocess environment. Besides keeping the smoke test
+ * independent of the developer machine, this prevents ambient provider keys,
+ * auth files, custom base URLs, and proxy/routing variables from bypassing the
+ * fake credential or escaping the explicit network guard.
+ */
+function createOfflineEnvironment(): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = {
+    HOME: scratchDir,
+    USERPROFILE: scratchDir,
+    XDG_CONFIG_HOME: scratchDir,
+    TMPDIR: scratchDir,
+    TEMP: scratchDir,
+    TMP: scratchDir,
+  };
+
+  // Keep only variables required to launch Bun on each supported platform.
+  for (const key of ['PATH', 'SystemRoot', 'WINDIR', 'COMSPEC', 'PATHEXT'] as const) {
+    if (process.env[key]) env[key] = process.env[key];
+  }
+  return env;
+}
+
 /** Spawn the bundle, send JSONL messages, and collect output until `done` matches or timeout. */
 function driveBundle(messages: object[], done: (output: string) => boolean): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [bundlePath], { cwd: scratchDir, stdio: ['pipe', 'pipe', 'pipe'] });
+    const child = spawn(process.execPath, ['--preload', blockNetworkPreloadPath, bundlePath], {
+      cwd: scratchDir,
+      env: createOfflineEnvironment(),
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
     let output = '';
     const finish = (error?: Error) => {
       clearTimeout(timer);
@@ -73,13 +101,13 @@ function driveBundle(messages: object[], done: (output: string) => boolean): Pro
 }
 
 describe('pi-agent-server bundle', () => {
-  it('resolves a ChatGPT Plus credential through the bundled auth pipeline', async () => {
+  it('resolves a ChatGPT Plus credential for Astra through the bundled auth pipeline offline', async () => {
     const output = await driveBundle(
       [
         {
           type: 'init',
           apiKey: '',
-          model: 'pi/gpt-5.2-codex',
+          model: 'pi/gpt-6-astra',
           cwd: scratchDir,
           thinkingLevel: 'off',
           workspaceRootPath: scratchDir,
@@ -95,12 +123,16 @@ describe('pi-agent-server bundle', () => {
       ],
       // The non-JWT token must fail exactly at request-build accountId extraction —
       // any earlier failure is one of the auth-pipeline regressions this test pins.
-      (out) => out.includes('accountId') || out.includes('No API key found') || out.includes('OAuth auth derivation failed'),
+      (out) => out.includes('Failed to extract accountId from token') ||
+        out.includes('OFFLINE_FETCH_BLOCKED') ||
+        out.includes('No API key found') ||
+        out.includes('OAuth auth derivation failed'),
     );
 
     expect(output).not.toContain('No API key found');
     expect(output).not.toContain('OAuth auth derivation failed');
     expect(output).not.toContain('Cannot find module');
+    expect(output).not.toContain('OFFLINE_FETCH_BLOCKED');
     expect(output).toContain('Failed to extract accountId from token');
   }, RUN_TIMEOUT_MS + 130_000);
 });

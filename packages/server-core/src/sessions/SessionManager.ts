@@ -759,12 +759,24 @@ export class SessionManager implements ISessionManager {
     const sessionId = managed.id
     let isTurnError = false
     switch (event.type) {
+      case 'text_discard':
+        // Failed partial text is never persisted here; tell each client which
+        // in-progress renderer/terminal stream must be discarded.
+        this.emit(managed.workspace.id, { ...event, sessionId })
+        break
+      case 'retry':
+        // Retry progress is transient and must not enter transcript history.
+        this.emit(managed.workspace.id, { ...event, sessionId })
+        break
       case 'text_complete': {
         const message: Message = {
           id: event.sdkMessageId ?? generateMessageId(),
           role: 'assistant',
           content: event.text,
           timestamp: this.nextTimestamp(),
+          isIntermediate: event.isIntermediate,
+          turnId: event.turnId,
+          parentToolUseId: event.parentToolUseId,
         }
         managed.messages.push(message)
         managed.lastFinalMessageId = message.id

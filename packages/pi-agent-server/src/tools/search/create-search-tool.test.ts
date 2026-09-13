@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'bun:test';
+import { validateToolArguments } from '@earendil-works/pi-ai';
 import { createSearchTool } from './create-search-tool.ts';
 import type { WebSearchProvider } from './types.ts';
 
@@ -16,6 +17,25 @@ describe('createSearchTool', () => {
     expect(tool.name).toBe('web_search');
     expect(tool.label).toBe('Web Search');
     expect(tool.description).toContain('Search the web');
+  });
+
+  it('validates arguments through the SDK TypeBox build (coercion + required checks)', () => {
+    const provider: WebSearchProvider = {
+      name: 'Mock',
+      async search() {
+        return [];
+      },
+    };
+    const tool = createSearchTool(provider);
+    const call = (args: unknown) =>
+      validateToolArguments(tool as any, { type: 'toolCall', id: 'call-1', name: tool.name, arguments: args } as any);
+
+    // The SDK only coerces model-emitted argument types (e.g. "3" -> 3) for schemas
+    // built with its own TypeBox; a schema from a second TypeBox copy would be
+    // validated strictly and reject this call instead.
+    expect(call({ query: 'craft', count: '3' })).toEqual({ query: 'craft', count: 3 });
+    expect(() => call({ count: 3 })).toThrow(/Validation failed/);
+    expect(() => call({ query: 'craft', count: 99 })).toThrow(/Validation failed/);
   });
 
   it('clamps count to [1, 10] and formats results', async () => {

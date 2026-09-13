@@ -1,6 +1,6 @@
 /** Named Pi provider and custom endpoint configurations. */
 
-import type { ModelDefinition } from './models.ts';
+import { normalizeDeprecatedModelId, type ModelDefinition } from './models.ts';
 
 type PiModelResolver = (piAuthProvider?: string) => ModelDefinition[];
 let piModelResolver: PiModelResolver = () => [];
@@ -189,19 +189,23 @@ export function getModelsForProviderType(
 export const PI_PREFERRED_DEFAULTS: Record<string, string[]> = {
   anthropic: [
     'claude-opus-4-8',
+    'claude-opus-5',
     'claude-opus-4-7',
     'claude-opus-4-6',
+    'claude-fable-5-1',
+    'claude-fable-5',
     'claude-sonnet-5',
     'claude-sonnet-4-6',
     'claude-haiku-4-5',
   ],
-  'openai-codex': ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.2', 'gpt-5.1'],
-  openai: ['gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.2', 'gpt-5.1'],
-  google: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3-flash-preview'],
+  'openai-codex': ['gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.2', 'gpt-5.1', 'gpt-5', 'o4-mini', 'o3', 'gpt-4o'],
+  openai: ['gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.2', 'gpt-5.1', 'gpt-5', 'o4-mini', 'o3', 'gpt-4o'],
+  google: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3-flash-preview', 'gemini-3.1-flash-lite-preview'],
   deepseek: ['deepseek-v4-pro', 'deepseek-v4-flash'],
   moonshotai: ['kimi-k3', 'kimi-k2.6'],
   'moonshotai-cn': ['kimi-k3', 'kimi-k2.6'],
   'kimi-coding': ['k3', 'kimi-for-coding', 'kimi-for-coding-highspeed'],
+  'amazon-bedrock': ['claude-opus-4-8', 'claude-opus-5', 'claude-opus-4-7', 'claude-opus-4-6', 'claude-sonnet-5', 'claude-sonnet-4-6', 'claude-haiku-4-5'],
 };
 
 export function getDefaultModelsForConnection(
@@ -213,7 +217,11 @@ export function getDefaultModelsForConnection(
   const preferred = piAuthProvider ? PI_PREFERRED_DEFAULTS[piAuthProvider] ?? [] : [];
   const priority = (id: string): number => {
     const bare = id.startsWith('pi/') ? id.slice(3) : id;
-    const index = preferred.findIndex(value => bare === value || bare.startsWith(`${value}-`));
+    // Retired snapshots must not inherit their replacement's priority and
+    // become a new connection's default.
+    if (normalizeDeprecatedModelId(bare) !== bare) return preferred.length;
+    const preferredId = bare.replace(/^(?:(?:[a-z]{2}|global)\.)?anthropic\./, '');
+    const index = preferred.findIndex(value => preferredId === value || preferredId.startsWith(`${value}-`));
     return index < 0 ? preferred.length : index;
   };
   return models.sort((a, b) => priority(a.id) - priority(b.id));

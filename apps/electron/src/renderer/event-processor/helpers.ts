@@ -156,9 +156,19 @@ export function insertMessageAt(
   }
 }
 
-/**
- * Create an empty session for a given ID
- */
+/** Remove transient retry activity without disturbing compaction or history. */
+export function clearRetryStatus(session: Session): Session {
+  const messages = session.messages.filter(m => !(m.role === 'status' && m.statusType === 'retrying'))
+  const isRetrying = session.currentStatus?.statusType === 'retrying'
+  if (messages.length === session.messages.length && !isRetrying) return session
+  return {
+    ...session,
+    messages,
+    ...(isRetrying ? { currentStatus: undefined } : {}),
+  }
+}
+
+/** Create an empty session for a given ID. */
 export function createEmptySession(sessionId: string, workspaceId: string, workspaceName: string = ''): Session {
   return {
     id: sessionId,

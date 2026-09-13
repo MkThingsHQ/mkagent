@@ -65,6 +65,17 @@ registerBunOAuthFlows();
 import { resolvePiModel, isDeniedMiniModelId, isModelNotFoundError } from './model-resolution.ts';
 import { pickProviderAppropriateMiniModel } from './pick-mini-model.ts';
 import {
+  MKAGENT_PI_EPHEMERAL_QUERY_DEADLINE_MS,
+  createMkAgentSettingsManager,
+} from './session-settings.ts';
+import {
+  EphemeralQueryCancelledError,
+  EphemeralQueryCoordinator,
+  isEphemeralQueryCancellation,
+  type EphemeralQueryContext,
+  type EphemeralQueryResource,
+} from './ephemeral-query-lifecycle.ts';
+import {
   buildCustomEndpointModelDef,
   normalizeCustomEndpointModelEntry,
   stripPiPrefix,
@@ -76,7 +87,7 @@ import {
 // Direct source imports from shared (bundled by bun build)
 import { handleLargeResponse, estimateTokens, tokenLimitFor } from '../../shared/src/utils/large-response.ts';
 import { getSessionPlansPath, getSessionPath } from '../../shared/src/sessions/storage.ts';
-import { buildCallLlmRequest, withTimeout, LLM_QUERY_TIMEOUT_MS } from '../../shared/src/agent/llm-tool.ts';
+import { buildCallLlmRequest } from '../../shared/src/agent/llm-tool.ts';
 import type { LLMQueryRequest, LLMQueryResult } from '../../shared/src/agent/llm-tool.ts';
 import { PI_TOOL_NAME_MAP, THINKING_TO_PI } from '../../shared/src/agent/backend/pi/constants.ts';
 import { getDefaultSummarizationModel } from '../../shared/src/config/models.ts';
@@ -138,6 +149,7 @@ type InboundMessage =
   | { type: 'abort' }
   | { type: 'mini_completion'; id: string; prompt: string }
   | { type: 'llm_query'; id: string; request: LLMQueryRequest }
+  | { type: 'cancel_ephemeral_query'; id: string }
   | { type: 'ensure_session_ready'; id: string }
   | { type: 'set_model'; model: string }
   | { type: 'set_thinking_level'; level: string }
@@ -221,7 +233,7 @@ interface OutboundOAuthCredentialUpdate {
   credential: Extract<PiCredential, { type: 'oauth' }>;
   previousRefresh?: string;
 }
-interface OutboundError { type: 'error'; message: string; code?: string }
+interface OutboundError { type: 'error'; message: string; code?: string; id?: string }
 
 type OutboundMessage =
   | OutboundReady
@@ -279,6 +291,14 @@ let moduleRuntimePromise: Promise<{
   modelRegistry: PiModelRegistry;
 }> | null = null;
 let unsubscribeEvents: (() => void) | null = null;
+
+const ephemeralQueries = new EphemeralQueryCoordinator();
+let localEphemeralQueryCounter = 0;
+
+function nextLocalEphemeralQueryId(source: string): string {
+  localEphemeralQueryCounter += 1;
+  return `${source}-${localEphemeralQueryCounter}`;
+}
 
 // Init config (set on 'init' message)
 let initConfig: Extract<InboundMessage, { type: 'init' }> | null = null;
@@ -621,12 +641,16 @@ async function ensureSession(): Promise<AgentSession> {
   const toolAllowlist = wrappedAll.map(t => t.name);
   debugLog(`Session tools: ${builtinDefs.length} builtin + ${webTools.length} web + ${proxyTools.length} proxy = ${wrappedAll.length} total`);
 
-  // Build session options
+  // Build session options.
+  // settingsManager: explicit in-memory settings (retry policy, compaction)
+  // instead of the SDK default that merges `<cwd>/.pi/settings.json` from the
+  // user's working directory and writes to `<agentDir>/settings.json`.
   const sessionOptions: CreateAgentSessionOptions = {
     cwd,
     modelRuntime,
     customTools: wrappedAll,
     tools: toolAllowlist,
+    settingsManager: createMkAgentSettingsManager('main'),
   };
 
   // Extension isolation: set agentDir to a temp directory under session path
@@ -937,7 +961,11 @@ function buildProxyTools(): ToolDefinition<any, any>[] {
 // LLM Query (ephemeral session for call_llm + mini completions)
 // ============================================================
 
-async function queryLlm(request: LLMQueryRequest): Promise<LLMQueryResult> {
+async function queryLlm(
+  request: LLMQueryRequest,
+  lifecycle: EphemeralQueryContext,
+): Promise<LLMQueryResult> {
+  lifecycle.throwIfCancelled();
   if (!initConfig) throw new Error('Cannot run queryLlm: init not received');
 
   debugLog('[queryLlm] Starting');
@@ -950,6 +978,7 @@ async function queryLlm(request: LLMQueryRequest): Promise<LLMQueryResult> {
 
   // Create the shared runtime upfront — used by both the provider guard and the ephemeral session.
   const { modelRuntime, modelRegistry } = await createAuthenticatedRuntime();
+  lifecycle.throwIfCancelled();
 
   const piAuthProvider = initConfig.piAuth?.provider;
 
@@ -977,6 +1006,7 @@ async function queryLlm(request: LLMQueryRequest): Promise<LLMQueryResult> {
   }
 
   const runQueryWithModel = async (modelId: string): Promise<string> => {
+    lifecycle.throwIfCancelled();
     debugLog(`[queryLlm] Using model: ${modelId}`);
 
     // Resolve model — fail fast if unresolvable so we don't let the Pi SDK
@@ -996,38 +1026,46 @@ async function queryLlm(request: LLMQueryRequest): Promise<LLMQueryResult> {
       modelRuntime,
       tools: [],
       sessionManager: PiSessionManager.inMemory(),
+      settingsManager: createMkAgentSettingsManager('ephemeral'),
       model: piModel,
     };
 
     const { session: ephemeralSession } = await createAgentSession(ephemeralOptions);
+    const resource: EphemeralQueryResource = {
+      abort: () => ephemeralSession.abort(),
+      dispose: () => ephemeralSession.dispose(),
+    };
+    lifecycle.setResource(resource);
 
-    // Pi SDK ignores options.model for ephemeral sessions (same issue as options.tools).
-    // Explicitly set the model after creation to ensure the mini model is used.
+    let unsub: (() => void) | undefined;
     try {
-      await ephemeralSession.setModel(piModel);
-    } catch {
-      debugLog(`[queryLlm] Failed to set model on ephemeral session, proceeding with default`);
-    }
+      // Pi SDK ignores options.model for ephemeral sessions (same issue as options.tools).
+      // Explicitly set the model after creation to ensure the mini model is used.
+      try {
+        await ephemeralSession.setModel(piModel);
+      } catch {
+        debugLog(`[queryLlm] Failed to set model on ephemeral session, proceeding with default`);
+      }
+      lifecycle.throwIfCancelled();
 
-    debugLog(`[queryLlm] Created ephemeral session: ${ephemeralSession.sessionId}`);
+      debugLog(`[queryLlm] Created ephemeral session: ${ephemeralSession.sessionId}`);
 
-    // Force the system prompt — see system-prompt-override.ts for why direct
-    // assignment to `state.systemPrompt` doesn't survive `session.prompt()`.
-    const promptForSession =
-      request.systemPrompt ?? 'Reply with ONLY the requested text. No explanation.';
-    applySystemPromptOverride(ephemeralSession, promptForSession);
+      // Force the system prompt — see system-prompt-override.ts for why direct
+      // assignment to `state.systemPrompt` doesn't survive `session.prompt()`.
+      const promptForSession =
+        request.systemPrompt ?? 'Reply with ONLY the requested text. No explanation.';
+      applySystemPromptOverride(ephemeralSession, promptForSession);
 
-    // Collect response text and errors from events
-    let result = '';
-    let lastError = '';
-    let completionResolve: () => void;
-    const completionPromise = new Promise<void>((resolve) => {
-      completionResolve = resolve;
-    });
+      // Collect response text and errors from events. `prompt()` resolves only
+      // after SDK retries/continuations settle, so the request-level coordinator
+      // owns the one actual deadline around this call.
+      let result = '';
+      let lastError = '';
 
-    const unsub = ephemeralSession.subscribe((event: AgentSessionEvent) => {
-      if (event.type === 'message_end') {
-        // Only capture assistant messages — Pi SDK emits message_end for user messages too
+      unsub = ephemeralSession.subscribe((event: AgentSessionEvent) => {
+        if (event.type !== 'message_end') return;
+
+        // Only capture assistant messages — Pi SDK emits message_end for user messages too.
         const msg = event.message as {
           role?: string;
           content?: string | Array<{ type: string; text?: string }>;
@@ -1036,7 +1074,7 @@ async function queryLlm(request: LLMQueryRequest): Promise<LLMQueryResult> {
         };
         if (msg.role !== 'assistant') return;
 
-        // Capture API errors from message_end (e.g. auth failures, model errors)
+        // Capture API errors from message_end (e.g. auth failures, model errors).
         if (msg.stopReason === 'error' && msg.errorMessage) {
           lastError = msg.errorMessage;
           debugLog(`[queryLlm] API error in message_end: ${msg.errorMessage}`);
@@ -1050,29 +1088,22 @@ async function queryLlm(request: LLMQueryRequest): Promise<LLMQueryResult> {
             .map((c) => c.text!)
             .join('');
         }
-      }
-      if (event.type === 'agent_end') {
-        completionResolve();
-      }
-    });
+      });
 
-    try {
+      lifecycle.throwIfCancelled();
       await ephemeralSession.prompt(request.prompt);
-      await withTimeout(
-        completionPromise,
-        LLM_QUERY_TIMEOUT_MS,
-        `queryLlm timed out after ${LLM_QUERY_TIMEOUT_MS / 1000}s`
-      );
+      lifecycle.throwIfCancelled();
       debugLog(`[queryLlm] Result length: ${result.trim().length}`);
 
-      // If we got no text but captured an error, throw so callers see the real issue
+      // If we got no text but captured an error, throw so callers see the real issue.
       if (!result.trim() && lastError) {
         throw new Error(lastError);
       }
 
       return result.trim();
     } finally {
-      unsub();
+      unsub?.();
+      lifecycle.clearResource(resource);
       ephemeralSession.dispose();
     }
   };
@@ -1128,17 +1159,31 @@ async function queryLlm(request: LLMQueryRequest): Promise<LLMQueryResult> {
   }
 }
 
+function runEphemeralLlmQuery(
+  id: string,
+  request: LLMQueryRequest,
+): Promise<LLMQueryResult> {
+  return ephemeralQueries.run(
+    id,
+    MKAGENT_PI_EPHEMERAL_QUERY_DEADLINE_MS,
+    lifecycle => queryLlm(request, lifecycle),
+  );
+}
+
 async function preExecuteCallLlm(input: Record<string, unknown>): Promise<LLMQueryResult> {
   const sessionPath = initConfig
     ? getSessionPath(initConfig.workspaceRootPath, initConfig.sessionId)
     : undefined;
   const request = await buildCallLlmRequest(input, { backendName: 'Pi', sessionPath });
-  return queryLlm(request);
+  return runEphemeralLlmQuery(nextLocalEphemeralQueryId('callback'), request);
 }
 
 async function runMiniCompletion(prompt: string): Promise<string | null> {
   try {
-    const result = await queryLlm({ prompt });
+    const result = await runEphemeralLlmQuery(
+      nextLocalEphemeralQueryId('summary'),
+      { prompt },
+    );
     const text = result.text || null;
     debugLog(`[runMiniCompletion] Result: ${text ? `"${text.slice(0, 200)}"` : 'null'}`);
     return text;
@@ -1292,6 +1337,9 @@ function handleSessionEvent(event: AgentSessionEvent): void {
 // ============================================================
 
 async function handleInit(msg: Extract<InboundMessage, { type: 'init' }>): Promise<void> {
+  // A re-init invalidates every utility query created under the old credentials.
+  ephemeralQueries.cancelAll(new EphemeralQueryCancelledError('Pi server reinitialized'));
+
   // Clean up any existing session from a previous init
   if (piSession) {
     if (unsubscribeEvents) {
@@ -1449,6 +1497,16 @@ function handlePreToolUseResponse(msg: Extract<InboundMessage, { type: 'pre_tool
   }
 }
 
+function handleCancelEphemeralQuery(
+  msg: Extract<InboundMessage, { type: 'cancel_ephemeral_query' }>,
+): void {
+  const cancelled = ephemeralQueries.cancel(
+    msg.id,
+    new EphemeralQueryCancelledError(`Ephemeral query cancelled by host: ${msg.id}`),
+  );
+  debugLog(`${cancelled ? 'Cancelled' : 'No active'} ephemeral query: ${msg.id}`);
+}
+
 async function handleAbort(): Promise<void> {
   if (piSession) {
     try {
@@ -1473,12 +1531,17 @@ async function handleMiniCompletion(msg: Extract<InboundMessage, { type: 'mini_c
   // as 'error' messages instead of being swallowed and returned as null.
   // runMiniCompletion is kept for the summarize callback where null is acceptable.
   try {
-    const result = await queryLlm({ prompt: msg.prompt });
+    const result = await runEphemeralLlmQuery(msg.id, { prompt: msg.prompt });
     send({ type: 'mini_completion_result', id: msg.id, text: result.text || null });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     debugLog(`[handleMiniCompletion] Error: ${errorMsg}`);
-    send({ type: 'error', message: errorMsg, code: 'mini_completion_error' });
+    if (isEphemeralQueryCancellation(error)) {
+      // Mini completions are best-effort; preserve their null-on-timeout contract.
+      send({ type: 'mini_completion_result', id: msg.id, text: null });
+    } else {
+      send({ type: 'error', id: msg.id, message: errorMsg, code: 'mini_completion_error' });
+    }
   }
 }
 
@@ -1488,14 +1551,15 @@ async function handleMiniCompletion(msg: Extract<InboundMessage, { type: 'mini_c
 // request-propagation + request-honoring are independent (see #596).
 async function handleLlmQuery(msg: Extract<InboundMessage, { type: 'llm_query' }>): Promise<void> {
   try {
-    const result = await queryLlm(msg.request);
+    const result = await runEphemeralLlmQuery(msg.id, msg.request);
     send({ type: 'llm_query_result', id: msg.id, result });
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
     debugLog(`[handleLlmQuery] Error: ${errorMsg}`);
-    // Dual-emit: the generic error channel updates session state while the
-    // targeted result rejects the pending promise for this specific call.
-    send({ type: 'error', message: errorMsg, code: 'llm_query_error' });
+    // Dual-emit: the generic `error` channel drives main-process OAuth
+    // auth-refresh detection (centralized in PiAgent), while the targeted
+    // `llm_query_result` rejects only this pending call.
+    send({ type: 'error', id: msg.id, message: errorMsg, code: 'llm_query_error' });
     send({ type: 'llm_query_result', id: msg.id, result: null, errorMessage: errorMsg, errorCode: 'llm_query_error' });
   }
 }
@@ -1680,6 +1744,9 @@ async function handleSetThinkingLevel(msg: Extract<InboundMessage, { type: 'set_
 function handleShutdown(): void {
   debugLog('Shutdown requested');
 
+  // Abort utility sessions independently from the main chat session.
+  ephemeralQueries.cancelAll(new EphemeralQueryCancelledError('Pi server shutting down'));
+
   // Unsubscribe events
   if (unsubscribeEvents) {
     unsubscribeEvents();
@@ -1745,6 +1812,10 @@ async function processMessage(msg: InboundMessage): Promise<void> {
 
     case 'llm_query':
       await handleLlmQuery(msg);
+      break;
+
+    case 'cancel_ephemeral_query':
+      handleCancelEphemeralQuery(msg);
       break;
 
     case 'ensure_session_ready':

@@ -17,6 +17,17 @@ const RELEASE_NOTES_DIR = join(CONFIG_DIR, 'release-notes');
 
 let releaseNotesInitialized = false;
 
+/**
+ * Only versioned files (`X.Y.Z.md`) are release notes. The resources folder can
+ * also contain pending-note templates such as `next.md`; loading those would
+ * create a phantom version and break semantic-version ordering.
+ */
+const RELEASE_NOTE_FILENAME = /^\d+\.\d+\.\d+\.md$/;
+
+export function isReleaseNoteFilename(filename: string): boolean {
+  return RELEASE_NOTE_FILENAME.test(filename);
+}
+
 function getAssetsDir(): string {
   return getBundledAssetsDir('release-notes')
     ?? join(process.cwd(), 'resources', 'release-notes');
@@ -40,7 +51,7 @@ function loadBundledReleaseNotes(): Record<string, string> {
 
   let files: string[];
   try {
-    files = existsSync(dir) ? readdirSync(dir).filter(f => f.endsWith('.md')) : [];
+    files = existsSync(dir) ? readdirSync(dir).filter(isReleaseNoteFilename) : [];
   } catch {
     console.warn(`[release-notes] Could not read release notes dir: ${dir}`);
     return notes;

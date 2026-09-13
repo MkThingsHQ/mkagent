@@ -12,8 +12,8 @@ import type { ThinkingLevel } from '../../thinking-levels.ts';
  * Map the app's {@link ThinkingLevel} to Pi's `ThinkingLevel`.
  * All levels pass through 1:1 — Pi clamps per model internally
  * (`clampThinkingLevel` in pi-ai), so `max` degrades to the model's
- * ceiling on models without native max support (e.g. GPT-5.6 accepts
- * it natively, older GPT-5.x fall back to xhigh).
+ * ceiling on models without native max support (e.g. GPT-5.6 and GPT-6
+ * accept it natively, older GPT-5.x fall back to xhigh).
  */
 export const THINKING_TO_PI: Record<ThinkingLevel, PiThinkingLevel> = {
   off: 'off',

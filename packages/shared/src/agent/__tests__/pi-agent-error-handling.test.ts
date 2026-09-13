@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import { PiAgent } from '../pi-agent.ts'
 import type { BackendConfig } from '../backend/types.ts'
+import { AbortReason } from '../core/session-lifecycle.ts'
 
 function createConfig(): BackendConfig {
   return {
@@ -118,6 +119,31 @@ describe('PiAgent subprocess error handling', () => {
     }))
 
     expect(enqueued.filter((event) => event.type === 'error' || event.type === 'typed_error')).toHaveLength(4)
+
+    agent.destroy()
+  })
+})
+
+describe('PiAgent recovery state on abort', () => {
+  it('forceAbort clears a held auto-retry so the next turn starts clean', () => {
+    const agent = new PiAgent(createConfig())
+    const adapter = (agent as any).adapter
+
+    // Transient error + agent_end { willRetry: true } → adapter holds the turn open.
+    ;[...adapter.adaptEvent({
+      type: 'message_end',
+      message: { role: 'assistant', stopReason: 'error', errorMessage: 'fetch failed' },
+    })]
+    ;[...adapter.adaptEvent({ type: 'agent_end', messages: [], willRetry: true })]
+    expect(adapter.isHoldingTurn).toBe(true)
+    expect(adapter.shouldCompleteQueue(true)).toBe(false)
+
+    // The SDK cancels the backoff on abort and emits no further agent_end, so
+    // the hold must be dropped here or the next turn's queue never completes.
+    agent.forceAbort(AbortReason.UserStop)
+
+    expect(adapter.isHoldingTurn).toBe(false)
+    expect(adapter.shouldCompleteQueue(true)).toBe(true)
 
     agent.destroy()
   })
