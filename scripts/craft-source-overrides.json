@@ -2081,12 +2081,12 @@
       "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
     },
     ".github/workflows/ci.yml": {
-      "sha256": "6f4375276aed7c1ac2f9897ddaceab12d0d15b8353f55e03c86876a8834ef933",
-      "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
+      "sha256": "6507940c8ff939ae4111ad0ed78c93431f5875ae5165a0e23f1baef7eaa5d85b",
+      "reason": "MkAgent CI authenticates GitHub-backed dependency downloads and retries transient packaging failures"
     },
     ".github/workflows/release.yml": {
-      "sha256": "a889d4c55c14a10db8f2da0654593a389044e88336bd5521208dbdbabbd1e2f5",
-      "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
+      "sha256": "7fd1e412af2e1b20597df9b598a65618c2bb6117450c8f7f193d32ffe803254c",
+      "reason": "MkAgent releases authenticate GitHub-backed dependency downloads and retry transient packaging failures"
     },
     "CHANGELOG.md": {
       "sha256": "e178eda7b1ab884dfc745ee8babb290bdd0300ecd0e87aae687b5381c6b6e6b6",
@@ -2219,6 +2219,18 @@
     "scripts/release.ts": {
       "sha256": "1774d385dc3a7caf061094e5c282216a57b99f2ea8e84de10d6789b0aae1ff02",
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
+    },
+    "scripts/release-workflow.test.ts": {
+      "sha256": "afc777f27d5bcc4116375878695d241b8fd5aa13b0867fe67f0674c254bb698f",
+      "reason": "Regression test keeps GitHub dependency authentication and download retry policy wired into CI and release workflows"
+    },
+    "scripts/run-with-retry.test.ts": {
+      "sha256": "c5852698de8e4af99f9da2f93fb40343c0f6eb7bc638900b0c636188f45fa156",
+      "reason": "Regression test covers the cross-platform retry runner used for transient CI downloads"
+    },
+    "scripts/run-with-retry.ts": {
+      "sha256": "7ee5e77b7f6f9194cfd70a209d6d6e56bb1942de4d81fff79a5c05bc88accdc3",
+      "reason": "Cross-platform bounded retry runner hardens dependency installation and Electron packaging downloads"
     },
     "scripts/run-tests.ts": {
       "sha256": "814fd072b63148ce578b093801ac8d7a7f195d00e75f4eaf43759e1b72acbdd2",

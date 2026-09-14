@@ -30,7 +30,9 @@ jobs:
           git clone --filter=blob:none https://github.com/craft-ai-agents/craft-agents-oss.git "$RUNNER_TEMP/craft-agents-oss"
           git -C "$RUNNER_TEMP/craft-agents-oss" checkout --detach d7592c481216e37c95a50dbfe08948a6987e8c74
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bun run scripts/run-with-retry.ts --attempts 4 --base-delay-ms 2000 -- bun install --frozen-lockfile
       - name: Lint
         run: bun run lint
         env:
@@ -84,7 +86,9 @@ jobs:
           bun-version: 1.3.14
       - uses: astral-sh/setup-uv@v6
       - name: Install dependencies
-        run: bun install --frozen-lockfile
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: bun run scripts/run-with-retry.ts --attempts 4 --base-delay-ms 2000 -- bun install --frozen-lockfile
       - name: Build desktop application
         env:
           MKAGENT_AUTO_UPDATE_ENABLED: ${{ matrix.target != 'mac' }}
@@ -99,7 +103,7 @@ jobs:
           if [ "${{ matrix.target }}" = "mac" ]; then
             args+=("-c.mac.identity=-" "-c.mac.hardenedRuntime=false")
           fi
-          bunx electron-builder "${args[@]}"
+          bun run ../../scripts/run-with-retry.ts --attempts 4 --base-delay-ms 5000 -- bunx electron-builder "${args[@]}"
       - name: Build headless server
         shell: bash
         run: bun run scripts/build-server.ts --output="dist/MkAgent-server-ci-${{ matrix.platform }}-${{ matrix.arch }}" --compress
