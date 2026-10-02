@@ -2,8 +2,9 @@
  * Resolves the best web search provider based on the user's LLM connection.
  *
  * Priority:
- *   1. Provider-native search (OpenAI, ChatGPT, OpenRouter, Google) — best quality
- *   2. DuckDuckGo — universal fallback, no API key required
+ *   1. MKAGENT_SEARCH_PROVIDER=youcom — explicit opt-in; keyless You.com profile
+ *   2. Provider-native search (OpenAI, ChatGPT, OpenRouter, Google) — best quality
+ *   3. DuckDuckGo — universal fallback, no API key required
  *
  * To add a new Responses API-compatible provider:
  *   1. Add a case here with the provider name and apiBase URL
@@ -15,6 +16,7 @@ import { ResponsesApiSearchProvider } from './providers/openai.ts';
 import { ChatGPTBackendSearchProvider, extractChatGptAccountId } from './providers/chatgpt.ts';
 import { GoogleSearchProvider } from './providers/google.ts';
 import { DDGSearchProvider } from './providers/ddg.ts';
+import { YouComSearchProvider } from './providers/youcom.ts';
 
 export type SearchProviderCredential =
   | { type: 'api_key'; key: string }
@@ -55,6 +57,13 @@ function getOpenAiCodexAccessToken(piAuth?: SearchProviderAuthConfig): string | 
  *   instead of a hardcoded one that may have been retired (craft-agents-oss#1023).
  */
 export function resolveSearchProvider(piAuth?: SearchProviderAuthConfig, activeModel?: string): WebSearchProvider {
+  // Explicit opt-in — routes web_search through You.com regardless of the LLM
+  // connection. Keyless free profile by default; YDC_API_KEY switches to the
+  // authenticated endpoint. Failures fall back to DuckDuckGo in createSearchTool.
+  if (process.env.MKAGENT_SEARCH_PROVIDER?.trim().toLowerCase() === 'youcom') {
+    return new YouComSearchProvider({ apiKey: process.env.YDC_API_KEY?.trim() || undefined });
+  }
+
   const provider = piAuth?.provider;
   const apiKey = getApiKey(piAuth);
   const openAiCodexAccess = getOpenAiCodexAccessToken(piAuth);

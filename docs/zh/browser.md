@@ -37,6 +37,17 @@ BrowserPaneManager
 
 两者都遵循会话权限,共用同一份网络代理。
 
+## 可选的 You.com 搜索 provider
+
+`web_search` 可以改走 [You.com](https://you.com),替代按 LLM 连接自动选择的 provider。完全 opt-in,且无需任何 API key:
+
+```bash
+export MKAGENT_SEARCH_PROVIDER=youcom   # 让 web_search 走 You.com
+export YDC_API_KEY=***                  # 可选:切换到带鉴权的完整 endpoint
+```
+
+不设置 `YDC_API_KEY` 时使用 You.com 的免费 keyless profile,只需这一个环境变量——与 DuckDuckGo fallback 一样零配置。若 You.com 请求因任何原因失败,`web_search` 会自动回退到 DuckDuckGo,endpoint 不可用时也不影响使用。取消该环境变量即恢复默认的 provider 选择逻辑。
+
 ## 工具也要受权限管
 
 `mcp__session__browser` 是会话工具:它的 handler 跑在 `packages/server-core`,用与其他工具一样的权限引擎。Browser 行为被拒会在 JSONL 上产出 `permission_requested` 事件与被拒 grant。

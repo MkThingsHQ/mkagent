@@ -8,6 +8,10 @@ All notable changes to MkAgent are documented in this file. The format follows
 
 Add user-visible changes here before running `bun run release:prepare <version>`.
 
+### Added
+
+- Added an optional You.com `web_search` provider (`MKAGENT_SEARCH_PROVIDER=youcom`), keyless by default via the You.com free profile, with an authenticated mode via `YDC_API_KEY` and automatic DuckDuckGo fallback on failure.
+
 ## [0.1.2] - 2026-09-13
 
 ### Added

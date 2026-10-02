@@ -37,6 +37,17 @@ In addition to the Browser pane, MkAgent ships two non-interactive retrieval too
 
 Both obey session permissions and reuse the same network proxy.
 
+## Optional You.com search provider
+
+`web_search` can be routed through [You.com](https://you.com) instead of the connection-native providers. It is strictly opt-in and works without any API key:
+
+```bash
+export MKAGENT_SEARCH_PROVIDER=youcom   # route web_search through You.com
+export YDC_API_KEY=***                  # optional: authenticated endpoint with the full toolset
+```
+
+Without `YDC_API_KEY`, the keyless You.com free profile is used, so the only setup is the env var itself — the same zero-key property as the DuckDuckGo fallback. If the You.com request fails for any reason, `web_search` automatically falls back to DuckDuckGo, so nothing breaks when the endpoint is unreachable. Unset the env var to return to the default provider resolution.
+
 ## Browser tools obey session permissions
 
 `mcp__session__browser` is a session tool: its handler runs in `packages/server-core` and uses the same permission engine as the rest of the session. A `deny` on a Browser action appears as a `permission_requested` event with the matching policy and a denied grant.

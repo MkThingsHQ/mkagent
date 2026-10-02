@@ -2041,6 +2041,10 @@
     "packages/shared/tests/models-pi.test.ts": {
       "sha256": "9d7f73b535013da434ad1b00498cbf23ad736269a907bbacfd1b3a2b5bf01586",
       "reason": "Craft v0.13.3 Pi model catalog and default ranking are adapted to the Pi-only MkAgent connection model"
+    },
+    "packages/pi-agent-server/src/tools/search/resolve-provider.ts": {
+      "sha256": "7708d63e071e134d12960304111c78d89ae4204e8fad5251dcf9325d49cbd623",
+      "reason": "Craft search provider resolution retains the provider-native fallback chain and adds the optional MkAgent You.com provider override"
     }
   },
   "mkOnly": {
@@ -2089,7 +2093,7 @@
       "reason": "MkAgent releases authenticate GitHub-backed dependency downloads and retry transient packaging failures"
     },
     "CHANGELOG.md": {
-      "sha256": "e178eda7b1ab884dfc745ee8babb290bdd0300ecd0e87aae687b5381c6b6e6b6",
+      "sha256": "4bbf342f6218f4a06a92a85e9ff841851a386d902141d2c8c964de2a35e17518",
       "reason": "MkAgent-specific release metadata required by the release workflow"
     },
     ".github/workflows/upstream-drift.yml": {
@@ -2299,6 +2303,14 @@
     "apps/electron/resources/release-notes/0.1.2.md": {
       "sha256": "5a0a4569fa16fe28a71674b649b3cd06d66b5470d91e3a92d8480a52c66445d9",
       "reason": "MkAgent-specific release metadata required by the release workflow"
+    },
+    "packages/pi-agent-server/src/tools/search/providers/youcom.ts": {
+      "sha256": "912d355360bf6260c8d9e803cc5b7dd0e3c23aade028ac679207b68dc726df98",
+      "reason": "Optional You.com web-search provider for the retained MkAgent Pi subprocess web_search tool"
+    },
+    "packages/pi-agent-server/src/tools/search/providers/youcom.test.ts": {
+      "sha256": "23aba4914df1e83db4749de6547fcbff7fbb6df9ac3f902ce66150dd5b969ece",
+      "reason": "Regression test for the optional You.com web-search provider not covered at the same Craft path"
     }
   },
   "deleted": {
