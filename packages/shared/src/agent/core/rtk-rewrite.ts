@@ -12,6 +12,13 @@
  *   exit 2           Deny rule — passthrough (our permission system handles)
  *   exit 3 + stdout  Ask rule — rewrite, but caller should still prompt
  *
+ * Not rewritten: excluded base commands (`rtkExcludeCommands` in config.json),
+ * and commands that start with the POSIX `command` builtin, the standard way
+ * to bypass wrappers. rtk itself rewrites `command grep` into
+ * `command rtk grep` (rtk-ai/rtk#3230), which turns the escape hatch into the
+ * thing it escapes. An absolute path (`/usr/bin/grep`) or `\grep` also skips
+ * rtk (rtk leaves those alone).
+ *
  * On any error (timeout, spawn failure, parse failure, identical output)
  * we fall through unchanged. RTK telemetry is always disabled for our
  * spawns regardless of user's rtk-side opt-in state.
@@ -20,6 +27,9 @@
 import { spawnSync } from 'node:child_process';
 
 const SPAWN_TIMEOUT_MS = 200;
+
+/** Leading words that ask for the real binary: never route them through rtk. */
+const BYPASS_PREFIXES = new Set(['command', 'builtin']);
 
 const REWRITE_EXIT_OK = 0;
 const REWRITE_EXIT_ASK = 3;
@@ -41,6 +51,8 @@ export function rewriteBashWithRtk(
   rtkPath: string | null,
   excludeCommands: string[],
   onDebug?: (msg: string) => void,
+  /** Spawn budget; tests pass a larger one for slow fake binaries. */
+  timeoutMs: number = SPAWN_TIMEOUT_MS,
 ): RtkRewriteResult {
   if (toolName !== 'Bash' || !rtkPath) {
     return { modified: false, input };
@@ -50,14 +62,14 @@ export function rewriteBashWithRtk(
   if (!command) return { modified: false, input };
 
   const baseCommand = command.trim().split(/\s+/)[0] ?? '';
-  if (baseCommand && excludeCommands.includes(baseCommand)) {
+  if (baseCommand && (BYPASS_PREFIXES.has(baseCommand) || excludeCommands.includes(baseCommand))) {
     return { modified: false, input };
   }
 
   try {
     const result = spawnSync(rtkPath, ['rewrite', command], {
       encoding: 'utf-8',
-      timeout: SPAWN_TIMEOUT_MS,
+      timeout: timeoutMs,
       env: { ...process.env, RTK_TELEMETRY_DISABLED: '1' },
     });
 

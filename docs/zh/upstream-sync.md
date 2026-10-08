@@ -7,23 +7,18 @@ MkAgent 的架构、UI 与运行时继承自 [Craft Agents OSS](https://github.c
 | 项 | 值 |
 |---|---|
 | 仓库 | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.12.1` |
-| Commit | `d7592c481216e37c95a50dbfe08948a6987e8c74` |
+| Tag | `v0.14.1` |
+| Commit | `332533f3096d12500012fe089c3f155e32af1c44` |
 
 ## 最近一次上游评估
 
 | 项 | 值 |
 |---|---|
-| 评估日期 | `2026-09-13` |
-| 上游 Tag | `v0.13.3` |
-| 上游 Commit | `e8963854c3679edcceb105a42537a06749e6cb64` |
+| 评估日期 | `2026-10-08` |
+| 上游 Tag | `v0.14.1` |
+| 上游 Commit | `332533f3096d12500012fe089c3f155e32af1c44` |
 
-审计基线仍保持在 `v0.12.1`：MkAgent 只回迁保留的 Pi/Lite 行为，不会因为
-后续版本主要新增了已裁剪产品功能，就宣称与其逐字节对齐。从 `v0.13.0`
-到 `v0.13.3`，本次保留的同步范围包括打包运行时判断、避免并发冲突的
-原子写入、仅识别语义化版本的 release notes，以及完整的 Pi 0.85.1
-重试、隔离设置与模型目录更新。Pages、Projects、Automations、Sources/MCP、
-Viewer/公开分享、消息系统和 Claude Agent SDK 继续排除。
+审计基线已更新到 `v0.14.1`，用于逐文件记录保留、修改与裁剪的范围，并不表示全量功能对齐。本次同步 Pi 0.87.1、模型目录、上下文占用与压缩、计划执行恢复、精确权限记忆与子代理权限约束、连接凭据测试、移动端输入、浏览器清理、RTK 与 Git 上下文。决策模型和 Guarded 模式按本次约定暂缓；Pages、Projects、Automations、Sources/MCP、Viewer/公开分享、消息集成和 Claude Agent SDK 仍不引入。
 
 当上游发布值得评估的新 tag 时:
 
@@ -43,7 +38,7 @@ MkAgent 工作期间,参考 checkout(`../craft-agents-oss`、`../echo`、`../xag
   │                                                                  │
   │ 2. 更新 audit                                                      │
   │    bun run audit:craft-reuse                                      │
-  │       期望:96 % 同路径 / 58 % 逐字一致                            │
+  │       期望:所有差异均已审阅并登记                            │
   │    bun run lint:craft-test-coverage                              │
   │       期望:无解释缺失 = 0                                         │
   │                                                                  │

@@ -948,10 +948,9 @@ export default function App() {
       // Track activity for stale session watchdog
       trackSessionActivity(sessionId)
 
-      // Dispatch window event when compaction completes
-      // This allows FreeFormInput to sequence the plan execution message after compaction
-      // Note: markCompactionComplete is called on the backend (sessions.ts) to ensure
-      // it happens even if CMD+R occurs during compaction
+      // Dispatch a wakeup when compaction completes. FreeFormInput still checks
+      // persisted readiness and claims dispatch atomically; this event alone is
+      // not proof that Accept & Compact may execute the plan.
       if (event.type === 'info' && event.statusType === 'compaction_complete') {
         window.dispatchEvent(new CustomEvent('craft:compaction-complete', {
           detail: { sessionId }

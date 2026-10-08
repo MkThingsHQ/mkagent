@@ -100,7 +100,7 @@ export interface ISessionManager {
     planPath: string,
     draftInputSnapshot?: string,
   ): Promise<void>
-  markPendingPlanExecutionDispatched(sessionId: string): Promise<void>
+  markPendingPlanExecutionDispatched(sessionId: string): Promise<boolean>
   clearPendingPlanExecution(sessionId: string): Promise<void>
   getPendingPlanExecution(sessionId: string): {
     planPath: string

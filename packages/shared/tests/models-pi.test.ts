@@ -31,8 +31,10 @@ describe('models-pi filtering', () => {
   it('returns current DeepSeek models from the Pi SDK catalog', () => {
     const models = getPiModelsForAuthProvider('deepseek');
     const ids = models.map(m => m.id);
-    expect(ids).toContain('pi/deepseek-v4-flash');
+    // Pi 0.86.0 replaced the retired `deepseek-v4-flash` alias with `deepseek-flash`.
+    expect(ids).toContain('pi/deepseek-flash');
     expect(ids).toContain('pi/deepseek-v4-pro');
+    expect(ids).not.toContain('pi/deepseek-v4-flash');
   });
 
   it('includes Moonshot AI in the Pi API key provider list with human-readable labels', () => {
@@ -50,9 +52,14 @@ describe('models-pi filtering', () => {
     expect(bedrockIds).toContain('pi/us.anthropic.claude-opus-5');
   });
 
-  it('returns the DeepSeek V4 Flash vision model from the Pi SDK catalog', () => {
-    const ids = getPiModelsForAuthProvider('deepseek').map(m => m.id);
-    expect(ids).toContain('pi/deepseek-v4-flash-vision-exp');
+  it('returns Claude Opus 5.5 from the Pi SDK catalog for Anthropic and Bedrock', () => {
+    // Added in Pi SDK 0.87.1 (adaptive thinking, 1M context). Bedrock exposes it
+    // only as regional inference profiles (us./eu./global./au./jp.).
+    expect(getPiModelsForAuthProvider('anthropic').map(m => m.id)).toContain('pi/claude-opus-5-5');
+    const bedrockIds = getPiModelsForAuthProvider('amazon-bedrock').map(m => m.id);
+    expect(bedrockIds).toContain('pi/us.anthropic.claude-opus-5-5');
+    expect(bedrockIds).toContain('pi/eu.anthropic.claude-opus-5-5');
+    expect(bedrockIds).toContain('pi/global.anthropic.claude-opus-5-5');
   });
 
   it('returns GPT-6 Astra from the Pi SDK catalog for OpenAI API keys and ChatGPT accounts', () => {

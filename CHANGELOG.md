@@ -8,6 +8,22 @@ All notable changes to MkAgent are documented in this file. The format follows
 
 Add user-visible changes here before running `bun run release:prepare <version>`.
 
+## [0.1.3] - 2026-10-08
+
+### Changed
+
+- Selectively synchronized retained Pi/Lite functionality from Craft Agents OSS v0.14.1; Decision models and Guarded mode remain deferred.
+- Upgraded Pi to 0.87.1, refreshed model presets, and improved utility-model fallback and delivery of queued steering messages.
+- Added canonical context occupancy, clearer compaction status, and reliable pending-plan dispatch after manual compaction.
+- Improved mobile composer sizing, focused-caret scrolling, browser popup cleanup, and nested-repository Git context.
+- Added RTK 0.44 compatibility checks, command exclusions, and an exact-output escape hatch.
+
+### Fixed
+
+- Made remembered tool approvals respect exact commands and write folders, reject unsafe argument variants, and clamp child-agent permissions to the parent mode.
+- Reused saved credentials when testing edited connections with masked API keys.
+- Preserved configuration-directory overrides and bounded network debug logs by default.
+
 ## [0.1.2] - 2026-09-13
 
 ### Added
@@ -54,6 +70,7 @@ Add user-visible changes here before running `bun run release:prepare <version>`
 - Local session search, flags, archives, import, export, and branching.
 
 [Unreleased]: https://github.com/MkThingsHQ/mkagent/releases
+[0.1.3]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.1.3
 [0.1.2]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.1.2
 [0.1.1]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.1.1
 [0.1.0]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.1.0

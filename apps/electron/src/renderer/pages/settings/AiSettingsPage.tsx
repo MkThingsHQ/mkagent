@@ -1,3 +1,4 @@
+import { RtkUpdateDialog, type RtkStatusInfo } from '@/components/RtkUpdateDialog'
 /**
  * AiSettingsPage
  *
@@ -613,7 +614,8 @@ export default function AiSettingsPage() {
   const [extendedPromptCache, setExtendedPromptCache] = useState(false)
   const [enable1MContext, setEnable1MContext] = useState(false)
   const [rtkEnabled, setRtkEnabled] = useState(false)
-  const [rtkStatus, setRtkStatus] = useState<{ installed: boolean; path: string | null; version: string | null } | null>(null)
+  const [rtkStatus, setRtkStatus] = useState<RtkStatusInfo | null>(null)
+  const [rtkUpdateOpen, setRtkUpdateOpen] = useState(false)
   const [rtkRechecking, setRtkRechecking] = useState(false)
   const [rtkGain, setRtkGain] = useState<{ totalCommands: number; totalInput: number; totalOutput: number; totalSaved: number; avgSavingsPct: number; totalTimeMs: number; avgTimeMs: number } | null>(null)
 
@@ -1107,10 +1109,27 @@ export default function AiSettingsPage() {
                     <>
                       <SettingsToggle
                         label={t("settings.ai.rtk.title")}
-                        description={t("settings.ai.rtk.description")}
+                        description={rtkStatus.outdated ? t("settings.ai.rtk.outdatedDesc", { min: rtkStatus.minSafeVersion }) : t("settings.ai.rtk.description")}
                         checked={rtkEnabled}
                         onCheckedChange={handleRtkToggle}
                       />
+                      {rtkStatus.outdated && (
+                        <SettingsRow
+                          label={t("settings.ai.rtk.outdated", { version: rtkStatus.version ?? '?' })}
+                          description={t("settings.ai.rtk.outdatedDesc", { min: rtkStatus.minSafeVersion })}
+                        >
+                          <Button
+                            size="sm"
+                            onClick={() => setRtkUpdateOpen(true)}
+                            className="bg-background shadow-minimal text-foreground hover:bg-foreground/5 rounded-lg"
+                          >
+                            {t("settings.ai.rtk.update")}
+                          </Button>
+                        </SettingsRow>
+                      )}
+                      {rtkStatus.outdated && (
+                        <RtkUpdateDialog open={rtkUpdateOpen} onOpenChange={setRtkUpdateOpen} status={rtkStatus} onStatusChange={setRtkStatus} />
+                      )}
                       {rtkEnabled && rtkGain && rtkGain.totalCommands > 0 && (
                         <div className="px-4 pb-4 -mt-1">
                           <div className="flex items-center justify-between text-xs text-foreground/60">

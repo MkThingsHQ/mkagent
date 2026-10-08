@@ -19,26 +19,36 @@
  */
 @import "../../electron/src/renderer/index.css";
 
-/*
- * Web UI responsive layout is handled by container queries and isAutoCompact
- * in the shared renderer components. No webui-specific CSS overrides needed.
- *
- * The only webui-specific styles are safe-area insets for mobile browsers.
- */
-
-/* Safe area insets for mobile browsers (notch, home indicator) */
+/* Shared components own responsive layout. The web host alone follows the
+ * visible viewport (keyboard resize/pan), via viewport.ts. Dynamic viewport units
+ * are the pre-bootstrap/no-VisualViewport fallback, not the keyboard solution. */
 html, body, #root {
   overflow: hidden;
-  max-width: 100%;
 }
 
-body {
-  padding-bottom: env(safe-area-inset-bottom, 0px);
+html {
+  --webui-css-zoom: 1;
 }
 
-/* 120% zoom on mobile viewports for better readability */
+#root {
+  position: fixed;
+  top: var(--webui-viewport-top, 0px);
+  left: var(--webui-viewport-left, 0px);
+  width: var(--webui-viewport-width, calc(100vw / var(--webui-css-zoom)));
+  height: var(--webui-viewport-height, calc(100dvh / var(--webui-css-zoom)));
+  box-sizing: border-box;
+  /* Insets are physical viewport CSS pixels, like VisualViewport dimensions.
+   * Convert once for the zoomed root; descendants already sit inside this box. */
+  padding-top: calc(env(safe-area-inset-top, 0px) / var(--webui-css-zoom));
+  padding-right: calc(env(safe-area-inset-right, 0px) / var(--webui-css-zoom));
+  padding-bottom: calc(env(safe-area-inset-bottom, 0px) / var(--webui-css-zoom));
+  padding-left: calc(env(safe-area-inset-left, 0px) / var(--webui-css-zoom));
+}
+
+/* Preserve the current mobile readability zoom; sizing converts it exactly once. */
 @media (max-width: 768px) {
   html {
     zoom: 1.2;
+    --webui-css-zoom: 1.2;
   }
 }

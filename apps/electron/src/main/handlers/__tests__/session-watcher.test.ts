@@ -93,6 +93,11 @@ function makeCtx(clientId: string, workspaceId = 'ws-1'): RequestContext {
 // Tests
 // ---------------------------------------------------------------------------
 
+async function waitForNotification(check: () => boolean): Promise<void> {
+  const deadline = Date.now() + 2000
+  while (!check() && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 20))
+}
+
 describe('session file watcher isolation', () => {
   afterEach(() => {
     for (const dir of tempDirs) {
@@ -141,7 +146,8 @@ describe('session file watcher isolation', () => {
 
     // Trigger a change in s2
     writeFileSync(join(dir2, 'data.json'), '{}')
-    await new Promise(r => setTimeout(r, 300))
+    // macOS FSEvents may deliver later than the debounce window; wait for the actual event.
+    await waitForNotification(() => pushCalls.some(p => p.target?.clientId === 'client-b'))
 
     // Client B should still receive notifications
     const clientBAfter = pushCalls.filter(p => p.target?.clientId === 'client-b')

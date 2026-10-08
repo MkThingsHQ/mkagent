@@ -187,25 +187,26 @@ export function getModelsForProviderType(
 }
 
 export const PI_PREFERRED_DEFAULTS: Record<string, string[]> = {
-  anthropic: [
-    'claude-opus-4-8',
-    'claude-opus-5',
-    'claude-opus-4-7',
-    'claude-opus-4-6',
-    'claude-fable-5-1',
-    'claude-fable-5',
-    'claude-sonnet-5',
-    'claude-sonnet-4-6',
-    'claude-haiku-4-5',
-  ],
-  'openai-codex': ['gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.2', 'gpt-5.1', 'gpt-5', 'o4-mini', 'o3', 'gpt-4o'],
+  // TODO(opus-4.6-sunset): drop 'claude-opus-4-6' from anthropic and amazon-bedrock
+  // when Opus 4.6 is deprecated.
+  // Opus 5.5 (in the Pi catalog since SDK 0.87.1) is the default for new
+  // connections, matching the Claude Agent SDK path; older Opus generations follow.
+  anthropic: ['claude-opus-5-5', 'claude-opus-5', 'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6', 'claude-fable-5-1', 'claude-fable-5', 'claude-sonnet-5', 'claude-sonnet-4-6', 'claude-haiku-4-5'],
+  // GPT-6 Astra entered the Pi catalog in SDK 0.85.1 for both the API-key and
+  // the ChatGPT-account (openai-codex) flows; new connections default to it.
   openai: ['gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.2', 'gpt-5.1', 'gpt-5', 'o4-mini', 'o3', 'gpt-4o'],
+  'openai-codex': ['gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.2', 'gpt-5.1', 'gpt-5', 'o4-mini', 'o3', 'gpt-4o'],
   google: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3-flash-preview', 'gemini-3.1-flash-lite-preview'],
-  deepseek: ['deepseek-v4-pro', 'deepseek-v4-flash'],
+  // Pi 0.86.0 replaced the retired `deepseek-v4-flash` alias (and the experimental
+  // vision variant) with `deepseek-flash`; stored ids migrate via DEPRECATED_MODEL_REPLACEMENTS.
+  deepseek: ['deepseek-v4-pro', 'deepseek-flash'],
+  // Kimi has no mini/flash-named model, so findSmallModel falls back to the
+  // last entry of the connection's model list; keep the cheaper K2.6 second
+  // so 3-tier setups get a sensible summarizer default.
   moonshotai: ['kimi-k3', 'kimi-k2.6'],
   'moonshotai-cn': ['kimi-k3', 'kimi-k2.6'],
   'kimi-coding': ['k3', 'kimi-for-coding', 'kimi-for-coding-highspeed'],
-  'amazon-bedrock': ['claude-opus-4-8', 'claude-opus-5', 'claude-opus-4-7', 'claude-opus-4-6', 'claude-sonnet-5', 'claude-sonnet-4-6', 'claude-haiku-4-5'],
+  'amazon-bedrock': ['claude-opus-5-5', 'claude-opus-5', 'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6', 'claude-sonnet-5', 'claude-sonnet-4-6', 'claude-haiku-4-5'],
 };
 
 export function getDefaultModelsForConnection(

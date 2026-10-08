@@ -628,12 +628,16 @@ export async function markCompactionComplete(
 export async function markPendingPlanExecutionDispatched(
   workspaceRootPath: string,
   sessionId: string
-): Promise<void> {
+): Promise<boolean> {
   const session = loadSession(workspaceRootPath, sessionId);
-  if (!session?.pendingPlanExecution) return;
+  const pending = session?.pendingPlanExecution;
+  if (!session || !pending || pending.awaitingCompaction || pending.executionDispatched) {
+    return false;
+  }
 
-  session.pendingPlanExecution.executionDispatched = true;
+  pending.executionDispatched = true;
   await saveSession(session);
+  return true;
 }
 
 /**
@@ -646,7 +650,7 @@ export async function clearPendingPlanExecution(
   sessionId: string
 ): Promise<void> {
   const session = loadSession(workspaceRootPath, sessionId);
-  if (!session) return;
+  if (!session?.pendingPlanExecution) return;
 
   delete session.pendingPlanExecution;
   await saveSession(session);

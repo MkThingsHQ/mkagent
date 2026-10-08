@@ -79,7 +79,7 @@ describe('shouldPromptInAskMode', () => {
   })
 
   it('auto-allows whitelisted file writes', () => {
-    const manager = { ...permissionManager, isCommandWhitelisted: (command: string) => command === 'Write' }
+    const manager = { ...permissionManager, isCommandWhitelisted: (command: string) => command === 'write:/tmp' }
     expect(shouldPromptInAskMode('Write', { file_path: '/tmp/a' }, manager, context)).toBeNull()
   })
 
@@ -88,7 +88,7 @@ describe('shouldPromptInAskMode', () => {
   })
 
   it('auto-allows whitelisted non-dangerous Bash commands', () => {
-    const manager = { ...permissionManager, isCommandWhitelisted: (command: string) => command === 'npm' }
+    const manager = { ...permissionManager, isCommandWhitelisted: (command: string) => command === 'npm test' }
     expect(shouldPromptInAskMode('Bash', { command: 'npm test' }, manager, context)).toBeNull()
   })
 

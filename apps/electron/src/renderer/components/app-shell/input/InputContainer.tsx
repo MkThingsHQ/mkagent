@@ -6,10 +6,11 @@ import { StructuredInput } from './StructuredInput'
 import type { RichTextInputHandle } from '@/components/ui/rich-text-input'
 import { useOptionalAppShellContext } from '@/context/AppShellContext'
 import type { StructuredInputState, StructuredResponse, InputMode } from './structured/types'
-import { getStructuredInputMaxHeight } from './structured-height'
+import { getComposerMaxHeight } from './composer-height'
+import { useInputAvailableHeight } from '@/hooks/useInputAvailableHeight'
 import { BackgroundFinishedChip } from '../BackgroundFinishedChip'
 
-interface InputContainerProps extends Omit<FreeFormInputProps, 'inputRef'> {
+interface InputContainerProps extends Omit<FreeFormInputProps, 'inputRef' | 'maxHeight'> {
   /** Structured input state - when present, shows structured UI instead of freeform */
   structuredInput?: StructuredInputState
   /** Callback when user responds to structured input */
@@ -55,15 +56,14 @@ export function InputContainer({
   const isFocusedPanel = appShellContext?.isFocusedPanel ?? true
   const mode: InputMode = structuredInput ? 'structured' : 'freeform'
   const measureRef = React.useRef<HTMLDivElement>(null)
+  const containerRef = React.useRef<HTMLDivElement>(null)
+  const availableHeight = useInputAvailableHeight(containerRef)
   // Separate height states: freeform uses callback, structured uses measuring div
   // Use smaller fallback height for compact mode
   const [freeformHeight, setFreeformHeight] = React.useState<number>(
     compactMode ? FALLBACK_HEIGHTS['freeform-compact'] : FALLBACK_HEIGHTS.freeform
   )
   const [structuredHeight, setStructuredHeight] = React.useState<number | null>(null)
-  const [viewportHeight, setViewportHeight] = React.useState<number>(() =>
-    typeof window === 'undefined' ? 0 : window.innerHeight
-  )
   const [isFocused, setIsFocused] = React.useState(false)
   const hasInitializedRef = React.useRef(false)
 
@@ -141,15 +141,6 @@ export function InputContainer({
     setIsFocused(focused)
   }, [])
 
-  React.useEffect(() => {
-    if (typeof window === 'undefined') return
-
-    const updateViewportHeight = () => setViewportHeight(window.innerHeight)
-    updateViewportHeight()
-    window.addEventListener('resize', updateViewportHeight)
-    return () => window.removeEventListener('resize', updateViewportHeight)
-  }, [])
-
   // Use ResizeObserver only for structured inputs (freeform uses onHeightChange callback)
   React.useEffect(() => {
     // Skip for freeform - it uses the onHeightChange callback
@@ -177,15 +168,13 @@ export function InputContainer({
     return () => observer.disconnect()
   }, [contentKey, mode])
 
-  // Use appropriate height source based on mode. Structured prompts are clamped
-  // to viewport-aware bounds; their internals scroll so action buttons stay reachable.
+  // Both modes share viewport/parent bounds. Their content scrolls internally
+  // while action rows stay outside the scroll region.
   const rawTargetHeight = mode === 'freeform'
     ? freeformHeight
     : (structuredHeight ?? FALLBACK_HEIGHTS[structuredInput?.type ?? 'freeform'] ?? FALLBACK_HEIGHTS.freeform)
-  const structuredMaxHeight = getStructuredInputMaxHeight(viewportHeight)
-  const targetHeight = mode === 'freeform'
-    ? rawTargetHeight
-    : Math.min(rawTargetHeight, structuredMaxHeight)
+  const maxHeight = getComposerMaxHeight(availableHeight, mode)
+  const targetHeight = Math.min(rawTargetHeight, maxHeight)
 
   // Motion value for frame-synchronized height animation
   const heightMotionValue = useMotionValue(targetHeight)
@@ -203,10 +192,12 @@ export function InputContainer({
   // Animate height changes using motion value
   React.useEffect(() => {
     if (shouldAnimateHeight) {
-      animate(heightMotionValue, targetHeight, {
+      const animation = animate(heightMotionValue, targetHeight, {
         duration: TRANSITION_DURATION,
         ease: TRANSITION_EASE
       })
+      // A keyboard resize can replace a transition before its animation settles.
+      return () => animation.stop()
     } else {
       // Instant update - no animation
       heightMotionValue.set(targetHeight)
@@ -229,6 +220,7 @@ export function InputContainer({
           isCollapsedInCompact={isCollapsedInCompact}
           onRequestExpand={handleRequestExpand}
           inputRef={forMeasuring ? undefined : textareaRef}
+          maxHeight={maxHeight}
           onHeightChange={forMeasuring ? undefined : handleFreeformHeightChange}
           onFocusChange={forMeasuring ? undefined : handleFocusChange}
           unstyled
@@ -245,7 +237,7 @@ export function InputContainer({
   }
 
   return (
-    <div className="relative">
+    <div ref={containerRef} className="relative">
       {/* Hidden measuring div - only needed for structured inputs (freeform uses onHeightChange) */}
       {mode !== 'freeform' && (
         <div
@@ -268,7 +260,7 @@ export function InputContainer({
         )}
         style={{
           height: heightMotionValue,
-          ...(mode !== 'freeform' ? { maxHeight: structuredMaxHeight } : {}),
+          maxHeight,
         }}
       >
         {/* Crossfading content - freeform anchored to bottom (for auto-grow), others fill */}

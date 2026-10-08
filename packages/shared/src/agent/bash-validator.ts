@@ -125,18 +125,25 @@ interface ScriptNode extends ASTNode {
 // ============================================================
 
 /**
- * Command arguments that execute subcommands or perform writes.
- * These are program-level features (not shell constructs) that the AST parser
- * cannot detect — e.g., `find -exec` runs arbitrary commands despite `find`
- * being a read-only search tool.
+ * Program-level argument inspectors. Some read-only tools gain write or execute
+ * powers through their own arguments (`find -exec`, awk `system()`, `sed -i`,
+ * `sort -o`, `gh api -X DELETE`). The shell AST cannot see these, so each
+ * inspector reads the parsed argv and returns a reason when the invocation is
+ * not read-only.
  *
- * Checked BEFORE the regex allowlist pattern match in validateCommand().
+ * Checked BEFORE the regex allowlist pattern match in validateCommand(). They
+ * live in code rather than in default.json because an installed default.json
+ * only ever gains patterns on upgrade (ensureDefaultPermissions), so a narrowed
+ * pattern would never reach existing installs.
  */
-const DANGEROUS_COMMAND_ARGS: Record<string, Set<string>> = {
-  find: new Set(['-exec', '-execdir', '-ok', '-okdir', '-delete']),
-};
+type ArgumentInspector = (commandParts: string[]) => string | null;
 
-const AWK_COMMANDS = new Set(['awk', 'gawk', 'mawk', 'nawk']);
+const FIND_DANGEROUS_ARGS = new Set(['-exec', '-execdir', '-ok', '-okdir', '-delete']);
+
+function getDangerousFindReason(commandParts: string[]): string | null {
+  const arg = commandParts.slice(1).find(part => FIND_DANGEROUS_ARGS.has(part));
+  return arg ? `"${arg}" allows arbitrary command execution or file modification within "find"` : null;
+}
 
 function getDangerousAwkReason(commandParts: string[]): string | null {
   // commandParts[0] is awk/gawk/mawk/nawk - inspect script/args only
@@ -158,6 +165,223 @@ function getDangerousAwkReason(commandParts: string[]): string | null {
 
   return null;
 }
+
+/**
+ * `s<d>pattern<d>replacement<d>flags` with any delimiter; the flags are captured.
+ * Bodies may contain newlines: bash-parser turns `\n` inside quotes into a real one.
+ */
+const SED_SUBSTITUTION = /s([^\\\n])((?:\\.|(?!\1)[^\\])*)\1((?:\\.|(?!\1)[^\\])*)\1([a-zA-Z0-9]*)/g;
+/** `y<d>source<d>dest<d>` transliteration: rewrites the pattern space only. */
+const SED_TRANSLITERATE = /y([^\\\n])((?:\\.|(?!\1)[^\\])*)\1((?:\\.|(?!\1)[^\\])*)\1/g;
+/** `/regex/` line addresses (optionally with the I/M modifiers). */
+const SED_REGEX_ADDRESS = /\/(?:\\.|[^/\\])*\/[IM]*/g;
+/**
+ * `:label` definitions and `b`/`t`/`T` branches to a label, possibly after an
+ * address or `!` (`$!ba`). Harmless, and common in multi-line idioms.
+ */
+const SED_LABELS_AND_BRANCHES = /(^|[;{}\s!\d$,])(?::\w+|[btT]\w*)/g;
+/** What may remain once addresses, substitutions and labels are gone: line numbers and print-style commands. */
+const SED_READ_ONLY_REMAINDER = /^[\s\d,$~+!;{}pPl=nNdDgGhHxqQzFv]*$/;
+
+function getUnsafeSedScriptReason(script: string): string | null {
+  let unsafeFlags: string | null = null;
+  const withoutSubstitutions = script.replace(SED_SUBSTITUTION, (_match, _delimiter, _pattern, _replacement, flags: string) => {
+    if (/[we]/.test(flags)) unsafeFlags = flags;
+    return ' ';
+  });
+  if (unsafeFlags !== null) {
+    return (unsafeFlags as string).includes('e')
+      ? 'sed s///e executes the pattern space as a shell command'
+      : 'sed s///w writes to a file';
+  }
+  const remainder = withoutSubstitutions
+    .replace(SED_TRANSLITERATE, ' ')
+    .replace(SED_REGEX_ADDRESS, ' ')
+    .replace(SED_LABELS_AND_BRANCHES, '$1 ');
+  if (!SED_READ_ONLY_REMAINDER.test(remainder)) {
+    return 'sed script contains commands that may write files or run programs (only print-style commands are allowed)';
+  }
+  return null;
+}
+
+/**
+ * sed is read-only only when it prints: -i/--in-place edits files, `w`/`W` and
+ * s///w write files, `e` and s///e (GNU) run programs, and -f/--file load a
+ * script that cannot be inspected.
+ */
+function getDangerousSedReason(commandParts: string[]): string | null {
+  const args = commandParts.slice(1);
+  const scripts: string[] = [];
+  let scriptFromOption = false;
+  let operands = 0;
+  const addOperand = (operand: string) => {
+    // The first operand is the script unless -e/--expression supplied one; the rest are input files.
+    if (!scriptFromOption && operands === 0) scripts.push(operand);
+    operands++;
+  };
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]!;
+    if (arg === '--') {
+      args.slice(i + 1).forEach(addOperand);
+      break;
+    }
+    if (arg.startsWith('--')) {
+      const eq = arg.indexOf('=');
+      const name = eq === -1 ? arg : arg.slice(0, eq);
+      const inlineValue = eq === -1 ? undefined : arg.slice(eq + 1);
+      if (name === '--in-place') return 'sed --in-place edits files';
+      if (name === '--file') return 'sed --file runs a script that cannot be inspected';
+      if (name === '--expression') {
+        scriptFromOption = true;
+        scripts.push(inlineValue ?? args[++i] ?? '');
+      } else if (name === '--line-length' && inlineValue === undefined && /^\d+$/.test(args[i + 1] ?? '')) {
+        i++;
+      }
+      continue;
+    }
+    if (arg.startsWith('-') && arg.length > 1) {
+      for (let j = 1; j < arg.length; j++) {
+        const flag = arg[j];
+        if (flag === 'i') return 'sed -i edits files in place';
+        if (flag === 'f') return 'sed -f runs a script that cannot be inspected';
+        if (flag === 'e') {
+          scriptFromOption = true;
+          scripts.push(arg.slice(j + 1) || args[++i] || '');
+          break;
+        }
+        if (flag === 'l') {
+          // GNU: -l N (line-wrap length). BSD: -l takes no value.
+          if (j === arg.length - 1 && /^\d+$/.test(args[i + 1] ?? '')) i++;
+          break;
+        }
+      }
+      continue;
+    }
+    addOperand(arg);
+  }
+
+  for (const script of scripts) {
+    const reason = getUnsafeSedScriptReason(script);
+    if (reason) return reason;
+  }
+  return null;
+}
+
+/** sort writes files with -o/--output and runs a program with --compress-program. */
+function getDangerousSortReason(commandParts: string[]): string | null {
+  const args = commandParts.slice(1);
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]!;
+    if (arg === '--') break;
+    if (arg.startsWith('--')) {
+      const name = arg.split('=', 1)[0];
+      if (name === '--output') return 'sort --output writes to a file';
+      if (name === '--compress-program') return 'sort --compress-program runs an external program';
+      continue;
+    }
+    if (arg.startsWith('-') && arg.length > 1) {
+      for (let j = 1; j < arg.length; j++) {
+        const flag = arg[j]!;
+        if (flag === 'o') return 'sort -o writes to a file';
+        // These take a value: the rest of the cluster, or the next argument.
+        if ('ktST'.includes(flag)) {
+          if (j === arg.length - 1) i++;
+          break;
+        }
+      }
+    }
+  }
+  return null;
+}
+
+/** `gh api` long options that take a value (`--name value` or `--name=value`). */
+const GH_API_VALUE_OPTIONS = new Set(['cache', 'field', 'header', 'hostname', 'input', 'jq', 'method', 'preview', 'raw-field', 'template']);
+/** `gh api` short options that take a value (`-X value` or `-Xvalue`), by long name. */
+const GH_API_VALUE_FLAGS: Record<string, string> = {
+  F: 'field', H: 'header', X: 'method', f: 'raw-field', p: 'preview', q: 'jq', t: 'template',
+};
+
+/** Split one `gh api` option into its long name and value, consuming the next argument when needed. */
+function readGhApiOption(args: string[], index: number): { name: string; value: string; next: number } | null {
+  const arg = args[index]!;
+  if (arg.startsWith('--')) {
+    const eq = arg.indexOf('=');
+    const name = eq === -1 ? arg.slice(2) : arg.slice(2, eq);
+    if (!GH_API_VALUE_OPTIONS.has(name)) return null;
+    return eq === -1
+      ? { name, value: args[index + 1] ?? '', next: index + 1 }
+      : { name, value: arg.slice(eq + 1), next: index };
+  }
+  // Boolean flags (-i) may be clustered in front of a value flag: -iX DELETE, -iXDELETE.
+  let j = 1;
+  while (j < arg.length && !(arg[j]! in GH_API_VALUE_FLAGS)) j++;
+  if (j >= arg.length) return null;
+  const name = GH_API_VALUE_FLAGS[arg[j]!]!;
+  return j + 1 < arg.length
+    ? { name, value: arg.slice(j + 1), next: index }
+    : { name, value: args[index + 1] ?? '', next: index + 1 };
+}
+
+/**
+ * `gh api` is read-only only for GET requests: -X/--method picks the method, and
+ * -f/-F/--field/--raw-field/--input switch the default from GET to POST.
+ * GraphQL always goes over POST, so it is judged by its query instead.
+ */
+function getDangerousGhReason(commandParts: string[]): string | null {
+  if (commandParts[1] !== 'api') return null;
+  const args = commandParts.slice(2);
+  const methods: string[] = [];
+  const fields: string[] = [];
+  let usesInput = false;
+  let endpoint: string | undefined;
+
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i]!;
+    if (!arg.startsWith('-') || arg === '-') {
+      endpoint ??= arg;
+      continue;
+    }
+    const option = readGhApiOption(args, i);
+    if (!option) continue;
+    i = option.next;
+    const { name, value } = option;
+
+    if (name === 'method') methods.push(value.toUpperCase());
+    else if (name === 'field' || name === 'raw-field') fields.push(value);
+    else if (name === 'input') usesInput = true;
+    else if (name === 'header' && /x-http-method|method-override/i.test(value)) {
+      return 'gh api method-override header changes the request method';
+    }
+  }
+
+  if (endpoint === 'graphql') {
+    if (usesInput) return 'gh api graphql --input sends a query that cannot be inspected';
+    if (fields.some(field => /^query=@/.test(field))) return 'gh api graphql reads the query from a file that cannot be inspected';
+    if (fields.some(field => /\bmutation\b/i.test(field))) return 'gh api graphql mutation changes remote state';
+    return null;
+  }
+
+  const mutating = methods.find(method => method !== 'GET' && method !== 'HEAD');
+  if (mutating) return `gh api -X ${mutating} changes remote state`;
+  if (methods.length === 0 && (fields.length > 0 || usesInput)) {
+    return 'gh api sends a POST request when -f/-F/--field/--raw-field/--input are used without --method GET';
+  }
+  return null;
+}
+
+const ARGUMENT_INSPECTORS: Record<string, ArgumentInspector> = {
+  find: getDangerousFindReason,
+  awk: getDangerousAwkReason,
+  gawk: getDangerousAwkReason,
+  mawk: getDangerousAwkReason,
+  nawk: getDangerousAwkReason,
+  sed: getDangerousSedReason,
+  gsed: getDangerousSedReason,
+  sort: getDangerousSortReason,
+  gsort: getDangerousSortReason,
+  gh: getDangerousGhReason,
+};
 
 // ============================================================
 // Validation Logic
@@ -197,6 +421,33 @@ export function validateBashCommand(
     ...result,
     subcommandResults: subcommandResults.length > 0 ? subcommandResults : undefined,
   };
+}
+
+/**
+ * The argv of `command` when it is exactly one plain command: no `&&`/`||`/`;`/`|`
+ * chains, subshells, background jobs, redirects, environment assignments or
+ * expansions. `null` for anything else, including parse errors.
+ *
+ * For decisions about one command that must not carry over to whatever else is
+ * chained onto it (Ask-mode "Always Allow").
+ */
+export function parseSimpleCommand(command: string): string[] | null {
+  let ast: ScriptNode;
+  try {
+    ast = bashParser(command) as ScriptNode;
+  } catch {
+    return null;
+  }
+  if (ast.commands.length !== 1 || ast.commands[0]?.type !== 'Command') return null;
+  const node = ast.commands[0] as CommandNode;
+  if (node.async || !node.name || node.prefix?.length || checkWordForExpansions(node.name)) return null;
+
+  const argv = [node.name.text];
+  for (const item of node.suffix ?? []) {
+    if (item.type !== 'Word' || checkWordForExpansions(item as WordNode)) return null;
+    argv.push((item as WordNode).text);
+  }
+  return argv;
 }
 
 /**
@@ -365,51 +616,15 @@ function validateCommand(
   // Check for command arguments that enable sub-command execution or writes.
   // e.g., `find -exec touch file \;` — the `-exec` flag runs arbitrary commands.
   // These are program-level features invisible to the shell AST.
-  const cmdName = node.name?.text;
-  if (cmdName) {
-    const normalizedCmd = cmdName.toLowerCase();
-
-    if (AWK_COMMANDS.has(normalizedCmd)) {
-      const awkReason = getDangerousAwkReason(commandParts);
-      if (awkReason) {
-        const subResult: SubcommandResult = {
-          command: commandParts.join(' '),
-          allowed: false,
-          reason: awkReason,
-        };
-        results.push(subResult);
-        return {
-          allowed: false,
-          reason: {
-            type: 'unsafe_command',
-            command: commandParts.join(' '),
-            explanation: awkReason,
-          },
-        };
-      }
-    }
-
-    if (DANGEROUS_COMMAND_ARGS[normalizedCmd]) {
-      const dangerousArgs = DANGEROUS_COMMAND_ARGS[normalizedCmd];
-      for (const part of commandParts) {
-        if (dangerousArgs.has(part)) {
-          const subResult: SubcommandResult = {
-            command: commandParts.join(' '),
-            allowed: false,
-            reason: `Argument "${part}" executes subcommands or performs writes`,
-          };
-          results.push(subResult);
-          return {
-            allowed: false,
-            reason: {
-              type: 'unsafe_command',
-              command: commandParts.join(' '),
-              explanation: `"${part}" allows arbitrary command execution or file modification within "${normalizedCmd}"`,
-            },
-          };
-        }
-      }
-    }
+  const inspector = node.name ? ARGUMENT_INSPECTORS[node.name.text.toLowerCase()] : undefined;
+  const argumentReason = inspector?.(commandParts);
+  if (argumentReason) {
+    const command = commandParts.join(' ');
+    results.push({ command, allowed: false, reason: argumentReason });
+    return {
+      allowed: false,
+      reason: { type: 'unsafe_command', command, explanation: argumentReason },
+    };
   }
 
   // Build the command string and check against patterns

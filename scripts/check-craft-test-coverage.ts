@@ -24,6 +24,15 @@ function isTestFile(file: string): boolean {
 }
 
 const deletedFeaturePatterns: Array<{ pattern: RegExp; reason: string }> = [
+  { pattern: /^packages\/(?:shared|server-core)\/src\/decisions\//, reason: 'Decision model explicitly deferred for the v0.14.1 Lite sync' },
+  { pattern: /^packages\/(?:shared|server-core)\/src\/pages\//, reason: 'Pages and its source/action bridge are outside Lite' },
+  { pattern: /^apps\/electron\/src\/(?:main\/__tests__\/page-thumbnail-host|shared\/(?:__tests__\/page-bridge|__tests__\/route-parser-pages))/, reason: 'Pages UI and thumbnail runtime removed' },
+  { pattern: /^packages\/pi-agent-server\/src\/large-result-gate/, reason: 'Decision-model large-result gate deferred; existing summarization retained' },
+  { pattern: /^packages\/server-core\/src\/sessions\/(?:attended-session|automation-loop-and-retry|automation-prompts|decision-lifecycle|turn-context)/, reason: 'Automation and decision-model lifecycle not included in Lite' },
+  { pattern: /^packages\/session-tools-core\/src\/(?:api-auth|handlers\/(?:decide|pages))/, reason: 'Sources auth, Pages and decide tool are outside this sync' },
+  { pattern: /^packages\/shared\/src\/agent\/(?:__tests__\/(?:base-agent-turn-context|guarded-permission-mode|pi-agent-guarded-mode|mcp-tool-names)|core\/__tests__\/guarded-mode)/, reason: 'Decision turn context, Guarded mode and external MCP runtime excluded' },
+  { pattern: /^packages\/shared\/src\/utils\/(?:__tests__\/(?:large-result-filter|redaction)|redaction\.test)/, reason: 'Decision result filtering and removed source/Pages audit redaction helpers excluded' },
+
   { pattern: /^packages\/messaging-/, reason: 'external messaging removed' },
   { pattern: /^apps\/electron\/src\/renderer\/components\/app-shell\/(?:__tests__\/transfer-targets|kanban\/)/, reason: 'transfer/projects/kanban removed' },
   { pattern: /^apps\/electron\/src\/renderer\/components\/app-shell\/inherited-filter-params/, reason: 'labels and user status filters removed' },
@@ -57,6 +66,9 @@ const deletedFeaturePatterns: Array<{ pattern: RegExp; reason: string }> = [
 ]
 
 const replacements: Record<string, string> = {
+  'packages/shared/src/agent/__tests__/clamp-permission-mode.test.ts': 'packages/server-core/src/sessions/midstream-queue.test.ts',
+  'packages/server-core/src/sessions/title-generation.isolated.ts': 'packages/pi-agent-server/src/mini-model-query.test.ts',
+
   'apps/electron/src/main/handlers/__tests__/registration.test.ts': 'apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts',
   'apps/electron/src/shared/__tests__/ipc-channels.test.ts': 'apps/electron/src/transport/__tests__/channel-map-parity.test.ts',
   'packages/pi-agent-server/src/craft-metadata-schema.test.ts': 'packages/pi-agent-server/src/mkagent-metadata-schema.test.ts',
@@ -65,6 +77,10 @@ const replacements: Record<string, string> = {
 }
 
 const intentionalCaseReductions: Record<string, { upstream: number; retained: number; reason: string }> = {
+  'packages/shared/src/agent/__tests__/tool-matching.test.ts': { upstream: 62, retained: 61, reason: 'Sources MCP matching excluded; Lite tool matching retained' },
+  'packages/session-tools-core/src/tool-defs-filtering.test.ts': { upstream: 8, retained: 7, reason: 'Decide tool excluded; retained tool visibility filtering covered' },
+  'packages/server-core/src/sessions/pi-retry-streaming.test.ts': { upstream: 4, retained: 2, reason: 'Lite forwards unbatched deltas and has no upstream delta-flush timers; discard and recovered persistence covered' },
+  'packages/server-core/src/sessions/midstream-queue.test.ts': { upstream: 12, retained: 7, reason: 'Decision routing and Claude queue lifecycle excluded; Lite queue, compaction, claims and spawn clamp covered' },
   'apps/cli/src/commands.test.ts': { upstream: 52, retained: 36, reason: 'Sources, automations, labels, webhooks, and their validation steps were removed' },
   'apps/cli/src/run.test.ts': { upstream: 12, retained: 9, reason: 'Source selection and the upstream validation harness were removed; retained run and workspace routing stay covered' },
   'apps/electron/src/main/__tests__/connection-setup-logic.test.ts': { upstream: 32, retained: 26, reason: 'Direct Anthropic, Bedrock, and Copilot setup were removed; retained LLM subscriptions are covered in server-core' },
@@ -77,25 +93,24 @@ const intentionalCaseReductions: Record<string, { upstream: number; retained: nu
   'apps/electron/src/renderer/lib/__tests__/mentions.test.ts': { upstream: 43, retained: 37, reason: 'Source mentions were removed; Skill and file mentions remain covered' },
   'apps/electron/src/renderer/utils/__tests__/session-list-collapse.test.ts': { upstream: 4, retained: 3, reason: 'Removed id-based product filters no longer have collapse keys' },
   'packages/pi-agent-server/src/tools/search/resolve-provider.test.ts': { upstream: 13, retained: 5, reason: 'ChatGPT subscription search and OAuth credential variants were removed' },
-  'packages/server-core/src/domain/connection-setup-logic.test.ts': { upstream: 16, retained: 15, reason: 'Direct Anthropic connection modes were removed; both Pi-routed subscription templates remain covered' },
-  'packages/server-core/src/sessions/background-task-surface.test.ts': { upstream: 5, retained: 4, reason: 'Lite always keeps retained background tasks alive' },
+  'packages/server-core/src/domain/connection-setup-logic.test.ts': { upstream: 24, retained: 23, reason: 'Direct Claude/Copilot provider setup excluded; masked-key regressions retained' },
+  'packages/server-core/src/sessions/background-task-surface.test.ts': { upstream: 9, retained: 4, reason: 'Claude SDK ownership and automation/task notices excluded; retained Pi task surface covered' },
   'packages/server-core/src/sessions/cold-session-metadata.test.ts': { upstream: 6, retained: 3, reason: 'Statuses and labels were removed; retained rename, flag, and cold sidebar metadata are covered' },
   'packages/shared/src/agent/__tests__/base-agent.test.ts': { upstream: 34, retained: 19, reason: 'Source managers, Claude prompt builders, and direct backend callbacks were removed' },
   'packages/shared/src/agent/__tests__/conversation-summary.test.ts': { upstream: 4, retained: 3, reason: 'Cross-workspace transferred-session context was removed' },
-  'packages/shared/src/agent/__tests__/pi-event-adapter.test.ts': { upstream: 62, retained: 61, reason: 'Craft-only Pi turn anchor event was removed' },
   'packages/shared/src/agent/__tests__/session-self-management-bindings.test.ts': { upstream: 10, retained: 7, reason: 'Status and label mutation bindings were removed' },
   'packages/shared/src/agent/backend/__tests__/factory.test.ts': { upstream: 38, retained: 16, reason: 'Claude SDK, Copilot, and unsupported auth combinations were removed; Pi OAuth routing remains covered' },
   'packages/shared/src/agent/backend/__tests__/runtime-resolver.test.ts': { upstream: 10, retained: 8, reason: 'Claude native binary resolution was removed' },
-  'packages/shared/src/agent/core/__tests__/pre-tool-use-checks.isolated.ts': { upstream: 69, retained: 18, reason: 'Sources, labels, automations, and their MCP/API guards were removed; retained permission pipeline is covered' },
+  'packages/shared/src/agent/core/__tests__/pre-tool-use-checks.isolated.ts': { upstream: 80, retained: 18, reason: 'Sources API, Pages and Guarded cases excluded; precise permissions additionally covered in pi-permission-sync and permission-remember' },
   'packages/shared/src/agent/core/__tests__/prerequisite-manager.isolated.ts': { upstream: 33, retained: 13, reason: 'Source guide prerequisites were removed; Browser and Skill prerequisites remain covered' },
-  'packages/shared/src/config/__tests__/llm-connections.test.ts': { upstream: 53, retained: 14, reason: 'Direct provider catalogs were removed; retained Pi, OAuth, and Craft v0.13.3 model-ranking behavior are covered' },
+  'packages/shared/src/config/__tests__/llm-connections.test.ts': { upstream: 70, retained: 14, reason: 'Direct Claude and Copilot catalogs excluded; Pi 0.87 models covered by shared models and mini-model tests' },
   'packages/shared/src/config/__tests__/midstream-behavior.test.ts': { upstream: 11, retained: 10, reason: 'Direct Anthropic queue behavior was removed' },
   'packages/shared/src/config/__tests__/model-supports-images.test.ts': { upstream: 8, retained: 7, reason: 'Direct Anthropic catalog behavior was removed' },
   'packages/shared/src/i18n/__tests__/locale-registry.test.ts': { upstream: 15, retained: 11, reason: 'Lite intentionally ships only English and Simplified Chinese' },
-  'packages/shared/src/prompts/__tests__/system.test.ts': { upstream: 16, retained: 8, reason: 'Projects and project asset manifests were removed; retained prompt and git guidance remain covered' },
+  'packages/shared/src/prompts/__tests__/system.test.ts': { upstream: 23, retained: 8, reason: 'Projects and source metadata excluded; Git context covered by developer-context and prompt-builder tests' },
   'packages/shared/src/skills/__tests__/storage.test.ts': { upstream: 33, retained: 30, reason: 'Skill requiredSources metadata was removed with Sources' },
   'packages/shared/tests/content-validators.test.ts': { upstream: 41, retained: 15, reason: 'Source and status validators were removed; retained Skills and permissions validators remain covered' },
-  'packages/shared/tests/mode-manager.test.ts': { upstream: 175, retained: 174, reason: 'Source MCP read-only patterns were removed' },
+  'packages/shared/tests/mode-manager.test.ts': { upstream: 176, retained: 174, reason: 'External MCP pattern and source policy cases excluded; retained Bash restrictions covered by pi-permission-sync' },
 }
 
 function countTestCases(path: string): number {

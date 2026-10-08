@@ -95,7 +95,12 @@ export function handleComplete(
         isProcessing: false,
         currentStatus: undefined,  // Clear any lingering status
         // Update tokenUsage from complete event (for real-time context counter updates)
-        tokenUsage: event.tokenUsage ?? session.tokenUsage,
+        tokenUsage: event.tokenUsage ? {
+          ...event.tokenUsage,
+          // Cumulative/legacy results may omit occupancy. Omission is not a
+          // context reset and must not erase a newer post-compaction snapshot.
+          contextUsage: event.tokenUsage.contextUsage ?? session.tokenUsage?.contextUsage,
+        } : session.tokenUsage,
         // Update hasUnread flag from main process (state machine for NEW badge)
         // Only update if explicitly provided - undefined means "don't change"
         ...(event.hasUnread !== undefined && { hasUnread: event.hasUnread }),
@@ -777,7 +782,8 @@ export function handleUsageUpdate(
     costUsd: session.tokenUsage?.costUsd ?? 0,
     ...(session.tokenUsage?.cacheReadTokens !== undefined && { cacheReadTokens: session.tokenUsage.cacheReadTokens }),
     ...(session.tokenUsage?.cacheCreationTokens !== undefined && { cacheCreationTokens: session.tokenUsage.cacheCreationTokens }),
-    ...(event.tokenUsage.contextWindow && { contextWindow: event.tokenUsage.contextWindow }),
+    contextWindow: event.tokenUsage.contextWindow ?? session.tokenUsage?.contextWindow,
+    contextUsage: event.tokenUsage.contextUsage ?? session.tokenUsage?.contextUsage,
   }
 
   return {

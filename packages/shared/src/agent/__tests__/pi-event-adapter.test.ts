@@ -526,6 +526,21 @@ describe('PiEventAdapter', () => {
       expect((events[0] as any).error.message.toLowerCase()).not.toContain('<html');
     });
 
+    it('should emit typed_error for auth-expiry error messages', () => {
+      const events = collect(adapter.adaptEvent({
+        type: 'message_end',
+        message: {
+          role: 'assistant',
+          stopReason: 'error',
+          errorMessage: 'Provided authentication token is expired. Please try signing in again.',
+        },
+      } as any));
+
+      expect(events).toHaveLength(1);
+      expect(events[0].type).toBe('typed_error');
+      expect(events[0].error.code).toBe('invalid_api_key');
+    });
+
     it('should emit typed_error for 401 unauthorized errors', () => {
       const events = collect(adapter.adaptEvent({
         type: 'message_end',
@@ -999,8 +1014,12 @@ describe('PiEventAdapter', () => {
         aborted: false,
       } as any));
 
-      expect(events).toHaveLength(1);
+      expect(events).toHaveLength(2);
       expect(events[0]).toMatchObject({
+        type: 'context_usage',
+        contextUsage: { usedTokens: null, isStale: true },
+      });
+      expect(events[1]).toMatchObject({
         type: 'info',
         message: 'Compacted context to fit within limits',
       });
@@ -1014,21 +1033,22 @@ describe('PiEventAdapter', () => {
         errorMessage: 'Out of memory',
       } as any));
 
-      expect(events).toHaveLength(1);
-      expect(events[0]).toMatchObject({
+      expect(events).toHaveLength(2);
+      expect(events[0]).toEqual({ type: 'compaction_failed' });
+      expect(events[1]).toMatchObject({
         type: 'error',
         message: 'Context compaction failed: Out of memory',
       });
     });
 
-    it('should emit nothing for aborted compaction', () => {
+    it('should emit compaction_failed for aborted compaction', () => {
       const events = collect(adapter.adaptEvent({
         type: 'compaction_end',
         result: null,
         aborted: true,
       } as any));
 
-      expect(events).toHaveLength(0);
+      expect(events).toEqual([{ type: 'compaction_failed' }]);
     });
 
     it('should emit retry/backoff with reason and delay for auto_retry_start', () => {
@@ -1464,13 +1484,16 @@ describe('PiEventAdapter', () => {
       const startEvents = collect(adapter.adaptEvent({ type: 'compaction_start' } as any));
       expect(startEvents).toMatchObject([{ type: 'status', message: 'Compacting context...' }]);
 
-      // 4. compaction_end success — info surfaces, still no complete.
+      // 4. compaction_end success — occupancy invalidates the old count, info surfaces, still no complete.
       const endEvents = collect(adapter.adaptEvent({
         type: 'compaction_end',
         result: { /* compaction result */ },
         aborted: false,
       } as any));
-      expect(endEvents).toMatchObject([{ type: 'info', message: 'Compacted context to fit within limits' }]);
+      expect(endEvents).toMatchObject([
+        { type: 'context_usage', contextUsage: { usedTokens: null, isStale: true } },
+        { type: 'info', message: 'Compacted context to fit within limits', compactionTrigger: 'auto' },
+      ]);
       expect(adapter.shouldCompleteQueue(false)).toBe(false);
 
       // 5. Recovered text + final agent_end — text_complete + complete arrive.
@@ -1505,6 +1528,7 @@ describe('PiEventAdapter', () => {
       } as any));
 
       expect(failureEvents).toEqual([
+        { type: 'compaction_failed' },
         { type: 'error', message: 'Context compaction failed: Out of memory during summary' },
         { type: 'complete' },
       ]);
@@ -1578,6 +1602,7 @@ describe('PiEventAdapter', () => {
       } as any));
 
       expect(events).toEqual([
+        { type: 'compaction_failed' },
         { type: 'error', message: 'Auto-compaction hit a transient error. Try /compact manually.' },
         { type: 'complete' },
       ]);

@@ -39,11 +39,12 @@ import type { Workspace } from '../config/storage.ts';
 
 // Event adapter
 import { PiEventAdapter } from './backend/pi/event-adapter.ts';
+import type { PiCompactResult } from './backend/pi/protocol.ts';
 import { EventQueue } from './backend/event-queue.ts';
 
 // System prompt for MkAgent context
 import { getSystemPrompt } from '../prompts/system.ts';
-import { getCoAuthorPreference } from '../config/preferences.ts';
+import { formatPreferencesForPrompt, getCoAuthorPreference } from '../config/preferences.ts';
 
 // Credential manager for token storage
 import { getCredentialManager } from '../credentials/manager.ts';
@@ -85,7 +86,7 @@ import { parseError, type AgentError } from './errors.ts';
 // Centralized PreToolUse pipeline
 import { runPreToolUseChecks, type PreToolUseCheckResult } from './core/pre-tool-use.ts';
 import { getRtkPath } from './core/rtk-detector.ts';
-import { getRtkEnabled, getBrowserToolEnabled } from '../config/storage.ts';
+import { getRtkEnabled, getRtkExcludeCommands, getBrowserToolEnabled } from '../config/storage.ts';
 import type { RtkContext } from './core/rtk-rewrite.ts';
 
 // Workspace slug extraction for skill qualification
@@ -94,6 +95,7 @@ import { extractWorkspaceSlug } from '../utils/workspace.ts';
 // LLM tool types
 import { LLM_QUERY_TIMEOUT_MS, type LLMQueryRequest, type LLMQueryResult } from './llm-tool.ts';
 import { executeBrowserToolCommand } from './browser-tool-runtime.ts';
+import type { PermissionRemember } from './core/permission-remember.ts';
 import { saveBinaryResponse } from '../utils/binary-detection.ts';
 
 // ============================================================
@@ -187,12 +189,23 @@ export class PiAgent extends BaseAgent {
   private subprocessErrorRepeatCount = 0;
   private static readonly MAX_IDENTICAL_SUBPROCESS_ERRORS = 3;
 
+  // Keep the cached system prefix stable for this session.
+  private pinnedPreferencesPrompt: string | null = null;
+  private pinnedIncludeCoAuthoredBy: boolean | null = null;
+  private promptDriftNotified = false;
+
   private resetSubprocessErrorDedup(): void {
     this.lastSubprocessError = null;
     this.subprocessErrorRepeatCount = 0;
   }
 
-  // Ring buffer of recent subprocess stderr. Always on (independent of MKAGENT_DEBUG)
+  private clearPinnedPromptSnapshot(): void {
+    this.pinnedPreferencesPrompt = null;
+    this.pinnedIncludeCoAuthoredBy = null;
+    this.promptDriftNotified = false;
+  }
+
+  // Ring buffer of recent subprocess stderr, independent of MKAGENT_DEBUG.
   // so that connection-test and other failures can surface what the subprocess
   // actually said, instead of a bare "timed out" with no context.
   private stderrBuffer: string[] = [];
@@ -225,6 +238,7 @@ export class PiAgent extends BaseAgent {
   private pendingPermissions: Map<string, {
     resolve: (allowed: boolean) => void;
     toolName: string;
+    remember?: PermissionRemember;
   }> = new Map();
 
   // Pending tool executions (correlation map for subprocess tool_execute_request -> main process -> tool_execute_response)
@@ -247,9 +261,17 @@ export class PiAgent extends BaseAgent {
     reject: (error: Error) => void;
   }> = new Map();
 
+  // Invalidates a manual compact continuation if stop/dispose wins its await.
+  private compactionEpoch = 0;
+
+  // Host-side deadline for a manual compact RPC. GPT-backed compactions on large
+  // conversations legitimately take 60-120 s (one blocking summary call, no
+  // progress stream); 5 min covers realistic cases. Overridable for tests.
+  private compactTimeoutMs = 300_000;
+
   // Pending compact requests (manual compaction RPC)
   private pendingCompactions: Map<string, {
-    resolve: (result: { summary: string; firstKeptEntryId: string; tokensBefore: number } | null) => void;
+    resolve: (result: PiCompactResult) => void;
     reject: (error: Error) => void;
   }> = new Map();
 
@@ -868,6 +890,10 @@ export class PiAgent extends BaseAgent {
 
     // Detect session MCP tool completions (same pattern as in-process version)
     const eventType = event.type as string;
+    // Manual /compact uses an RPC-owned generator rather than the event queue.
+    // Its SDK end arrives before compact_result; only the correlated response
+    // may report success (including after a timeout/stop discarded the request).
+    if (eventType === 'compaction_end' && event.reason === 'manual') return;
     let adaptedEvent = event;
 
     if (eventType === 'tool_execution_start') {
@@ -976,7 +1002,7 @@ export class PiAgent extends BaseAgent {
     // Build RTK context fresh per call so toggling the preference takes
     // effect without restart. `getRtkPath()` is cached per process.
     const rtkContext: RtkContext | undefined = getRtkEnabled()
-      ? { enabled: true, path: getRtkPath(), exclude: [] }
+      ? { enabled: true, path: getRtkPath(), exclude: getRtkExcludeCommands() }
       : undefined;
 
     const checkResult = runPreToolUseChecks({
@@ -1026,12 +1052,7 @@ export class PiAgent extends BaseAgent {
 
       case 'prompt': {
         if (!this.onPermissionRequest) {
-          // No permission handler — allow
-          if (checkResult.modifiedInput) {
-            this.send({ type: 'pre_tool_use_response', requestId, action: 'modify', input: checkResult.modifiedInput });
-          } else {
-            this.send({ type: 'pre_tool_use_response', requestId, action: 'allow' });
-          }
+          this.send({ type: 'pre_tool_use_response', requestId, action: 'block', reason: 'Permission is required but no permission handler is available.' });
           return;
         }
 
@@ -1043,6 +1064,7 @@ export class PiAgent extends BaseAgent {
           this.pendingPermissions.set(permRequestId, {
             resolve,
             toolName,
+            remember: checkResult.remember,
           });
         });
 
@@ -1051,6 +1073,7 @@ export class PiAgent extends BaseAgent {
           toolName,
           command: checkResult.command,
           description: checkResult.description,
+          canAlwaysAllow: Boolean(checkResult.remember),
           type: checkResult.promptType,
           appName: checkResult.appName,
           reason: checkResult.reason,
@@ -1359,7 +1382,7 @@ export class PiAgent extends BaseAgent {
 
     const raw = msg.result as Record<string, unknown> | undefined;
     if (!raw) {
-      pending.resolve(null);
+      pending.reject(new Error('Compaction returned no result'));
       return;
     }
 
@@ -1367,6 +1390,9 @@ export class PiAgent extends BaseAgent {
       summary: String(raw.summary || ''),
       firstKeptEntryId: String(raw.firstKeptEntryId || ''),
       tokensBefore: Number(raw.tokensBefore || 0),
+      estimatedTokensAfter: raw.estimatedTokensAfter as PiCompactResult['estimatedTokensAfter'],
+      contextUsage: raw.contextUsage as PiCompactResult['contextUsage'],
+      compactionSettings: raw.compactionSettings as PiCompactResult['compactionSettings'],
     });
   }
 
@@ -1500,19 +1526,26 @@ export class PiAgent extends BaseAgent {
   /**
    * Ask subprocess to compact the active session context.
    */
-  private async requestCompact(customInstructions?: string): Promise<{ summary: string; firstKeptEntryId: string; tokensBefore: number } | null> {
+  private async requestCompact(customInstructions?: string): Promise<PiCompactResult> {
+    const epoch = this.compactionEpoch;
     await this.ensureSubprocess();
+    if (epoch !== this.compactionEpoch) throw new Error('Compaction aborted');
 
     const id = `compact-${++this.rpcIdCounter}`;
-    // GPT-backed Pi compactions on large conversations can legitimately take 60-120s
-    // (single blocking OpenAI summary call, no progress stream). 5 min covers realistic
-    // cases; truly hung subprocesses are caught by the stdio death watchdog.
-    const timeoutMs = 300_000;
+    const timeoutMs = this.compactTimeoutMs;
 
-    return new Promise<{ summary: string; firstKeptEntryId: string; tokensBefore: number } | null>((resolve, reject) => {
+    return new Promise<PiCompactResult>((resolve, reject) => {
       const timer = setTimeout(() => {
+        if (!this.pendingCompactions.has(id)) return;
         this.pendingCompactions.delete(id);
-        reject(new Error(`compact timed out after ${Math.floor(timeoutMs / 1000)}s`));
+        // Cancel the work in the child as well (OSS #1060): the epoch bump turns a
+        // late compact_result and the /compact continuation into no-ops, and
+        // `abort` makes the subprocess call session.abort(), which cancels the
+        // in-flight summarization instead of leaving it running behind a
+        // rejected promise.
+        this.compactionEpoch++;
+        this.send({ type: 'abort' });
+        reject(new Error(`Compaction timed out after ${Math.floor(timeoutMs / 1000)}s and was cancelled`));
       }, timeoutMs);
 
       this.pendingCompactions.set(id, {
@@ -1635,6 +1668,8 @@ export class PiAgent extends BaseAgent {
     options?: ChatOptions
   ): AsyncGenerator<AgentEvent> {
     let message = messageParam;
+    const compactMatch = message.trim().match(/^\/compact(?:\s+([\s\S]+))?$/i);
+    const compactEpoch = this.compactionEpoch;
     // Reset state for new turn
     this._isProcessing = true;
     this.abortReason = undefined;
@@ -1666,6 +1701,7 @@ export class PiAgent extends BaseAgent {
           this.piSessionId = null;
           this.killSubprocess();
           this.clearSessionForRecovery();
+          this.clearPinnedPromptSnapshot();
 
           const recoveryContext = this.buildRecoveryContext();
           if (recoveryContext) {
@@ -1679,32 +1715,54 @@ export class PiAgent extends BaseAgent {
         }
       }
 
-      const trimmedMessage = message.trim();
-      const compactMatch = trimmedMessage.match(/^\/compact(?:\s+([\s\S]+))?$/i);
       if (compactMatch) {
+        if (compactEpoch !== this.compactionEpoch) throw new Error('Compaction aborted');
         const customInstructions = compactMatch[1]?.trim() || undefined;
         const compactResult = await this.requestCompact(customInstructions);
-        if (compactResult) {
-          yield {
-            type: 'info',
-            message: `Compacted context to fit within limits (from ~${compactResult.tokensBefore.toLocaleString()} tokens)`,
-          };
-        } else {
-          yield { type: 'info', message: 'Compacted context to fit within limits' };
-        }
+        if (compactEpoch !== this.compactionEpoch) throw new Error('Compaction aborted');
+        this.resetPrerequisiteState();
+        yield* this.adapter.adaptContextUsage(compactResult, true, compactResult.estimatedTokensAfter);
+        // A consumer can stop between yielded occupancy and success.
+        if (compactEpoch !== this.compactionEpoch) throw new Error('Compaction aborted');
+        yield {
+          type: 'info',
+          message: `Compacted context to fit within limits (from ~${compactResult.tokensBefore.toLocaleString()} tokens)`,
+          compactionTrigger: 'manual',
+        };
         yield { type: 'complete' };
         return;
       }
 
+      // Build system prompt from a pinned session snapshot. Pi folds stable
+      // blocks into its cached system prefix, so changing these mid-session
+      // would silently churn cache and diverge from Claude's behavior.
+      const currentPreferencesPrompt = formatPreferencesForPrompt();
+      const currentIncludeCoAuthoredBy = getCoAuthorPreference();
+
+      if (this.pinnedPreferencesPrompt === null) {
+        this.pinnedPreferencesPrompt = currentPreferencesPrompt;
+        this.pinnedIncludeCoAuthoredBy = currentIncludeCoAuthoredBy;
+      } else {
+        const preferencesDrifted = currentPreferencesPrompt !== this.pinnedPreferencesPrompt;
+        const coAuthorDrifted = currentIncludeCoAuthoredBy !== this.pinnedIncludeCoAuthoredBy;
+        if ((preferencesDrifted || coAuthorDrifted) && !this.promptDriftNotified) {
+          yield {
+            type: 'info',
+            message: 'Note: System prompt context changed since this session started. Start a new session to apply preference changes.',
+          };
+          this.promptDriftNotified = true;
+        }
+      }
+
       // Build system prompt
       const systemPrompt = getSystemPrompt(
-        undefined, // pinnedPreferencesPrompt
+        this.pinnedPreferencesPrompt ?? undefined,
         this.config.debugMode,
         this.config.workspace.rootPath,
         this.config.session?.workingDirectory,
         this.config.systemPromptPreset,
-        'MkAgent Backend', // backendName
-        getCoAuthorPreference(),
+        'MkAgent Backend',
+        this.pinnedIncludeCoAuthoredBy ?? undefined,
       );
 
       const promptModeDiagnostics = getPermissionModeDiagnostics(this._sessionId)
@@ -1780,7 +1838,9 @@ export class PiAgent extends BaseAgent {
         yield event;
       }
     } catch (error) {
+      if (compactMatch) yield { type: 'compaction_failed' };
       if (error instanceof Error && error.message.includes('abort')) {
+        if (compactMatch) yield { type: 'complete' };
         if (this.abortReason === AbortReason.PlanSubmitted) {
           return;
         }
@@ -1813,10 +1873,11 @@ export class PiAgent extends BaseAgent {
    * Respond to a pending permission request.
    * Permission checking now happens in the main process, so this resolves locally.
    */
-  respondToPermission(requestId: string, allowed: boolean, _alwaysAllow?: boolean): void {
+  respondToPermission(requestId: string, allowed: boolean, alwaysAllow?: boolean): void {
     const pending = this.pendingPermissions.get(requestId);
     if (pending) {
       this.pendingPermissions.delete(requestId);
+      if (allowed && alwaysAllow && pending.remember) this.permissionManager.remember(pending.remember);
       pending.resolve(allowed);
     }
   }
@@ -1889,6 +1950,7 @@ export class PiAgent extends BaseAgent {
   }
 
   async abort(reason?: string): Promise<void> {
+    this.cancelPendingCompactions();
     // Deny all pending permissions
     for (const [, pending] of this.pendingPermissions) {
       pending.resolve(false);
@@ -1904,6 +1966,7 @@ export class PiAgent extends BaseAgent {
   }
 
   forceAbort(reason: AbortReason): void {
+    this.cancelPendingCompactions();
     this.abortReason = reason;
     this._isProcessing = false;
 
@@ -1946,6 +2009,13 @@ export class PiAgent extends BaseAgent {
    * Events flow through the existing generator — no abort needed.
    */
   override redirect(message: string): boolean {
+    if (this.isCompactionInFlight()) {
+      // A manual /compact owns this turn: no agent loop is running to consume a
+      // steer, so it would vanish (OSS #1058). Refuse without aborting the
+      // compaction; the session layer queues the message for replay.
+      this.debug('Steer refused during manual compaction; message must be queued');
+      return false;
+    }
     if (!this._isProcessing || !this.subprocess) {
       // Not streaming or no subprocess — fall back to abort
       this.forceAbort(AbortReason.Redirect);
@@ -1954,6 +2024,11 @@ export class PiAgent extends BaseAgent {
     this.debug(`Steering mid-stream: "${message.slice(0, 100)}"`);
     this.send({ type: 'steer', message });
     return true;
+  }
+
+  /** A pending manual compact RPC owns the turn; see AgentBackend.isCompactionInFlight. */
+  override isCompactionInFlight(): boolean {
+    return this.pendingCompactions.size > 0;
   }
 
   // ============================================================
@@ -2021,6 +2096,7 @@ export class PiAgent extends BaseAgent {
    * Used before an idle runtime restart so we don't leave transient children behind.
    */
   private async killSubprocessGracefully(timeoutMs = 2_000): Promise<void> {
+    this.cancelPendingCompactions();
     this.rejectAllPendingEphemeral(new Error('Pi subprocess stopped'));
 
     const child = this.subprocess;
@@ -2082,7 +2158,16 @@ export class PiAgent extends BaseAgent {
   /**
    * Kill the subprocess and clean up resources.
    */
+  private cancelPendingCompactions(): void {
+    this.compactionEpoch++;
+    for (const pending of this.pendingCompactions.values()) {
+      pending.reject(new Error('Compaction aborted'));
+    }
+    this.pendingCompactions.clear();
+  }
+
   private killSubprocess(): void {
+    this.cancelPendingCompactions();
     this.rejectAllPendingEphemeral(new Error('Pi subprocess stopped'));
 
     if (this.readline) {

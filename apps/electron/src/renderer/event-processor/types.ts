@@ -402,10 +402,7 @@ export interface MessageAnnotationsUpdatedEvent {
 export interface UsageUpdateEvent {
   type: 'usage_update'
   sessionId: string
-  tokenUsage: {
-    inputTokens: number
-    contextWindow?: number
-  }
+  tokenUsage: Pick<NonNullable<Session['tokenUsage']>, 'inputTokens' | 'contextWindow' | 'contextUsage'>
 }
 
 /**

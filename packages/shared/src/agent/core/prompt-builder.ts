@@ -1,3 +1,4 @@
+import { formatStableGitDeveloperContext, formatVolatileGitDeveloperContext } from '../../prompts/developer-context.ts';
 /**
  * PromptBuilder - System Prompt and Context Building
  *
@@ -99,6 +100,8 @@ export class PromptBuilder {
 
     // Date/time first (kept on the user tail to preserve prompt caching)
     parts.push(getDateTimeContext());
+    const developerContext = formatVolatileGitDeveloperContext(this.config.session?.workingDirectory);
+    if (developerContext) parts.push(developerContext);
 
     // Session state (permission mode, plans folder path, data folder path).
     // Only this volatile builder may consume the one-shot mode-change signal.
@@ -129,6 +132,8 @@ export class PromptBuilder {
    */
   buildStableContextParts(): string[] {
     const parts: string[] = [];
+    const developerContext = formatStableGitDeveloperContext(this.config.session?.workingDirectory);
+    if (developerContext) parts.push(developerContext);
 
     // Workspace capabilities
     parts.push(this.formatWorkspaceCapabilities());

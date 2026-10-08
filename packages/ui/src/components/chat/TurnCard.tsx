@@ -571,6 +571,9 @@ function formatToolInput(
 
   // For call_llm: model shown as badge, prompt duplicates intent
   if (toolName === 'mcp__session__call_llm') return ''
+  // For decide: state/questions JSON is noise in a one-line summary; the intent
+  // (and the overlay) carry the meaning
+  if (toolName === 'mcp__session__decide') return ''
 
   const parts: string[] = []
 

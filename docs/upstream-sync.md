@@ -7,24 +7,18 @@ MkAgent derives its architecture, UI, and runtime from [Craft Agents OSS](https:
 | Item | Value |
 |---|---|
 | Repository | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.12.1` |
-| Commit | `d7592c481216e37c95a50dbfe08948a6987e8c74` |
+| Tag | `v0.14.1` |
+| Commit | `332533f3096d12500012fe089c3f155e32af1c44` |
 
 ## Latest evaluated release
 
 | Item | Value |
 |---|---|
-| Evaluated on | `2026-09-13` |
-| Upstream tag | `v0.13.3` |
-| Upstream commit | `e8963854c3679edcceb105a42537a06749e6cb64` |
+| Evaluated on | `2026-10-08` |
+| Upstream tag | `v0.14.1` |
+| Upstream commit | `332533f3096d12500012fe089c3f155e32af1c44` |
 
-The audit baseline remains `v0.12.1`: MkAgent selectively backports retained
-Pi/Lite behavior without claiming byte-level parity with releases dominated by
-excluded product areas. From `v0.13.0` through `v0.13.3`, the retained sync set
-includes packaged-runtime detection, collision-safe atomic writes, semver-only
-release-note discovery, and the complete Pi 0.85.1 retry/settings/model update.
-Pages, Projects, Automations, Sources/MCP, Viewer/public sharing, messaging, and
-the Claude Agent SDK remain excluded.
+The audit baseline is now `v0.14.1`, recording retained files, reviewed overrides and excluded files rather than claiming full feature parity. This sync includes Pi 0.87.1, model catalogs, context occupancy and compaction, pending-plan recovery, precise permission memory and child-agent permission limits, saved-credential tests, mobile input, browser cleanup, RTK and Git context. Decision models and Guarded mode are explicitly deferred. Pages, Projects, Automations, Sources/MCP, Viewer/public sharing, messaging and the Claude Agent SDK remain excluded.
 
 When upstream publishes a new tag worth evaluating:
 
@@ -44,7 +38,7 @@ Reference checkouts (`../craft-agents-oss`, `../echo`, `../xagent`) stay read-on
   │                                                                  │
   │ 2. Update the audit                                               │
   │    bun run audit:craft-reuse                                      │
-  │       → 96 % same-path / 58 % byte-identical expected             │
+  │       → reviewed lineage with no unregistered differences             │
   │    bun run lint:craft-test-coverage                              │
   │       → 0 missing-without-explanation expected                    │
   │                                                                  │

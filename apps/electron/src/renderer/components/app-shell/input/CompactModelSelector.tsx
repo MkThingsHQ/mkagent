@@ -24,6 +24,7 @@ import {
   ANTHROPIC_MODELS,
   getModelDisplayName,
   getModelShortName,
+  getModelContextWindow,
 } from '@config/models'
 import {
   isCompatProvider,
@@ -38,10 +39,10 @@ import {
 import { ConnectionIcon } from '@/components/icons/ConnectionIcon'
 import { derivePickerMode } from './picker-mode'
 import {
-  formatTokenCount,
   groupConnectionsByProvider,
   stripPiPrefixForDisplay,
 } from './model-picker-helpers'
+import { getContextDisplay, getContextDisplayLabels, type ContextStatus } from './context-display'
 import { useModelVisionToggle } from './useModelVisionToggle'
 
 interface CompactModelSelectorProps {
@@ -53,11 +54,7 @@ interface CompactModelSelectorProps {
   onThinkingLevelChange?: (level: ThinkingLevel) => void
   isEmptySession?: boolean
   connectionUnavailable?: boolean
-  contextStatus?: {
-    isCompacting?: boolean
-    inputTokens?: number
-    contextWindow?: number
-  }
+  contextStatus?: ContextStatus
 }
 
 export function CompactModelSelector({
@@ -139,6 +136,8 @@ export function CompactModelSelector({
     !!effectiveConnectionDetails &&
     llmConnections.length > 1 &&
     storage.get(storage.KEYS.showConnectionIcons, true)
+  const contextDisplay = getContextDisplay(contextStatus, getModelContextWindow(currentModel))
+  const contextLabels = getContextDisplayLabels(contextDisplay, t)
 
   // Reset accordion state when the drawer closes so re-open shows top-level switcher.
   React.useEffect(() => {
@@ -432,19 +431,24 @@ export function CompactModelSelector({
           )}
 
           {/* === Context section === */}
-          {contextStatus?.inputTokens != null && contextStatus.inputTokens > 0 && (
+          {contextDisplay.visible && (
             <>
               <div className="px-3 pt-4 pb-1 text-xs font-medium text-foreground/60 uppercase tracking-wide select-none">
                 {t('chat.modelPicker.contextSection')}
               </div>
-              <div className="flex items-center justify-between px-3 py-2 text-xs text-foreground/60 select-none">
-                <span>{t('chat.context')}</span>
-                <span className="flex items-center gap-1.5">
-                  {contextStatus.isCompacting && <Spinner className="h-3 w-3" />}
-                  {t('chat.tokensUsed', {
-                    displayCount: formatTokenCount(contextStatus.inputTokens),
-                  })}
-                </span>
+              <div className="px-3 py-2 text-xs text-foreground/60 select-none">
+                <div className="flex items-center justify-between gap-3">
+                  <span>{contextLabels.window}</span>
+                  <span className="flex min-w-0 items-center gap-1.5 text-right">
+                    {contextStatus?.isCompacting && <Spinner className="h-3 w-3 shrink-0" />}
+                    <span>{contextLabels.usage}</span>
+                  </span>
+                </div>
+                {(contextLabels.percent || contextLabels.qualifier) && (
+                  <div className="mt-0.5 text-[10px] text-foreground/40">
+                    {[contextLabels.percent, contextLabels.qualifier].filter(Boolean).join(' · ')}
+                  </div>
+                )}
               </div>
             </>
           )}

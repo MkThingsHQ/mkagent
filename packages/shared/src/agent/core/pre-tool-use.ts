@@ -36,10 +36,12 @@ import {
   isReadOnlyBashCommandWithConfig,
   getPermissionModeDiagnostics,
   PERMISSION_MODE_CONFIG,
+  matchesAllowedWritePath,
   type PermissionMode,
 } from '../mode-manager.ts';
 import { permissionsConfigCache, type PermissionsContext } from '../permissions-config.ts';
 import type { PrerequisiteCheckResult } from './prerequisite-manager.ts';
+import { getBashRememberKey, getFileWriteRememberKey, getNetworkCommandHosts, type PermissionRemember } from './permission-remember.ts';
 import { rewriteBashWithRtk } from './rtk-rewrite.ts';
 
 // ============================================================
@@ -98,7 +100,6 @@ export const BUILT_IN_TOOLS = new Set([
   'WebFetch',
   'WebSearch',
   'Task',
-  'TaskOutput',
   'TodoWrite',
   'MultiEdit',
   'NotebookEdit',
@@ -528,6 +529,8 @@ export type PreToolUseCheckResult =
       rememberForMinutes?: number;
       commandHash?: string;
       approvalTtlSeconds?: number;
+      /** What an "Always Allow" answer stores. Absent: the prompt cannot be remembered. */
+      remember?: PermissionRemember;
     }
   | { type: 'call_llm_intercept'; input: Record<string, unknown> }
   | { type: 'spawn_session_intercept'; input: Record<string, unknown> };
@@ -559,6 +562,8 @@ export interface PreToolUseInput {
   permissionManager: PermissionManagerLike;
   /** Backend metadata (e.g. Pi forwards intent / displayName via input.metadata) */
   backendMetadata?: { intent?: string; displayName?: string };
+  /** Keep `_intent` on source tools: Claude's source proxies require it and take it out themselves */
+  keepSourceToolIntent?: boolean;
   /** RTK Bash-rewrite context (undefined when toggle is off or rtk binary missing) */
   rtkContext?: import('./rtk-rewrite.ts').RtkContext;
   /** Debug callback */
@@ -571,9 +576,7 @@ export interface PreToolUseInput {
  */
 export interface PermissionManagerLike {
   isCommandWhitelisted(command: string): boolean;
-  isDangerousCommand(command: string): boolean;
   getBaseCommand(command: string): string;
-  extractDomainFromNetworkCommand(command: string): string | null;
   isDomainWhitelisted(domain: string): boolean;
 }
 
@@ -638,6 +641,7 @@ export function runPreToolUseChecks(ctx: PreToolUseInput): PreToolUseCheckResult
   // Canonical mode source of truth for this session.
   // Keep incoming permissionMode only for mismatch diagnostics.
   const diagnostics = getPermissionModeDiagnostics(sessionId);
+  // Guarded without an active risk check behaves as Ask (see resolveEffectivePermissionMode).
   const effectivePermissionMode = diagnostics.permissionMode;
 
   if (permissionMode !== effectivePermissionMode) {
@@ -783,6 +787,7 @@ export function runPreToolUseChecks(ctx: PreToolUseInput): PreToolUseCheckResult
         rememberForMinutes: promptInfo.rememberForMinutes,
         commandHash: promptInfo.commandHash,
         approvalTtlSeconds: promptInfo.approvalTtlSeconds,
+        remember: promptInfo.remember,
       };
     }
   }
@@ -811,6 +816,8 @@ interface PromptInfo {
   rememberForMinutes?: number;
   commandHash?: string;
   approvalTtlSeconds?: number;
+  /** What an "Always Allow" answer stores: the same key the whitelist check below looks up. */
+  remember?: PermissionRemember;
 }
 
 function hashCommand(command: string): string {
@@ -907,15 +914,28 @@ export function shouldPromptInAskMode(
 
   // --- File writes ---
   if (FILE_WRITE_TOOLS.has(toolName)) {
-    if (permissionManager.isCommandWhitelisted(toolName)) {
-      onDebug?.(`Auto-allowing "${toolName}" (previously approved)`);
+    const filePath = (input.file_path as string) || (input.notebook_path as string) || 'unknown';
+    // "Always Allow" covers writes into the same folder, never other paths (~/.ssh, ~/.zshrc).
+    const rememberKey = filePath !== 'unknown' ? getFileWriteRememberKey(filePath) : null;
+    if (rememberKey && permissionManager.isCommandWhitelisted(rememberKey)) {
+      onDebug?.(`Auto-allowing "${toolName}" to "${filePath}" (folder previously approved)`);
       return null;
     }
-    const filePath = (input.file_path as string) || (input.notebook_path as string) || 'unknown';
+    // Honor the workspace allowedWritePaths allowlist here too. Explore mode already
+    // auto-allows these paths, so re-prompting for them in Ask mode only pushed
+    // automations to Allow-All (OSS #1065). Writes outside the allowlist still prompt.
+    if (filePath !== 'unknown') {
+      const { allowedWritePaths } = permissionsConfigCache.getMergedConfig(permissionsContext);
+      if (allowedWritePaths.length > 0 && matchesAllowedWritePath(filePath, allowedWritePaths)) {
+        onDebug?.(`Auto-allowing "${toolName}" to "${filePath}" via allowedWritePaths`);
+        return null;
+      }
+    }
     return {
       promptType: 'file_write',
       description: `${toolName}: ${filePath}`,
       command: filePath,
+      remember: rememberKey ? { kind: 'command', key: rememberKey } : undefined,
     };
   }
 
@@ -937,26 +957,29 @@ export function shouldPromptInAskMode(
       return null;
     }
 
-    // Check session whitelist (not dangerous)
-    if (permissionManager.isCommandWhitelisted(baseCommand) &&
-        !permissionManager.isDangerousCommand(baseCommand)) {
-      onDebug?.(`Auto-allowing "${baseCommand}" (previously approved)`);
+    // Session whitelist. The key covers exactly this one plain command; chains,
+    // wrappers and dangerous commands have no key (permission-remember.ts).
+    const rememberKey = getBashRememberKey(command);
+    if (rememberKey && permissionManager.isCommandWhitelisted(rememberKey)) {
+      onDebug?.(`Auto-allowing "${rememberKey}" (previously approved)`);
       return null;
     }
 
-    // Check domain whitelist for curl/wget
-    if (['curl', 'wget'].includes(baseCommand)) {
-      const domain = permissionManager.extractDomainFromNetworkCommand(command);
-      if (domain && permissionManager.isDomainWhitelisted(domain)) {
-        onDebug?.(`Auto-allowing ${baseCommand} to "${domain}" (domain whitelisted)`);
-        return null;
-      }
+    // Domain whitelist for a single plain curl/wget call: every host it contacts must be approved.
+    const hosts = getNetworkCommandHosts(command);
+    if (hosts && hosts.length > 0 && hosts.every(host => permissionManager.isDomainWhitelisted(host))) {
+      onDebug?.(`Auto-allowing ${baseCommand} to ${hosts.join(', ')} (domains whitelisted)`);
+      return null;
     }
 
+    const remember: PermissionRemember | undefined = hosts && hosts.length > 0
+      ? { kind: 'domains', domains: hosts }
+      : rememberKey ? { kind: 'command', key: rememberKey } : undefined;
     return {
       promptType: 'bash',
       description: `Execute: ${command}`,
       command,
+      remember,
     };
   }
 
@@ -977,6 +1000,7 @@ export function shouldPromptInAskMode(
         promptType: 'network',
         description: `MCP: ${serverAndTool}`,
         command: toolName,
+        remember: { kind: 'command', key: toolName },
       };
     }
     // Read-only MCP tool — no prompt needed

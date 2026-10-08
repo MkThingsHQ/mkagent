@@ -9,6 +9,8 @@ export type {
   StoredConfig,
 } from './workspace.ts';
 
+export type { ContextUsageSnapshot } from './context-usage.ts';
+
 // Session types
 export type {
   Session,

@@ -1,4 +1,5 @@
 import type {
+  ContextUsageSnapshot,
   MessageRole,
   StoredAttachment,
   StoredMessage,
@@ -32,6 +33,7 @@ export interface SessionTokenUsage {
   cacheReadTokens?: number;
   cacheCreationTokens?: number;
   contextWindow?: number;
+  contextUsage?: ContextUsageSnapshot;
 }
 
 export type { StoredMessage } from '@mkagent/core/types';

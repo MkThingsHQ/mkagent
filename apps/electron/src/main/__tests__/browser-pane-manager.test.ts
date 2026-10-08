@@ -12,10 +12,15 @@ let toolbarLoadFailuresRemaining = 0
 const mockShellOpenExternal = mock(async () => {})
 const mockIpcMainHandle = mock(() => {})
 
+// Electron assigns every webContents a unique numeric id; the manager keys popup
+// and page lookups on it, so the mock must too.
+let nextMockWebContentsId = 1
+
 function createMockWebContents() {
   const listeners: Record<string, Function[]> = {}
   let currentUrl = 'about:blank'
   return {
+    id: nextMockWebContentsId++,
     userAgent: 'Mock Chrome Electron/99.0.0',
     session: {},
     isDestroyed: mock(() => false),
@@ -77,6 +82,15 @@ function createMockWebContents() {
       for (const cb of listeners[event] || []) cb({}, ...args)
     },
   }
+}
+
+/**
+ * Electron's `did-create-window` handler signature is `(window, details)` with no
+ * leading event object, unlike most webContents events, so it cannot go through
+ * the mock's `_emit` (which prepends one).
+ */
+function emitDidCreateWindow(webContents: any, popupWindow: any, details: { url?: string }): void {
+  for (const cb of webContents._listeners['did-create-window'] || []) cb(popupWindow, details)
 }
 
 function createMockBrowserView() {
@@ -344,7 +358,7 @@ describe('BrowserPaneManager', () => {
     const instance = (manager as any).instances.get('popup-parent')
 
     const popupWindow = createMockWindow({ width: 520, height: 720 })
-    instance.pageView.webContents._listeners['did-create-window'][0](popupWindow, { url: 'https://accounts.google.com/signin' })
+    emitDidCreateWindow(instance.pageView.webContents, popupWindow, { url: 'https://accounts.google.com/signin' })
 
     expect((manager as any).popupWindowsByParentInstanceId.get('popup-parent')?.size).toBe(1)
 
@@ -1295,5 +1309,108 @@ describe('BrowserPaneManager', () => {
         status: 'failed',
       })
     })
+  })
+})
+
+// Regression for OSS #1059: closing a popup destroys its BrowserWindow, after
+// which reading `webContents` throws "Object has been destroyed". Cleanup used
+// to read it, so the popup stayed registered, the parent's teardown threw before
+// removing the instance, and every later browser_tool call hit the dead window.
+describe('BrowserPaneManager popup teardown after the popup window was destroyed', () => {
+  let manager: InstanceType<typeof BrowserPaneManager>
+
+  beforeEach(() => {
+    createdWindows.length = 0
+    toolbarLoadFailuresRemaining = 0
+    manager = new BrowserPaneManager()
+  })
+
+  /** Make a mock window behave like a destroyed Electron BrowserWindow. */
+  function markDestroyed(win: any): void {
+    win.isDestroyed = mock(() => true)
+    Object.defineProperty(win, 'webContents', {
+      configurable: true,
+      get() {
+        throw new Error('Object has been destroyed')
+      },
+    })
+  }
+
+  function openPopup(parentId: string) {
+    const instance = (manager as any).instances.get(parentId)
+    const popupWindow = createMockWindow({ width: 520, height: 720 })
+    emitDidCreateWindow(instance.pageView.webContents, popupWindow, { url: 'https://accounts.google.com/signin' })
+    return popupWindow
+  }
+
+  it('unregisters a popup whose window is already destroyed when closed fires', () => {
+    manager.createInstance('popup-closed')
+    const popupWindow = openPopup('popup-closed')
+    const popupWcId = popupWindow.webContents.id
+    expect((manager as any).popupParentByWebContentsId.get(popupWcId)).toBe('popup-closed')
+
+    markDestroyed(popupWindow)
+    expect(() => popupWindow._emit('closed')).not.toThrow()
+
+    expect((manager as any).popupParentByWebContentsId.has(popupWcId)).toBe(false)
+    expect((manager as any).popupWindowsByParentInstanceId.has('popup-closed')).toBe(false)
+  })
+
+  it('terminating the parent after closing a popup removes the instance and allows a fresh one', () => {
+    const removed: string[] = []
+    manager.onRemoved((id) => removed.push(id))
+    manager.createInstance('popup-then-terminate')
+    const popupWindow = openPopup('popup-then-terminate')
+
+    markDestroyed(popupWindow)
+    popupWindow._emit('closed')
+
+    expect(() => manager.destroyInstance('popup-then-terminate')).not.toThrow()
+    expect(manager.listInstances()).toHaveLength(0)
+    expect(removed).toEqual(['popup-then-terminate'])
+
+    // The next browser_tool open must get a working window.
+    manager.createInstance('popup-then-terminate')
+    expect(manager.listInstances()).toHaveLength(1)
+  })
+
+  it('tears down a parent whose still-registered popup was destroyed out of band', () => {
+    manager.createInstance('popup-stale')
+    const popupWindow = openPopup('popup-stale')
+    // Destroyed without `closed` reaching us (e.g. crash of the popup renderer).
+    markDestroyed(popupWindow)
+
+    expect(() => manager.destroyInstance('popup-stale')).not.toThrow()
+    expect(manager.listInstances()).toHaveLength(0)
+    expect(popupWindow.destroy).not.toHaveBeenCalled()
+    expect((manager as any).popupWindowsByParentInstanceId.has('popup-stale')).toBe(false)
+  })
+
+  it('removes the instance even when a teardown step throws', () => {
+    const removed: string[] = []
+    manager.onRemoved((id) => removed.push(id))
+    manager.createInstance('teardown-throws')
+    const instance = (manager as any).instances.get('teardown-throws')
+    instance.cdp.detach = mock(() => {
+      throw new Error('Object has been destroyed')
+    })
+
+    expect(() => manager.destroyInstance('teardown-throws')).not.toThrow()
+    expect(manager.listInstances()).toHaveLength(0)
+    expect(removed).toEqual(['teardown-throws'])
+  })
+
+  it('resolves instances by page webContents id without touching destroyed webContents', () => {
+    manager.createInstance('lookup-safe')
+    const instance = (manager as any).instances.get('lookup-safe')
+    const wcId = instance.pageWebContentsId
+    Object.defineProperty(instance.pageView, 'webContents', {
+      configurable: true,
+      get() {
+        throw new Error('Object has been destroyed')
+      },
+    })
+    expect((manager as any).findInstanceByPageWebContentsId(wcId)).toBe(instance)
+    expect((manager as any).findInstanceByPageWebContentsId(wcId + 1000)).toBeUndefined()
   })
 })

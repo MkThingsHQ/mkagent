@@ -495,6 +495,7 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
       workspaceId,
       disabled = false,
       className,
+      style,
       onFocus,
       onBlur,
       onKeyDown,
@@ -783,7 +784,7 @@ export const RichTextInput = React.forwardRef<RichTextInputHandle, RichTextInput
             className
           )}
           // Use inline style for line-height to override text-sm's built-in line-height
-          style={{ lineHeight: 1.25 }}
+          style={{ lineHeight: 1.25, ...style }}
           onInput={handleInput}
           onKeyDown={handleKeyDownInternal}
           onFocus={handleFocus}

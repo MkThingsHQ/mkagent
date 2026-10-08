@@ -9,7 +9,9 @@
  * Pi backend.
  */
 
-import type { AgentEvent as CraftAgentEvent } from '@mkagent/core/types';
+import type { AgentEvent as CraftAgentEvent, ContextUsageSnapshot } from '@mkagent/core/types';
+import { contextAfterCompaction, contextFromPi } from '../../context-usage.ts';
+import type { PiContextUsagePayload } from './protocol.ts';
 import type {
   AgentEvent as PiAgentEvent,
 } from '@earendil-works/pi-agent-core';
@@ -62,7 +64,7 @@ const RETRYABLE_PROVIDER_SIDE_PATTERN =
  * Combined event type the adapter can handle.
  * AgentSessionEvent is a superset of PiAgentEvent (adds compaction_*, auto_retry_*, queue_update).
  */
-type PiEvent = PiAgentEvent | AgentSessionEvent;
+type PiEvent = (PiAgentEvent | AgentSessionEvent | { type: 'context_usage' }) & PiContextUsagePayload;
 
 /**
  * Maps Pi SDK events to MkAgentEvents for UI compatibility.
@@ -102,6 +104,19 @@ export class PiEventAdapter extends BaseEventAdapter {
   // on the tool_start event so the UI shows the effective default instead of
   // leaving the badge blank.
   private miniModel: string | undefined;
+
+  // Occupancy is independent of API billing; never fall back to lastUsage.
+  private contextUsage: ContextUsageSnapshot | undefined;
+
+  /** Normalize raw subprocess metadata at the host boundary (also used by manual RPC). */
+  *adaptContextUsage(payload: PiContextUsagePayload, afterCompaction = false, estimatedTokensAfter?: number): Generator<CraftAgentEvent> {
+    const snapshot = contextFromPi(payload.contextUsage, payload.compactionSettings, estimatedTokensAfter)
+      ?? (afterCompaction ? contextAfterCompaction(estimatedTokensAfter, this.contextUsage) : undefined);
+    if (snapshot) {
+      this.contextUsage = snapshot;
+      yield { type: 'context_usage', contextUsage: snapshot };
+    }
+  }
 
   // Track last usage for emitting with complete event
   private lastUsage: { input: number; output: number; cacheRead: number; cacheWrite: number; totalTokens: number; cost: { total: number } } | undefined;
@@ -352,7 +367,14 @@ export class PiEventAdapter extends BaseEventAdapter {
    * Adapt a Pi SDK event to zero or more MkAgentEvents.
    */
   *adaptEvent(event: PiEvent): Generator<CraftAgentEvent> {
-    // App-injected event from pi-agent-server (not part of the Pi SDK).
+    // Occupancy metadata must arrive before completion can close the queue. A
+    // compaction success uses its fresh result estimate below, not old API usage.
+    if (event.type !== 'compaction_end') {
+      yield* this.adaptContextUsage(event);
+    }
+    if (event.type === 'context_usage') return;
+
+    // Craft-injected event from pi-agent-server (not part of the Pi SDK).
     // The subprocess emits this immediately after each `message_end` to deliver
     // the correct `sdkTurnAnchor` (the leaf id AFTER the SDK has appended the
     // assistant entry). We forward it through as-is — SessionManager correlates
@@ -568,6 +590,16 @@ export class PiEventAdapter extends BaseEventAdapter {
             sdkMessageId,
           };
           this.hasStreamedDeltas = false;
+        } else if (!textContent && !isIntermediate && !this.hasEmittedFinalText && msg.usage && (msg.usage as { output?: number }).output) {
+          // The model used output tokens but produced no text. This typically means
+          // reasoning consumed the entire output budget (observed with DeepSeek models
+          // when context is large and no budget_tokens cap is set). Without this warning
+          // the turn silently completes and the user sees no reply with no error.
+          console.warn(
+            `[PiEventAdapter] Turn produced ${(msg.usage as { output?: number }).output} output token(s) but zero text. ` +
+            `Reasoning likely consumed the full output budget (seen with DeepSeek + thinkingLevel≥medium at large contexts). ` +
+            `Lower the thinking level or start a fresh session to recover.`
+          );
         }
 
         // Emit usage_update if the assistant message includes token usage
@@ -747,15 +779,20 @@ export class PiEventAdapter extends BaseEventAdapter {
             this.overflowState = 'recovering';
             this.heldOverflowError = null;
           }
-          // Use "Compacted" keyword so session handler detects statusType: 'compaction_complete'
-          yield { type: 'info', message: 'Compacted context to fit within limits' };
-        } else if (compactionEvent.errorMessage) {
+          yield* this.adaptContextUsage(event, true, compactionEvent.result.estimatedTokensAfter);
+          // Explicit trigger keeps automatic compaction from accepting a pending plan.
+          yield {
+            type: 'info', message: 'Compacted context to fit within limits',
+            compactionTrigger: compactionEvent.reason === 'manual' ? 'manual' : 'auto',
+          };
+        } else {
+          yield { type: 'compaction_failed' };
           // Defensive handler for the Pi SDK auto-compaction race (cause A
           // in plans/fix-pi-gpt-compaction.md). The raw stack
           // `undefined is not an object (evaluating 'this._autoCompactionAbortController.signal')`
           // is unhelpful to the user; convert it to a friendly retry hint and
           // log for diagnostics. Remove once the upstream fix ships.
-          if (SDK_AUTOCOMPACT_RACE_SIGNATURE.test(compactionEvent.errorMessage)) {
+          if (compactionEvent.errorMessage && SDK_AUTOCOMPACT_RACE_SIGNATURE.test(compactionEvent.errorMessage)) {
             this.log.warn('Pi SDK auto-compaction race; recommend manual /compact', {
               errorMessage: compactionEvent.errorMessage,
             });
@@ -763,7 +800,7 @@ export class PiEventAdapter extends BaseEventAdapter {
               type: 'error',
               message: 'Auto-compaction hit a transient error. Try /compact manually.',
             };
-          } else {
+          } else if (compactionEvent.errorMessage) {
             yield {
               type: 'error',
               message: `Context compaction failed: ${compactionEvent.errorMessage}`,

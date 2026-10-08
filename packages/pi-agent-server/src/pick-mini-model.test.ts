@@ -42,9 +42,9 @@ describe('pickProviderAppropriateMiniModel', () => {
 
   it('returns the first resolvable DeepSeek preferred model', () => {
     const registry = createMockRegistry({
-      deepseek: [{ id: 'deepseek-v4-flash', name: 'DeepSeek V4 Flash' }],
+      deepseek: [{ id: 'deepseek-flash', name: 'DeepSeek V4 Flash' }],
     });
-    expect(pickProviderAppropriateMiniModel('deepseek', registry, false)).toBe('deepseek-v4-flash');
+    expect(pickProviderAppropriateMiniModel('deepseek', registry, false)).toBe('deepseek-flash');
   });
 
   it('returns undefined when a known provider has no resolvable candidate', () => {

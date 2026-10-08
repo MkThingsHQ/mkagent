@@ -78,6 +78,7 @@ export interface StoredConfig {
   extendedPromptCache?: boolean;  // Use 1h prompt cache TTL instead of 5m (default: false)
   enable1MContext?: boolean;  // Enable 1M context window for supported models (default: false — opt-in; requires Anthropic Tier 4+)
   // Token optimization
+  rtkExcludeCommands?: string[];
   rtkEnabled?: boolean;  // Route Bash commands through rtk to compress tool output (default: false). https://github.com/rtk-ai/rtk
   // Network proxy
   networkProxy?: import('./types.ts').NetworkProxySettings;
@@ -2068,4 +2069,10 @@ export function setServerConfig(serverConfig: ServerConfig): void {
 
   config.serverConfig = serverConfig;
   saveConfig(config);
+}
+
+/** Base commands that bypass RTK; invalid entries are ignored. */
+export function getRtkExcludeCommands(): string[] {
+  const value = loadStoredConfig()?.rtkExcludeCommands;
+  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0).map(entry => entry.trim()) : [];
 }

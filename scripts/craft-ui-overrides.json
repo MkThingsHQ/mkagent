@@ -2,8 +2,48 @@
   "version": 2,
   "files": {
     "apps/electron/src/renderer/App.tsx": {
-      "sha256": "1bfa047301be236f250a31aba862a40dcd513e889877287d547bd52d6f44ce34",
+      "sha256": "eeb5f65c577edc413ef515b31085c2bb491201e0e00743d2f36834c2762d60be",
       "reason": "Craft application shell retains Claude and ChatGPT OAuth props while excluded product surfaces remain removed"
+    },
+    "apps/electron/src/renderer/assets/mkagent_app_icon.png": {
+      "sha256": "8ef2d656c2eb9bbef8d0d8abb646e1ded0e4143046434866d541aaf9e3da6dc5",
+      "reason": "MkAgent trademark-safe replacement asset"
+    },
+    "apps/electron/src/renderer/assets/mkagent_app_icon.svg": {
+      "sha256": "3d1b70b6c3ce090706ee71b4b6e8af1104e5ba6567486ce632b6dcd0ee064b68",
+      "reason": "MkAgent trademark-safe replacement asset"
+    },
+    "apps/electron/src/renderer/assets/mkagent_mark.png": {
+      "sha256": "7ab54137b8b7ab251a521ea1903a02dcb7f27598beabff8dca1d4a3fcd75906b",
+      "reason": "MkAgent trademark-safe replacement asset"
+    },
+    "apps/electron/src/renderer/assets/mkagent_mark.svg": {
+      "sha256": "d6d83873eefbabb442b6671e14eb3238d520f7772edcaf8b9e21c9745cdf9b69",
+      "reason": "MkAgent trademark-safe replacement asset"
+    },
+    "apps/electron/src/renderer/atoms/__tests__/browser-pane.test.ts": {
+      "sha256": "3920dbfc87eb8b75f1aa02bef5b4d98b791bb513dfd4827e4cff4d4312388432",
+      "reason": "Craft renderer test adapted to retained Lite behavior"
+    },
+    "apps/electron/src/renderer/atoms/__tests__/panel-stack-lanes.test.ts": {
+      "sha256": "e408b6e536a7d7b2ccf48a1766d518fbe8375b500771065c2d54bd471373e4ec",
+      "reason": "Craft renderer test adapted to retained Lite behavior"
+    },
+    "apps/electron/src/renderer/atoms/background-finished.ts": {
+      "sha256": "e28b3dba904fe7aba050b98f168f844ce079d89e696385f13a2ad06a7fbc0855",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/atoms/browser-pane.ts": {
+      "sha256": "c0edb1818675844b39c2dbc3faa45d62242697658a7f8e3a9df5539569eb6f7d",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/atoms/panel-stack.ts": {
+      "sha256": "48c3a6f6f3eafdd79705236de9deb0212b256699cde23962650b7d5f5456260e",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/atoms/sessions.ts": {
+      "sha256": "0e38de06d614110008137fd7634fc5c3da5b9dc6c54ef124c1d5784ecd8c44f2",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/browser-empty-state.html": {
       "sha256": "c82afe0928071236a407e8c4faa1fc3b52e2c7cb2f33bc4c075cbebdbd9fcb6e",
@@ -21,84 +61,20 @@
       "sha256": "f81de1d9b87f4c32b32f7bce68f37f26f85329cd960869541875ad2903c512d2",
       "reason": "Craft browser toolbar renderer extended to apply live app-theme updates"
     },
-    "apps/electron/src/renderer/context/ThemeContext.tsx": {
-      "sha256": "451f88e4f421ec91b225563ab090df88d624dd501ea3d1135e1bead93f2d25a5",
-      "reason": "Craft theme context corrected to hydrate host-managed auxiliary windows from the saved app preference on startup"
+    "apps/electron/src/renderer/components/RtkUpdateDialog.tsx": {
+      "sha256": "5ea62c6671a81d1dd289b90e3e1ad28709f44c25711896c66e893207b96e1d20",
+      "reason": "MkAgent-branded RTK compatibility dialog"
     },
-    "apps/electron/src/renderer/atoms/panel-stack.ts": {
-      "sha256": "48c3a6f6f3eafdd79705236de9deb0212b256699cde23962650b7d5f5456260e",
+    "apps/electron/src/renderer/components/ServerDirectoryBrowser.tsx": {
+      "sha256": "98cf5e27c3abe8d0451ae623be7737223cedfbac1eabfb60b7e70c1c9bcb0ded",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
-    "apps/electron/src/renderer/atoms/browser-pane.ts": {
-      "sha256": "c0edb1818675844b39c2dbc3faa45d62242697658a7f8e3a9df5539569eb6f7d",
+    "apps/electron/src/renderer/components/SplashScreen.tsx": {
+      "sha256": "bb8dd7d8af53be69c3f7e01e3c6cdb892f1058b5d929d99dd512e6b0f15eecd9",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
-    "apps/electron/src/renderer/atoms/__tests__/panel-stack-lanes.test.ts": {
-      "sha256": "e408b6e536a7d7b2ccf48a1766d518fbe8375b500771065c2d54bd471373e4ec",
-      "reason": "Craft renderer test adapted to retained Lite behavior"
-    },
-    "apps/electron/src/renderer/atoms/__tests__/browser-pane.test.ts": {
-      "sha256": "3920dbfc87eb8b75f1aa02bef5b4d98b791bb513dfd4827e4cff4d4312388432",
-      "reason": "Craft renderer test adapted to retained Lite behavior"
-    },
-    "apps/electron/src/renderer/atoms/background-finished.ts": {
-      "sha256": "e28b3dba904fe7aba050b98f168f844ce079d89e696385f13a2ad06a7fbc0855",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/atoms/sessions.ts": {
-      "sha256": "0e38de06d614110008137fd7634fc5c3da5b9dc6c54ef124c1d5784ecd8c44f2",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/index.html": {
-      "sha256": "ded83e3435b22343c047a0c6ec56bda95d71d5c69833c632d39aa8e6b76e610b",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/contexts/NavigationContext.tsx": {
-      "sha256": "0f460eb8fc9d74083231389918d0bf54b4f4844ca25d7775f42e5c0d62b2a99f",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts": {
-      "sha256": "9308753a67b74314cd9c9bec7aaf461ce1bc0926460aff7c5a9b866dadbd59b3",
-      "reason": "Craft renderer test adapted to retained Lite behavior"
-    },
-    "apps/electron/src/renderer/context/AppShellContext.tsx": {
-      "sha256": "22619dc0570656078028509601f0ca04f88d00e71b17cd66715a719ffeda260b",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/context/SessionListContext.tsx": {
-      "sha256": "83747bea0c71dc003530fb253f4474faf7adde24b963db15612ca8611e2cd472",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/utils/session.ts": {
-      "sha256": "7982f7e7d639b50e8f729249b016eab8a11a275b35677b027e93578fcfa9f4bf",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/utils/__tests__/session-list-collapse.test.ts": {
-      "sha256": "773a43638e779eb6f5001b24ce78147c1b2397612646e9365d3226639050ed6d",
-      "reason": "Craft renderer test adapted to retained Lite behavior"
-    },
-    "apps/electron/src/renderer/utils/session-list-collapse.ts": {
-      "sha256": "ecd4000a5c2e5f66b467847af1611f2ae0d3d4bc2529369a5a76896abf5baf2e",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/index.css": {
-      "sha256": "fb918a1d6d086c50b460359b7e1ae947a03d6a756fed9a14a102e600480f4f3c",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/components/ui/EditPopover.tsx": {
-      "sha256": "6bed04b6ba78ad5942da8ba3f7fd0b66468b0af9046ff4ef0fe199e3b9b9ee47",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/components/ui/mention-menu.tsx": {
-      "sha256": "96fb9df8cd5d08fbcc268caa1bfe01231e75ec5c3b8a10556056759d1b1852f4",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/components/ui/rich-text-input.tsx": {
-      "sha256": "ea324cac9dbc64f693a701be0a3f06064eafcb0279d532c3f16a10b55b5930ff",
-      "reason": "Craft rich-text input retains the xagent-proven DOM and IME placeholder visibility fix"
-    },
-    "apps/electron/src/renderer/components/ui/mention-badge.tsx": {
-      "sha256": "ffc771e934c91ac7bee74012e32ca92a4606371f2ade39830ebe66a889c29d8f",
+    "apps/electron/src/renderer/components/apisetup/ApiKeyInput.tsx": {
+      "sha256": "dd0a687966d17af0c6e94cb8e40a2f8cb1607e5b01d906a9d4b0b333eb593625",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/app-menu/DesktopAppMenu.tsx": {
@@ -109,13 +85,213 @@
       "sha256": "739cd2fc3bb583ee4a4a8ca02f639147b819b3466478dea17bb0ef9c6d817f97",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
-    "apps/electron/src/renderer/components/SplashScreen.tsx": {
-      "sha256": "bb8dd7d8af53be69c3f7e01e3c6cdb892f1058b5d929d99dd512e6b0f15eecd9",
+    "apps/electron/src/renderer/components/app-shell/ActiveOptionBadges.tsx": {
+      "sha256": "20bc9a4fd93cf4f27428e6511e3c230ca9d0258cf4ae1801019d2ab397c302e7",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": {
+      "sha256": "d36f2cd417fde2821bf28895bf9bd6b8ef48d06c6360564d2bf2cd162f9ba53e",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/BatchSessionMenu.tsx": {
+      "sha256": "da4a5e9c258416f71115f2a419ac62d6664038ede422612fec41da569cd3c122",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx": {
+      "sha256": "2ef50df28338f229ff682da6557cca68a301523cb631bd904898bd8b9763aba4",
+      "reason": "Craft chat display passes persisted user-message timestamps to the shared timestamp and copy footer"
+    },
+    "apps/electron/src/renderer/components/app-shell/CompactSessionMenu.tsx": {
+      "sha256": "a7459b6b5f68c9440c2b8885d91ee6f2d933bc622247ec89e77628de79db64aa",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/CompactWorkspaceSwitcher.tsx": {
+      "sha256": "880249a670308f6a8945f302e14b3c8f8675301ee3e3ed048057749bc1c5022f",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/LeftSidebar.tsx": {
+      "sha256": "2a3da90d7a01c7beade3210c00161a7f7b4ca8697c44a91777f7ba205ca5f1f7",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": {
+      "sha256": "52f5971be39fc8e4ca91b6888ca940271b018e68d12b5d66bb3ab4308f3085ba",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/MultiSelectPanel.tsx": {
+      "sha256": "c3b4780c6e67483dfb3092967f17a82c5f3164694feddd2c40f3c33f891eb461",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/NavigatorPanel.tsx": {
+      "sha256": "c790ae8ff5a15bfa5cd9e1d5f572c8af3c24760102da690d58e27984895b597a",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": {
+      "sha256": "118b78fd6841bafa4dc298957c75e451b0f08d3a9c64f251b926fb652b24f886",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/SessionItem.tsx": {
+      "sha256": "9531d76eb6aa8e775a8630306304c3f29f2b38bd099ae84c12558d50c00e2f80",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/SessionList.tsx": {
+      "sha256": "3e56196de1321a0b4116c3ea4431993434a99389097ca079fdb8646b0595a5d1",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/SessionMenu.tsx": {
+      "sha256": "188ca4ebfb82016cbb1882ba723fe42397df263e218f720b9fc58133abd27eef",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/SidebarMenu.tsx": {
+      "sha256": "c9489084750318c10977f216ab959035817790cd2dda54a017ab5151729fe048",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/SkillMenu.tsx": {
+      "sha256": "73908b1f3655a61b0f72c3e543c94e593ff0ca6c1d22288a4f7b8f70d6e3fa96",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx": {
+      "sha256": "80533b62df72002cac742b7bd92819c43d49e38ec1524049ea217348f9cb96f9",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/TaskActionMenu.tsx": {
+      "sha256": "2f4a4afdea155882f5f7b29b7cd03ebb288f1e88c7b07edf58052014350819a8",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/TopBar.tsx": {
+      "sha256": "3fa0802cf77dc0735cb30e7239ac18db9ce973025a6eb6659a2d0a8f2fe6f8e5",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/WorkspaceSwitcher.tsx": {
+      "sha256": "3b76bff0ae472453327ebd33036cac413676134e45b6450dfc812e16f556431d",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/__tests__/transport-connection-banner.test.ts": {
+      "sha256": "22b5051fe16d65c5c111f4206bcee44d3c1d4435f861d6a6be73852883e5af90",
+      "reason": "Craft renderer test adapted to retained Lite behavior"
+    },
+    "apps/electron/src/renderer/components/app-shell/input/ChatInputZone.tsx": {
+      "sha256": "3c116dacc65c8e6568f6d993b42fb7fa972eefce54de6f131d4f07260233331d",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/input/CompactPermissionModeSelector.tsx": {
+      "sha256": "20348b64205c1849cdecef438aee9c460b1e3222c55fca18afd9ea3e04a44125",
+      "reason": "Retain Lite permission modes and precise approvals; Guarded and decision configuration deferred"
+    },
+    "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx": {
+      "sha256": "fdd4fe14e97d35e748e3d4100ed514a40b4488722c3039f64f8b901cf3812d7a",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/input/FreeFormInputContextBadge.tsx": {
+      "sha256": "2fee8c0580f4d5c3a5f628660936f2194d3679374744cd573bcf49ad48e3badc",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/input/StructuredInput.tsx": {
+      "sha256": "33c1c4166eaa90ccd47ff2e7e40cd9233c6d43b4a4cbd2b702d76021ae87fe5c",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/input/ToolbarStatusSlot.tsx": {
+      "sha256": "3fb9e4d05082116db57a9fe74bedadd718651f8fb930aa007014e4546624320f",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/input/WorkingDirectorySelector.tsx": {
+      "sha256": "953fef0e972ecda5d7a5032864105e0e2429aa65d93ad3f8bc82b60f16f0da3b",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/input/__tests__/model-picker-helpers.test.ts": {
+      "sha256": "f86c58d329e87ae4aad1d1b54e17ad47dac7caa2b670503e88554c89d10deff8",
+      "reason": "Craft renderer test adapted to retained Lite behavior"
+    },
+    "apps/electron/src/renderer/components/app-shell/input/model-picker-helpers.ts": {
+      "sha256": "455f9828ad739cbea3ac9908c07a1548e9ab9f28bc2a9f351fd7fc7eb90cb710",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/input/structured/AdminApprovalRequest.tsx": {
+      "sha256": "91e51bef40e8457e371e2489417a8133f56bb97c625dedc1574dc19c11f9a1c2",
+      "reason": "Craft renderer file adapted for complete MkAgent localization coverage"
+    },
+    "apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx": {
+      "sha256": "58c0607ad9faf054ac28e778edb1f5ad533e092aed6d2f11b85f745c02c1224a",
+      "reason": "Craft renderer file adapted for complete MkAgent localization coverage"
+    },
+    "apps/electron/src/renderer/components/app-shell/input/structured/types.ts": {
+      "sha256": "718736fa9d15f0953c9d8f619d1810486979b42955ac8d061f9c7238f34f188a",
+      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/browser/BrowserTabStrip.tsx": {
+      "sha256": "c9cf38a62b3b21a9780b5d6c191670a8f84d31f214319240eafad82ef3807f5e",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/chat/EmptyStateHint.tsx": {
       "sha256": "97ac4447cb2d76b99ea32ee6af130da4cff9e32d2414fe7f5d58501e593aafa6",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/components/icons/MkAgentAppIcon.tsx": {
+      "sha256": "6f8b043d2a721d41254cb68d233cd44d530198ca9f7dffa27d98c572113403bd",
+      "reason": "MkAgent trademark-safe replacement asset"
+    },
+    "apps/electron/src/renderer/components/icons/SettingsIcons.tsx": {
+      "sha256": "2275dfa4320c597db3c544434636d5b6527ba9341b2120de106140e5da805b3e",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/components/info/index.ts": {
+      "sha256": "7c7e7259107a658445b68a8d22015c7f6debed01b8f47a541c7e30a397a2c875",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/components/onboarding/APISetupStep.tsx": {
+      "sha256": "6c0b8d0762c16ceb7a56c7f9c7da8f322b65857f127c1d3b05282577914f0cc6",
+      "reason": "Craft setup method union is trimmed to two Pi-routed subscriptions and the existing Pi API-key flow"
+    },
+    "apps/electron/src/renderer/components/onboarding/CompletionStep.tsx": {
+      "sha256": "41fbccbe0002d041770f34392c47572380f77d1b8eb4f4c9bab7c3b84411a467",
+      "reason": "Craft onboarding uses the MkAgent app icon while retaining the upstream layout"
+    },
+    "apps/electron/src/renderer/components/onboarding/CredentialsStep.tsx": {
+      "sha256": "6103bcea6d4b863404d077eda8e74f49a13490a6f21a34e0742c4a88f13c1ac2",
+      "reason": "Craft onboarding retains Claude and ChatGPT OAuth controls while Copilot and direct Claude SDK branches stay removed"
+    },
+    "apps/electron/src/renderer/components/onboarding/OnboardingWizard.tsx": {
+      "sha256": "5b3b30da6f9e05e6912561263e5b7c5176ebfffebf99be3eacf710c1f0faecbd",
+      "reason": "Craft onboarding wizard restores the retained OAuth state and actions without Copilot state"
+    },
+    "apps/electron/src/renderer/components/onboarding/ProviderSelectStep.tsx": {
+      "sha256": "cb31b8def0c34458ad00e9162088066978fa9958cc5e92ca241009a9dd732447",
+      "reason": "Craft provider cards retain Claude and ChatGPT, use MkAgent branding, and omit Copilot"
+    },
+    "apps/electron/src/renderer/components/onboarding/ReauthScreen.tsx": {
+      "sha256": "ae48a297f7a1e10567a1544aba58aa4baf5056c7e9f651fb1a3e7d011ae06095",
+      "reason": "Craft reauthentication screen removes an unused Craft icon import and stale product comment"
+    },
+    "apps/electron/src/renderer/components/onboarding/WelcomeStep.tsx": {
+      "sha256": "fb0a1e179c208cfbf5ad19afa373484f992873f7bdb2792bbb107b7766c14d4c",
+      "reason": "Craft onboarding uses the MkAgent app icon while retaining the upstream layout"
+    },
+    "apps/electron/src/renderer/components/settings/SettingsToggle.tsx": {
+      "sha256": "6761b2b07f2e1703072447324f5b4278da40d45c4aa59c57ab9f14eec9d7cb4d",
+      "reason": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded"
+    },
+    "apps/electron/src/renderer/components/ui/EditPopover.tsx": {
+      "sha256": "6bed04b6ba78ad5942da8ba3f7fd0b66468b0af9046ff4ef0fe199e3b9b9ee47",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/components/ui/__tests__/rich-text-input.test.ts": {
+      "sha256": "2910ca919db761812e2fa78e35c21b3ad98334b5d1959f6947117be8a1c8efa7",
+      "reason": "Craft rich-text input test retains the xagent-proven placeholder visibility regression coverage"
+    },
+    "apps/electron/src/renderer/components/ui/mention-badge.tsx": {
+      "sha256": "ffc771e934c91ac7bee74012e32ca92a4606371f2ade39830ebe66a889c29d8f",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/components/ui/mention-menu.tsx": {
+      "sha256": "96fb9df8cd5d08fbcc268caa1bfe01231e75ec5c3b8a10556056759d1b1852f4",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/components/ui/rich-text-input.tsx": {
+      "sha256": "3a42d4581694c4eca490754f70a9d4c234aee6514bf4fa778ca8d84707330107",
+      "reason": "Craft rich-text input retains the xagent-proven DOM and IME placeholder visibility fix"
+    },
+    "apps/electron/src/renderer/components/ui/slash-command-menu.tsx": {
+      "sha256": "db0b47ea137523cd04179baeb1f78c485ceb1116bbd1ed18767c4ae756987e5c",
+      "reason": "Craft renderer file adapted for complete MkAgent localization coverage"
     },
     "apps/electron/src/renderer/components/workspace/AddWorkspaceStep_Choice.tsx": {
       "sha256": "f5552f9fa804d7885b4a3bdcd5f24a4869c0af989acf6e72928badbebd616476",
@@ -129,256 +305,84 @@
       "sha256": "9d9c8fecff1668b2fc80153a6137d6aed41cfaa6d3c9094f95c968986d1a6622",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
-    "apps/electron/src/renderer/components/apisetup/ApiKeyInput.tsx": {
-      "sha256": "dd0a687966d17af0c6e94cb8e40a2f8cb1607e5b01d906a9d4b0b333eb593625",
+    "apps/electron/src/renderer/context/AppShellContext.tsx": {
+      "sha256": "22619dc0570656078028509601f0ca04f88d00e71b17cd66715a719ffeda260b",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
-    "apps/electron/src/renderer/components/apisetup/index.ts": {
-      "sha256": "c507115453628315c73c53477bc7caf4d0f4261b3872819b9afa4a1a7423286d",
-      "reason": "Craft API setup barrel restores the shared OAuth control without Copilot or Sources exports"
-    },
-    "apps/electron/src/renderer/components/info/index.ts": {
-      "sha256": "7c7e7259107a658445b68a8d22015c7f6debed01b8f47a541c7e30a397a2c875",
+    "apps/electron/src/renderer/context/SessionListContext.tsx": {
+      "sha256": "83747bea0c71dc003530fb253f4474faf7adde24b963db15612ca8611e2cd472",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
-    "apps/electron/src/renderer/components/ServerDirectoryBrowser.tsx": {
-      "sha256": "98cf5e27c3abe8d0451ae623be7737223cedfbac1eabfb60b7e70c1c9bcb0ded",
+    "apps/electron/src/renderer/context/ThemeContext.tsx": {
+      "sha256": "451f88e4f421ec91b225563ab090df88d624dd501ea3d1135e1bead93f2d25a5",
+      "reason": "Craft theme context corrected to hydrate host-managed auxiliary windows from the saved app preference on startup"
+    },
+    "apps/electron/src/renderer/contexts/NavigationContext.tsx": {
+      "sha256": "0f460eb8fc9d74083231389918d0bf54b4f4844ca25d7775f42e5c0d62b2a99f",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
-    "apps/electron/src/renderer/components/browser/BrowserTabStrip.tsx": {
-      "sha256": "c9cf38a62b3b21a9780b5d6c191670a8f84d31f214319240eafad82ef3807f5e",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/components/icons/MkAgentAppIcon.tsx": {
-      "sha256": "6f8b043d2a721d41254cb68d233cd44d530198ca9f7dffa27d98c572113403bd",
-      "reason": "MkAgent trademark-safe replacement asset"
-    },
-    "apps/electron/src/renderer/components/icons/SettingsIcons.tsx": {
-      "sha256": "2275dfa4320c597db3c544434636d5b6527ba9341b2120de106140e5da805b3e",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/components/app-shell/BatchSessionMenu.tsx": {
-      "sha256": "da4a5e9c258416f71115f2a419ac62d6664038ede422612fec41da569cd3c122",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/TopBar.tsx": {
-      "sha256": "3fa0802cf77dc0735cb30e7239ac18db9ce973025a6eb6659a2d0a8f2fe6f8e5",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/SessionList.tsx": {
-      "sha256": "3e56196de1321a0b4116c3ea4431993434a99389097ca079fdb8646b0595a5d1",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/TaskActionMenu.tsx": {
-      "sha256": "2f4a4afdea155882f5f7b29b7cd03ebb288f1e88c7b07edf58052014350819a8",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/input/ToolbarStatusSlot.tsx": {
-      "sha256": "3fb9e4d05082116db57a9fe74bedadd718651f8fb930aa007014e4546624320f",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/input/StructuredInput.tsx": {
-      "sha256": "33c1c4166eaa90ccd47ff2e7e40cd9233c6d43b4a4cbd2b702d76021ae87fe5c",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx": {
-      "sha256": "684aa8e35ab82f582b7a8d2fb3b721f79c31592457a3847a8ad698e8db3d8f5f",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/input/FreeFormInputContextBadge.tsx": {
-      "sha256": "2fee8c0580f4d5c3a5f628660936f2194d3679374744cd573bcf49ad48e3badc",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/input/ChatInputZone.tsx": {
-      "sha256": "3c116dacc65c8e6568f6d993b42fb7fa972eefce54de6f131d4f07260233331d",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/input/model-picker-helpers.ts": {
-      "sha256": "455f9828ad739cbea3ac9908c07a1548e9ab9f28bc2a9f351fd7fc7eb90cb710",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/input/__tests__/model-picker-helpers.test.ts": {
-      "sha256": "f86c58d329e87ae4aad1d1b54e17ad47dac7caa2b670503e88554c89d10deff8",
+    "apps/electron/src/renderer/contexts/__tests__/navigation-reconcile.test.ts": {
+      "sha256": "9308753a67b74314cd9c9bec7aaf461ce1bc0926460aff7c5a9b866dadbd59b3",
       "reason": "Craft renderer test adapted to retained Lite behavior"
-    },
-    "apps/electron/src/renderer/components/app-shell/input/WorkingDirectorySelector.tsx": {
-      "sha256": "953fef0e972ecda5d7a5032864105e0e2429aa65d93ad3f8bc82b60f16f0da3b",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/input/structured/types.ts": {
-      "sha256": "718736fa9d15f0953c9d8f619d1810486979b42955ac8d061f9c7238f34f188a",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx": {
-      "sha256": "80533b62df72002cac742b7bd92819c43d49e38ec1524049ea217348f9cb96f9",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/AppShell.tsx": {
-      "sha256": "d36f2cd417fde2821bf28895bf9bd6b8ef48d06c6360564d2bf2cd162f9ba53e",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/WorkspaceSwitcher.tsx": {
-      "sha256": "3b76bff0ae472453327ebd33036cac413676134e45b6450dfc812e16f556431d",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/CompactWorkspaceSwitcher.tsx": {
-      "sha256": "880249a670308f6a8945f302e14b3c8f8675301ee3e3ed048057749bc1c5022f",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/MultiSelectPanel.tsx": {
-      "sha256": "c3b4780c6e67483dfb3092967f17a82c5f3164694feddd2c40f3c33f891eb461",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx": {
-      "sha256": "ebeee1f251d9ee3bb4de35838aff819ebb8b736a0953faf20c68ce1446488275",
-      "reason": "Craft chat display passes persisted user-message timestamps to the shared timestamp and copy footer"
-    },
-    "apps/electron/src/renderer/components/app-shell/input/structured/AdminApprovalRequest.tsx": {
-      "sha256": "91e51bef40e8457e371e2489417a8133f56bb97c625dedc1574dc19c11f9a1c2",
-      "reason": "Craft renderer file adapted for complete MkAgent localization coverage"
-    },
-    "apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx": {
-      "sha256": "35636ea9bae3ea48425cfdfc690e696cc570a82c9286048579053353859a1ad8",
-      "reason": "Craft renderer file adapted for complete MkAgent localization coverage"
-    },
-    "apps/electron/src/renderer/components/ui/slash-command-menu.tsx": {
-      "sha256": "db0b47ea137523cd04179baeb1f78c485ceb1116bbd1ed18767c4ae756987e5c",
-      "reason": "Craft renderer file adapted for complete MkAgent localization coverage"
-    },
-    "apps/electron/src/renderer/components/app-shell/__tests__/transport-connection-banner.test.ts": {
-      "sha256": "22b5051fe16d65c5c111f4206bcee44d3c1d4435f861d6a6be73852883e5af90",
-      "reason": "Craft renderer test adapted to retained Lite behavior"
-    },
-    "apps/electron/src/renderer/components/app-shell/SkillMenu.tsx": {
-      "sha256": "73908b1f3655a61b0f72c3e543c94e593ff0ca6c1d22288a4f7b8f70d6e3fa96",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/NavigatorPanel.tsx": {
-      "sha256": "c790ae8ff5a15bfa5cd9e1d5f572c8af3c24760102da690d58e27984895b597a",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/LeftSidebar.tsx": {
-      "sha256": "2a3da90d7a01c7beade3210c00161a7f7b4ca8697c44a91777f7ba205ca5f1f7",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/SessionMenu.tsx": {
-      "sha256": "188ca4ebfb82016cbb1882ba723fe42397df263e218f720b9fc58133abd27eef",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/ActiveOptionBadges.tsx": {
-      "sha256": "20bc9a4fd93cf4f27428e6511e3c230ca9d0258cf4ae1801019d2ab397c302e7",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/SidebarMenu.tsx": {
-      "sha256": "c9489084750318c10977f216ab959035817790cd2dda54a017ab5151729fe048",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx": {
-      "sha256": "52f5971be39fc8e4ca91b6888ca940271b018e68d12b5d66bb3ab4308f3085ba",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx": {
-      "sha256": "118b78fd6841bafa4dc298957c75e451b0f08d3a9c64f251b926fb652b24f886",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/CompactSessionMenu.tsx": {
-      "sha256": "a7459b6b5f68c9440c2b8885d91ee6f2d933bc622247ec89e77628de79db64aa",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/app-shell/SessionItem.tsx": {
-      "sha256": "9531d76eb6aa8e775a8630306304c3f29f2b38bd099ae84c12558d50c00e2f80",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
-    },
-    "apps/electron/src/renderer/components/onboarding/WelcomeStep.tsx": {
-      "sha256": "fb0a1e179c208cfbf5ad19afa373484f992873f7bdb2792bbb107b7766c14d4c",
-      "reason": "Craft onboarding uses the MkAgent app icon while retaining the upstream layout"
-    },
-    "apps/electron/src/renderer/components/onboarding/CompletionStep.tsx": {
-      "sha256": "41fbccbe0002d041770f34392c47572380f77d1b8eb4f4c9bab7c3b84411a467",
-      "reason": "Craft onboarding uses the MkAgent app icon while retaining the upstream layout"
-    },
-    "apps/electron/src/renderer/components/onboarding/ReauthScreen.tsx": {
-      "sha256": "ae48a297f7a1e10567a1544aba58aa4baf5056c7e9f651fb1a3e7d011ae06095",
-      "reason": "Craft reauthentication screen removes an unused Craft icon import and stale product comment"
-    },
-    "apps/electron/src/renderer/components/ui/__tests__/rich-text-input.test.ts": {
-      "sha256": "2910ca919db761812e2fa78e35c21b3ad98334b5d1959f6947117be8a1c8efa7",
-      "reason": "Craft rich-text input test retains the xagent-proven placeholder visibility regression coverage"
-    },
-    "apps/electron/src/renderer/components/onboarding/CredentialsStep.tsx": {
-      "sha256": "6103bcea6d4b863404d077eda8e74f49a13490a6f21a34e0742c4a88f13c1ac2",
-      "reason": "Craft onboarding retains Claude and ChatGPT OAuth controls while Copilot and direct Claude SDK branches stay removed"
-    },
-    "apps/electron/src/renderer/components/onboarding/APISetupStep.tsx": {
-      "sha256": "6c0b8d0762c16ceb7a56c7f9c7da8f322b65857f127c1d3b05282577914f0cc6",
-      "reason": "Craft setup method union is trimmed to two Pi-routed subscriptions and the existing Pi API-key flow"
-    },
-    "apps/electron/src/renderer/components/onboarding/ProviderSelectStep.tsx": {
-      "sha256": "cb31b8def0c34458ad00e9162088066978fa9958cc5e92ca241009a9dd732447",
-      "reason": "Craft provider cards retain Claude and ChatGPT, use MkAgent branding, and omit Copilot"
-    },
-    "apps/electron/src/renderer/components/onboarding/OnboardingWizard.tsx": {
-      "sha256": "5b3b30da6f9e05e6912561263e5b7c5176ebfffebf99be3eacf710c1f0faecbd",
-      "reason": "Craft onboarding wizard restores the retained OAuth state and actions without Copilot state"
-    },
-    "apps/electron/src/renderer/event-processor/types.ts": {
-      "sha256": "fe05633bbc85cf8ed41a19a528b893ddae816bff71f405bf433a477f53ab6511",
-      "reason": "Craft v0.13.3 retry event types are adapted to the narrower MkAgent protocol surface"
-    },
-    "apps/electron/src/renderer/event-processor/processor.ts": {
-      "sha256": "cd4f3cdfb04f9aa515e96db12f596d919c6debba88deea2d6a891ecd171ab712",
-      "reason": "Craft v0.13.3 retry and text-discard events are routed through the retained MkAgent event processor"
-    },
-    "apps/electron/src/renderer/event-processor/index.ts": {
-      "sha256": "d21117d69820e7d70aefdfa9a7dedd03ff6ea1a2e01fc271748d159738fa615b",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/event-processor/handlers/session.ts": {
-      "sha256": "53e262c61dba2f29abd03d4711b9d3b2732fad998d2dd37fbbf474e5088d7604",
-      "reason": "Craft v0.13.3 retry lifecycle is adapted to the MkAgent renderer and retained Lite session state"
     },
     "apps/electron/src/renderer/event-processor/handlers/__tests__/conversation-flow.test.ts": {
       "sha256": "c8d766a7782b0990731475001fa377e1162cdc2a05a779a110ddb9fa59273079",
       "reason": "Craft renderer test adapted to retained Lite behavior"
     },
-    "apps/electron/src/renderer/hooks/useSessionSearch.ts": {
-      "sha256": "5825a043c104f917a67f52779521084538f944568ac5c5c764b7bc7e68134239",
+    "apps/electron/src/renderer/event-processor/handlers/session.ts": {
+      "sha256": "f3856241e22116a24cd646ad54e15a7207c5526211de085e1e3c88380604423b",
+      "reason": "Craft v0.13.3 retry lifecycle is adapted to the MkAgent renderer and retained Lite session state"
+    },
+    "apps/electron/src/renderer/event-processor/index.ts": {
+      "sha256": "d21117d69820e7d70aefdfa9a7dedd03ff6ea1a2e01fc271748d159738fa615b",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/event-processor/processor.ts": {
+      "sha256": "cd4f3cdfb04f9aa515e96db12f596d919c6debba88deea2d6a891ecd171ab712",
+      "reason": "Craft v0.13.3 retry and text-discard events are routed through the retained MkAgent event processor"
+    },
+    "apps/electron/src/renderer/event-processor/types.ts": {
+      "sha256": "3dabff07cb3061d9f7ef9d2924a44fe1821a5b383c9c7531d91c673ac338cf4d",
+      "reason": "Craft v0.13.3 retry event types are adapted to the narrower MkAgent protocol surface"
+    },
+    "apps/electron/src/renderer/hooks/__tests__/useOnboarding.test.ts": {
+      "sha256": "f6f47abc46b7346c2636a2e5bd95eef6dc82f1d923e41c0ec08ca9484a0a8e20",
+      "reason": "Craft onboarding tests retain Claude and ChatGPT slug and identity coverage while excluding Copilot"
+    },
+    "apps/electron/src/renderer/hooks/__tests__/useSessionSearch.test.ts": {
+      "sha256": "66a69ca7846731efd379f36c822a39389689ee73c1c3dcc7c49c1bc9dcda3b8d",
+      "reason": "Craft renderer test adapted to retained Lite behavior"
+    },
+    "apps/electron/src/renderer/hooks/useEntitySelection.ts": {
+      "sha256": "2e414a9ecfd2fc525c43a08b96203f1582c5717e5171925a8fcc7543bef6e19d",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/hooks/useNotifications.ts": {
+      "sha256": "a4e07d0f673a4d92f8e0d97fea3803b2d59e75363a76a23559d3a210d6c9e673",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/hooks/useOnboarding.ts": {
-      "sha256": "e88faba94ea2067930eb6adb076d66976179bb0400dd3c807c345642f3f999be",
+      "sha256": "4585558b1eced14f3b8c070840b9d01475066d46c3b031d7982da9016f00b4a9",
       "reason": "Craft onboarding hook retains Claude and ChatGPT OAuth lifecycle and removes Copilot and direct Claude SDK setup"
     },
     "apps/electron/src/renderer/hooks/useSessionMenuActions.ts": {
       "sha256": "25d98eb805bd2b787a4aa2fe56af66b187ea581cf23ffd4530282874cd58dbfe",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
-    "apps/electron/src/renderer/hooks/__tests__/useSessionSearch.test.ts": {
-      "sha256": "66a69ca7846731efd379f36c822a39389689ee73c1c3dcc7c49c1bc9dcda3b8d",
-      "reason": "Craft renderer test adapted to retained Lite behavior"
+    "apps/electron/src/renderer/hooks/useSessionOptions.ts": {
+      "sha256": "7eefd45f5dcef7fbbad12ac4c1bb39c0350a931952284b580f8be8a2bcec1f44",
+      "reason": "Retain Lite permission modes and precise approvals; Guarded and decision configuration deferred"
     },
-    "apps/electron/src/renderer/hooks/__tests__/useOnboarding.test.ts": {
-      "sha256": "f6f47abc46b7346c2636a2e5bd95eef6dc82f1d923e41c0ec08ca9484a0a8e20",
-      "reason": "Craft onboarding tests retain Claude and ChatGPT slug and identity coverage while excluding Copilot"
-    },
-    "apps/electron/src/renderer/hooks/useNotifications.ts": {
-      "sha256": "a4e07d0f673a4d92f8e0d97fea3803b2d59e75363a76a23559d3a210d6c9e673",
+    "apps/electron/src/renderer/hooks/useSessionSearch.ts": {
+      "sha256": "5825a043c104f917a67f52779521084538f944568ac5c5c764b7bc7e68134239",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
-    "apps/electron/src/renderer/hooks/useEntitySelection.ts": {
-      "sha256": "2e414a9ecfd2fc525c43a08b96203f1582c5717e5171925a8fcc7543bef6e19d",
+    "apps/electron/src/renderer/index.css": {
+      "sha256": "fb918a1d6d086c50b460359b7e1ae947a03d6a756fed9a14a102e600480f4f3c",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
-    "apps/electron/src/renderer/lib/provider-icons.ts": {
-      "sha256": "fe7aba9231ffdb92f01cbe75cdfdad29c2a9fdc0ba8e3985abe9707df11737f7",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/lib/mentions.ts": {
-      "sha256": "a26f2a3a6f5d112a4a3f3a19e911f2474066acc5b3cdea75c055722861745a4c",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/lib/local-storage.ts": {
-      "sha256": "a8ee220a566e19e6a23ce35749403d8b17a5cf72422048995d06ee16343ba927",
+    "apps/electron/src/renderer/index.html": {
+      "sha256": "ded83e3435b22343c047a0c6ec56bda95d71d5c69833c632d39aa8e6b76e610b",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/lib/__tests__/mentions.test.ts": {
@@ -389,6 +393,14 @@
       "sha256": "72319165278fa53972410645521fabaaaea40d7dddff6045ba175e04d86ae7b2",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
+    "apps/electron/src/renderer/lib/local-storage.ts": {
+      "sha256": "a8ee220a566e19e6a23ce35749403d8b17a5cf72422048995d06ee16343ba927",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/lib/mentions.ts": {
+      "sha256": "a26f2a3a6f5d112a4a3f3a19e911f2474066acc5b3cdea75c055722861745a4c",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
     "apps/electron/src/renderer/lib/nav-helpers.ts": {
       "sha256": "5d3e051f11765283eebc0680dff031de9430ffcb7160633447ebb546f7c1f33c",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
@@ -397,49 +409,13 @@
       "sha256": "eef6f355f72567ebaa74c6277b584640b773673178848235494769598b6b682d",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
-    "apps/electron/src/renderer/assets/mkagent_mark.svg": {
-      "sha256": "d6d83873eefbabb442b6671e14eb3238d520f7772edcaf8b9e21c9745cdf9b69",
-      "reason": "MkAgent trademark-safe replacement asset"
-    },
-    "apps/electron/src/renderer/assets/mkagent_app_icon.png": {
-      "sha256": "8ef2d656c2eb9bbef8d0d8abb646e1ded0e4143046434866d541aaf9e3da6dc5",
-      "reason": "MkAgent trademark-safe replacement asset"
-    },
-    "apps/electron/src/renderer/assets/mkagent_app_icon.svg": {
-      "sha256": "3d1b70b6c3ce090706ee71b4b6e8af1104e5ba6567486ce632b6dcd0ee064b68",
-      "reason": "MkAgent trademark-safe replacement asset"
-    },
-    "apps/electron/src/renderer/assets/mkagent_mark.png": {
-      "sha256": "7ab54137b8b7ab251a521ea1903a02dcb7f27598beabff8dca1d4a3fcd75906b",
-      "reason": "MkAgent trademark-safe replacement asset"
-    },
-    "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx": {
-      "sha256": "35cd476c9880869a6f20a6498b41bb7486fb59f93acb226cef7e822274410540",
-      "reason": "Craft settings UI adapted only to retained MkAgent settings"
-    },
-    "apps/electron/src/renderer/pages/settings/WorkspaceSettingsPage.tsx": {
-      "sha256": "5e9b24d260d0ffb6f378597abafe068aaa955e00333306048545d0275bc3d7fd",
-      "reason": "Craft settings UI adapted only to retained MkAgent settings"
-    },
-    "apps/electron/src/renderer/pages/settings/settings-pages.ts": {
-      "sha256": "5e2520e3f35979818577cd12eeffc7a321e1c18378e8a2cf49c9cc7f5210bb09",
-      "reason": "Craft settings UI adapted only to retained MkAgent settings"
-    },
-    "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx": {
-      "sha256": "d699cda661aaaa784aca471537f42ee100237d3355a0cc29639f6bcd1196944a",
-      "reason": "Craft AI settings restores retained Claude and ChatGPT reauthentication while all other removed settings remain absent"
-    },
-    "apps/electron/src/renderer/pages/settings/index.ts": {
-      "sha256": "b7bfec4ded6fcd0ad804b7079866f600c8b10ce00de8a832650f52e6f7c58454",
-      "reason": "Craft settings UI adapted only to retained MkAgent settings"
-    },
-    "apps/electron/src/renderer/pages/settings/PermissionsSettingsPage.tsx": {
-      "sha256": "6a6c104288b9b4107d5d0b23177c7c9aaf314724f88d97fac39e12f80426ec9b",
-      "reason": "Craft settings UI adapted only to retained MkAgent settings"
-    },
-    "apps/electron/src/renderer/pages/index.ts": {
-      "sha256": "4899116eabd23af0657fa153ba3b00ab99680b2ea837f62946f333a4a57198ef",
+    "apps/electron/src/renderer/lib/provider-icons.ts": {
+      "sha256": "fe7aba9231ffdb92f01cbe75cdfdad29c2a9fdc0ba8e3985abe9707df11737f7",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/main.tsx": {
+      "sha256": "21c7f0dc860147dd161fc307ff2ebf65bc3973c39186f462e7bbb78cf51609f7",
+      "reason": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded"
     },
     "apps/electron/src/renderer/pages/ChatPage.tsx": {
       "sha256": "75a59deda225ba7111b32cb4c33ca55076dc9486902b9c16cd813e290d84655d",
@@ -449,17 +425,45 @@
       "sha256": "88eebdbe1ec6e0fc4ce3e93ca8823b4fe87edf057daef8b4c33fdb985da2178b",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
-    "apps/electron/src/renderer/event-processor/handlers/text.ts": {
-      "sha256": "dbe9a078d809a3f36d04b029162d0ad6124f8c885e2c7f0b122cae4a47725a36",
-      "reason": "Craft v0.13.3 failed-attempt text discard prevents retried responses from merging with partial output"
+    "apps/electron/src/renderer/pages/index.ts": {
+      "sha256": "4899116eabd23af0657fa153ba3b00ab99680b2ea837f62946f333a4a57198ef",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
-    "apps/electron/src/renderer/event-processor/helpers.ts": {
-      "sha256": "4102e427632ada8ecee43168ecc5cadf63ba7cd7939e5ba978a8607a2f3c3cc8",
-      "reason": "Craft v0.13.3 transient retry-status cleanup is retained for MkAgent conversations"
+    "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx": {
+      "sha256": "dad1d635b1e4e3970be1f634d2d1653b22db494c3db8292e897f49906379fc66",
+      "reason": "Craft AI settings restores retained Claude and ChatGPT reauthentication while all other removed settings remain absent"
     },
-    "apps/electron/src/renderer/event-processor/handlers/__tests__/retry-lifecycle.test.ts": {
-      "sha256": "76350493a75f9b9e9c68ab23b54de07cf54ddd20393124c324ea7e15ce10791f",
-      "reason": "Selective Craft v0.13.3 regression coverage for MkAgent retry and failed-text rendering"
+    "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx": {
+      "sha256": "35cd476c9880869a6f20a6498b41bb7486fb59f93acb226cef7e822274410540",
+      "reason": "Craft settings UI adapted only to retained MkAgent settings"
+    },
+    "apps/electron/src/renderer/pages/settings/PermissionsSettingsPage.tsx": {
+      "sha256": "6a6c104288b9b4107d5d0b23177c7c9aaf314724f88d97fac39e12f80426ec9b",
+      "reason": "Craft settings UI adapted only to retained MkAgent settings"
+    },
+    "apps/electron/src/renderer/pages/settings/WorkspaceSettingsPage.tsx": {
+      "sha256": "5e9b24d260d0ffb6f378597abafe068aaa955e00333306048545d0275bc3d7fd",
+      "reason": "Craft settings UI adapted only to retained MkAgent settings"
+    },
+    "apps/electron/src/renderer/pages/settings/index.ts": {
+      "sha256": "b7bfec4ded6fcd0ad804b7079866f600c8b10ce00de8a832650f52e6f7c58454",
+      "reason": "Craft settings UI adapted only to retained MkAgent settings"
+    },
+    "apps/electron/src/renderer/pages/settings/settings-pages.ts": {
+      "sha256": "5e2520e3f35979818577cd12eeffc7a321e1c18378e8a2cf49c9cc7f5210bb09",
+      "reason": "Craft settings UI adapted only to retained MkAgent settings"
+    },
+    "apps/electron/src/renderer/utils/__tests__/session-list-collapse.test.ts": {
+      "sha256": "773a43638e779eb6f5001b24ce78147c1b2397612646e9365d3226639050ed6d",
+      "reason": "Craft renderer test adapted to retained Lite behavior"
+    },
+    "apps/electron/src/renderer/utils/session-list-collapse.ts": {
+      "sha256": "ecd4000a5c2e5f66b467847af1611f2ae0d3d4bc2529369a5a76896abf5baf2e",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/utils/session.ts": {
+      "sha256": "7982f7e7d639b50e8f729249b016eab8a11a275b35677b027e93578fcfa9f4bf",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     }
   }
 }

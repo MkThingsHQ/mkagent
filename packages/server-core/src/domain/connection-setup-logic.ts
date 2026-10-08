@@ -93,6 +93,61 @@ export function setupTestRequiresApiKey(baseUrl?: string): boolean {
   return !isLoopbackBaseUrl(baseUrl)
 }
 
+/** Placeholder run that stands in for a stored API key in the edit form (GET_API_KEY). */
+export const API_KEY_MASK = '••••••••'
+
+/**
+ * Mask a stored API key for display: provider prefix + mask + last four, or the
+ * mask alone for short keys. The only producer of masked values.
+ */
+export function maskApiKey(key: string): string {
+  return key.length > 15 ? key.slice(0, 7) + API_KEY_MASK + key.slice(-4) : API_KEY_MASK
+}
+
+/**
+ * True for values produced by {@link maskApiKey}, i.e. the edit form echoing a
+ * stored key back. Real keys never contain the bullet character.
+ */
+export function isMaskedApiKey(value: string | null | undefined): boolean {
+  return typeof value === 'string' && value.includes('••')
+}
+
+export type SetupTestApiKeyResolution =
+  | { ok: true; apiKey: string; source: 'input' | 'stored' }
+  | { ok: false; error: string }
+
+/**
+ * Decide which API key a setup test should use.
+ *
+ * The edit form shows the stored key as a masked placeholder; when the user
+ * leaves it untouched and clicks Test, the placeholder arrives here. Testing
+ * with the bullets always failed authentication (OSS #1048), so resolve it to
+ * the stored credential by connection slug, and ask for the key when that is
+ * not possible. Pure apart from the injected store lookup.
+ */
+export async function resolveSetupTestApiKey(
+  input: { apiKey: string | undefined; connectionSlug?: string; allowEmptyApiKey: boolean },
+  getStoredApiKey: (slug: string) => Promise<string | null>,
+): Promise<SetupTestApiKeyResolution> {
+  const trimmed = input.apiKey?.trim() ?? ''
+
+  if (isMaskedApiKey(trimmed)) {
+    if (!input.connectionSlug) {
+      return { ok: false, error: 'Re-enter the API key to test this connection.' }
+    }
+    const stored = await getStoredApiKey(input.connectionSlug)
+    if (!stored) {
+      return { ok: false, error: 'No API key is stored for this connection. Re-enter the key to test it.' }
+    }
+    return { ok: true, apiKey: stored, source: 'stored' }
+  }
+
+  if (!trimmed && !input.allowEmptyApiKey) {
+    return { ok: false, error: 'API key is required' }
+  }
+  return { ok: true, apiKey: trimmed, source: 'input' }
+}
+
 /**
  * Decide how a custom OpenAI/Anthropic-compatible endpoint should be persisted.
  *

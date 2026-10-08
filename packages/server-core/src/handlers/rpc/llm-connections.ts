@@ -34,6 +34,7 @@ import {
   createBuiltInConnection,
   piAuthProviderDisplayName,
   resolveCustomEndpointSetup,
+  resolveSetupTestApiKey,
   setupTestRequiresApiKey,
   validateModelList,
   validateSetupTestInput,
@@ -167,6 +168,7 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
 
   server.handle(RPC_CHANNELS.settings.TEST_LLM_CONNECTION_SETUP, async (_ctx, params: {
     provider: 'pi'
+    connectionSlug?: string
     apiKey: string
     baseUrl?: string
     model?: string
@@ -175,14 +177,13 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
   }) => {
     const validation = validateSetupTestInput(params)
     if (!validation.valid) return { success: false, error: validation.error }
-    if (setupTestRequiresApiKey(params.baseUrl) && !params.apiKey.trim()) {
-      return { success: false, error: 'API key is required' }
-    }
     try {
+      const key = await resolveSetupTestApiKey({ ...params, allowEmptyApiKey: !setupTestRequiresApiKey(params.baseUrl) }, slug => getCredentialManager().getLlmApiKey(slug))
+      if (!key.ok) return { success: false, error: key.error }
       const connection = resolveSetupTestConnectionHint(params)
       const result = await testBackendConnection({
         provider: 'pi',
-        apiKey: params.apiKey,
+        apiKey: key.apiKey,
         model: params.model ?? '',
         baseUrl: params.baseUrl,
         connection,

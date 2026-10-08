@@ -7,6 +7,7 @@ import {
   SessionManager,
   createManagedSession,
   resolveMidStreamDeliveryOutcome,
+  clampSpawnPermissionMode,
 } from './SessionManager.ts'
 import { buildBackendRuntimeSignature, buildRestartRequiredSignature } from './runtime-config.ts'
 
@@ -38,6 +39,52 @@ describe('mid-stream queue runtime invariants', () => {
     ;(sm as unknown as { sessions: Map<string, unknown> }).sessions.set(id, managed)
     return managed
   }
+
+  it('queues messages during manual compaction without calling redirect', async () => {
+    const managed = buildSession('compacting')
+    const redirect = mock(() => true)
+    managed.isProcessing = true
+    managed.agent = { isCompactionInFlight: () => true, redirect } as never
+    ;(sm as any).flushSession = async () => {}
+    await sm.sendMessage(managed.id, 'continue after compact')
+    expect(redirect).not.toHaveBeenCalled()
+    expect(managed.messageQueue.map(item => item.message)).toEqual(['continue after compact'])
+    expect(managed.messages.at(-1)?.isQueued).toBe(true)
+  })
+
+  it('claims a pending plan only once after manual completion and while idle', async () => {
+    const managed = buildSession('pending-plan')
+    managed.pendingPlanExecution = { planPath: '/tmp/plan.md', awaitingCompaction: true, executionDispatched: false }
+    await sm.markCompactionComplete(managed.id)
+    expect(managed.pendingPlanExecution.awaitingCompaction).toBe(true)
+    expect(await sm.markPendingPlanExecutionDispatched(managed.id)).toBe(false)
+    ;(sm as any).handleAgentEvent(managed, { type: 'info', message: 'Compacted automatically', compactionTrigger: 'auto' })
+    expect(managed.pendingPlanExecution.awaitingCompaction).toBe(true)
+    ;(sm as any).handleAgentEvent(managed, { type: 'compaction_failed' })
+    expect(managed.pendingPlanExecution.awaitingCompaction).toBe(true)
+    ;(sm as any).handleAgentEvent(managed, { type: 'info', message: 'Compacted', compactionTrigger: 'manual' })
+    managed.isProcessing = true
+    expect(await sm.markPendingPlanExecutionDispatched(managed.id)).toBe(false)
+    managed.isProcessing = false
+    expect(await sm.markPendingPlanExecutionDispatched(managed.id)).toBe(true)
+    expect(await sm.markPendingPlanExecutionDispatched(managed.id)).toBe(false)
+  })
+
+  it('preserves fresh context occupancy separately from billing usage', () => {
+    const managed = buildSession('context-usage')
+    const contextUsage = { usedTokens: 100, limitTokens: 1000, limitKind: 'compaction' as const, isEstimate: true, isStale: false, canCompact: true }
+    ;(sm as any).handleAgentEvent(managed, { type: 'context_usage', contextUsage })
+    ;(sm as any).handleAgentEvent(managed, { type: 'usage_update', usage: { inputTokens: 5000 } })
+    expect(managed.tokenUsage.contextUsage).toEqual(contextUsage)
+    expect(managed.tokenUsage.inputTokens).toBe(5000)
+  })
+
+  it('never gives a spawned session more permission than its parent', () => {
+    expect(clampSpawnPermissionMode('allow-all', 'ask')).toBe('ask')
+    expect(clampSpawnPermissionMode('ask', 'safe')).toBe('safe')
+    expect(clampSpawnPermissionMode('safe', 'allow-all')).toBe('safe')
+    expect(clampSpawnPermissionMode(undefined, undefined)).toBe('ask')
+  })
 
   it('distinguishes non-interrupting queue mode from a failed steer', () => {
     expect(resolveMidStreamDeliveryOutcome('queue', false)).toEqual({

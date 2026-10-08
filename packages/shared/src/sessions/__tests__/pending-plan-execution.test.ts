@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it } from 'bun:test'
-import { existsSync, mkdirSync, rmSync } from 'node:fs'
+import { existsSync, mkdirSync, rmSync, statSync } from 'node:fs'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import type { StoredSession } from '../types.ts'
 import {
+  clearPendingPlanExecution,
   getPendingPlanExecution,
+  getSessionFilePath,
   markCompactionComplete,
   markPendingPlanExecutionDispatched,
   saveSession,
@@ -58,8 +60,10 @@ describe('pending plan execution persistence', () => {
       executionDispatched: false,
     })
 
+    expect(await markPendingPlanExecutionDispatched(workspaceRoot, 'session-1')).toBe(false)
     await markCompactionComplete(workspaceRoot, 'session-1')
-    await markPendingPlanExecutionDispatched(workspaceRoot, 'session-1')
+    expect(await markPendingPlanExecutionDispatched(workspaceRoot, 'session-1')).toBe(true)
+    expect(await markPendingPlanExecutionDispatched(workspaceRoot, 'session-1')).toBe(false)
 
     expect(getPendingPlanExecution(workspaceRoot, 'session-1')).toEqual({
       planPath: '/tmp/plan.md',
@@ -67,5 +71,21 @@ describe('pending plan execution persistence', () => {
       awaitingCompaction: false,
       executionDispatched: true,
     })
+  })
+
+  it('clears a pending plan, and leaves the file alone when nothing is pending', async () => {
+    const path = getSessionFilePath(workspaceRoot, 'session-1')
+    const untouched = statSync(path).mtimeMs
+    await new Promise(resolve => setTimeout(resolve, 15))
+    // Runs on every user message: no rewrite (concurrent sends used to race on the .tmp file).
+    await Promise.all([
+      clearPendingPlanExecution(workspaceRoot, 'session-1'),
+      clearPendingPlanExecution(workspaceRoot, 'session-1'),
+    ])
+    expect(statSync(path).mtimeMs).toBe(untouched)
+
+    await setPendingPlanExecution(workspaceRoot, 'session-1', '/tmp/plan.md')
+    await clearPendingPlanExecution(workspaceRoot, 'session-1')
+    expect(getPendingPlanExecution(workspaceRoot, 'session-1')).toBeNull()
   })
 })

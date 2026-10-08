@@ -1,8 +1,11 @@
+import { findGitRepositoryRoot } from './developer-context.ts';
+import { escapePromptXmlAttr, sanitizePromptLine } from './prompt-sanitize.ts';
+const PROJECT_CONTEXT_FILES_TAGS = ['project_context_files'] as const;
 import { formatPreferencesForPrompt, getCoAuthorPreference } from '../config/preferences.ts';
-import { getBrowserToolEnabled } from '../config/storage.ts';
+import { getBrowserToolEnabled, getRtkEnabled } from '../config/storage.ts';
 import { debug } from '../utils/debug.ts';
 import { existsSync, readFileSync, readdirSync } from 'fs';
-import { join, relative } from 'path';
+import { join, relative, dirname, resolve } from 'path';
 import { DOC_REFS, APP_ROOT } from '../docs/index.ts';
 import { PERMISSION_MODE_CONFIG } from '../agent/mode-types.ts';
 import { FEATURE_FLAGS } from '../feature-flags.ts';
@@ -263,23 +266,67 @@ export function getProjectContextFilesPrompt(workingDirectory?: string): string 
     return '';
   }
 
-  const contextFiles = findAllProjectContextFiles(workingDirectory);
+  const { contextRoot, contextFiles } = findRelevantProjectContextFiles(workingDirectory);
   if (contextFiles.length === 0) {
     return '';
   }
 
-  // Format file list with (root) annotation for top-level files
+  // Format file list with (root) annotation for top-level files. Paths are
+  // relative to contextRoot, which may be a git repository root when the
+  // selected working directory is nested inside a repo.
   const fileList = contextFiles
     .map((file) => {
-      const isRoot = !file.includes('/');
-      return `- ${file}${isRoot ? ' (root)' : ''}`;
+      const sanitized = sanitizePromptLine(file, PROJECT_CONTEXT_FILES_TAGS);
+      const isRoot = !sanitized.includes('/');
+      return `- ${sanitized}${isRoot ? ' (root)' : ''}`;
     })
     .join('\n');
 
+  const workingDirectoryAttr = escapePromptXmlAttr(workingDirectory);
+  const contextRootAttr = escapePromptXmlAttr(contextRoot);
+
   return `
-<project_context_files working_directory="${workingDirectory}">
+<project_context_files working_directory="${workingDirectoryAttr}" context_root="${contextRootAttr}">
 ${fileList}
 </project_context_files>`;
+}
+
+function findRelevantProjectContextFiles(workingDirectory: string): { contextRoot: string; contextFiles: string[] } {
+  const resolvedWorkingDirectory = resolve(workingDirectory);
+  const gitRoot = findGitRepositoryRoot(resolvedWorkingDirectory);
+  if (!gitRoot) {
+    return {
+      contextRoot: resolvedWorkingDirectory,
+      contextFiles: findAllProjectContextFiles(resolvedWorkingDirectory),
+    };
+  }
+
+  const contextRoot = resolve(gitRoot);
+  const allFiles = findAllProjectContextFiles(contextRoot);
+  const selectedRel = normalizePromptPath(relative(contextRoot, resolvedWorkingDirectory));
+  if (!selectedRel || selectedRel === '.') {
+    return { contextRoot, contextFiles: allFiles };
+  }
+
+  const relevant = allFiles.filter((file) => {
+    const normalizedFile = normalizePromptPath(file);
+    const dir = normalizePromptPath(dirname(normalizedFile));
+    const normalizedDir = dir === '.' ? '' : dir;
+
+    // Always include root instructions, include ancestors of the selected CWD,
+    // and include context files below the selected subtree. This keeps nested
+    // package sessions useful without dumping every unrelated monorepo package.
+    return normalizedDir === '' ||
+      selectedRel === normalizedDir ||
+      selectedRel.startsWith(`${normalizedDir}/`) ||
+      normalizedDir.startsWith(`${selectedRel}/`);
+  });
+
+  return { contextRoot, contextFiles: relevant.length > 0 ? relevant : allFiles.slice(0, 1) };
+}
+
+function normalizePromptPath(value: string): string {
+  return value.replace(/\\/g, '/');
 }
 
 /** Options for getSystemPrompt */
@@ -373,7 +420,8 @@ export function getSystemPrompt(
   // to enable prompt caching. The system prompt stays static and cacheable.
   // Safe Mode context is also in user messages for the same reason.
   const basePrompt = getMkAgentAssistantPrompt(workspaceRootPath, backendName, resolvedIncludeCoAuthoredBy);
-  const fullPrompt = `${basePrompt}${preferences}${debugContext}${projectContextFiles}`;
+  const rtkContext = getRtkEnabled() ? '\n\nBash output may be compacted by rtk. When exact output is required, prefix the command with `command` or run the binary by its absolute path (for example `/usr/bin/grep`).' : '';
+  const fullPrompt = `${basePrompt}${preferences}${debugContext}${projectContextFiles}${rtkContext}`;
 
   debug('[getSystemPrompt] full prompt length:', fullPrompt.length);
 

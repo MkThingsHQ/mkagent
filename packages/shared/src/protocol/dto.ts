@@ -1,3 +1,4 @@
+import type { ContextUsageSnapshot } from '@mkagent/core/types';
 import type {
   AnnotationV1,
   ContentBadge,
@@ -47,6 +48,7 @@ export interface Session {
     cacheReadTokens?: number;
     cacheCreationTokens?: number;
     contextWindow?: number;
+    contextUsage?: ContextUsageSnapshot;
   };
   hidden?: boolean;
   isArchived?: boolean;
@@ -116,7 +118,7 @@ export type SessionEvent =
   | { type: 'session_model_changed'; sessionId: string; model: string | null }
   | { type: 'session_deleted'; sessionId: string }
   | { type: 'session_created'; sessionId: string }
-  | { type: 'usage_update'; sessionId: string; tokenUsage: { inputTokens: number; contextWindow?: number } }
+  | { type: 'usage_update'; sessionId: string; tokenUsage: { inputTokens: number; contextWindow?: number; contextUsage?: ContextUsageSnapshot } }
   | { type: 'message_annotations_updated'; sessionId: string; messageId: string; annotations: AnnotationV1[] }
   | { type: 'working_directory_error'; sessionId: string; error: string };
 
@@ -197,6 +199,7 @@ export interface LlmConnectionSetup {
   oauthIdentity?: ClaudeOAuthIdentityDto;
 }
 export interface TestLlmConnectionParams {
+  connectionSlug?: string;
   provider: 'pi';
   apiKey: string;
   baseUrl?: string;

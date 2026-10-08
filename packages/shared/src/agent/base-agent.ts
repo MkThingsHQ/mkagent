@@ -311,6 +311,8 @@ export abstract class BaseAgent implements AgentBackend {
 
   abstract abort(reason?: string): Promise<void>;
   abstract forceAbort(reason: AbortReason): void;
+  isCompactionInFlight(): boolean { return false; }
+
   abstract isProcessing(): boolean;
   abstract respondToPermission(requestId: string, allowed: boolean, alwaysAllow?: boolean): void;
   abstract runMiniCompletion(prompt: string): Promise<string | null>;

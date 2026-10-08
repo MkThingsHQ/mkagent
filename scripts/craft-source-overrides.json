@@ -1,63 +1,7 @@
 {
   "version": 2,
-  "baselineCommit": "d7592c481216e37c95a50dbfe08948a6987e8c74",
+  "baselineCommit": "332533f3096d12500012fe089c3f155e32af1c44",
   "modified": {
-    "packages/pi-agent-server/src/adapt-credential.test.ts": {
-      "sha256": "708f1d8771ed4b8e833a4de4675cc480e227a88b236be12c39e3bb25cd59dc90",
-      "reason": "Craft ModelRuntime credential adapter test retains MkAgent API-key and OAuth subscription compatibility"
-    },
-    "packages/pi-agent-server/src/adapt-credential.ts": {
-      "sha256": "78ab18322cbcb7d7d3c7a3d710132be0dd797b10d82b1ffcb4e49ce1405a4f93",
-      "reason": "Craft ModelRuntime credential adapter retains MkAgent API-key and OAuth subscription compatibility"
-    },
-    "packages/pi-agent-server/src/custom-endpoint-models.test.ts": {
-      "sha256": "e4a07cbfab1bf16e0957f32f605eae878ce047a41140c98b6203b6c868e3d328",
-      "reason": "Craft custom endpoint regression test retains MkAgent naming while covering strict OpenAI-compatible gateways"
-    },
-    "packages/pi-agent-server/src/custom-endpoint-models.ts": {
-      "sha256": "77f8f08f01ed2bd8bfcea659c4c15a13b9a95df7de6eb2c064f2e23a025ce2cb",
-      "reason": "Craft custom endpoint model definition is adapted to MkAgent connection types and Pi-only runtime"
-    },
-    "packages/server-core/src/bootstrap/lock-identity.test.ts": {
-      "sha256": "e63c3d9b30d172150e1a136b3e6dbf18bfac705175d38d2ae9f6ee6d860ccc7f",
-      "reason": "Craft stale-lock regression test is adapted to MkAgent executable identities"
-    },
-    "packages/server-core/src/bootstrap/lock-identity.ts": {
-      "sha256": "7095e3e1bd6c2bde917e9010690ee61a19882883a6afa53872cbad3f0976a1e7",
-      "reason": "Craft stale-lock identity check is adapted to MkAgent executable names"
-    },
-    "packages/ui/src/components/markdown/__tests__/markdown-link-routing.test.ts": {
-      "sha256": "f51554c5d91f5c50d203904fbe2ac569b7c15dc3e8b23501bc9e7af7f6e13b67",
-      "reason": "Craft markdown routing regression test is adapted to MkAgent file-link fixtures"
-    },
-    "packages/ui/src/components/markdown/link-target.ts": {
-      "sha256": "c41b7da0aa475fbf2571241acbcc60141793db9d8aeacf40f8aa3151f2390328",
-      "reason": "Craft markdown link target decoder is retained with MkAgent local-file routing behavior"
-    },
-    "packages/shared/src/auth/callback-page.ts": {
-      "sha256": "added983bb95f06a06e4f04dfbbf585af0259072717f5d29d5d70509a5b3995d",
-      "reason": "Craft LLM OAuth callback page uses the embedded MkAgent mark instead of the Craft banner"
-    },
-    "packages/shared/src/auth/claude-oauth.ts": {
-      "sha256": "7706a1a27e1a02d6a1c6ab12127e16b25a5df95fd40205e7feba64af918a4a64",
-      "reason": "Craft Claude OAuth implementation retained with the MkAgent user-agent brand"
-    },
-    "packages/shared/src/auth/index.ts": {
-      "sha256": "0be4753456d2babad32e7d6b98c9422d22c4ea73296e105b0b260ec4f6b8ffb8",
-      "reason": "Craft auth barrel trimmed to retained ChatGPT and Claude LLM OAuth without Sources or generic OAuth"
-    },
-    "apps/electron/src/main/__tests__/session-branch-rollback.isolated.ts": {
-      "sha256": "c666329f7b0d652b591a5eef123ad21f8a81c467ef596f25e9d007b50be1c2ab",
-      "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
-    },
-    "apps/electron/src/main/menu.ts": {
-      "sha256": "55f8622cf203a03710d7b816f7c257e33a91b106cba297aa49e0e65e2b222c70",
-      "reason": "Craft Electron runtime adapted for the retained Lite runtime and removed product channels"
-    },
-    "packages/shared/src/agent/core/config-watcher-manager.ts": {
-      "sha256": "ca4c98636a431abea531ad8ab0f36822f90dd14849f7e336f7d2089b861e41b9",
-      "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
-    },
     ".env.example": {
       "sha256": "3fb7bf14e2bb07e5e62631256cc8dca97f87fc745835a9ea3a3782839126f718",
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
@@ -75,7 +19,7 @@
       "reason": "Craft documentation adapted to the retained MkAgent feature set and product identifiers"
     },
     "apps/cli/package.json": {
-      "sha256": "607f94c859b6198a4ab4ca6ca1300aa1f9c4c94a9221bef69ca4e71fd4325288",
+      "sha256": "b86438ef3300726b01fb9bf289bdc113fb9045abdd2c16f4f1673df0f057c216",
       "reason": "Craft CLI reduced to retained commands and the Pi-only MkAgent runtime"
     },
     "apps/cli/src/client.ts": {
@@ -85,6 +29,14 @@
     "apps/cli/src/commands.test.ts": {
       "sha256": "59c81ee8bc802dfe46f0c13eddacac1aab3a4b5d6b6f51d63ab37c587099da42",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
+    },
+    "apps/cli/src/index.ts": {
+      "sha256": "acf9dc3413092c450338e8c8ef0f2e845a3f4858fae4380147d04f86ed973759",
+      "reason": "Craft v0.13.3 retry streaming is adapted to the narrower MkAgent CLI command surface"
+    },
+    "apps/cli/src/retry-stream.test.ts": {
+      "sha256": "0dc20b7a8125f22c5c7c45604686ec9eb2f79a32b4629c84ce999e13fb5ef1cd",
+      "reason": "Preserve MkAgent isolated Pi retry policy and streaming regression coverage"
     },
     "apps/cli/src/run.test.ts": {
       "sha256": "f36c5c258ddaa27ad2bb2e7b67ce0f25f928a334820abb69906cd1999f0de9b4",
@@ -111,7 +63,7 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/electron/package.json": {
-      "sha256": "8a79a4c52180d47a7982cded6c66871aeb49ff9d2f988dbe76b6106f94f96485",
+      "sha256": "a500fe50e7f075342e238134f4dac8a763727df12d88a6507d296cfa1a18ff9d",
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/electron/resources/bin/doc-diff": {
@@ -299,7 +251,7 @@
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "apps/electron/src/main/__tests__/browser-pane-manager.test.ts": {
-      "sha256": "8a4017f1987c720fcce33b26506e2ac84246f8d225db5f6e785841c3cdfc8b4b",
+      "sha256": "2d3179ec1d60a92a0efcc264638fdb8e4b90c18ef2a152bd3559f3f1aaf5fcc9",
       "reason": "Craft browser tests strengthened to cover app-theme hydration and live theme updates that the upstream system-theme-only implementation misses"
     },
     "apps/electron/src/main/__tests__/connection-setup-logic.test.ts": {
@@ -312,6 +264,10 @@
     },
     "apps/electron/src/main/__tests__/notifications-routing.isolated.ts": {
       "sha256": "d0090976d292a9cf3b1c384bc2449522e256b9d11a2d003d3e3646a6dc6684e0",
+      "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
+    },
+    "apps/electron/src/main/__tests__/session-branch-rollback.isolated.ts": {
+      "sha256": "c666329f7b0d652b591a5eef123ad21f8a81c467ef596f25e9d007b50be1c2ab",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "apps/electron/src/main/__tests__/session-branching-validation.test.ts": {
@@ -347,7 +303,7 @@
       "reason": "Craft Electron runtime adapted for the retained Lite runtime and removed product channels"
     },
     "apps/electron/src/main/browser-pane-manager.ts": {
-      "sha256": "4dab4b8725187b3b0c759e45d8ac93a3718ac7ec4074145245edfc522dc05532",
+      "sha256": "b1185d0eb41c976c739a93a4ecd4b4bc19070de7a73891d09c224705b1ed5712",
       "reason": "Craft browser runtime adapted to honor the explicit app light, dark, or system preference for first paint and live updates"
     },
     "apps/electron/src/main/deep-link.ts": {
@@ -363,7 +319,7 @@
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "apps/electron/src/main/handlers/__tests__/session-watcher.test.ts": {
-      "sha256": "917df99b2300f14bb28bc4812d56bce4b4115684bada456b9761492c2350ee5d",
+      "sha256": "dfc53b2f69e7b3060893751040faba01945d228a04d26830f3d583e23143cb46",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "apps/electron/src/main/handlers/__tests__/sessions-watchers.test.ts": {
@@ -398,6 +354,10 @@
       "sha256": "0bf1e637ddd50a9610922870520e04349ca117bc194e8058029630d43367cedf",
       "reason": "Craft Electron runtime adapted for the retained Lite runtime and removed product channels"
     },
+    "apps/electron/src/main/menu.ts": {
+      "sha256": "55f8622cf203a03710d7b816f7c257e33a91b106cba297aa49e0e65e2b222c70",
+      "reason": "Craft Electron runtime adapted for the retained Lite runtime and removed product channels"
+    },
     "apps/electron/src/main/window-manager.ts": {
       "sha256": "0c81037340b508d90c731fa1fff8140d50e1a0dfb3b58d5ff19da84c7a450b36",
       "reason": "Craft Electron runtime adapted for the retained Lite runtime and removed product channels"
@@ -415,28 +375,8 @@
       "reason": "Craft browser toolbar preload extended with the minimal app-theme update event"
     },
     "apps/electron/src/renderer/App.tsx": {
-      "sha256": "1bfa047301be236f250a31aba862a40dcd513e889877287d547bd52d6f44ce34",
+      "sha256": "eeb5f65c577edc413ef515b31085c2bb491201e0e00743d2f36834c2762d60be",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/browser-empty-state.html": {
-      "sha256": "c82afe0928071236a407e8c4faa1fc3b52e2c7cb2f33bc4c075cbebdbd9fcb6e",
-      "reason": "Craft browser empty state corrected to honor explicit app theme mode instead of always following the operating system"
-    },
-    "apps/electron/src/renderer/browser-empty-state.tsx": {
-      "sha256": "1ee37195bba7594bf936fc374c8c490eebabf2f3715b5f6d9ea0c66d3e5ccd6e",
-      "reason": "Craft standalone browser empty-state renderer initializes the retained localization runtime before rendering"
-    },
-    "apps/electron/src/renderer/browser-toolbar.html": {
-      "sha256": "a12a4dbc2eee21f3fa6e1c2a3cabb84247dc15eadd6607c9e4a82f4f454dbce2",
-      "reason": "Craft browser toolbar corrected to honor explicit app theme mode before first paint"
-    },
-    "apps/electron/src/renderer/browser-toolbar.tsx": {
-      "sha256": "f81de1d9b87f4c32b32f7bce68f37f26f85329cd960869541875ad2903c512d2",
-      "reason": "Craft browser toolbar renderer extended to apply live app-theme updates"
-    },
-    "apps/electron/src/renderer/context/ThemeContext.tsx": {
-      "sha256": "451f88e4f421ec91b225563ab090df88d624dd501ea3d1135e1bead93f2d25a5",
-      "reason": "Craft theme context corrected to hydrate host-managed auxiliary windows from the saved app preference on startup"
     },
     "apps/electron/src/renderer/atoms/__tests__/browser-pane.test.ts": {
       "sha256": "3920dbfc87eb8b75f1aa02bef5b4d98b791bb513dfd4827e4cff4d4312388432",
@@ -461,6 +401,26 @@
     "apps/electron/src/renderer/atoms/sessions.ts": {
       "sha256": "0e38de06d614110008137fd7634fc5c3da5b9dc6c54ef124c1d5784ecd8c44f2",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/browser-empty-state.html": {
+      "sha256": "c82afe0928071236a407e8c4faa1fc3b52e2c7cb2f33bc4c075cbebdbd9fcb6e",
+      "reason": "Craft browser empty state corrected to honor explicit app theme mode instead of always following the operating system"
+    },
+    "apps/electron/src/renderer/browser-empty-state.tsx": {
+      "sha256": "1ee37195bba7594bf936fc374c8c490eebabf2f3715b5f6d9ea0c66d3e5ccd6e",
+      "reason": "Craft standalone browser empty-state renderer initializes the retained localization runtime before rendering"
+    },
+    "apps/electron/src/renderer/browser-toolbar.html": {
+      "sha256": "a12a4dbc2eee21f3fa6e1c2a3cabb84247dc15eadd6607c9e4a82f4f454dbce2",
+      "reason": "Craft browser toolbar corrected to honor explicit app theme mode before first paint"
+    },
+    "apps/electron/src/renderer/browser-toolbar.tsx": {
+      "sha256": "f81de1d9b87f4c32b32f7bce68f37f26f85329cd960869541875ad2903c512d2",
+      "reason": "Craft browser toolbar renderer extended to apply live app-theme updates"
+    },
+    "apps/electron/src/renderer/components/RtkUpdateDialog.tsx": {
+      "sha256": "5ea62c6671a81d1dd289b90e3e1ad28709f44c25711896c66e893207b96e1d20",
+      "reason": "MkAgent-branded RTK compatibility dialog"
     },
     "apps/electron/src/renderer/components/ServerDirectoryBrowser.tsx": {
       "sha256": "98cf5e27c3abe8d0451ae623be7737223cedfbac1eabfb60b7e70c1c9bcb0ded",
@@ -495,7 +455,7 @@
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx": {
-      "sha256": "ebeee1f251d9ee3bb4de35838aff819ebb8b736a0953faf20c68ce1446488275",
+      "sha256": "2ef50df28338f229ff682da6557cca68a301523cb631bd904898bd8b9763aba4",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/app-shell/CompactSessionMenu.tsx": {
@@ -570,8 +530,12 @@
       "sha256": "3c116dacc65c8e6568f6d993b42fb7fa972eefce54de6f131d4f07260233331d",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
+    "apps/electron/src/renderer/components/app-shell/input/CompactPermissionModeSelector.tsx": {
+      "sha256": "20348b64205c1849cdecef438aee9c460b1e3222c55fca18afd9ea3e04a44125",
+      "reason": "Retain Lite permission modes and precise approvals; Guarded and decision configuration deferred"
+    },
     "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx": {
-      "sha256": "684aa8e35ab82f582b7a8d2fb3b721f79c31592457a3847a8ad698e8db3d8f5f",
+      "sha256": "fdd4fe14e97d35e748e3d4100ed514a40b4488722c3039f64f8b901cf3812d7a",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/app-shell/input/FreeFormInputContextBadge.tsx": {
@@ -598,6 +562,14 @@
       "sha256": "455f9828ad739cbea3ac9908c07a1548e9ab9f28bc2a9f351fd7fc7eb90cb710",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
+    "apps/electron/src/renderer/components/app-shell/input/structured/AdminApprovalRequest.tsx": {
+      "sha256": "91e51bef40e8457e371e2489417a8133f56bb97c625dedc1574dc19c11f9a1c2",
+      "reason": "Craft renderer adapted for complete MkAgent localization coverage"
+    },
+    "apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx": {
+      "sha256": "58c0607ad9faf054ac28e778edb1f5ad533e092aed6d2f11b85f745c02c1224a",
+      "reason": "Craft renderer adapted for complete MkAgent localization coverage"
+    },
     "apps/electron/src/renderer/components/app-shell/input/structured/types.ts": {
       "sha256": "718736fa9d15f0953c9d8f619d1810486979b42955ac8d061f9c7238f34f188a",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
@@ -622,6 +594,10 @@
       "sha256": "6c0b8d0762c16ceb7a56c7f9c7da8f322b65857f127c1d3b05282577914f0cc6",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
+    "apps/electron/src/renderer/components/onboarding/CompletionStep.tsx": {
+      "sha256": "41fbccbe0002d041770f34392c47572380f77d1b8eb4f4c9bab7c3b84411a467",
+      "reason": "Craft onboarding uses the MkAgent app icon while retaining the upstream layout"
+    },
     "apps/electron/src/renderer/components/onboarding/CredentialsStep.tsx": {
       "sha256": "6103bcea6d4b863404d077eda8e74f49a13490a6f21a34e0742c4a88f13c1ac2",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
@@ -634,10 +610,6 @@
       "sha256": "cb31b8def0c34458ad00e9162088066978fa9958cc5e92ca241009a9dd732447",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
-    "apps/electron/src/renderer/components/onboarding/CompletionStep.tsx": {
-      "sha256": "41fbccbe0002d041770f34392c47572380f77d1b8eb4f4c9bab7c3b84411a467",
-      "reason": "Craft onboarding uses the MkAgent app icon while retaining the upstream layout"
-    },
     "apps/electron/src/renderer/components/onboarding/ReauthScreen.tsx": {
       "sha256": "ae48a297f7a1e10567a1544aba58aa4baf5056c7e9f651fb1a3e7d011ae06095",
       "reason": "Craft reauthentication screen removes an unused Craft icon import and stale product comment"
@@ -646,9 +618,17 @@
       "sha256": "fb0a1e179c208cfbf5ad19afa373484f992873f7bdb2792bbb107b7766c14d4c",
       "reason": "Craft onboarding uses the MkAgent app icon while retaining the upstream layout"
     },
+    "apps/electron/src/renderer/components/settings/SettingsToggle.tsx": {
+      "sha256": "6761b2b07f2e1703072447324f5b4278da40d45c4aa59c57ab9f14eec9d7cb4d",
+      "reason": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded"
+    },
     "apps/electron/src/renderer/components/ui/EditPopover.tsx": {
       "sha256": "6bed04b6ba78ad5942da8ba3f7fd0b66468b0af9046ff4ef0fe199e3b9b9ee47",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/components/ui/__tests__/rich-text-input.test.ts": {
+      "sha256": "2910ca919db761812e2fa78e35c21b3ad98334b5d1959f6947117be8a1c8efa7",
+      "reason": "Craft rich-text input test retains the xagent-proven placeholder visibility regression coverage"
     },
     "apps/electron/src/renderer/components/ui/mention-badge.tsx": {
       "sha256": "ffc771e934c91ac7bee74012e32ca92a4606371f2ade39830ebe66a889c29d8f",
@@ -659,12 +639,12 @@
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/ui/rich-text-input.tsx": {
-      "sha256": "ea324cac9dbc64f693a701be0a3f06064eafcb0279d532c3f16a10b55b5930ff",
+      "sha256": "3a42d4581694c4eca490754f70a9d4c234aee6514bf4fa778ca8d84707330107",
       "reason": "Craft rich-text input retains the xagent-proven DOM and IME placeholder visibility fix"
     },
-    "apps/electron/src/renderer/components/ui/__tests__/rich-text-input.test.ts": {
-      "sha256": "2910ca919db761812e2fa78e35c21b3ad98334b5d1959f6947117be8a1c8efa7",
-      "reason": "Craft rich-text input test retains the xagent-proven placeholder visibility regression coverage"
+    "apps/electron/src/renderer/components/ui/slash-command-menu.tsx": {
+      "sha256": "db0b47ea137523cd04179baeb1f78c485ceb1116bbd1ed18767c4ae756987e5c",
+      "reason": "Craft renderer adapted for complete MkAgent localization coverage"
     },
     "apps/electron/src/renderer/components/workspace/AddWorkspaceStep_Choice.tsx": {
       "sha256": "f5552f9fa804d7885b4a3bdcd5f24a4869c0af989acf6e72928badbebd616476",
@@ -686,6 +666,10 @@
       "sha256": "83747bea0c71dc003530fb253f4474faf7adde24b963db15612ca8611e2cd472",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
+    "apps/electron/src/renderer/context/ThemeContext.tsx": {
+      "sha256": "451f88e4f421ec91b225563ab090df88d624dd501ea3d1135e1bead93f2d25a5",
+      "reason": "Craft theme context corrected to hydrate host-managed auxiliary windows from the saved app preference on startup"
+    },
     "apps/electron/src/renderer/contexts/NavigationContext.tsx": {
       "sha256": "0f460eb8fc9d74083231389918d0bf54b4f4844ca25d7775f42e5c0d62b2a99f",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
@@ -694,9 +678,21 @@
       "sha256": "9308753a67b74314cd9c9bec7aaf461ce1bc0926460aff7c5a9b866dadbd59b3",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
+    "apps/electron/src/renderer/event-processor/handlers/session.ts": {
+      "sha256": "f3856241e22116a24cd646ad54e15a7207c5526211de085e1e3c88380604423b",
+      "reason": "Craft v0.13.3 retry lifecycle is adapted to the retained MkAgent renderer state and protocol"
+    },
     "apps/electron/src/renderer/event-processor/index.ts": {
       "sha256": "d21117d69820e7d70aefdfa9a7dedd03ff6ea1a2e01fc271748d159738fa615b",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/event-processor/processor.ts": {
+      "sha256": "cd4f3cdfb04f9aa515e96db12f596d919c6debba88deea2d6a891ecd171ab712",
+      "reason": "Craft v0.13.3 retry lifecycle is adapted to the retained MkAgent renderer state and protocol"
+    },
+    "apps/electron/src/renderer/event-processor/types.ts": {
+      "sha256": "3dabff07cb3061d9f7ef9d2924a44fe1821a5b383c9c7531d91c673ac338cf4d",
+      "reason": "Craft v0.13.3 retry lifecycle is adapted to the retained MkAgent renderer state and protocol"
     },
     "apps/electron/src/renderer/hooks/__tests__/useOnboarding.test.ts": {
       "sha256": "f6f47abc46b7346c2636a2e5bd95eef6dc82f1d923e41c0ec08ca9484a0a8e20",
@@ -715,12 +711,16 @@
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
     "apps/electron/src/renderer/hooks/useOnboarding.ts": {
-      "sha256": "e88faba94ea2067930eb6adb076d66976179bb0400dd3c807c345642f3f999be",
+      "sha256": "4585558b1eced14f3b8c070840b9d01475066d46c3b031d7982da9016f00b4a9",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
     "apps/electron/src/renderer/hooks/useSessionMenuActions.ts": {
       "sha256": "25d98eb805bd2b787a4aa2fe56af66b187ea581cf23ffd4530282874cd58dbfe",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/hooks/useSessionOptions.ts": {
+      "sha256": "7eefd45f5dcef7fbbad12ac4c1bb39c0350a931952284b580f8be8a2bcec1f44",
+      "reason": "Retain Lite permission modes and precise approvals; Guarded and decision configuration deferred"
     },
     "apps/electron/src/renderer/hooks/useSessionSearch.ts": {
       "sha256": "5825a043c104f917a67f52779521084538f944568ac5c5c764b7bc7e68134239",
@@ -762,6 +762,10 @@
       "sha256": "fe7aba9231ffdb92f01cbe75cdfdad29c2a9fdc0ba8e3985abe9707df11737f7",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
+    "apps/electron/src/renderer/main.tsx": {
+      "sha256": "21c7f0dc860147dd161fc307ff2ebf65bc3973c39186f462e7bbb78cf51609f7",
+      "reason": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded"
+    },
     "apps/electron/src/renderer/pages/ChatPage.tsx": {
       "sha256": "75a59deda225ba7111b32cb4c33ca55076dc9486902b9c16cd813e290d84655d",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
@@ -775,7 +779,7 @@
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
     "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx": {
-      "sha256": "d699cda661aaaa784aca471537f42ee100237d3355a0cc29639f6bcd1196944a",
+      "sha256": "dad1d635b1e4e3970be1f634d2d1653b22db494c3db8292e897f49906379fc66",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
     "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx": {
@@ -827,7 +831,7 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/electron/src/shared/types.ts": {
-      "sha256": "cd1d64984dff1ead5e0552ceb8b56e23d87e1f9a0e64e0872699586d75893c39",
+      "sha256": "835fd29de7f4c5a18ebe67715771d76600eaf613db292e7f9bf7b69d80b40ce6",
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/electron/src/transport/__tests__/channel-map-parity.test.ts": {
@@ -847,7 +851,7 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/webui/package.json": {
-      "sha256": "bb17193a4e8c18bb7427f1e9c808bcc7c921ad5a8558d31d369b48d6afb3e814",
+      "sha256": "ae4378c14d94d4be1622fa6ecadb37b0413135cc9392e95f8dfd1cbef11ca506",
       "reason": "Craft WebUI adapted to the retained authenticated headless transport"
     },
     "apps/webui/src/adapter/web-api.ts": {
@@ -855,7 +859,7 @@
       "reason": "Craft WebUI adapter retains Claude code login and explicitly limits new ChatGPT localhost login to Desktop"
     },
     "apps/webui/src/index.css": {
-      "sha256": "2396b04909ea0a1c5699a7d7546e1cf608f224b6a34cd3f9d9f670d450180041",
+      "sha256": "fdd53d7c6040d1aae64a55eb27cad7c0e0bcfcd4851c0161a157d394f6043e39",
       "reason": "Craft WebUI adapted to the retained authenticated headless transport"
     },
     "apps/webui/src/index.html": {
@@ -898,12 +902,20 @@
       "sha256": "6d551fefd0340a5efb2014f6c8db9b423423a85c31f3eef6720b646e16b9401a",
       "reason": "Craft WebUI adapted to the retained authenticated headless transport"
     },
+    "bun.lock": {
+      "sha256": "30e7ac0a07989ad3d3a974a7b90e52ac10f8fa280e5460a900f38e9f25a42b0c",
+      "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
+    },
+    "package.json": {
+      "sha256": "7101743e3cac8f67cdd9cc4352aef4064d0d87a33c814623e961b66961f3364c",
+      "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
+    },
     "packages/core/README.md": {
       "sha256": "cac1ded695383920e62457a566c3ececed3acc5568a733f7eff4ab78c69ba2cd",
       "reason": "Craft documentation adapted to the retained MkAgent feature set and product identifiers"
     },
     "packages/core/package.json": {
-      "sha256": "723a914645a6f1810a07ffec1d437fc39f8144cdc1940fc2cc1fcfdff8b649ce",
+      "sha256": "fde138c882cf4c210a3583e393a9b874215b603f98cd298d5f6684336fbad0cd",
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "packages/core/src/index.ts": {
@@ -911,8 +923,12 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "packages/core/src/types/index.ts": {
-      "sha256": "60e5046126beaf300e6abc991dc63dab538e7f7ea846b2237fd9149499f6f0bb",
+      "sha256": "e3ccfd7737ce8d52bf756097305f99add54decf19a1eb873a32a2adf9b823fc1",
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
+    },
+    "packages/core/src/types/message.ts": {
+      "sha256": "9917e4db4d368f1c284ae779347704eda90377be553868d8b00c8a57c2e3dd3d",
+      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
     },
     "packages/core/src/types/server.ts": {
       "sha256": "f219afff9bc08a40cca3f555190ae53625fddab8fbc5f20553bd9bf0a3252897",
@@ -926,6 +942,30 @@
       "sha256": "6be2e74f3f750a84273dac7dfdf044328e04165c4b93964971d9f56a6bc01eb8",
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
+    "packages/pi-agent-server/package.json": {
+      "sha256": "ed8632b5ac394a06e5498e491011f90258191883c967eb54eb0032ed96c65b9e",
+      "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
+    },
+    "packages/pi-agent-server/src/adapt-credential.test.ts": {
+      "sha256": "708f1d8771ed4b8e833a4de4675cc480e227a88b236be12c39e3bb25cd59dc90",
+      "reason": "Craft ModelRuntime credential adapter test retains MkAgent API-key and OAuth subscription compatibility"
+    },
+    "packages/pi-agent-server/src/adapt-credential.ts": {
+      "sha256": "78ab18322cbcb7d7d3c7a3d710132be0dd797b10d82b1ffcb4e49ce1405a4f93",
+      "reason": "Craft ModelRuntime credential adapter retains MkAgent API-key and OAuth subscription compatibility"
+    },
+    "packages/pi-agent-server/src/custom-endpoint-models.test.ts": {
+      "sha256": "e4a07cbfab1bf16e0957f32f605eae878ce047a41140c98b6203b6c868e3d328",
+      "reason": "Craft custom endpoint regression test retains MkAgent naming while covering strict OpenAI-compatible gateways"
+    },
+    "packages/pi-agent-server/src/custom-endpoint-models.ts": {
+      "sha256": "77f8f08f01ed2bd8bfcea659c4c15a13b9a95df7de6eb2c064f2e23a025ce2cb",
+      "reason": "Craft custom endpoint model definition is adapted to MkAgent connection types and Pi-only runtime"
+    },
+    "packages/pi-agent-server/src/index.ts": {
+      "sha256": "2311c974e7c54fad8b4d1898b1955f91bb657d1892b9006977f1e1a117107f22",
+      "reason": "Craft v0.13.3 Pi 0.85.1 runtime behavior is retained with MkAgent OAuth and Lite tool seams"
+    },
     "packages/pi-agent-server/src/model-resolution.test.ts": {
       "sha256": "54af49d90ef7d6e106fac9053be7c7b503cd25fa2880f21a6c05c8190695db35",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
@@ -935,20 +975,32 @@
       "reason": "Craft Pi subprocess adapted to the retained provider and session-tool contract"
     },
     "packages/pi-agent-server/src/pick-mini-model.test.ts": {
-      "sha256": "6c7e23250b0d38a28b1a041b18f73cff7b5fe38456ac0ce2c82ae44cefcb2305",
+      "sha256": "84cbaab2b1265a7de3dea0f823f43c0a795f9fed2d1fad4041066bda93f57f54",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "packages/pi-agent-server/src/pick-mini-model.ts": {
       "sha256": "b5dc2d46aab22db76a952aada34d2b46173bf8ce49c40fc09e486cb6ee1ab774",
       "reason": "Craft Pi subprocess adapted to the retained provider and session-tool contract"
     },
+    "packages/pi-agent-server/src/session-settings.test.ts": {
+      "sha256": "78013d608635053baad746f2401671088670e985ef4e01e296074fd120eeb161",
+      "reason": "Preserve MkAgent isolated Pi retry policy and streaming regression coverage"
+    },
+    "packages/pi-agent-server/src/session-settings.ts": {
+      "sha256": "0a7871c56890bfc83264b896ff9c75c733c7716ae6eaae98e8b55cfa2659f4ff",
+      "reason": "Preserve MkAgent isolated Pi retry policy and streaming regression coverage"
+    },
     "packages/pi-agent-server/src/session-tool-registration.test.ts": {
       "sha256": "1da8beb9f89367a76be6c639a4f3b745b29da8ccb35576dd5b802e456178e6eb",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
-    "packages/pi-agent-server/src/system-prompt-override.test.ts": {
-      "sha256": "07e292b1cdcc147b341d703d4dd2bc63e23c078e34aef5d574d2cc93a575aa97",
-      "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
+    "packages/pi-agent-server/src/steering-sdk.test.ts": {
+      "sha256": "8a195c3634e0454b0f9d4628781e01e0023b11fe088c338c2bf35198bf7b1bbd",
+      "reason": "Exercise retained Pi steering integration without decision-mode routing"
+    },
+    "packages/pi-agent-server/src/tools/search/create-search-tool.test.ts": {
+      "sha256": "430f4c3678499b06495f9d5805aa2db435d177ff83496072793be12d299edc77",
+      "reason": "Craft v0.13.3 Pi 0.85.1 runtime behavior is retained with MkAgent OAuth and Lite tool seams"
     },
     "packages/pi-agent-server/src/tools/search/providers/ddg.ts": {
       "sha256": "2efe3e4c6beaa02c7da6f2de46b13e3a50a1a92888fb3100505c323e41047165",
@@ -958,24 +1010,40 @@
       "sha256": "ef1ecc3ac10f11c94747ab9644b322e4eda6ff0d73ba86ca3ba2fe95b23a32c5",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
+    "packages/pi-agent-server/src/tools/web-fetch.ts": {
+      "sha256": "6c6cfd43e100fa113b6c948eba83198fb804fe7057e99bd3f94fb84f5538efbb",
+      "reason": "Craft v0.13.3 Pi 0.85.1 runtime behavior is retained with MkAgent OAuth and Lite tool seams"
+    },
     "packages/pi-agent-server/tsconfig.typecheck.json": {
       "sha256": "74782cf3fa68384ff08bd6d633a2dfa0e0e137d6c19fa52180fb44faa413c783",
       "reason": "Craft Pi subprocess adapted to the retained provider and session-tool contract"
     },
+    "packages/server-core/package.json": {
+      "sha256": "b3ca5bb9be0b7ab8fcb892f18a4d12a57c630f3347aff200fc096d168c33d842",
+      "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
+    },
     "packages/server-core/src/bootstrap/headless-start.ts": {
       "sha256": "bce72eba3915678d7a3cad76960fc0e4b2a4dd5f5dac3a809f7488e52223050c",
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
+    },
+    "packages/server-core/src/bootstrap/lock-identity.test.ts": {
+      "sha256": "e63c3d9b30d172150e1a136b3e6dbf18bfac705175d38d2ae9f6ee6d860ccc7f",
+      "reason": "Craft stale-lock regression test is adapted to MkAgent executable identities"
+    },
+    "packages/server-core/src/bootstrap/lock-identity.ts": {
+      "sha256": "7095e3e1bd6c2bde917e9010690ee61a19882883a6afa53872cbad3f0976a1e7",
+      "reason": "Craft stale-lock identity check is adapted to MkAgent executable names"
     },
     "packages/server-core/src/domain/browser-tool-detection.ts": {
       "sha256": "1a496653b8c83d07848c1a2f0d7e9d9dbb232730c6520903be7d364823db05e2",
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/server-core/src/domain/connection-setup-logic.test.ts": {
-      "sha256": "2a3d2d38377065fad551c14111803fa4647a14857c3d4a38c9a199872d700ad4",
+      "sha256": "d6f85b18520af8116498e24f6462a52ac5614cf2d320838e6b4ad68b03f88cce",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "packages/server-core/src/domain/connection-setup-logic.ts": {
-      "sha256": "6d06114c080b635b1a6e8b86187d9fbce8db1dfb2f62710e5654ce6c6f69131a",
+      "sha256": "229bc6d027754a395baedfddee84cef51f434f75debf928efaebd85e11f19ca9",
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/server-core/src/domain/title-sanitizer.ts": {
@@ -1007,7 +1075,7 @@
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/server-core/src/handlers/rpc/llm-connections.ts": {
-      "sha256": "4ca0d164812cc491ce5b938d4762f32f6f3aa2491dca726b23bbba976da665b8",
+      "sha256": "b0e9ec678d653349c9b7d72851bdcd8214c1414d88daa862dec0756a228eacea",
       "reason": "Craft LLM connection handlers retain ChatGPT OAuth and route both subscriptions through the Pi-only connection model"
     },
     "packages/server-core/src/handlers/rpc/onboarding.ts": {
@@ -1043,7 +1111,7 @@
       "reason": "Craft theme preference broadcast also notifies the local host so auxiliary browser windows remain synchronized"
     },
     "packages/server-core/src/handlers/session-manager-interface.ts": {
-      "sha256": "d3b5d5f744bb98190c33d93f281075a67d605c0c5565d908e8ea5f2ae926ded2",
+      "sha256": "66329ff38737323a61b68022b215709398d5070b62e3a6de2c1f48e1a50df22c",
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/server-core/src/model-fetchers/index.ts": {
@@ -1062,9 +1130,17 @@
       "sha256": "0cb7aa6e70b8e54af32d572cfd9ca17061a34f390fce3a1e164ef7a1d29e3faf",
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
+    "packages/server-core/src/services/privileged-execution-broker.ts": {
+      "sha256": "bc532b91fca10d6a57a92fce59915b13b346dd6d0c05da5fa5aa4e8ea0c721ee",
+      "reason": "Craft privileged-execution audit logging follows the configurable MkAgent data directory"
+    },
     "packages/server-core/src/sessions/RemoteBrowserPaneManager.ts": {
       "sha256": "17ab5719d0be629d7464fd29164be4613ace233bb7522c97c93b1ee35c7ffeb8",
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
+    },
+    "packages/server-core/src/sessions/SessionManager.ts": {
+      "sha256": "665fb7f0ae1c5ffc5bd55f68dbb28911165dffae7e0a3d154d291ef01f902b4e",
+      "reason": "Craft v0.13.3 retry events are forwarded without persistence through the simplified MkAgent SessionManager"
     },
     "packages/server-core/src/sessions/background-task-surface.test.ts": {
       "sha256": "4d1e66985991c88426fd5f6760e1d687c3ca31dead1cfde09b794d8aea0acc27",
@@ -1075,8 +1151,12 @@
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "packages/server-core/src/sessions/midstream-queue.test.ts": {
-      "sha256": "c3a57ffaf115af97e4e6c162e3a3c4f366fb6235dc3164de26b2c177ca56acbe",
+      "sha256": "d480bf8d27c0a40e56d2b519694903056e1f53def9552e2d6e70cc557aa2a1ef",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
+    },
+    "packages/server-core/src/sessions/pi-retry-streaming.test.ts": {
+      "sha256": "2b8465eb70ee3f7564e395e328b751fc6ae7974ad25d57aa99898ae15828b9e2",
+      "reason": "Preserve MkAgent isolated Pi retry policy and streaming regression coverage"
     },
     "packages/server-core/src/sessions/pi-turn-anchors.test.ts": {
       "sha256": "e17ba01950f21699a282676af8681ccb9bd7f65fbee8738119adf7e90c87c64d",
@@ -1103,7 +1183,7 @@
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/server/package.json": {
-      "sha256": "cff48f0b36bd9ced53d588f667485f51a91cbfc0fabf6cb13154de5a682003d5",
+      "sha256": "62f37a1f0fb3e95edc089e2a363cd819053fabf1cb08a8dab5bffbd3854e63d0",
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/server/src/__tests__/smoke.test.ts": {
@@ -1115,7 +1195,7 @@
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/session-tools-core/package.json": {
-      "sha256": "a784fcd8c3cdc2016daab98e2fc9c1992da2b3ecaa3ff82c5ab859368e445f6e",
+      "sha256": "050cf81273fe1ed444d2b6c402ba1927b4ca8015b953ac48332ba6bd13d4409a",
       "reason": "Craft session tool module reduced to retained Lite tools and safety boundaries"
     },
     "packages/session-tools-core/src/context.ts": {
@@ -1133,6 +1213,10 @@
     "packages/session-tools-core/src/handlers/index.ts": {
       "sha256": "4285ceca0dadcd97c64b24770be39fe66e109de415d9b9fb475d2604338763dd",
       "reason": "Craft session tool module reduced to retained Lite tools and safety boundaries"
+    },
+    "packages/session-tools-core/src/handlers/list-background-tasks.ts": {
+      "sha256": "aa9c4833b4d11d9dfbbc291bfe9acc70fef31ff60a09e9824056aa972336bba4",
+      "reason": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded"
     },
     "packages/session-tools-core/src/handlers/list-sessions.ts": {
       "sha256": "35d5b44c6f03659f6bce82dcb055547328c70c637f65900e611ae553cf449d3f",
@@ -1174,6 +1258,14 @@
       "sha256": "7ced94918ba63b6770b7100361968af9035a5cea245cfcc6bc09b2aaf6f9f988",
       "reason": "Craft session tool module reduced to retained Lite tools and safety boundaries"
     },
+    "packages/session-tools-core/src/runtime/resolve-script-runtime.test.ts": {
+      "sha256": "6b3f83b539a2bb8b67fff89a0286d7131de4dd3392b155659c663c08a5f89a5d",
+      "reason": "Craft packaged-runtime hardening is adapted to both Electron and headless MkAgent environment encodings"
+    },
+    "packages/session-tools-core/src/runtime/resolve-script-runtime.ts": {
+      "sha256": "0ca12c4f5ce6e73181b72c5f38e0067b220557dcf0a337f516f2779f11b745d1",
+      "reason": "Craft packaged-runtime hardening is adapted to both Electron and headless MkAgent environment encodings"
+    },
     "packages/session-tools-core/src/runtime/sandbox-env.test.ts": {
       "sha256": "7c05a2155e8ca346d653776d9f45b6e53d0e80ce647c6a88d4f3c139967a3f5e",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
@@ -1206,6 +1298,10 @@
       "sha256": "b1581c21a76f83fd2f3bd825cf3733a560a9fb8025e1a797aa30683615419503",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
+    "packages/shared/package.json": {
+      "sha256": "d9a11f1d3b5ce51406111ec6184a5f4c0e87de0c3d15e56594cb3609b7195419",
+      "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
+    },
     "packages/shared/src/__tests__/feature-flags.test.ts": {
       "sha256": "68eeef24a8f1a3f32eec273ba35a72359d0fd9a1a4207d272195b0ef048312b0",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
@@ -1217,6 +1313,10 @@
     "packages/shared/src/__tests__/unified-network-interceptor-hints.test.ts": {
       "sha256": "2fd1a2a7ce3108da7e7c9cb170a02b20f496b25fad82a6d5ce7fc2249cf02eff",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
+    },
+    "packages/shared/src/__tests__/unified-network-interceptor.curl.test.ts": {
+      "sha256": "ef87a4b479094364e83b0425aedcd24f03f443eedaf3dda96b78f7e94c3197ec",
+      "reason": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded"
     },
     "packages/shared/src/__tests__/unified-network-interceptor.relay-sse.test.ts": {
       "sha256": "211b01489a20962e0cef4f4bae05cce44c3b20a260bc80da66c3686d3d92c4c4",
@@ -1266,9 +1366,25 @@
       "sha256": "47d65b0f47f9db58b21b5ac5f96e1eec40d6793dbd62accb98dc7fb0627bc91a",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
+    "packages/shared/src/agent/__tests__/pi-agent-error-handling.test.ts": {
+      "sha256": "4c77e56350845e01a8012a35e3f7a65ce21e9fdb741f027f05095bbcddfaf24e",
+      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
+    },
     "packages/shared/src/agent/__tests__/pi-agent-stderr-buffer.test.ts": {
       "sha256": "e1781315471caf3a92e241af7ea38e72fb9abfafe96dbcd252b60f1a2090dada",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
+    },
+    "packages/shared/src/agent/__tests__/pi-event-adapter.test.ts": {
+      "sha256": "eaf0cc297ffa94a26432bc073fc833019156b82a1585324fc61e0fc6855b924d",
+      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
+    },
+    "packages/shared/src/agent/__tests__/pi-query-llm.test.ts": {
+      "sha256": "bfacf97bd1f63740f1c94aac0456f52535bfa4d749880189e9a9321968c89b5c",
+      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
+    },
+    "packages/shared/src/agent/__tests__/pi-retry-sdk-integration.test.ts": {
+      "sha256": "ef2b599cca8f8d875cbef4c10005ee00751f953d61eadc410ffc776af7bf3d11",
+      "reason": "Preserve MkAgent isolated Pi retry policy and streaming regression coverage"
     },
     "packages/shared/src/agent/__tests__/prompt-builder-context-split.test.ts": {
       "sha256": "7eaf1dbe967572e575af3766407f72312c321edcbc428cbfaeff9c940b298271",
@@ -1342,16 +1458,32 @@
       "sha256": "e3c0d267dd84b9e7b00630e25e6abcfd554bcffa2f25553e106e08c2f3f3b18d",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
+    "packages/shared/src/agent/backend/pi/constants.ts": {
+      "sha256": "86038ba838fb0e8c85a7a4e094552f7dca9d09af1e45d336e2ff008a6bc57308",
+      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
+    },
+    "packages/shared/src/agent/backend/pi/event-adapter.ts": {
+      "sha256": "a5dbf1f501504b74c24ffc9cc3b6688e330f7a30a70546469015790bbf8fbf56",
+      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
+    },
+    "packages/shared/src/agent/backend/pi/protocol.ts": {
+      "sha256": "e0015c625f38e1e6c03c5ecfca79fbf498f0420bbbd08bbe90baf37e02a8f9d5",
+      "reason": "Retain Pi/Lite protocol and tools; decision-model messages and filtering deferred"
+    },
+    "packages/shared/src/agent/backend/pi/session-tool-defs.ts": {
+      "sha256": "766cc8d08c44c4b7c272c328b0057543d219691bc327c39b020b67c55388081a",
+      "reason": "Retain Pi/Lite protocol and tools; decision-model messages and filtering deferred"
+    },
     "packages/shared/src/agent/backend/read-patterns.ts": {
       "sha256": "7d6918780a6e553206512754f5ce9394e93e58cf8c71291db322203ef968750a",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/agent/backend/types.ts": {
-      "sha256": "b972ae96327f161c0a88747201677a5fde7b720f5a49b20c73bd7a6d90b4030d",
+      "sha256": "22f885e61eae7a11ac6df8dc83a0ed641ed860a7cf58b33fb362f7a8089d0890",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/agent/base-agent.ts": {
-      "sha256": "d4a797496cdde4018c1d33c5e869be1379ed96f5c8841bb2c1c51408e3c6ca72",
+      "sha256": "af8b0287506c56687ee57169075177bb019b7e20c0892f36321f3f697d0c5aa8",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/agent/browser-tool-runtime.ts": {
@@ -1367,7 +1499,7 @@
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/agent/core/__tests__/pre-tool-use-checks.isolated.ts": {
-      "sha256": "208c1c248f3aa5ee52a43c2febb30a0b00502a99b2903530b6657a4a88415903",
+      "sha256": "2e7bf84da3632a55d73cd3d2210743e7c7629917944b042af8047933ced510dd",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "packages/shared/src/agent/core/__tests__/prerequisite-manager.isolated.ts": {
@@ -1382,6 +1514,10 @@
       "sha256": "a33dcb1a310c374fe6f7e5f749e8e2f36da5a4d06e680e833f729f1b97fe4e63",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
+    "packages/shared/src/agent/core/config-watcher-manager.ts": {
+      "sha256": "ca4c98636a431abea531ad8ab0f36822f90dd14849f7e336f7d2089b861e41b9",
+      "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
+    },
     "packages/shared/src/agent/core/index.ts": {
       "sha256": "e3145714f39a19ebd914fb112d61f377c78b74230015e1276f5bc98fd7fdd216",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
@@ -1391,11 +1527,11 @@
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/agent/core/permission-manager.ts": {
-      "sha256": "721a04937419804b892810014a3838e9ba5999130a351e105ae6e9094b8ff9a2",
+      "sha256": "d87a0e825950567cb3faceba946cc92cbe75d2ada03b60ae59a10be44c82d98b",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/agent/core/pre-tool-use.ts": {
-      "sha256": "f25350ae5e6162c5e7db562f2b679529e0d00304f74b8e32d6ffc80b4d695876",
+      "sha256": "08faf0f01d30ce502c26aaecee78d051b78ce04e11e2a42ef552ccef13bc3406",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/agent/core/prerequisite-manager.ts": {
@@ -1403,7 +1539,7 @@
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/agent/core/prompt-builder.ts": {
-      "sha256": "5ad3fb9b73247f846bd01f17dd7d51a34c9d08d446e8663b7de49ebeb087b5e0",
+      "sha256": "b311b7a5acea2c378c823d3cf384fa356ad8525b0d7a85ebcf8a105595dc4f40",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/agent/core/session-lifecycle.ts": {
@@ -1418,6 +1554,10 @@
       "sha256": "ad45b179f2abc3f68ab2670e9966dae0b031127620cb57e0dd6be7fb718e8fc1",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
+    "packages/shared/src/agent/errors.ts": {
+      "sha256": "86beb1b44a3d23336345087abf05cb85905e0e18430bef9de806a5358e027dc3",
+      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
+    },
     "packages/shared/src/agent/index.ts": {
       "sha256": "2b40f44f4d6cb91ae5c66b5ef575ea5bc1dcc9da4f97ef236ce6ee4a5dae1daf",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
@@ -1427,7 +1567,7 @@
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/agent/mode-manager.ts": {
-      "sha256": "35290ff05af807747cb17d88c8a935b1a6bf6e1ee7f0522d786e0a0bf01cfdbd",
+      "sha256": "04a852d28ac9354922b9840a7b8435fbcfc401bad475e3a8d141e9afaf4f6fc9",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/agent/mode-types.ts": {
@@ -1437,6 +1577,14 @@
     "packages/shared/src/agent/permissions-config.ts": {
       "sha256": "f7d26f0052f81b4eb5d2eb57fefd6d9e0f3b98a23f4753c741f52adc2fcb8506",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
+    },
+    "packages/shared/src/agent/pi-agent.ts": {
+      "sha256": "026cbf522139173b0bc9f37ac037c6456667db2eddcc809d1ea836a01c1f1290",
+      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
+    },
+    "packages/shared/src/agent/plan-types.ts": {
+      "sha256": "529cc7377490361bef7e742729c31f9adffdadb5b77a8eb0d5eda3ccfa2d9aaf",
+      "reason": "Retain Lite permission modes and precise approvals; Guarded and decision configuration deferred"
     },
     "packages/shared/src/agent/powershell-parser.ps1": {
       "sha256": "93794073fad7f62428a097ac781cbc017142e819f1d228fba05aa9aabc5d6a00",
@@ -1462,6 +1610,22 @@
       "sha256": "540eaa5c4436483bfb2dc1b9c883535f18499c790713e56035e9dccea1a02be0",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
+    "packages/shared/src/agent/tool-matching.ts": {
+      "sha256": "b577231a64546242f3ed74f35ae591abd7ee990fd9ede7008fbda39f647cfc93",
+      "reason": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded"
+    },
+    "packages/shared/src/auth/callback-page.ts": {
+      "sha256": "added983bb95f06a06e4f04dfbbf585af0259072717f5d29d5d70509a5b3995d",
+      "reason": "Craft LLM OAuth callback page uses the embedded MkAgent mark instead of the Craft banner"
+    },
+    "packages/shared/src/auth/claude-oauth.ts": {
+      "sha256": "7706a1a27e1a02d6a1c6ab12127e16b25a5df95fd40205e7feba64af918a4a64",
+      "reason": "Craft Claude OAuth implementation retained with the MkAgent user-agent brand"
+    },
+    "packages/shared/src/auth/index.ts": {
+      "sha256": "0be4753456d2babad32e7d6b98c9422d22c4ea73296e105b0b260ec4f6b8ffb8",
+      "reason": "Craft auth barrel trimmed to retained ChatGPT and Claude LLM OAuth without Sources or generic OAuth"
+    },
     "packages/shared/src/branding.ts": {
       "sha256": "d7753d78939f5a681fa48def21545cb6a4a03a15a99129562485d48b8a7e9fc2",
       "reason": "Craft callback branding is replaced with the embedded MkAgent mark"
@@ -1470,6 +1634,10 @@
       "sha256": "7407fcec9ccc20189f9c5209873c43f03d37dcc16cd7b03386f85ea52a22e305",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
+    "packages/shared/src/config/__tests__/llm-connections.test.ts": {
+      "sha256": "93e42a26e21471ba782c9f189ae5265b8febaad234128fb0c1c9c98f6f186631",
+      "reason": "Selective Craft v0.13.3 retained-feature synchronization for the MkAgent Lite boundary"
+    },
     "packages/shared/src/config/__tests__/midstream-behavior.test.ts": {
       "sha256": "7bb7d544a25c92ec65d2773599d442a8251dfcf640648529ff1ad0ff2013946b",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
@@ -1477,6 +1645,10 @@
     "packages/shared/src/config/__tests__/model-supports-images.test.ts": {
       "sha256": "a4833d3cfd9d70451fb2a46ea7a27a97efc463a91d1c1e99b9fe7fbef2e9c260",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
+    },
+    "packages/shared/src/config/__tests__/paths.test.ts": {
+      "sha256": "4f5a539814602b5f5919bef177f334473e55ef51bed2fe8a90d21bc5223ff9d6",
+      "reason": "Verify existing MkAgent CONFIG_DIR compatibility"
     },
     "packages/shared/src/config/__tests__/preferences-ui-language.test.ts": {
       "sha256": "7137f07203262adf2cca8a69d4f1d9dacbad58c3c0e16a6a2a0a7f6b205b6b06",
@@ -1498,6 +1670,10 @@
       "sha256": "2a9c7665f20984ebf1346393e6de5fe4b68e78cfb8048eae86dca8295d0c8ef5",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
+    "packages/shared/src/config/llm-connections.ts": {
+      "sha256": "8b492d4c185a736b9ce85f051f2060f59bc21d0b448b66d21c33d1148741cac0",
+      "reason": "Craft v0.13.3 Pi model catalog and default ranking are adapted to the Pi-only MkAgent connection model"
+    },
     "packages/shared/src/config/llm-validation.ts": {
       "sha256": "5c500197763f3525dcc7aae7164d95ee8635ecf18858b7ad9be4699f1eb2dbb2",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
@@ -1510,8 +1686,12 @@
       "sha256": "7abec9b5e5ec06a7ad8b9c5e610de56582ae1ea337161bb331460d7b8edbec32",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
+    "packages/shared/src/config/models.ts": {
+      "sha256": "f0a80c2b69efaedef22bd54098425c7275daa7c2f4d1df7c8211eb3fcc295f21",
+      "reason": "Craft v0.13.3 Pi model catalog and default ranking are adapted to the Pi-only MkAgent connection model"
+    },
     "packages/shared/src/config/paths.ts": {
-      "sha256": "f700376076af6191e80d04027692cc81902b4f66bc43cbe73a29a7dd18d38ee2",
+      "sha256": "5440f76d6d30e24e837eab6bf22a799c76d159fde22acaaa6b94a1a9c16be991",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/config/provider-metadata.ts": {
@@ -1519,7 +1699,7 @@
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/config/storage.ts": {
-      "sha256": "293f8282adee3b7f6667f1461b287cbba174a94bb85dab696dfe4b09e5e018f7",
+      "sha256": "5821ed51eaeb487acf94db521d3a954fa6f8e2133b057e02e326d58c4bda5437",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/config/types.ts": {
@@ -1567,11 +1747,11 @@
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "packages/shared/src/i18n/locales/en.json": {
-      "sha256": "3c28b915f0b29b940cf4619a9209e5963b5e34cb50e6b196634c3c16fd57bef2",
+      "sha256": "de7671eb715ac60aa3f22d525a9fdc2cce9c6003c8a8d63af847e69de13ef963",
       "reason": "Craft locale is reduced to product-neutral subscription and reauthentication copy"
     },
     "packages/shared/src/i18n/locales/zh-Hans.json": {
-      "sha256": "9960cd956d95266517c9b8a61b39775c11d11347ee8e592001f7f6bd7c7d9ed1",
+      "sha256": "d15888a662f9738664a6f4b5d140509578c253baf468236fce1e261d4bc4475a",
       "reason": "Craft locale is reduced to product-neutral subscription and reauthentication copy"
     },
     "packages/shared/src/i18n/registry.ts": {
@@ -1587,7 +1767,7 @@
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/interceptor-common.ts": {
-      "sha256": "af85dc7b4b82ebf574f2becc44e448c067aa0eaf244a5a5c67a748cc25c0a7a4",
+      "sha256": "aecb5ae498801531ab5d97e99ca500a27adb2c3da967f614a0be1aa73cc1ddaf",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/mentions/index.ts": {
@@ -1603,12 +1783,16 @@
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/prompts/system.ts": {
-      "sha256": "d7897ccbd81c84b4fd86f24be6b622be8cfa4a6261c6e754779a6b9724bb7fba",
+      "sha256": "e736a12cf582edaabfcb5c2e2c2a81aa377377b16f61edae1cf0bbd0a8c34a49",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/protocol/channels.ts": {
       "sha256": "e01b6a2455ff4a617db76db59729b76ac736c13cba444643cb7b9269e6f25277",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
+    },
+    "packages/shared/src/protocol/dto.ts": {
+      "sha256": "dfeb4fe1d77333b9203b2f82b5498733a7037dfa7e44c4c32cd40af7f3a7087b",
+      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
     },
     "packages/shared/src/protocol/events.ts": {
       "sha256": "dd36d2d0abfc363c2d9d670771be64b3745156d30aa8fb0d9a2dbe389ef27f79",
@@ -1617,6 +1801,14 @@
     "packages/shared/src/protocol/routing.ts": {
       "sha256": "7d781e30f1b52b85c2fb06cb919758986d15356d46d7f3c06d9205e5bfe677fc",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
+    },
+    "packages/shared/src/release-notes/index.test.ts": {
+      "sha256": "5763fa541a44c3f3a42849186f2f853e67ab80a11e316fba33738c1157aa64f2",
+      "reason": "MkAgent 0.1.3 release metadata and Pi 0.87.1 dependency set"
+    },
+    "packages/shared/src/release-notes/index.ts": {
+      "sha256": "96295430d7fd516150b252cb5c3f29a52b5ebe0650a373e102d624f96c66ed86",
+      "reason": "Craft v0.13.3 semver-only release-note discovery is retained so MkAgent ignores pending templates"
     },
     "packages/shared/src/sessions/__tests__/bundle.test.ts": {
       "sha256": "4ec477ba9d4586cd0a96ae5143d0a10751dc93354ce6a4cb9c228e0332a86998",
@@ -1639,11 +1831,11 @@
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/sessions/storage.ts": {
-      "sha256": "dc5c750fa910df685693d8ba51fdb39d526b3d729525ae853921cbee90051580",
+      "sha256": "1c0a3869a1b06492732e0fb89ec06252b1f6fdb7e65611e687cacde5a3281cfb",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/sessions/types.ts": {
-      "sha256": "a0c58c256f3edd7f1f2e45e3c746b781f52482ea02e4a2ee8e2dfb0c32aa8920",
+      "sha256": "a3975cc4d9d549e961cdb724f8631635162e87d9e1a4a00e8e8ca6c493221581",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/skills/__tests__/storage.test.ts": {
@@ -1659,7 +1851,7 @@
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/unified-network-interceptor.ts": {
-      "sha256": "09eda733045e9f397c4044ca6f21021048512135a60c5950d69b0514e13cb07f",
+      "sha256": "19534e88a4cc8673c78f43744f6f97153a185fc9812b83cde4d579b46af85bcf",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/utils/__tests__/url-safety.test.ts": {
@@ -1670,13 +1862,21 @@
       "sha256": "d6d98aab20060e0252e17bcf25754609557d2cd284f8bce220270fcac800fb8c",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
+    "packages/shared/src/utils/files.ts": {
+      "sha256": "03149aa07ec9100ace1a694ea7cb37a50fb4ae91127dd8105a9cb9997da77105",
+      "reason": "Craft collision-safe atomic writes are retained for concurrent MkAgent configuration writers"
+    },
     "packages/shared/src/utils/icon.ts": {
       "sha256": "f399cab35c9d57517f3a5957424e95c81d23934c925175556d3b0ee262d55632",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
-    "packages/shared/src/utils/logo.ts": {
-      "sha256": "d3ff998c7d18c151f46a228cfdb402fd75830cb4787e05085a3e27848748c16e",
-      "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
+    "packages/shared/src/utils/index.ts": {
+      "sha256": "4820cb05380493706955caf3fd683160d223acc6b3aedb2ff1f4d8a925ffb14b",
+      "reason": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded"
+    },
+    "packages/shared/src/utils/large-response.ts": {
+      "sha256": "07a068a437acd34c0ff525ce47caa0ea3d5456ce2eef5e00bba8ae7ca74d231c",
+      "reason": "Retain Pi/Lite protocol and tools; decision-model messages and filtering deferred"
     },
     "packages/shared/src/utils/mask.ts": {
       "sha256": "87507597c2951cef0b20feba8c9aafed6e6a038eb965aa9617ab0b1e6b698366",
@@ -1751,7 +1951,7 @@
       "reason": "Craft shared UI package reduced to components used by retained interfaces"
     },
     "packages/ui/package.json": {
-      "sha256": "988260045cbed8d5ee9d914e3bcf863e7deb5cf87eee294b25d2b2df95618bc8",
+      "sha256": "c26740ba4828c7f93978f32ab820510507c13c29172daa5b1265b1df324f383a",
       "reason": "Craft shared UI package reduced to components used by retained interfaces"
     },
     "packages/ui/src/components/annotations/block-markers.ts": {
@@ -1759,8 +1959,12 @@
       "reason": "Craft shared UI package reduced to components used by retained interfaces"
     },
     "packages/ui/src/components/chat/TurnCard.tsx": {
-      "sha256": "e1c825862a4e5e79bf3055b47132ff5b57be69a953d08b6b69575060b5da9f9c",
+      "sha256": "ba8c8770afbc1e6743854c300f60dead74391fe8ff5156888e48343b97900d21",
       "reason": "Craft shared UI package reduced to components used by retained interfaces"
+    },
+    "packages/ui/src/components/chat/UserMessageBubble.tsx": {
+      "sha256": "78299be91b6cb9c801be4fccb85ec3a77ad9c51748d2be43d20d6f8bf344b69b",
+      "reason": "Craft user message bubble adds a timestamp and copy footer without restoring excluded product UI"
     },
     "packages/ui/src/components/chat/__tests__/turn-lifecycle.test.ts": {
       "sha256": "f909c500acaf4f89291d741e1a37cb77dd9292b1df2035f5218475048ece832e",
@@ -1786,6 +1990,10 @@
       "sha256": "373fc7ecc5695fdf0d5bb93486826865aaffc97d3d57b14c3a7bdf3113315c39",
       "reason": "Craft shared UI package reduced to components used by retained interfaces"
     },
+    "packages/ui/src/components/markdown/MarkdownDatatableBlock.tsx": {
+      "sha256": "af0c2f07b7988d30fef629ae2c2663c61c4f99994bb56805ac05c650535658a8",
+      "reason": "Craft shared UI adapted for complete MkAgent localization coverage"
+    },
     "packages/ui/src/components/markdown/MarkdownDiffBlock.tsx": {
       "sha256": "982f3b7d94f76544b66b8573349137231b35c1529ccc958b4f1c8b4cf2698bf1",
       "reason": "Craft shared UI package reduced to components used by retained interfaces"
@@ -1810,53 +2018,13 @@
       "sha256": "87f334ab82ca2dbf141dc34d7f53faa573b746fabc0ccf14cef002feb8922d25",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
-    "packages/ui/src/index.ts": {
-      "sha256": "9953712439a00b72c2aed2287fd1e9644deac65d616b0b0ee6af12bfb105a63a",
-      "reason": "Craft shared UI package reduced to components used by retained interfaces"
+    "packages/ui/src/components/markdown/__tests__/markdown-link-routing.test.ts": {
+      "sha256": "f51554c5d91f5c50d203904fbe2ac569b7c15dc3e8b23501bc9e7af7f6e13b67",
+      "reason": "Craft markdown routing regression test is adapted to MkAgent file-link fixtures"
     },
-    "packages/ui/src/lib/dismissible-layer-bridge.ts": {
-      "sha256": "a169a57466c4e5922ed6eb9e4dd919e9d6f5ac03d359d304a1c38bfe705ae30b",
-      "reason": "Craft shared UI package reduced to components used by retained interfaces"
-    },
-    "packages/ui/src/styles/index.css": {
-      "sha256": "c149163ff0b819e57b7942c67f32ac0a71c6a8f41ebfcdca9a4ab43c36551238",
-      "reason": "Craft shared UI package reduced to components used by retained interfaces"
-    },
-    "scripts/browser-tool.ts": {
-      "sha256": "910ec99ba0da6fbed5f22df1f9e3e7415a41950a9c2edeebe92e8d1ff0d39baf",
-      "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
-    },
-    "scripts/build-server.ts": {
-      "sha256": "2274a8658c38275d245426c8d22d8e6a869ab65e11519234b033930577b4f9c2",
-      "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
-    },
-    "scripts/electron-build-main.ts": {
-      "sha256": "11e27dea2fedc7c894225d9406bba284296e4016a8a3d6917c2f7258ff3e4694",
-      "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
-    },
-    "scripts/electron-build-resources.ts": {
-      "sha256": "aaff2bbe4f243da821e4b719628a87b136c70d08c97add4a455c7c112533843d",
-      "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
-    },
-    "scripts/electron-dev.ts": {
-      "sha256": "359cefcfb43d2c944d1290949ecf138877c38bff579c6559e5e9b23707877a1a",
-      "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
-    },
-    "apps/electron/src/renderer/components/app-shell/input/structured/AdminApprovalRequest.tsx": {
-      "sha256": "91e51bef40e8457e371e2489417a8133f56bb97c625dedc1574dc19c11f9a1c2",
-      "reason": "Craft renderer adapted for complete MkAgent localization coverage"
-    },
-    "apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx": {
-      "sha256": "35636ea9bae3ea48425cfdfc690e696cc570a82c9286048579053353859a1ad8",
-      "reason": "Craft renderer adapted for complete MkAgent localization coverage"
-    },
-    "apps/electron/src/renderer/components/ui/slash-command-menu.tsx": {
-      "sha256": "db0b47ea137523cd04179baeb1f78c485ceb1116bbd1ed18767c4ae756987e5c",
-      "reason": "Craft renderer adapted for complete MkAgent localization coverage"
-    },
-    "packages/ui/src/components/markdown/MarkdownDatatableBlock.tsx": {
-      "sha256": "af0c2f07b7988d30fef629ae2c2663c61c4f99994bb56805ac05c650535658a8",
-      "reason": "Craft shared UI adapted for complete MkAgent localization coverage"
+    "packages/ui/src/components/markdown/link-target.ts": {
+      "sha256": "c41b7da0aa475fbf2571241acbcc60141793db9d8aeacf40f8aa3151f2390328",
+      "reason": "Craft markdown link target decoder is retained with MkAgent local-file routing behavior"
     },
     "packages/ui/src/components/overlay/CodePreviewOverlay.tsx": {
       "sha256": "28d91ec10618a21e4b55f35c7de9c88b1821c4feaa6b9030ab31d78c2a8d2e70",
@@ -1874,9 +2042,45 @@
       "sha256": "7fc91ffe4a8b26942226ea3061fcc46f44659685b1ecedd71207583644118007",
       "reason": "Craft shared UI adapted for complete MkAgent localization coverage"
     },
+    "packages/ui/src/index.ts": {
+      "sha256": "9953712439a00b72c2aed2287fd1e9644deac65d616b0b0ee6af12bfb105a63a",
+      "reason": "Craft shared UI package reduced to components used by retained interfaces"
+    },
+    "packages/ui/src/lib/dismissible-layer-bridge.ts": {
+      "sha256": "a169a57466c4e5922ed6eb9e4dd919e9d6f5ac03d359d304a1c38bfe705ae30b",
+      "reason": "Craft shared UI package reduced to components used by retained interfaces"
+    },
+    "packages/ui/src/lib/tool-parsers.ts": {
+      "sha256": "935d4aa39a46a56f4c1fba5f9177a820507be816285c8e17bd5870c586bcacca",
+      "reason": "Retain Pi/Lite protocol and tools; decision-model messages and filtering deferred"
+    },
+    "packages/ui/src/styles/index.css": {
+      "sha256": "c149163ff0b819e57b7942c67f32ac0a71c6a8f41ebfcdca9a4ab43c36551238",
+      "reason": "Craft shared UI package reduced to components used by retained interfaces"
+    },
+    "scripts/browser-tool.ts": {
+      "sha256": "910ec99ba0da6fbed5f22df1f9e3e7415a41950a9c2edeebe92e8d1ff0d39baf",
+      "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
+    },
+    "scripts/build-server.ts": {
+      "sha256": "2274a8658c38275d245426c8d22d8e6a869ab65e11519234b033930577b4f9c2",
+      "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
+    },
     "scripts/check-i18n-parity.ts": {
       "sha256": "1c2d2bc8d2c6154d7cad20af822e4f7413192f47c0d3f46e6a39a7e36026805c",
       "reason": "Craft quality automation adapted for MkAgent localization validation"
+    },
+    "scripts/electron-build-main.ts": {
+      "sha256": "11e27dea2fedc7c894225d9406bba284296e4016a8a3d6917c2f7258ff3e4694",
+      "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
+    },
+    "scripts/electron-build-resources.ts": {
+      "sha256": "aaff2bbe4f243da821e4b719628a87b136c70d08c97add4a455c7c112533843d",
+      "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
+    },
+    "scripts/electron-dev.ts": {
+      "sha256": "359cefcfb43d2c944d1290949ecf138877c38bff579c6559e5e9b23707877a1a",
+      "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
     },
     "scripts/install-app.ps1": {
       "sha256": "ddf42ed1a68081f657f3ce37ee308e4f45f53fd3ebf5e8f24ba01036a9635e57",
@@ -1885,201 +2089,9 @@
     "scripts/install-app.sh": {
       "sha256": "1c6ed682d47531005d81d3d24473bbae20739f4acf8add9c70adec86e4334b9d",
       "reason": "Craft build or quality automation adapted to MkAgent targets and the pinned lineage checks"
-    },
-    "packages/server-core/src/services/privileged-execution-broker.ts": {
-      "sha256": "bc532b91fca10d6a57a92fce59915b13b346dd6d0c05da5fa5aa4e8ea0c721ee",
-      "reason": "Craft privileged-execution audit logging follows the configurable MkAgent data directory"
-    },
-    "packages/ui/src/components/chat/UserMessageBubble.tsx": {
-      "sha256": "78299be91b6cb9c801be4fccb85ec3a77ad9c51748d2be43d20d6f8bf344b69b",
-      "reason": "Craft user message bubble adds a timestamp and copy footer without restoring excluded product UI"
-    },
-    "apps/cli/src/index.ts": {
-      "sha256": "acf9dc3413092c450338e8c8ef0f2e845a3f4858fae4380147d04f86ed973759",
-      "reason": "Craft v0.13.3 retry streaming is adapted to the narrower MkAgent CLI command surface"
-    },
-    "apps/electron/src/renderer/event-processor/handlers/session.ts": {
-      "sha256": "53e262c61dba2f29abd03d4711b9d3b2732fad998d2dd37fbbf474e5088d7604",
-      "reason": "Craft v0.13.3 retry lifecycle is adapted to the retained MkAgent renderer state and protocol"
-    },
-    "apps/electron/src/renderer/event-processor/handlers/text.ts": {
-      "sha256": "dbe9a078d809a3f36d04b029162d0ad6124f8c885e2c7f0b122cae4a47725a36",
-      "reason": "Craft v0.13.3 retry lifecycle is adapted to the retained MkAgent renderer state and protocol"
-    },
-    "apps/electron/src/renderer/event-processor/helpers.ts": {
-      "sha256": "4102e427632ada8ecee43168ecc5cadf63ba7cd7939e5ba978a8607a2f3c3cc8",
-      "reason": "Craft v0.13.3 retry lifecycle is adapted to the retained MkAgent renderer state and protocol"
-    },
-    "apps/electron/src/renderer/event-processor/processor.ts": {
-      "sha256": "cd4f3cdfb04f9aa515e96db12f596d919c6debba88deea2d6a891ecd171ab712",
-      "reason": "Craft v0.13.3 retry lifecycle is adapted to the retained MkAgent renderer state and protocol"
-    },
-    "apps/electron/src/renderer/event-processor/types.ts": {
-      "sha256": "fe05633bbc85cf8ed41a19a528b893ddae816bff71f405bf433a477f53ab6511",
-      "reason": "Craft v0.13.3 retry lifecycle is adapted to the retained MkAgent renderer state and protocol"
-    },
-    "bun.lock": {
-      "sha256": "d3bcab1ea71cd4971b410ba7b2c2dbefb32e3efda6ceb53438c81eaf091a91c1",
-      "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
-    },
-    "package.json": {
-      "sha256": "da91c28fb1a9b3a387d2d73815e9ac3c66530d4f4c4ae9c333d03c1a2379d105",
-      "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
-    },
-    "packages/core/src/types/message.ts": {
-      "sha256": "0dab94f57430b0d1773ee742b3dcbf009ad28264b9927c9541f88c7c0cb9dc51",
-      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
-    },
-    "packages/pi-agent-server/package.json": {
-      "sha256": "9bb1fba8fdf0cc9bd6a1adbe6ec3c7861d4eba093da3c5deb4b455a264e5ad00",
-      "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
-    },
-    "packages/pi-agent-server/src/bundle-smoke.test.ts": {
-      "sha256": "a103ef5566b23f6b05e0f5112a16b5c8e55f8b8190df36decc3d8adeffd09426",
-      "reason": "Craft v0.13.3 Pi 0.85.1 runtime behavior is retained with MkAgent OAuth and Lite tool seams"
-    },
-    "packages/pi-agent-server/src/index.ts": {
-      "sha256": "1235f0a37942baa47c13477df8321e33535ab6632bf6eb8e0eb5245b57b81cdb",
-      "reason": "Craft v0.13.3 Pi 0.85.1 runtime behavior is retained with MkAgent OAuth and Lite tool seams"
-    },
-    "packages/pi-agent-server/src/tools/search/create-search-tool.test.ts": {
-      "sha256": "430f4c3678499b06495f9d5805aa2db435d177ff83496072793be12d299edc77",
-      "reason": "Craft v0.13.3 Pi 0.85.1 runtime behavior is retained with MkAgent OAuth and Lite tool seams"
-    },
-    "packages/pi-agent-server/src/tools/search/create-search-tool.ts": {
-      "sha256": "df740c6b91a8b00a46bcb49ab28dfec3b06c8b3b1a4e4f9b0df530abf23ebc1b",
-      "reason": "Craft v0.13.3 Pi 0.85.1 runtime behavior is retained with MkAgent OAuth and Lite tool seams"
-    },
-    "packages/pi-agent-server/src/tools/search/providers/chatgpt.test.ts": {
-      "sha256": "bb6d5ee7887a9f70e3699d65ed389eae5e264e5802ad399c5ddac0f2fe40041b",
-      "reason": "Craft v0.13.3 Pi 0.85.1 runtime behavior is retained with MkAgent OAuth and Lite tool seams"
-    },
-    "packages/pi-agent-server/src/tools/search/providers/chatgpt.ts": {
-      "sha256": "f39db01965ab6ee1b61c51bff442f10322fe8b03af21cd458df180ce322ede66",
-      "reason": "Craft v0.13.3 Pi 0.85.1 runtime behavior is retained with MkAgent OAuth and Lite tool seams"
-    },
-    "packages/pi-agent-server/src/tools/web-fetch.ts": {
-      "sha256": "6c6cfd43e100fa113b6c948eba83198fb804fe7057e99bd3f94fb84f5538efbb",
-      "reason": "Craft v0.13.3 Pi 0.85.1 runtime behavior is retained with MkAgent OAuth and Lite tool seams"
-    },
-    "packages/server-core/package.json": {
-      "sha256": "6582f236edda3cf5fd9bb8213cf736e56c9d7eabca5350202e89e5cf0a74bcc1",
-      "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
-    },
-    "packages/server-core/src/sessions/SessionManager.ts": {
-      "sha256": "0903fe20c520d037846e094fe13f8fe353bab356c4eecbd641915f44f7348500",
-      "reason": "Craft v0.13.3 retry events are forwarded without persistence through the simplified MkAgent SessionManager"
-    },
-    "packages/session-tools-core/src/runtime/resolve-script-runtime.test.ts": {
-      "sha256": "6b3f83b539a2bb8b67fff89a0286d7131de4dd3392b155659c663c08a5f89a5d",
-      "reason": "Craft packaged-runtime hardening is adapted to both Electron and headless MkAgent environment encodings"
-    },
-    "packages/session-tools-core/src/runtime/resolve-script-runtime.ts": {
-      "sha256": "0ca12c4f5ce6e73181b72c5f38e0067b220557dcf0a337f516f2779f11b745d1",
-      "reason": "Craft packaged-runtime hardening is adapted to both Electron and headless MkAgent environment encodings"
-    },
-    "packages/shared/package.json": {
-      "sha256": "3da37d86eba422a3cebf9e2eb116cc66b6f5e9a6db7b3cbc8f894a3d91274d04",
-      "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
-    },
-    "packages/shared/src/agent/__tests__/pi-agent-error-handling.test.ts": {
-      "sha256": "4c77e56350845e01a8012a35e3f7a65ce21e9fdb741f027f05095bbcddfaf24e",
-      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
-    },
-    "packages/shared/src/agent/__tests__/pi-event-adapter.test.ts": {
-      "sha256": "1f1ac060156a06c9a0b9fcff8e86b504615fd3b3cc213cd539570e3f2cf7cda1",
-      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
-    },
-    "packages/shared/src/agent/__tests__/pi-query-llm.test.ts": {
-      "sha256": "bfacf97bd1f63740f1c94aac0456f52535bfa4d749880189e9a9321968c89b5c",
-      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
-    },
-    "packages/shared/src/agent/backend/pi/constants.ts": {
-      "sha256": "86038ba838fb0e8c85a7a4e094552f7dca9d09af1e45d336e2ff008a6bc57308",
-      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
-    },
-    "packages/shared/src/agent/backend/pi/event-adapter.ts": {
-      "sha256": "79b06cfdc0fd04685c7d719792300d0dba793e9a7a44676f4829df064d9c2fc2",
-      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
-    },
-    "packages/shared/src/agent/errors.ts": {
-      "sha256": "86beb1b44a3d23336345087abf05cb85905e0e18430bef9de806a5358e027dc3",
-      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
-    },
-    "packages/shared/src/agent/pi-agent.ts": {
-      "sha256": "d574e428067167098ce5d13d07ac5ba97420ea23b9e4a9946e53b6f47bb1404c",
-      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
-    },
-    "packages/shared/src/agent/thinking-levels.ts": {
-      "sha256": "8ed3e0f3a89a5e1adeb63377281c3a3f82cb9181557212254760a2bb2f773495",
-      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
-    },
-    "packages/shared/src/config/__tests__/llm-connections.test.ts": {
-      "sha256": "93e42a26e21471ba782c9f189ae5265b8febaad234128fb0c1c9c98f6f186631",
-      "reason": "Selective Craft v0.13.3 retained-feature synchronization for the MkAgent Lite boundary"
-    },
-    "packages/shared/src/config/llm-connections.ts": {
-      "sha256": "ae557738e1e35571f9369f438468f0d6c9de226aee2df460a7f16a739bdc69df",
-      "reason": "Craft v0.13.3 Pi model catalog and default ranking are adapted to the Pi-only MkAgent connection model"
-    },
-    "packages/shared/src/config/models.ts": {
-      "sha256": "1b9f73504b80a1b6403677526eb186ce647f1b6ae8283cffc6e0b6e0c0d80593",
-      "reason": "Craft v0.13.3 Pi model catalog and default ranking are adapted to the Pi-only MkAgent connection model"
-    },
-    "packages/shared/src/protocol/dto.ts": {
-      "sha256": "f82b81909b8a7d0a129e6ff5e2af9814d0cc08dd8671fb134332e5cef743171b",
-      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
-    },
-    "packages/shared/src/release-notes/index.ts": {
-      "sha256": "96295430d7fd516150b252cb5c3f29a52b5ebe0650a373e102d624f96c66ed86",
-      "reason": "Craft v0.13.3 semver-only release-note discovery is retained so MkAgent ignores pending templates"
-    },
-    "packages/shared/src/utils/files.ts": {
-      "sha256": "ccfe0b140eeadb77b11cbc34cb3def90085d1caf665b688f19de3826ba13d49d",
-      "reason": "Craft collision-safe atomic writes are retained for concurrent MkAgent configuration writers"
-    },
-    "packages/shared/tests/models-pi.test.ts": {
-      "sha256": "9d7f73b535013da434ad1b00498cbf23ad736269a907bbacfd1b3a2b5bf01586",
-      "reason": "Craft v0.13.3 Pi model catalog and default ranking are adapted to the Pi-only MkAgent connection model"
     }
   },
   "mkOnly": {
-    "README.zh.md": {
-      "sha256": "d8a0463130fe5c1062fa7ca141b86ae5d4af1eeba84394a1731eeaf68c4ac3e3",
-      "reason": "Simplified Chinese MkAgent project overview maintained alongside the English README"
-    },
-    "packages/shared/src/auth/__tests__/llm-oauth.test.ts": {
-      "sha256": "d31df220858de7f87a46b73c934a9ff2391732af9b29573ba064a82f82443b7a",
-      "reason": "Regression coverage for retained Craft LLM OAuth configuration, branding, and connection-scoped secure credential storage"
-    },
-    "packages/server-core/src/sessions/retained-session-events.test.ts": {
-      "sha256": "0bc14406e7adee0540dd926fa45d6ab31246493172b200e0b8af02c5e44fa90b",
-      "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
-    },
-    "packages/session-tools-core/src/skill-helpers.test.ts": {
-      "sha256": "ce1e3264c187f3419a9c1af4d239ecf819b5e423a335ffc40aa677acb3197241",
-      "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
-    },
-    "packages/shared/src/agent/__tests__/pi-context.test.ts": {
-      "sha256": "808d9ef4fc5f49d0034007b256fd874f24ac5678d157c64e1ddf6b80a55a1a1e",
-      "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
-    },
-    "packages/shared/src/config/__tests__/watcher-retained.test.ts": {
-      "sha256": "377e2033947a874645a1a88a84e8772ba0f8eef5ab2b43d7c77c31cfe76d627a",
-      "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
-    },
-    "packages/shared/src/protocol/__tests__/events.test.ts": {
-      "sha256": "9af9c60b5ba8c089eca3c62233e5168b1c5f221e79dc63d874e58b6d49594240",
-      "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
-    },
-    "packages/ui/src/__tests__/package-exports.test.ts": {
-      "sha256": "8bcd187af2979927eb5a42c0be6061b2385f495eba1b1f306f86570b42a522c4",
-      "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
-    },
-    "scripts/build-server.test.ts": {
-      "sha256": "b29b0cdfd4bd24c9beb3318e93bd892b0754649512e61414d3f8e0c017aed2fa",
-      "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
-    },
     ".github/workflows/ci.yml": {
       "sha256": "6507940c8ff939ae4111ad0ed78c93431f5875ae5165a0e23f1baef7eaa5d85b",
       "reason": "MkAgent CI authenticates GitHub-backed dependency downloads and retries transient packaging failures"
@@ -2088,13 +2100,17 @@
       "sha256": "7fd1e412af2e1b20597df9b598a65618c2bb6117450c8f7f193d32ffe803254c",
       "reason": "MkAgent releases authenticate GitHub-backed dependency downloads and retry transient packaging failures"
     },
-    "CHANGELOG.md": {
-      "sha256": "e178eda7b1ab884dfc745ee8babb290bdd0300ecd0e87aae687b5381c6b6e6b6",
-      "reason": "MkAgent-specific release metadata required by the release workflow"
-    },
     ".github/workflows/upstream-drift.yml": {
       "sha256": "b56b77cd0e8b21a863730eb6046510e6c1b39ac7e2137e449f54c5697b7d850b",
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
+    },
+    "CHANGELOG.md": {
+      "sha256": "89f26c4d4a4979d2468cf4d6c26122c0fde26b7d1d414ac7a9f353f550e378b5",
+      "reason": "MkAgent-specific release metadata required by the release workflow"
+    },
+    "README.zh.md": {
+      "sha256": "d8a0463130fe5c1062fa7ca141b86ae5d4af1eeba84394a1731eeaf68c4ac3e3",
+      "reason": "Simplified Chinese MkAgent project overview maintained alongside the English README"
     },
     "apps/electron/resources/generate-brand-icons.sh": {
       "sha256": "b3b1484bafbb3a6c135791b854f49c53e4ece9ab610b7edf80681ed16e305f64",
@@ -2107,6 +2123,18 @@
     "apps/electron/resources/release-notes/0.1.0.md": {
       "sha256": "41a441ab3680d9309cce421e78f12bd265fb74a43eff2aab37c5f4065ea5f694",
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
+    },
+    "apps/electron/resources/release-notes/0.1.1.md": {
+      "sha256": "5019bedeffad9d584e255283599144069dd349492c633e8cd55cfb970e0b4811",
+      "reason": "MkAgent-specific release metadata required by the release workflow"
+    },
+    "apps/electron/resources/release-notes/0.1.2.md": {
+      "sha256": "5a0a4569fa16fe28a71674b649b3cd06d66b5470d91e3a92d8480a52c66445d9",
+      "reason": "MkAgent-specific release metadata required by the release workflow"
+    },
+    "apps/electron/resources/release-notes/0.1.3.md": {
+      "sha256": "c4714fe50e98fb5f7f5678659957eaeb2365e96faddb6f1051890d667e8ad453",
+      "reason": "MkAgent-specific release metadata required by the release workflow"
     },
     "apps/electron/resources/tool-icons/mkagent.svg": {
       "sha256": "e819759606becd7af443ac503e58351103d016d2ed82ea5c979f98f950878db5",
@@ -2160,17 +2188,37 @@
       "sha256": "4ff54b22b2f7c3baeea7a7184caa8b7feea14c6b42898585f1f14d7fc784a673",
       "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
     },
+    "packages/server-core/src/sessions/retained-session-events.test.ts": {
+      "sha256": "0bc14406e7adee0540dd926fa45d6ab31246493172b200e0b8af02c5e44fa90b",
+      "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
+    },
     "packages/server-core/src/sessions/session-branching.test.ts": {
       "sha256": "38b09455d0c706868b6a80be4eafbd29f4906c8c0a8427e0e802c7ee992b8ce5",
+      "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
+    },
+    "packages/session-tools-core/src/skill-helpers.test.ts": {
+      "sha256": "ce1e3264c187f3419a9c1af4d239ecf819b5e423a335ffc40aa677acb3197241",
       "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
     },
     "packages/session-tools-core/src/skill-helpers.ts": {
       "sha256": "f5d646c53a7341a5b1af21a8d4628a9c9f9658aadb78b70b382205682de65d8c",
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
+    "packages/shared/src/agent/__tests__/pi-context.test.ts": {
+      "sha256": "808d9ef4fc5f49d0034007b256fd874f24ac5678d157c64e1ddf6b80a55a1a1e",
+      "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
+    },
     "packages/shared/src/agent/__tests__/pi-conversation-flow.integration.test.ts": {
       "sha256": "a900f93cc3e98985170fd5c8f1ed98687729daa7e7e737b7597c69b3606ef255",
       "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
+    },
+    "packages/shared/src/agent/__tests__/pi-permission-sync.test.ts": {
+      "sha256": "2b0396dea7c09e201543cfe21e362a0d563f75dcb141448789892c7c9b032067",
+      "reason": "Retain Lite permission modes and precise approvals; Guarded and decision configuration deferred"
+    },
+    "packages/shared/src/agent/core/__tests__/config-dir-paths.test.ts": {
+      "sha256": "0bd513596bdc12d98c766544f62144ef572bc5be1f7973ce158d61dd86099d40",
+      "reason": "MkAgent regression test covers config recognition and permission hints under a custom CONFIG_DIR"
     },
     "packages/shared/src/agent/pi-context.ts": {
       "sha256": "6da3166fc31586ae91e59151206a1f4c0f5cc25627b9d0ebc9ea0ddf5cfe9ec3",
@@ -2180,12 +2228,24 @@
       "sha256": "031d6f2e7f3680ae94217927bbeb2fae17d2d6eaa9f6a61e8762c7730e7c6e82",
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
+    "packages/shared/src/auth/__tests__/llm-oauth.test.ts": {
+      "sha256": "d31df220858de7f87a46b73c934a9ff2391732af9b29573ba064a82f82443b7a",
+      "reason": "Regression coverage for retained Craft LLM OAuth configuration, branding, and connection-scoped secure credential storage"
+    },
+    "packages/shared/src/config/__tests__/watcher-retained.test.ts": {
+      "sha256": "377e2033947a874645a1a88a84e8772ba0f8eef5ab2b43d7c77c31cfe76d627a",
+      "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
+    },
     "packages/shared/src/config/sync-mkagent-bash-patterns.ts": {
       "sha256": "49b08947181e61c82feb3653809f1a56595fedf793d1566cbc92f118f6ce9cee",
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
     "packages/shared/src/mentions/__tests__/resolve-skill-mentions.test.ts": {
       "sha256": "99425dca3cc534e4e741bc8c80fc8e221a2fa8307be5cfb425f304a79407ed66",
+      "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
+    },
+    "packages/shared/src/protocol/__tests__/events.test.ts": {
+      "sha256": "9af9c60b5ba8c089eca3c62233e5168b1c5f221e79dc63d874e58b6d49594240",
       "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
     },
     "packages/shared/src/workspaces/__tests__/default-workspace.test.ts": {
@@ -2196,33 +2256,57 @@
       "sha256": "e82880ae69a57cbd2bb330ce7e0cdc175af4b85f7c9a346e7b418cc2c0c69708",
       "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
     },
+    "packages/ui/src/__tests__/package-exports.test.ts": {
+      "sha256": "8bcd187af2979927eb5a42c0be6061b2385f495eba1b1f306f86570b42a522c4",
+      "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
+    },
+    "packages/ui/src/components/chat/__tests__/message-timestamp.test.ts": {
+      "sha256": "bb590783c178611baf3447b40343771d2a8f70942764c8fea5daa298a85a725e",
+      "reason": "MkAgent regression test covers stable local timestamp formatting for user-message footers"
+    },
+    "packages/ui/src/components/chat/message-timestamp.ts": {
+      "sha256": "fde704355db09df0d4e3652ed49afb1ef0170e56f33b2c1dadf21a1a0c731ada",
+      "reason": "MkAgent chat utility isolates user-message timestamp formatting from renderer-only dependencies"
+    },
     "scripts/audit-craft-reuse.ts": {
       "sha256": "1fdf34bb746b9d09e8a458da69575a4d0047371c29acfd9092fb9fdefb05477c",
       "reason": "MkAgent lineage audit script excludes independently maintained product documentation from Craft source-reuse checks"
     },
-    "scripts/collect-release-assets.ts": {
-      "sha256": "edc5a8d6a7e0e1600690f3dde42664a768c1ac6dc9ec008fbd9237b4404bb64b",
-      "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
-    },
-    "scripts/check-i18n-usage.ts": {
-      "sha256": "993af14ce3836b7a66bc30fa196aacf726dd3e1bd32088bdd9a2925f7016b9ac",
-      "reason": "MkAgent localization guard also verifies that every standalone Electron renderer initializes i18n"
+    "scripts/build-server.test.ts": {
+      "sha256": "b29b0cdfd4bd24c9beb3318e93bd892b0754649512e61414d3f8e0c017aed2fa",
+      "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
     },
     "scripts/check-craft-test-coverage.ts": {
-      "sha256": "3f7a55300979700cd77fdad50922e63419a83df4190044916348b89d985d1b0c",
+      "sha256": "5a437e4cbce941c57544856d9f5c236cef5a3d5dfac269a91e29eb17bcb13c62",
       "reason": "MkAgent coverage guard records retained Craft v0.13.3 Pi model-ranking regression coverage"
     },
     "scripts/check-craft-ui-sync.ts": {
       "sha256": "43403aab630df37ea15c59f84a9f65311b0d7412a4cdf2c2d2d3ffb633947819",
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
     },
-    "scripts/release.ts": {
-      "sha256": "1774d385dc3a7caf061094e5c282216a57b99f2ea8e84de10d6789b0aae1ff02",
+    "scripts/check-i18n-usage.ts": {
+      "sha256": "993af14ce3836b7a66bc30fa196aacf726dd3e1bd32088bdd9a2925f7016b9ac",
+      "reason": "MkAgent localization guard also verifies that every standalone Electron renderer initializes i18n"
+    },
+    "scripts/collect-release-assets.ts": {
+      "sha256": "edc5a8d6a7e0e1600690f3dde42664a768c1ac6dc9ec008fbd9237b4404bb64b",
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
+    },
+    "scripts/craft-ui-overrides.json": {
+      "sha256": "096e66b62bd254c28ac6a1105c46da620e2d0d2ec3e9b8eb01f57a617cfa96ef",
+      "reason": "MkAgent renderer lineage ledger records the selective Craft v0.13.3 retry synchronization"
     },
     "scripts/release-workflow.test.ts": {
       "sha256": "afc777f27d5bcc4116375878695d241b8fd5aa13b0867fe67f0674c254bb698f",
       "reason": "Regression test keeps GitHub dependency authentication and download retry policy wired into CI and release workflows"
+    },
+    "scripts/release.ts": {
+      "sha256": "1774d385dc3a7caf061094e5c282216a57b99f2ea8e84de10d6789b0aae1ff02",
+      "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
+    },
+    "scripts/run-tests.ts": {
+      "sha256": "814fd072b63148ce578b093801ac8d7a7f195d00e75f4eaf43759e1b72acbdd2",
+      "reason": "MkAgent test discovery excludes generated artifacts and isolates suites whose global Bun mocks can race with other tests"
     },
     "scripts/run-with-retry.test.ts": {
       "sha256": "c5852698de8e4af99f9da2f93fb40343c0f6eb7bc638900b0c636188f45fa156",
@@ -2231,87 +2315,9 @@
     "scripts/run-with-retry.ts": {
       "sha256": "7ee5e77b7f6f9194cfd70a209d6d6e56bb1942de4d81fff79a5c05bc88accdc3",
       "reason": "Cross-platform bounded retry runner hardens dependency installation and Electron packaging downloads"
-    },
-    "scripts/run-tests.ts": {
-      "sha256": "814fd072b63148ce578b093801ac8d7a7f195d00e75f4eaf43759e1b72acbdd2",
-      "reason": "MkAgent test discovery excludes generated artifacts and isolates suites whose global Bun mocks can race with other tests"
-    },
-    "packages/shared/src/agent/core/__tests__/config-dir-paths.test.ts": {
-      "sha256": "0bd513596bdc12d98c766544f62144ef572bc5be1f7973ce158d61dd86099d40",
-      "reason": "MkAgent regression test covers config recognition and permission hints under a custom CONFIG_DIR"
-    },
-    "packages/ui/src/components/chat/message-timestamp.ts": {
-      "sha256": "fde704355db09df0d4e3652ed49afb1ef0170e56f33b2c1dadf21a1a0c731ada",
-      "reason": "MkAgent chat utility isolates user-message timestamp formatting from renderer-only dependencies"
-    },
-    "packages/ui/src/components/chat/__tests__/message-timestamp.test.ts": {
-      "sha256": "bb590783c178611baf3447b40343771d2a8f70942764c8fea5daa298a85a725e",
-      "reason": "MkAgent regression test covers stable local timestamp formatting for user-message footers"
-    },
-    "apps/electron/resources/release-notes/0.1.1.md": {
-      "sha256": "5019bedeffad9d584e255283599144069dd349492c633e8cd55cfb970e0b4811",
-      "reason": "MkAgent-specific release metadata required by the release workflow"
-    },
-    "scripts/craft-ui-overrides.json": {
-      "sha256": "c4e3a8c3cd5c854281fc8618b405ff112f3db0435fbdb04386e71f657ae3926b",
-      "reason": "MkAgent renderer lineage ledger records the selective Craft v0.13.3 retry synchronization"
-    },
-    "apps/cli/src/retry-stream.test.ts": {
-      "sha256": "0dc20b7a8125f22c5c7c45604686ec9eb2f79a32b4629c84ce999e13fb5ef1cd",
-      "reason": "Craft v0.13.3 retry streaming is adapted to the narrower MkAgent CLI command surface"
-    },
-    "apps/electron/src/renderer/event-processor/handlers/__tests__/retry-lifecycle.test.ts": {
-      "sha256": "76350493a75f9b9e9c68ab23b54de07cf54ddd20393124c324ea7e15ce10791f",
-      "reason": "Craft v0.13.3 retry lifecycle is adapted to the retained MkAgent renderer state and protocol"
-    },
-    "packages/pi-agent-server/src/ephemeral-query-lifecycle.test.ts": {
-      "sha256": "308577cc98dd7c458257ff1123dd525b9547aa1e8a6970f8b7614984b5ed24be",
-      "reason": "Selective Craft v0.13.3 bounded utility-query lifecycle for the retained MkAgent Pi subprocess"
-    },
-    "packages/pi-agent-server/src/ephemeral-query-lifecycle.ts": {
-      "sha256": "530b59743bb3482c22d7d30b906f34fef7acc20409255186913b607cd9b130b1",
-      "reason": "Selective Craft v0.13.3 bounded utility-query lifecycle for the retained MkAgent Pi subprocess"
-    },
-    "packages/pi-agent-server/src/session-settings.test.ts": {
-      "sha256": "162ed5ded13d9efbeee25743412b27790db53a72e6922860378f1670c7aaca28",
-      "reason": "Selective Craft v0.13.3 in-memory retry and compaction settings isolated for MkAgent Pi sessions"
-    },
-    "packages/pi-agent-server/src/session-settings.ts": {
-      "sha256": "40556f0e3e7f70f1ff11c7a4ae16655a6a9e4a854d0583201e1264f7227a7ee0",
-      "reason": "Selective Craft v0.13.3 in-memory retry and compaction settings isolated for MkAgent Pi sessions"
-    },
-    "packages/pi-agent-server/src/test-fixtures/block-network.ts": {
-      "sha256": "dca859153abd603effa2e4c2ac68856efc707929d4d2d3523300bab3c13fbec6",
-      "reason": "Craft v0.13.3 Pi 0.85.1 runtime behavior is retained with MkAgent OAuth and Lite tool seams"
-    },
-    "packages/server-core/src/sessions/pi-retry-streaming.test.ts": {
-      "sha256": "2b8465eb70ee3f7564e395e328b751fc6ae7974ad25d57aa99898ae15828b9e2",
-      "reason": "Craft v0.13.3 retry events are forwarded without persistence through the simplified MkAgent SessionManager"
-    },
-    "packages/shared/src/agent/__tests__/pi-retry-sdk-integration.test.ts": {
-      "sha256": "ef2b599cca8f8d875cbef4c10005ee00751f953d61eadc410ffc776af7bf3d11",
-      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
-    },
-    "packages/shared/src/release-notes/index.test.ts": {
-      "sha256": "5763fa541a44c3f3a42849186f2f853e67ab80a11e316fba33738c1157aa64f2",
-      "reason": "Craft v0.13.3 semver-only release-note discovery is retained so MkAgent ignores pending templates"
-    },
-    "apps/electron/resources/release-notes/0.1.2.md": {
-      "sha256": "5a0a4569fa16fe28a71674b649b3cd06d66b5470d91e3a92d8480a52c66445d9",
-      "reason": "MkAgent-specific release metadata required by the release workflow"
     }
   },
   "deleted": {
-    "apps/electron/resources/release-notes/0.11.3.md": "Craft release notes describe the upstream full product and are not shipped as MkAgent product documentation",
-    "apps/electron/resources/release-notes/0.11.4.md": "Craft release notes describe the upstream full product and are not shipped as MkAgent product documentation",
-    "apps/electron/resources/release-notes/0.12.0.md": "Craft release notes describe the upstream full product and are not shipped as MkAgent product documentation",
-    "apps/electron/resources/release-notes/0.12.1.md": "Craft release notes describe the upstream full product and are not shipped as MkAgent product documentation",
-    "apps/electron/src/renderer/components/app-shell/inherited-filter-params.test.ts": "Inherited label and custom-status filters are excluded from MkAgent Lite",
-    "apps/electron/src/renderer/components/app-shell/inherited-filter-params.ts": "Inherited label and custom-status filters are excluded from MkAgent Lite",
-    "packages/shared/src/auth/__tests__/github-copilot.test.ts": "GitHub Copilot authentication is outside MkAgent's retained Lite provider boundary",
-    "packages/shared/src/auth/github-copilot.ts": "GitHub Copilot authentication is outside MkAgent's retained Lite provider boundary",
-    "packages/shared/src/mcp/__tests__/proxy-tool-name.test.ts": "Source MCP proxy tooling is excluded from MkAgent Lite",
-    "packages/shared/src/mcp/proxy-tool-name.ts": "Source MCP proxy tooling is excluded from MkAgent Lite",
     ".dockerignore": "Craft file reviewed and removed because it is outside the locked MkAgent Lite product, build, and test boundary",
     ".github/ISSUE_TEMPLATE/bug_report.yml": "Upstream workflow or template is replaced by the MkAgent derivative workflow",
     ".github/ISSUE_TEMPLATE/feature_request.yml": "Upstream workflow or template is replaced by the MkAgent derivative workflow",
@@ -2328,7 +2334,6 @@
     "apps/electron/resources/Assets.car": "Craft file reviewed and removed because it is outside the locked MkAgent Lite product, build, and test boundary",
     "apps/electron/resources/bin/craft-agent": "Craft file reviewed and removed because it is outside the locked MkAgent Lite product, build, and test boundary",
     "apps/electron/resources/bin/craft-agent.cmd": "Craft file reviewed and removed because it is outside the locked MkAgent Lite product, build, and test boundary",
-    "apps/electron/resources/bridge-mcp-server/index.js": "Bridge executable belongs to excluded Sources and MCP integration",
     "apps/electron/resources/craft-logos/craft_app_icon.png": "Craft file reviewed and removed because it is outside the locked MkAgent Lite product, build, and test boundary",
     "apps/electron/resources/craft-logos/craft_app_icon_dark.png": "Craft file reviewed and removed because it is outside the locked MkAgent Lite product, build, and test boundary",
     "apps/electron/resources/craft-logos/craft_logo_black.png": "Craft file reviewed and removed because it is outside the locked MkAgent Lite product, build, and test boundary",
@@ -2338,7 +2343,9 @@
     "apps/electron/resources/dmg-background@2x.png": "Craft file reviewed and removed because it is outside the locked MkAgent Lite product, build, and test boundary",
     "apps/electron/resources/docs/automations.md": "Documentation covers an excluded Craft full-product feature",
     "apps/electron/resources/docs/craft-cli.md": "Documentation covers an excluded Craft full-product feature",
+    "apps/electron/resources/docs/decisions.md": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
     "apps/electron/resources/docs/labels.md": "Documentation covers an excluded Craft full-product feature",
+    "apps/electron/resources/docs/pages.md": "Pages UI and runtime excluded from Lite",
     "apps/electron/resources/docs/sources.md": "Documentation covers an excluded Craft full-product feature",
     "apps/electron/resources/docs/statuses.md": "Documentation covers an excluded Craft full-product feature",
     "apps/electron/resources/release-notes/0.10.0.md": "Historical Craft release note is not applicable to the MkAgent release line",
@@ -2350,6 +2357,19 @@
     "apps/electron/resources/release-notes/0.11.0.md": "Historical Craft release note is not applicable to the MkAgent release line",
     "apps/electron/resources/release-notes/0.11.1.md": "Historical Craft release note is not applicable to the MkAgent release line",
     "apps/electron/resources/release-notes/0.11.2.md": "Historical Craft release note is not applicable to the MkAgent release line",
+    "apps/electron/resources/release-notes/0.11.3.md": "Craft release notes describe the upstream full product and are not shipped as MkAgent product documentation",
+    "apps/electron/resources/release-notes/0.11.4.md": "Craft release notes describe the upstream full product and are not shipped as MkAgent product documentation",
+    "apps/electron/resources/release-notes/0.12.0.md": "Craft release notes describe the upstream full product and are not shipped as MkAgent product documentation",
+    "apps/electron/resources/release-notes/0.12.1.md": "Craft release notes describe the upstream full product and are not shipped as MkAgent product documentation",
+    "apps/electron/resources/release-notes/0.13.0.md": "External Sources/MCP and associated metadata helpers excluded from Lite",
+    "apps/electron/resources/release-notes/0.13.1.md": "External Sources/MCP and associated metadata helpers excluded from Lite",
+    "apps/electron/resources/release-notes/0.13.2.md": "External Sources/MCP and associated metadata helpers excluded from Lite",
+    "apps/electron/resources/release-notes/0.13.3.md": "External Sources/MCP and associated metadata helpers excluded from Lite",
+    "apps/electron/resources/release-notes/0.13.4.md": "External Sources/MCP and associated metadata helpers excluded from Lite",
+    "apps/electron/resources/release-notes/0.13.5.md": "External Sources/MCP and associated metadata helpers excluded from Lite",
+    "apps/electron/resources/release-notes/0.13.6.md": "External Sources/MCP and associated metadata helpers excluded from Lite",
+    "apps/electron/resources/release-notes/0.14.0.md": "External Sources/MCP and associated metadata helpers excluded from Lite",
+    "apps/electron/resources/release-notes/0.14.1.md": "External Sources/MCP and associated metadata helpers excluded from Lite",
     "apps/electron/resources/release-notes/0.2.30.md": "Historical Craft release note is not applicable to the MkAgent release line",
     "apps/electron/resources/release-notes/0.2.31.md": "Historical Craft release note is not applicable to the MkAgent release line",
     "apps/electron/resources/release-notes/0.2.32.md": "Historical Craft release note is not applicable to the MkAgent release line",
@@ -2409,9 +2429,12 @@
     "apps/electron/resources/release-notes/0.9.6.md": "Historical Craft release note is not applicable to the MkAgent release line",
     "apps/electron/resources/release-notes/next.md": "Historical Craft release note is not applicable to the MkAgent release line",
     "apps/electron/resources/tool-icons/craft-agent.svg": "Craft file reviewed and removed because it is outside the locked MkAgent Lite product, build, and test boundary",
+    "apps/electron/src/main/__tests__/page-thumbnail-host.test.ts": "Pages UI and runtime excluded from Lite",
     "apps/electron/src/main/chunked-rpc.ts": "Electron dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/main/handlers/__tests__/registration.test.ts": "Electron dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/main/onboarding.ts": "Electron dependency serves only an excluded Craft full-product surface",
+    "apps/electron/src/main/page-thumbnail-host.ts": "Pages UI and runtime excluded from Lite",
+    "apps/electron/src/main/page-thumbnailer.ts": "Pages UI and runtime excluded from Lite",
     "apps/electron/src/main/shims/abort-controller.cjs": "Electron dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/assets/craft_logo_c.svg": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/assets/messaging-icons/lark.svg": "Renderer dependency serves only an excluded Craft full-product surface",
@@ -2423,9 +2446,12 @@
     "apps/electron/src/renderer/atoms/automations.ts": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/atoms/kanban.ts": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/atoms/messaging.ts": "Renderer dependency serves only an excluded Craft full-product surface",
+    "apps/electron/src/renderer/atoms/pages.ts": "Pages UI and runtime excluded from Lite",
+    "apps/electron/src/renderer/atoms/permission-modes.ts": "Retain Lite permission modes and precise approvals; Guarded and decision configuration deferred",
     "apps/electron/src/renderer/atoms/projects.ts": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/atoms/sources.ts": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/components/app-shell/CompactSessionListFilter.tsx": "Renderer dependency serves only an excluded Craft full-product surface",
+    "apps/electron/src/renderer/components/app-shell/ProjectMultiSelectFilter.tsx": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded",
     "apps/electron/src/renderer/components/app-shell/ProjectsListPanel.tsx": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/components/app-shell/SendResourceToWorkspaceDialog.tsx": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/components/app-shell/SendToWorkspaceDialog.tsx": "Renderer dependency serves only an excluded Craft full-product surface",
@@ -2436,6 +2462,8 @@
     "apps/electron/src/renderer/components/app-shell/SourceMenu.tsx": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/components/app-shell/SourcesListPanel.tsx": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/components/app-shell/__tests__/transfer-targets.test.ts": "Renderer dependency serves only an excluded Craft full-product surface",
+    "apps/electron/src/renderer/components/app-shell/inherited-filter-params.test.ts": "Inherited label and custom-status filters are excluded from MkAgent Lite",
+    "apps/electron/src/renderer/components/app-shell/inherited-filter-params.ts": "Inherited label and custom-status filters are excluded from MkAgent Lite",
     "apps/electron/src/renderer/components/app-shell/input/structured/CredentialRequest.tsx": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/components/app-shell/kanban/BoardListToggle.tsx": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/components/app-shell/kanban/KanbanBoard.tsx": "Renderer dependency serves only an excluded Craft full-product surface",
@@ -2501,6 +2529,17 @@
     "apps/electron/src/renderer/components/messaging/access/TelegramAccessSection.tsx": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/components/messaging/access/index.ts": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/components/messaging/access/types.ts": "Renderer dependency serves only an excluded Craft full-product surface",
+    "apps/electron/src/renderer/components/pages/DeletePageDialog.tsx": "Pages UI and runtime excluded from Lite",
+    "apps/electron/src/renderer/components/pages/PageFrame.tsx": "Pages UI and runtime excluded from Lite",
+    "apps/electron/src/renderer/components/pages/PageGrantRequestDialog.tsx": "Pages UI and runtime excluded from Lite",
+    "apps/electron/src/renderer/components/pages/PageGrantsDialog.tsx": "Pages UI and runtime excluded from Lite",
+    "apps/electron/src/renderer/components/pages/PageSourceAuthBanner.tsx": "Pages UI and runtime excluded from Lite",
+    "apps/electron/src/renderer/components/pages/PageTile.tsx": "Pages UI and runtime excluded from Lite",
+    "apps/electron/src/renderer/components/pages/PageView.tsx": "Pages UI and runtime excluded from Lite",
+    "apps/electron/src/renderer/components/pages/PagesHome.tsx": "Pages UI and runtime excluded from Lite",
+    "apps/electron/src/renderer/components/pages/SharePageDialog.tsx": "Pages UI and runtime excluded from Lite",
+    "apps/electron/src/renderer/components/pages/grant-visuals.tsx": "Pages UI and runtime excluded from Lite",
+    "apps/electron/src/renderer/components/pages/page-visuals.tsx": "Pages UI and runtime excluded from Lite",
     "apps/electron/src/renderer/components/projects/CreateProjectDialog.tsx": "Projects, Kanban, and task-conductor product functionality is excluded from MkAgent Lite",
     "apps/electron/src/renderer/components/ui/CompactSourceSelector.tsx": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/components/ui/SourceSelectorPopover.tsx": "Renderer dependency serves only an excluded Craft full-product surface",
@@ -2523,8 +2562,11 @@
     "apps/electron/src/renderer/config/__tests__/session-status-config.test.ts": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/config/session-status-config.tsx": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/hooks/useAutomations.ts": "Renderer dependency serves only an excluded Craft full-product surface",
+    "apps/electron/src/renderer/hooks/useAvailablePermissionModes.ts": "Retain Lite permission modes and precise approvals; Guarded and decision configuration deferred",
+    "apps/electron/src/renderer/hooks/useInView.ts": "Pages UI and runtime excluded from Lite",
     "apps/electron/src/renderer/hooks/useKanbanColumnColors.ts": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/hooks/useLabels.ts": "Renderer dependency serves only an excluded Craft full-product surface",
+    "apps/electron/src/renderer/hooks/usePages.ts": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded",
     "apps/electron/src/renderer/hooks/useProjectColorTreatment.ts": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/hooks/useProjects.ts": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/renderer/hooks/useStatuses.ts": "Renderer dependency serves only an excluded Craft full-product surface",
@@ -2602,8 +2644,11 @@
     "apps/electron/src/renderer/utils/project-colors.ts": "Renderer dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/runtime/platform-headless.ts": "Obsolete re-export after the retained platform runtime moved to server-core",
     "apps/electron/src/shared/__tests__/ipc-channels.test.ts": "Electron dependency serves only an excluded Craft full-product surface",
+    "apps/electron/src/shared/__tests__/page-bridge.test.ts": "Pages UI and runtime excluded from Lite",
     "apps/electron/src/shared/__tests__/route-parser-automations.test.ts": "Electron dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/shared/__tests__/route-parser-label-filter.test.ts": "Electron dependency serves only an excluded Craft full-product surface",
+    "apps/electron/src/shared/__tests__/route-parser-pages.test.ts": "Pages UI and runtime excluded from Lite",
+    "apps/electron/src/shared/page-bridge.ts": "Pages UI and runtime excluded from Lite",
     "apps/electron/src/transport/__tests__/routed-client.test.ts": "Electron dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/transport/routed-client.ts": "Electron dependency serves only an excluded Craft full-product surface",
     "apps/viewer/index.html": "Viewer, public sharing, and session MCP product surfaces are excluded from MkAgent Lite",
@@ -2621,6 +2666,7 @@
     "apps/viewer/vite.config.ts": "Viewer, public sharing, and session MCP product surfaces are excluded from MkAgent Lite",
     "apps/webui/src/responsive.ts": "Unused compatibility helper after the shared Craft renderer integration",
     "packages/core/CLAUDE.md": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
+    "packages/core/src/types/page.ts": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded",
     "packages/messaging-gateway/package.json": "External Messaging product package is excluded from MkAgent Lite",
     "packages/messaging-gateway/src/__tests__/access-control.test.ts": "External Messaging product package is excluded from MkAgent Lite",
     "packages/messaging-gateway/src/__tests__/binding-store-update.test.ts": "External Messaging product package is excluded from MkAgent Lite",
@@ -2682,12 +2728,49 @@
     "packages/messaging-whatsapp-worker/tsconfig.json": "External Messaging product package is excluded from MkAgent Lite",
     "packages/pi-agent-server/src/craft-metadata-schema.test.ts": "Pi implementation or test serves excluded OAuth, Sources, or upstream metadata",
     "packages/pi-agent-server/src/craft-metadata-schema.ts": "Pi implementation or test serves excluded OAuth, Sources, or upstream metadata",
+    "packages/pi-agent-server/src/large-result-gate.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/pi-agent-server/src/large-result-gate.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/__fixtures__/adaptive-thinking.cases.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/__fixtures__/large-results.cases.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/adaptive-thinking.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/adaptive-thinking.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/automation-condition.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/automation-condition.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/decision-outcomes.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/decision-point.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/decision-point.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/guarded-mode.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/guarded-mode.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/large-results.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/large-results.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/mid-turn-messages.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/mid-turn-messages.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/permission-risks.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/permission-risks.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/relevance.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/relevance.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/semantic-labels.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/semantic-labels.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/smart-titles.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/smart-titles.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/suggestions.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/suggestions.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/task-repairs.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/task-repairs.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/task-verdict.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/task-verdict.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/tool-callbacks.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/tool-callbacks.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/turn-outcome.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/decisions/turn-outcome.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
     "packages/server-core/src/handlers/messaging-registry-interface.ts": "Server implementation or test serves only an excluded Craft full-product feature",
     "packages/server-core/src/handlers/oauth-flow-store-interface.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/server-core/src/handlers/rpc/automations.ts": "Server implementation or test serves only an excluded Craft full-product feature",
+    "packages/server-core/src/handlers/rpc/decisions.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
     "packages/server-core/src/handlers/rpc/labels.ts": "Server implementation or test serves only an excluded Craft full-product feature",
     "packages/server-core/src/handlers/rpc/messaging.ts": "Server implementation or test serves only an excluded Craft full-product feature",
     "packages/server-core/src/handlers/rpc/oauth.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
+    "packages/server-core/src/handlers/rpc/pages.ts": "Pages UI and runtime excluded from Lite",
     "packages/server-core/src/handlers/rpc/projects.ts": "Server implementation or test serves only an excluded Craft full-product feature",
     "packages/server-core/src/handlers/rpc/resources.ts": "Server implementation or test serves only an excluded Craft full-product feature",
     "packages/server-core/src/handlers/rpc/sources.ts": "Server implementation or test serves only an excluded Craft full-product feature",
@@ -2697,23 +2780,45 @@
     "packages/server-core/src/handlers/rpc/transfer.ts": "Server implementation or test serves only an excluded Craft full-product feature",
     "packages/server-core/src/model-fetchers/anthropic.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/server-core/src/model-fetchers/bedrock-vertex.ts": "Server implementation or test serves only an excluded Craft full-product feature",
+    "packages/server-core/src/pages/__tests__/mcp-executor.test.ts": "Pages UI and runtime excluded from Lite",
+    "packages/server-core/src/pages/__tests__/script-executor-bridge.test.ts": "Pages UI and runtime excluded from Lite",
+    "packages/server-core/src/pages/mcp-executor.ts": "Pages UI and runtime excluded from Lite",
+    "packages/server-core/src/pages/script-executor-bridge.ts": "Pages UI and runtime excluded from Lite",
+    "packages/server-core/src/pages/source-gate.ts": "Pages UI and runtime excluded from Lite",
+    "packages/server-core/src/pages/tool-callbacks.test.ts": "Pages UI and runtime excluded from Lite",
+    "packages/server-core/src/pages/tool-callbacks.ts": "Pages UI and runtime excluded from Lite",
     "packages/server-core/src/sessions/adopt-task-draft.test.ts": "Server implementation or test serves only an excluded Craft full-product feature",
+    "packages/server-core/src/sessions/attended-session.test.ts": "Automation lifecycle excluded from Lite",
+    "packages/server-core/src/sessions/automation-loop-and-retry.test.ts": "Automation lifecycle excluded from Lite",
+    "packages/server-core/src/sessions/automation-prompts.test.ts": "Automation lifecycle excluded from Lite",
+    "packages/server-core/src/sessions/decision-lifecycle.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
     "packages/server-core/src/sessions/execute-prompt-automation-test-mode.test.ts": "Server implementation or test serves only an excluded Craft full-product feature",
     "packages/server-core/src/sessions/sendmessage-oauth-refresh.test.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/server-core/src/sessions/source-activated-auto-retry.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
+    "packages/server-core/src/sessions/title-generation.isolated.ts": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded",
+    "packages/server-core/src/sessions/turn-context.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/sources/build-servers.ts": "External Sources/MCP and associated metadata helpers excluded from Lite",
     "packages/server-core/src/tasks/TaskRunner.test.ts": "Projects, Kanban, and task-conductor product functionality is excluded from MkAgent Lite",
     "packages/server-core/src/tasks/TaskRunner.ts": "Projects, Kanban, and task-conductor product functionality is excluded from MkAgent Lite",
     "packages/server-core/src/tasks/create-task.test.ts": "Projects, Kanban, and task-conductor product functionality is excluded from MkAgent Lite",
     "packages/server-core/src/tasks/create-task.ts": "Projects, Kanban, and task-conductor product functionality is excluded from MkAgent Lite",
     "packages/server-core/src/tasks/index.ts": "Projects, Kanban, and task-conductor product functionality is excluded from MkAgent Lite",
+    "packages/server-core/src/tasks/verdict-decision.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/server-core/src/tasks/verdict-decision.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
     "packages/server-core/src/webui/__tests__/oauth-callback.test.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/session-mcp-server/package.json": "Viewer, public sharing, and session MCP product surfaces are excluded from MkAgent Lite",
     "packages/session-mcp-server/src/index.ts": "Viewer, public sharing, and session MCP product surfaces are excluded from MkAgent Lite",
     "packages/session-mcp-server/tsconfig.json": "Viewer, public sharing, and session MCP product surfaces are excluded from MkAgent Lite",
+    "packages/session-tools-core/src/api-auth.test.ts": "External Sources/MCP and associated metadata helpers excluded from Lite",
+    "packages/session-tools-core/src/api-auth.ts": "External Sources/MCP and associated metadata helpers excluded from Lite",
     "packages/session-tools-core/src/handlers/create-task.test.ts": "Session tool or template serves only an excluded Craft full-product feature",
     "packages/session-tools-core/src/handlers/create-task.ts": "Session tool or template serves only an excluded Craft full-product feature",
     "packages/session-tools-core/src/handlers/credential-prompt.ts": "Session tool or template serves only an excluded Craft full-product feature",
+    "packages/session-tools-core/src/handlers/decide.test.ts": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded",
+    "packages/session-tools-core/src/handlers/decide.ts": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded",
     "packages/session-tools-core/src/handlers/messaging.ts": "Session tool or template serves only an excluded Craft full-product feature",
+    "packages/session-tools-core/src/handlers/pages.test.ts": "Pages UI and runtime excluded from Lite",
+    "packages/session-tools-core/src/handlers/pages.ts": "Pages UI and runtime excluded from Lite",
     "packages/session-tools-core/src/handlers/render-template.ts": "Session tool or template serves only an excluded Craft full-product feature",
     "packages/session-tools-core/src/handlers/set-session-labels.ts": "Session tool or template serves only an excluded Craft full-product feature",
     "packages/session-tools-core/src/handlers/set-session-status.test.ts": "Session tool or template serves only an excluded Craft full-product feature",
@@ -2727,23 +2832,36 @@
     "packages/shared/CLAUDE.md": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/shared/eslint-rules/no-inline-source-auth-check.cjs": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/agent/__tests__/base-agent-source-activation.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
+    "packages/shared/src/agent/__tests__/base-agent-turn-context.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/shared/src/agent/__tests__/clamp-permission-mode.test.ts": "Retain Lite permission modes and precise approvals; Guarded and decision configuration deferred",
     "packages/shared/src/agent/__tests__/claude-agent-branching.test.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/shared/src/agent/__tests__/claude-agent-handoff.test.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/shared/src/agent/__tests__/claude-agent-spawn-cwd.test.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/shared/src/agent/__tests__/claude-background-message-routing.test.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
+    "packages/shared/src/agent/__tests__/claude-compaction-events.test.ts": "Direct Claude SDK and Copilot providers excluded; Pi provider runtime retained",
+    "packages/shared/src/agent/__tests__/claude-event-adapter-tasks.test.ts": "Direct Claude SDK and Copilot providers excluded; Pi provider runtime retained",
     "packages/shared/src/agent/__tests__/claude-event-adapter.test.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
+    "packages/shared/src/agent/__tests__/claude-keepalive-stop.test.ts": "Direct Claude SDK and Copilot providers excluded; Pi provider runtime retained",
+    "packages/shared/src/agent/__tests__/claude-large-mcp-results.test.ts": "Direct Claude SDK and Copilot providers excluded; Pi provider runtime retained",
+    "packages/shared/src/agent/__tests__/claude-live-thinking.test.ts": "Direct Claude SDK and Copilot providers excluded; Pi provider runtime retained",
     "packages/shared/src/agent/__tests__/claude-sdk-error-mapper.test.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
+    "packages/shared/src/agent/__tests__/claude-steering.test.ts": "Direct Claude SDK and Copilot providers excluded; Pi provider runtime retained",
+    "packages/shared/src/agent/__tests__/claude-subprocess-env.test.ts": "Direct Claude SDK and Copilot providers excluded; Pi provider runtime retained",
     "packages/shared/src/agent/__tests__/claude-thinking-config.test.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/shared/src/agent/__tests__/credential-prompt-detection.test.ts": "Shared implementation or test serves only an excluded backend or product feature",
+    "packages/shared/src/agent/__tests__/guarded-permission-mode.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
     "packages/shared/src/agent/__tests__/json-prop-to-zod.test.ts": "Shared implementation or test serves only an excluded backend or product feature",
+    "packages/shared/src/agent/__tests__/mcp-tool-names.test.ts": "External Sources/MCP and associated metadata helpers excluded from Lite",
     "packages/shared/src/agent/__tests__/permissions-config-craft-cli-flag.test.ts": "Shared implementation or test serves only an excluded backend or product feature",
     "packages/shared/src/agent/__tests__/pi-agent-bedrock-env.test.ts": "Shared implementation or test serves only an excluded backend or product feature",
+    "packages/shared/src/agent/__tests__/pi-agent-guarded-mode.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
     "packages/shared/src/agent/__tests__/pi-agent-pretool-labels.test.ts": "Shared implementation or test serves only an excluded backend or product feature",
     "packages/shared/src/agent/__tests__/query-llm-partial-output.test.ts": "Shared implementation or test serves only an excluded backend or product feature",
     "packages/shared/src/agent/__tests__/source-activation-drain.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/agent/__tests__/source-state.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/agent/backend/claude/event-adapter.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/shared/src/agent/backend/claude/index.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
+    "packages/shared/src/agent/backend/claude/pending-steers.ts": "Direct Claude SDK and Copilot providers excluded; Pi provider runtime retained",
     "packages/shared/src/agent/backend/claude/persistent-input.test.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/shared/src/agent/backend/claude/persistent-input.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/shared/src/agent/backend/claude/session-tool-parity.test.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
@@ -2754,12 +2872,17 @@
     "packages/shared/src/agent/claude-context.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/shared/src/agent/claude-llm-query.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/shared/src/agent/claude-sdk-error-mapper.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
+    "packages/shared/src/agent/core/__tests__/guarded-mode.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
     "packages/shared/src/agent/core/__tests__/source-manager.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
+    "packages/shared/src/agent/core/guarded-mode.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
     "packages/shared/src/agent/core/source-manager.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/agent/diagnostics.ts": "Shared implementation or test serves only an excluded backend or product feature",
+    "packages/shared/src/agent/mcp-tool-names.ts": "External Sources/MCP and associated metadata helpers excluded from Lite",
     "packages/shared/src/agent/options.ts": "Shared implementation or test serves only an excluded backend or product feature",
     "packages/shared/src/agent/source-activation-drain.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
+    "packages/shared/src/agent/source-policy.ts": "External Sources/MCP and associated metadata helpers excluded from Lite",
     "packages/shared/src/auth/__tests__/exports-and-session-context.test.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
+    "packages/shared/src/auth/__tests__/github-copilot.test.ts": "GitHub Copilot authentication is outside MkAgent's retained Lite provider boundary",
     "packages/shared/src/auth/__tests__/oauth-callback-url.test.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/shared/src/auth/__tests__/oauth-relay.test.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/shared/src/auth/__tests__/oauth.e2e.test.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
@@ -2768,6 +2891,7 @@
     "packages/shared/src/auth/__tests__/types.test.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/shared/src/auth/claude-token.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/shared/src/auth/generic-oauth.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
+    "packages/shared/src/auth/github-copilot.ts": "GitHub Copilot authentication is outside MkAgent's retained Lite provider boundary",
     "packages/shared/src/auth/google-oauth.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/shared/src/auth/microsoft-oauth.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
     "packages/shared/src/auth/oauth-flow-store.ts": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product",
@@ -2794,6 +2918,7 @@
     "packages/shared/src/automations/handlers/index.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
     "packages/shared/src/automations/handlers/prompt-handler.test.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
     "packages/shared/src/automations/handlers/prompt-handler.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
+    "packages/shared/src/automations/handlers/script-handler.ts": "Automation lifecycle excluded from Lite",
     "packages/shared/src/automations/handlers/types.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
     "packages/shared/src/automations/handlers/webhook-handler.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
     "packages/shared/src/automations/history-store.test.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
@@ -2805,10 +2930,13 @@
     "packages/shared/src/automations/resolve-config-path.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
     "packages/shared/src/automations/retry-scheduler.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
     "packages/shared/src/automations/schemas.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
+    "packages/shared/src/automations/script-executor.test.ts": "Automation lifecycle excluded from Lite",
+    "packages/shared/src/automations/script-executor.ts": "Automation lifecycle excluded from Lite",
     "packages/shared/src/automations/sdk-bridge.test.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
     "packages/shared/src/automations/sdk-bridge.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
     "packages/shared/src/automations/security.test.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
     "packages/shared/src/automations/security.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
+    "packages/shared/src/automations/semantic-condition.test.ts": "Automation lifecycle excluded from Lite",
     "packages/shared/src/automations/types.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
     "packages/shared/src/automations/utils.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
     "packages/shared/src/automations/validation.test.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
@@ -2825,6 +2953,21 @@
     "packages/shared/src/config/__tests__/storage-migrations.test.ts": "Shared implementation or test serves only an excluded backend or product feature",
     "packages/shared/src/config/__tests__/storage-startup-migration.test.ts": "Shared implementation or test serves only an excluded backend or product feature",
     "packages/shared/src/config/sync-craft-agent-bash-patterns.ts": "Shared implementation or test serves only an excluded backend or product feature",
+    "packages/shared/src/decisions/client.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/shared/src/decisions/client.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/shared/src/decisions/health.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/shared/src/decisions/health.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/shared/src/decisions/index.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/shared/src/decisions/providers.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/shared/src/decisions/records.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/shared/src/decisions/records.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/shared/src/decisions/resolve.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/shared/src/decisions/settings.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/shared/src/decisions/settings.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/shared/src/decisions/status.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/shared/src/decisions/types.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/shared/src/decisions/usage.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/shared/src/decisions/usage.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
     "packages/shared/src/docs/source-guides.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/i18n/locales/de.json": "Shared implementation or test serves only an excluded backend or product feature",
     "packages/shared/src/i18n/locales/es.json": "Shared implementation or test serves only an excluded backend or product feature",
@@ -2836,9 +2979,11 @@
     "packages/shared/src/labels/__tests__/resolve.test.ts": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite",
     "packages/shared/src/labels/__tests__/tree.test.ts": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite",
     "packages/shared/src/labels/__tests__/values.test.ts": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite",
+    "packages/shared/src/labels/auto/evaluator.test.ts": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded",
     "packages/shared/src/labels/auto/evaluator.ts": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite",
     "packages/shared/src/labels/auto/index.ts": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite",
     "packages/shared/src/labels/auto/normalize.ts": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite",
+    "packages/shared/src/labels/auto/semantic-rules-config.test.ts": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded",
     "packages/shared/src/labels/auto/types.ts": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite",
     "packages/shared/src/labels/auto/validation.ts": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite",
     "packages/shared/src/labels/crud.ts": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite",
@@ -2850,18 +2995,39 @@
     "packages/shared/src/labels/types.ts": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite",
     "packages/shared/src/labels/validation.ts": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite",
     "packages/shared/src/labels/values.ts": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite",
+    "packages/shared/src/mcp/__tests__/api-source-intent.test.ts": "External Sources/MCP and associated metadata helpers excluded from Lite",
     "packages/shared/src/mcp/__tests__/fixtures/mcp-server-good.mjs": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/mcp/__tests__/fixtures/mcp-server-lsp.mjs": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/mcp/__tests__/fixtures/mcp-server-noisy-stuck.mjs": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/mcp/__tests__/fixtures/mcp-server-slow.mjs": "Sources and MCP product integration is excluded from MkAgent Lite",
+    "packages/shared/src/mcp/__tests__/mcp-pool.test.ts": "External Sources/MCP and associated metadata helpers excluded from Lite",
+    "packages/shared/src/mcp/__tests__/proxy-tool-name.test.ts": "Source MCP proxy tooling is excluded from MkAgent Lite",
     "packages/shared/src/mcp/__tests__/validation.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/mcp/api-source-pool-client.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/mcp/client.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/mcp/index.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/mcp/mcp-pool.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/mcp/pool-server.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
+    "packages/shared/src/mcp/proxy-tool-name.ts": "Source MCP proxy tooling is excluded from MkAgent Lite",
     "packages/shared/src/mcp/validation.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/mentions/__tests__/resolve-skill-source-mentions.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
+    "packages/shared/src/pages/action-bridge.test.ts": "Pages UI and runtime excluded from Lite",
+    "packages/shared/src/pages/action-bridge.ts": "Pages UI and runtime excluded from Lite",
+    "packages/shared/src/pages/data-store-constants.ts": "Pages UI and runtime excluded from Lite",
+    "packages/shared/src/pages/data-store.test.ts": "Pages UI and runtime excluded from Lite",
+    "packages/shared/src/pages/data-store.ts": "Pages UI and runtime excluded from Lite",
+    "packages/shared/src/pages/data-write.test.ts": "Pages UI and runtime excluded from Lite",
+    "packages/shared/src/pages/data-write.ts": "Pages UI and runtime excluded from Lite",
+    "packages/shared/src/pages/index.ts": "Pages UI and runtime excluded from Lite",
+    "packages/shared/src/pages/publisher.ts": "Pages UI and runtime excluded from Lite",
+    "packages/shared/src/pages/refresh.ts": "Pages UI and runtime excluded from Lite",
+    "packages/shared/src/pages/share-bundle.test.ts": "Pages UI and runtime excluded from Lite",
+    "packages/shared/src/pages/share-bundle.ts": "Pages UI and runtime excluded from Lite",
+    "packages/shared/src/pages/storage.test.ts": "Pages UI and runtime excluded from Lite",
+    "packages/shared/src/pages/storage.ts": "Pages UI and runtime excluded from Lite",
+    "packages/shared/src/pages/types.ts": "Pages UI and runtime excluded from Lite",
+    "packages/shared/src/pages/validation.test.ts": "Pages UI and runtime excluded from Lite",
+    "packages/shared/src/pages/validation.ts": "Pages UI and runtime excluded from Lite",
     "packages/shared/src/projects/__tests__/storage.test.ts": "Projects, Kanban, and task-conductor product functionality is excluded from MkAgent Lite",
     "packages/shared/src/projects/index.ts": "Projects, Kanban, and task-conductor product functionality is excluded from MkAgent Lite",
     "packages/shared/src/projects/storage.ts": "Projects, Kanban, and task-conductor product functionality is excluded from MkAgent Lite",
@@ -2874,17 +3040,20 @@
     "packages/shared/src/scheduler/scheduler-service.ts": "Automations and scheduler product functionality is excluded from MkAgent Lite",
     "packages/shared/src/sources/__tests__/api-tools-credential-freshness.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/sources/__tests__/api-tools-description.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
+    "packages/shared/src/sources/__tests__/api-tools-log-redaction.test.ts": "External Sources/MCP and associated metadata helpers excluded from Lite",
     "packages/shared/src/sources/__tests__/authScheme-empty.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/sources/__tests__/basic-auth.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/sources/__tests__/credential-manager-expiry.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/sources/__tests__/credential-manager-integration.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/sources/__tests__/credential-manager-renew.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
+    "packages/shared/src/sources/__tests__/header-credential-shape.test.ts": "External Sources/MCP and associated metadata helpers excluded from Lite",
     "packages/shared/src/sources/__tests__/multi-header-auth.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/sources/__tests__/multi-header-e2e.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/sources/__tests__/oauth-relay.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/sources/__tests__/save-source-config-orphan-credential.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/sources/__tests__/server-builder-authScheme.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/sources/__tests__/server-builder-flow.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
+    "packages/shared/src/sources/__tests__/slack-oauth-relay.isolated.ts": "External Sources/MCP and associated metadata helpers excluded from Lite",
     "packages/shared/src/sources/__tests__/source-config-validation.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/sources/__tests__/token-refresh-manager.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/sources/api-tools.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
@@ -2909,6 +3078,11 @@
     "packages/shared/src/tasks/slug.ts": "Projects, Kanban, and task-conductor product functionality is excluded from MkAgent Lite",
     "packages/shared/src/tasks/storage.ts": "Projects, Kanban, and task-conductor product functionality is excluded from MkAgent Lite",
     "packages/shared/src/tasks/validate.ts": "Projects, Kanban, and task-conductor product functionality is excluded from MkAgent Lite",
+    "packages/shared/src/utils/__tests__/large-result-filter.test.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
+    "packages/shared/src/utils/__tests__/redaction.test.ts": "External Sources/MCP and associated metadata helpers excluded from Lite",
+    "packages/shared/src/utils/redaction.test.ts": "External Sources/MCP and associated metadata helpers excluded from Lite",
+    "packages/shared/src/utils/redaction.ts": "External Sources/MCP and associated metadata helpers excluded from Lite",
+    "packages/shared/src/utils/slug.ts": "External Sources/MCP and associated metadata helpers excluded from Lite",
     "packages/shared/src/validation/index.ts": "Shared implementation or test serves only an excluded backend or product feature",
     "packages/shared/src/validation/url-validator.ts": "Shared implementation or test serves only an excluded backend or product feature",
     "packages/shared/src/views/defaults.ts": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite",
@@ -2926,9 +3100,12 @@
     "scripts/build/darwin.ts": "Claude-specific upstream packaging helper is replaced by retained Pi packaging scripts",
     "scripts/build/linux.ts": "Claude-specific upstream packaging helper is replaced by retained Pi packaging scripts",
     "scripts/build/win32.ts": "Claude-specific upstream packaging helper is replaced by retained Pi packaging scripts",
+    "scripts/check-i18n-coverage.ts": "MkAgent maintains independent release, validation and build tooling for the Lite workspace",
+    "scripts/decisions-report.ts": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync",
     "scripts/docker-smoke-test.sh": "Operational test depends on removed Sources or upstream validation commands",
     "scripts/generate-dev-cert.sh": "Operational helper is replaced by MkAgent server package scripts and documentation",
     "scripts/install-server.sh": "Operational helper is replaced by MkAgent server package scripts and documentation",
-    "scripts/test-workflow-local.sh": "Operational test depends on removed Sources or upstream validation commands"
+    "scripts/test-workflow-local.sh": "Operational test depends on removed Sources or upstream validation commands",
+    "tsconfig.base.json": "MkAgent maintains independent release, validation and build tooling for the Lite workspace"
   }
 }

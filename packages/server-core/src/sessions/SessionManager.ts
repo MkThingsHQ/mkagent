@@ -56,7 +56,6 @@ import {
   listSessions as listStoredSessions,
   loadSession as loadStoredSession,
   markCompactionComplete as markStoredCompactionComplete,
-  markPendingPlanExecutionDispatched as markStoredPendingPlanExecutionDispatched,
   saveSession as saveStoredSession,
   sessionPersistenceQueue,
   serializeSession,
@@ -224,6 +223,13 @@ interface ManagedSession extends SessionConfig {
   lastFinalMessageId?: string
   lastMessageRole?: Session['lastMessageRole']
   pendingExternalHeader?: SessionHeader
+}
+
+export function clampSpawnPermissionMode(requested: PermissionMode | undefined, parent: PermissionMode | undefined): PermissionMode {
+  const modes: PermissionMode[] = ['safe', 'ask', 'allow-all']
+  const parentMode = parent ?? 'ask'
+  const requestedMode = requested ?? parentMode
+  return modes[Math.min(modes.indexOf(parentMode), modes.indexOf(requestedMode))] ?? 'ask'
 }
 
 export function createManagedSession(
@@ -651,7 +657,9 @@ export class SessionManager implements ISessionManager {
     managed.connectionLocked = true
 
     if (managed.isProcessing) {
-      const redirected = managed.agent?.redirect(message) ?? false
+      const redirected = managed.agent?.isCompactionInFlight?.()
+        ? false
+        : (managed.agent?.redirect(message) ?? false)
       if (!redirected) {
         userMessage.isQueued = true
         managed.messageQueue.push({
@@ -799,7 +807,11 @@ export class SessionManager implements ISessionManager {
         this.emit(managed.workspace.id, { type: 'status', sessionId, message: event.message })
         break
       case 'info':
-        this.emit(managed.workspace.id, { type: 'info', sessionId, message: event.message })
+        if (event.compactionTrigger === 'manual' && managed.pendingPlanExecution) {
+          managed.pendingPlanExecution.awaitingCompaction = false
+          this.persistSession(managed)
+        }
+        this.emit(managed.workspace.id, { type: 'info', sessionId, message: event.message, ...(event.compactionTrigger ? { statusType: 'compaction_complete' as const } : {}) })
         break
       case 'error': {
         if (!managed.isProcessing || event.message.includes('aborted') || event.message.includes('AbortError')) break
@@ -852,6 +864,16 @@ export class SessionManager implements ISessionManager {
           managed.tokenUsage = { ...managed.tokenUsage, ...event.usage }
         }
         this.emit(managed.workspace.id, { type: 'complete', sessionId, tokenUsage: managed.tokenUsage, hasUnread: managed.hasUnread })
+        break
+      case 'context_usage':
+        managed.tokenUsage.contextUsage = event.contextUsage
+        this.emit(managed.workspace.id, { type: 'usage_update', sessionId, tokenUsage: {
+          inputTokens: managed.tokenUsage.inputTokens,
+          contextWindow: managed.tokenUsage.contextWindow,
+          contextUsage: event.contextUsage,
+        } })
+        break
+      case 'compaction_failed':
         break
       case 'usage_update':
         managed.tokenUsage.inputTokens = event.usage.inputTokens
@@ -919,7 +941,7 @@ export class SessionManager implements ISessionManager {
         this.emit(managed.workspace.id, { type: 'shell_killed', sessionId, shellId: event.shellId })
         break
       case 'permission_request':
-        this.emit(managed.workspace.id, { type: 'permission_request', sessionId, request: { sessionId, requestId: event.requestId, toolName: event.toolName, command: event.command, description: event.description, type: event.permissionType, appName: event.appName, reason: event.reason, impact: event.impact, requiresSystemPrompt: event.requiresSystemPrompt, rememberForMinutes: event.rememberForMinutes, commandHash: event.commandHash, approvalTtlSeconds: event.approvalTtlSeconds } })
+        this.emit(managed.workspace.id, { type: 'permission_request', sessionId, request: { sessionId, requestId: event.requestId, toolName: event.toolName, command: event.command, description: event.description, type: event.permissionType, appName: event.appName, reason: event.reason, impact: event.impact, requiresSystemPrompt: event.requiresSystemPrompt, canAlwaysAllow: event.canAlwaysAllow, rememberForMinutes: event.rememberForMinutes, commandHash: event.commandHash, approvalTtlSeconds: event.approvalTtlSeconds } })
         break
       case 'pi_turn_anchor':
         void savePiTurnAnchor(
@@ -1072,7 +1094,7 @@ export class SessionManager implements ISessionManager {
         name: request.name,
         llmConnection: request.llmConnection ?? managed.llmConnection,
         model: request.model ?? managed.model,
-        permissionMode: request.permissionMode ?? managed.permissionMode,
+        permissionMode: clampSpawnPermissionMode(request.permissionMode, managed.permissionMode),
         thinkingLevel: request.thinkingLevel ?? managed.thinkingLevel,
         workingDirectory: request.workingDirectory,
         parentSessionId: managed.id,
@@ -1596,16 +1618,18 @@ export class SessionManager implements ISessionManager {
 
   async markCompactionComplete(sessionId: string): Promise<void> {
     const managed = this.sessions.get(sessionId)
-    if (!managed) return
-    if (managed.pendingPlanExecution) managed.pendingPlanExecution.awaitingCompaction = false
+    // Only the backend's manual-compaction success event makes a plan ready.
+    // Retain this RPC for compatibility, without letting a client bypass that event.
+    if (!managed?.pendingPlanExecution || managed.pendingPlanExecution.awaitingCompaction) return
     await markStoredCompactionComplete(managed.workspace.rootPath, sessionId)
   }
 
-  async markPendingPlanExecutionDispatched(sessionId: string): Promise<void> {
+  async markPendingPlanExecutionDispatched(sessionId: string): Promise<boolean> {
     const managed = this.sessions.get(sessionId)
-    if (!managed) return
-    if (managed.pendingPlanExecution) managed.pendingPlanExecution.executionDispatched = true
-    await markStoredPendingPlanExecutionDispatched(managed.workspace.rootPath, sessionId)
+    if (!managed || managed.isProcessing || !managed.pendingPlanExecution || managed.pendingPlanExecution.awaitingCompaction || managed.pendingPlanExecution.executionDispatched) return false
+    managed.pendingPlanExecution.executionDispatched = true
+    await this.flushSession(sessionId)
+    return true
   }
 
   async clearPendingPlanExecution(sessionId: string): Promise<void> {

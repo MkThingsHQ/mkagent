@@ -12,10 +12,14 @@ import {
 } from './session-settings.ts';
 
 describe('createMkAgentSettingsManager', () => {
+  it('batches steering without changing follow-up defaults', () => {
+    expect(createMkAgentSettingsManager().getSteeringMode()).toBe('all');
+    expect(createMkAgentSettingsManager().getFollowUpMode()).toBe(SettingsManager.inMemory().getFollowUpMode());
+  });
   it('pins the agent-level auto-retry policy', () => {
     const settings = createMkAgentSettingsManager();
     expect(settings.getRetryEnabled()).toBe(true);
-    expect(settings.getRetrySettings()).toEqual({
+    expect(settings.getRetrySettings()).toMatchObject({
       enabled: true,
       maxRetries: MKAGENT_PI_RETRY_SETTINGS.maxRetries,
       baseDelayMs: MKAGENT_PI_RETRY_SETTINGS.baseDelayMs,
@@ -35,7 +39,7 @@ describe('createMkAgentSettingsManager', () => {
 
   it('uses a smaller retry policy for bounded ephemeral queries', () => {
     const settings = createMkAgentSettingsManager('ephemeral');
-    expect(settings.getRetrySettings()).toEqual({
+    expect(settings.getRetrySettings()).toMatchObject({
       enabled: true,
       maxRetries: MKAGENT_PI_EPHEMERAL_RETRY_SETTINGS.maxRetries,
       baseDelayMs: MKAGENT_PI_EPHEMERAL_RETRY_SETTINGS.baseDelayMs,

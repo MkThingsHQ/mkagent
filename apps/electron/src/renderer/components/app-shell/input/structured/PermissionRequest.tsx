@@ -81,7 +81,7 @@ export function PermissionRequest({ request, onResponse, unstyled = false }: Per
           <Check className="h-3.5 w-3.5" />
           {t('permission.allow')}
         </Button>
-        <Button
+        {request.canAlwaysAllow && (<Button
           size="sm"
           variant="ghost"
           className="h-7 gap-1.5 border border-foreground/10 hover:bg-foreground/5 active:bg-foreground/10"
@@ -89,7 +89,7 @@ export function PermissionRequest({ request, onResponse, unstyled = false }: Per
         >
           <RefreshCw className="h-3.5 w-3.5" />
           {t('permission.alwaysAllow')}
-        </Button>
+        </Button>)}
         <Button
           size="sm"
           variant="ghost"
@@ -101,9 +101,9 @@ export function PermissionRequest({ request, onResponse, unstyled = false }: Per
         </Button>
 
         {/* Tip text */}
-        <span className="min-w-0 flex-1 basis-full text-[10px] text-muted-foreground sm:basis-auto sm:text-right">
+        {request.canAlwaysAllow && (<span className="min-w-0 flex-1 basis-full text-[10px] text-muted-foreground sm:basis-auto sm:text-right">
           {t('permission.alwaysAllowHint')}
-        </span>
+        </span>)}
       </div>
     </div>
   )

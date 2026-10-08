@@ -22,27 +22,16 @@ import {
   type ToolCheckResult,
 } from '../mode-manager.ts';
 import { createLogger } from '../../utils/debug.ts';
+import { parseSimpleCommand } from '../bash-validator.ts';
 import { permissionsConfigCache, type PermissionsContext } from '../permissions-config.ts';
 import type { PermissionMode } from '../mode-types.ts';
+import { isDangerousArgv, type PermissionRemember } from './permission-remember.ts';
 import type { PermissionManagerConfig, ToolPermissionResult } from './types.ts';
 
 const log = createLogger('permissions');
 
 // Re-export types for convenience
-export type { ToolCheckResult, PermissionMode };
-
-/**
- * Dangerous commands that should always require permission in 'ask' mode.
- * These are never auto-allowed regardless of user configuration.
- */
-const DANGEROUS_COMMANDS = new Set([
-  'rm', 'rmdir', 'sudo', 'su', 'chmod', 'chown', 'chgrp',
-  'mv', 'cp', 'dd', 'mkfs', 'fdisk', 'parted',
-  'kill', 'killall', 'pkill',
-  'reboot', 'shutdown', 'halt', 'poweroff',
-  'curl', 'wget', 'ssh', 'scp', 'rsync',
-  'git push', 'git reset', 'git rebase', 'git checkout',
-]);
+export type { ToolCheckResult, PermissionMode, PermissionRemember };
 
 /**
  * PermissionManager provides centralized permission checking for agent backends.
@@ -183,7 +172,7 @@ export class PermissionManager {
   checkBashCommand(command: string): string | null {
     const mode = this.getPermissionMode();
 
-    // In execute mode, all commands are allowed
+    // In execute (and guarded) mode, all commands are allowed
     if (mode === 'allow-all') {
       return null;
     }
@@ -214,7 +203,7 @@ export class PermissionManager {
   requiresBashPermission(command: string): boolean {
     const mode = this.getPermissionMode();
 
-    // Execute mode never requires permission
+    // Execute mode never requires permission (Guarded's prompts come from its risk check)
     if (mode === 'allow-all') {
       return false;
     }
@@ -224,9 +213,10 @@ export class PermissionManager {
       return false;
     }
 
-    // In ask mode, check if command is dangerous
-    const baseCommand = this.getBaseCommand(command);
-    return this.isDangerousCommand(baseCommand);
+    // In ask mode: dangerous commands, and anything that is not one plain command
+    // (a chain can hide a dangerous command after a harmless one).
+    const argv = parseSimpleCommand(command);
+    return argv === null || isDangerousArgv(argv);
   }
 
   // ============================================================
@@ -234,8 +224,9 @@ export class PermissionManager {
   // ============================================================
 
   /**
-   * Extract the base command (first word) from a bash command string.
-   * Handles pipes, redirects, and other shell constructs.
+   * The first word of a bash command, after an optional `sudo`. For labels and
+   * curl/wget detection only: it ignores chains and subcommands, so it must not
+   * decide what "Always Allow" remembers (see permission-remember.ts).
    *
    * @param command - Full bash command
    * @returns Base command name
@@ -245,39 +236,6 @@ export class PermissionManager {
     // Extract first word, handling common prefixes
     const match = trimmed.match(/^(?:sudo\s+)?(\S+)/);
     return match?.[1] ?? trimmed.split(/\s+/)[0] ?? '';
-  }
-
-  /**
-   * Check if a command is in the dangerous commands list.
-   *
-   * @param baseCommand - Base command name (from getBaseCommand)
-   * @returns true if command is dangerous
-   */
-  isDangerousCommand(baseCommand: string): boolean {
-    return DANGEROUS_COMMANDS.has(baseCommand.toLowerCase());
-  }
-
-  /**
-   * Extract domain from network commands (curl, wget, ssh, etc.)
-   * Used for domain whitelisting checks.
-   *
-   * @param command - Full bash command
-   * @returns Domain if found, null otherwise
-   */
-  extractDomainFromNetworkCommand(command: string): string | null {
-    // Match common patterns for URLs and hostnames
-    const urlMatch = command.match(/https?:\/\/([^\/\s:]+)/);
-    if (urlMatch?.[1]) {
-      return urlMatch[1];
-    }
-
-    // Match ssh-style user@host patterns
-    const sshMatch = command.match(/@([^\s:]+)/);
-    if (sshMatch?.[1]) {
-      return sshMatch[1];
-    }
-
-    return null;
   }
 
   // ============================================================
@@ -321,15 +279,26 @@ export class PermissionManager {
    * Check if a base command has been whitelisted for this session.
    */
   isCommandWhitelisted(baseCommand: string): boolean {
-    return this.alwaysAllowedCommands.has(baseCommand.toLowerCase());
+    return this.alwaysAllowedCommands.has(baseCommand.startsWith('exact:') || baseCommand.startsWith('write:') ? baseCommand : baseCommand.toLowerCase());
   }
 
   /**
-   * Whitelist a command for the remainder of the session.
-   * Called when user clicks "Always Allow" for a command.
+   * Whitelist a command key for the remainder of the session.
    */
   whitelistCommand(baseCommand: string): void {
-    this.alwaysAllowedCommands.add(baseCommand.toLowerCase());
+    this.alwaysAllowedCommands.add(baseCommand.startsWith('exact:') || baseCommand.startsWith('write:') ? baseCommand : baseCommand.toLowerCase());
+  }
+
+  /**
+   * Apply an "Always Allow" answer: remember exactly what the prompt's permission
+   * check computed (`PromptInfo.remember`), never a key derived from the prompt text.
+   */
+  remember(entry: PermissionRemember): void {
+    if (entry.kind === 'domains') {
+      for (const domain of entry.domains) this.whitelistDomain(domain);
+    } else {
+      this.whitelistCommand(entry.key);
+    }
   }
 
   /**

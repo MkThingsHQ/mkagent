@@ -71,28 +71,6 @@ describe('PermissionManager', () => {
       expect(permissionManager.getBaseCommand('sudo apt-get update')).toBe('apt-get');
     });
 
-    it('should detect dangerous commands', () => {
-      expect(permissionManager.isDangerousCommand('rm')).toBe(true);
-      expect(permissionManager.isDangerousCommand('sudo')).toBe(true);
-      expect(permissionManager.isDangerousCommand('chmod')).toBe(true);
-      expect(permissionManager.isDangerousCommand('curl')).toBe(true);
-      expect(permissionManager.isDangerousCommand('wget')).toBe(true);
-
-      expect(permissionManager.isDangerousCommand('ls')).toBe(false);
-      expect(permissionManager.isDangerousCommand('cat')).toBe(false);
-      expect(permissionManager.isDangerousCommand('echo')).toBe(false);
-    });
-
-    it('should extract domain from network commands', () => {
-      expect(permissionManager.extractDomainFromNetworkCommand('curl https://api.example.com/data'))
-        .toBe('api.example.com');
-      expect(permissionManager.extractDomainFromNetworkCommand('wget http://download.example.org/file.zip'))
-        .toBe('download.example.org');
-      expect(permissionManager.extractDomainFromNetworkCommand('ssh user@server.example.com'))
-        .toBe('server.example.com');
-      expect(permissionManager.extractDomainFromNetworkCommand('ls -la'))
-        .toBe(null);
-    });
   });
 
   describe('Session-Scoped Whitelisting', () => {
@@ -134,6 +112,16 @@ describe('PermissionManager', () => {
       expect(permissionManager.isDomainWhitelisted('example.com')).toBe(false);
     });
 
+    it('should remember exactly the key or domains a prompt offered', () => {
+      permissionManager.remember({ kind: 'command', key: 'git commit' });
+      permissionManager.remember({ kind: 'domains', domains: ['api.example.com', 'cdn.example.com'] });
+
+      expect(permissionManager.isCommandWhitelisted('git commit')).toBe(true);
+      expect(permissionManager.isCommandWhitelisted('git')).toBe(false);
+      expect(permissionManager.isDomainWhitelisted('api.example.com')).toBe(true);
+      expect(permissionManager.isDomainWhitelisted('cdn.example.com')).toBe(true);
+    });
+
     it('should return copies of whitelisted sets for debugging', () => {
       permissionManager.whitelistCommand('ls');
       permissionManager.whitelistDomain('example.com');
@@ -164,17 +152,17 @@ describe('PermissionManager', () => {
     it('should require permission for dangerous commands in ask mode', () => {
       permissionManager.setPermissionMode('ask');
       expect(permissionManager.requiresBashPermission('rm file.txt')).toBe(true);
-      expect(permissionManager.requiresBashPermission('sudo rm -rf /')).toBe(true); // extracts 'rm' after sudo
+      expect(permissionManager.requiresBashPermission('sudo rm -rf /')).toBe(true); // sudo itself is dangerous
+      expect(permissionManager.requiresBashPermission('git push --force')).toBe(true); // two-word entry
+      expect(permissionManager.requiresBashPermission('ls && rm -rf ~')).toBe(true); // chains hide commands
       expect(permissionManager.requiresBashPermission('curl https://example.com')).toBe(true);
       expect(permissionManager.requiresBashPermission('wget http://example.com/file')).toBe(true);
     });
 
-    it('should not require permission for safe commands in ask mode', () => {
+    it('should not require permission for plain safe commands in ask mode', () => {
       permissionManager.setPermissionMode('ask');
-      // Note: this depends on the actual implementation's behavior
-      // The test verifies the expected behavior based on isDangerousCommand
-      expect(permissionManager.isDangerousCommand('ls')).toBe(false);
-      expect(permissionManager.isDangerousCommand('cat')).toBe(false);
+      expect(permissionManager.requiresBashPermission('ls -la')).toBe(false);
+      expect(permissionManager.requiresBashPermission('git commit -m x')).toBe(false);
     });
   });
 
