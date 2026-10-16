@@ -2161,8 +2161,8 @@
       "reason": "MkAgent CI authenticates GitHub-backed dependency downloads and retries transient packaging failures"
     },
     ".github/workflows/release.yml": {
-      "sha256": "7fd1e412af2e1b20597df9b598a65618c2bb6117450c8f7f193d32ffe803254c",
-      "reason": "MkAgent releases authenticate GitHub-backed dependency downloads and retry transient packaging failures"
+      "sha256": "aca9375406cb08bcacd2a3e1d0d68597d62f60a31dff874e036c8d3d8769ad03",
+      "reason": "MkAgent tag release workflow reads the source-lineage manifest baseline to keep release verification aligned with selective upstream syncs"
     },
     ".github/workflows/upstream-drift.yml": {
       "sha256": "b44d8973a96de31308b8977f5972e14b2412ea4152fc94c51005c839e777a9e4",

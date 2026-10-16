@@ -28,7 +28,8 @@ jobs:
       - name: Checkout pinned Craft baseline
         run: |
           git clone --filter=blob:none https://github.com/craft-ai-agents/craft-agents-oss.git "$RUNNER_TEMP/craft-agents-oss"
-          git -C "$RUNNER_TEMP/craft-agents-oss" checkout --detach d7592c481216e37c95a50dbfe08948a6987e8c74
+          baseline=$(jq -er ".baselineCommit" scripts/craft-source-overrides.json)
+          git -C "$RUNNER_TEMP/craft-agents-oss" checkout --detach "$baseline"
       - name: Install dependencies
         env:
           GITHUB_TOKEN: ${{ github.token }}
