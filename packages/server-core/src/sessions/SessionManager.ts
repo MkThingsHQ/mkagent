@@ -750,7 +750,7 @@ export class SessionManager implements ISessionManager {
         timestamp: this.nextTimestamp(),
       }
       managed.messages.push(storedError)
-      this.emit(managed.workspace.id, { type: 'error', sessionId: managed.id, error: errorMessage })
+      this.emit(managed.workspace.id, { type: 'error', sessionId: managed.id, error: errorMessage, backgroundTasksAlive: [...managed.backgroundTaskRegistry.values()].some(task => task.status === 'running') })
       runtimeHooks.captureException(error, { errorSource: 'session-turn', sessionId: managed.id })
     } finally {
       managed.isProcessing = false
@@ -803,6 +803,13 @@ export class SessionManager implements ISessionManager {
         this.emit(managed.workspace.id, { type: 'tool_start', sessionId, toolName: event.toolName, toolUseId: event.toolUseId, toolInput: event.input, toolIntent: event.intent, toolDisplayName: event.displayName, toolDisplayMeta: event.toolDisplayMeta, turnId: event.turnId, parentToolUseId: event.parentToolUseId, timestamp: this.nextTimestamp() })
         break
       case 'tool_result':
+        // Compact transcripts do not persist tool messages; retain a running shell's output
+        // path from its launch acknowledgement before the result leaves this process.
+        for (const task of managed.backgroundTaskRegistry.values()) {
+          if (task.toolUseId !== event.toolUseId) continue
+          const outputFile = launchOutputFile(event.result, task.taskId)
+          if (outputFile) managed.backgroundTaskOutputs.set(task.taskId, { outputFile })
+        }
         this.emit(managed.workspace.id, { type: 'tool_result', sessionId, toolUseId: event.toolUseId, toolName: event.toolName ?? 'tool', result: event.result, isError: event.isError, turnId: event.turnId, parentToolUseId: event.parentToolUseId, timestamp: this.nextTimestamp() })
         break
       case 'status':
@@ -829,6 +836,7 @@ export class SessionManager implements ISessionManager {
           type: 'error',
           sessionId,
           error: event.message,
+          backgroundTasksAlive: [...managed.backgroundTaskRegistry.values()].some(task => task.status === 'running'),
           timestamp: message.timestamp,
         })
         isTurnError = true
@@ -866,7 +874,7 @@ export class SessionManager implements ISessionManager {
         if (event.usage) {
           managed.tokenUsage = { ...managed.tokenUsage, ...event.usage }
         }
-        this.emit(managed.workspace.id, { type: 'complete', sessionId, tokenUsage: managed.tokenUsage, hasUnread: managed.hasUnread })
+        this.emit(managed.workspace.id, { type: 'complete', sessionId, tokenUsage: managed.tokenUsage, hasUnread: managed.hasUnread, backgroundTasksAlive: [...managed.backgroundTaskRegistry.values()].some(task => task.status === 'running') })
         break
       case 'context_usage':
         managed.tokenUsage.contextUsage = event.contextUsage
@@ -1303,7 +1311,7 @@ export class SessionManager implements ISessionManager {
     if (!managed?.agent || !managed.isProcessing) return
     managed.agent.forceAbort(AbortReason.UserStop)
     managed.isProcessing = false
-    if (!silent) this.emit(managed.workspace.id, { type: 'interrupted', sessionId })
+    if (!silent) this.emit(managed.workspace.id, { type: 'interrupted', sessionId, backgroundTasksAlive: [...managed.backgroundTaskRegistry.values()].some(task => task.status === 'running') })
   }
 
   async killShell(sessionId: string, shellId: string): Promise<StopBackgroundTaskResult> {

@@ -74,6 +74,7 @@ import { useTransportConnectionState } from '@/hooks/useTransportConnectionState
 import { useStaleSessionRecovery } from '@/hooks/useStaleSessionRecovery'
 import { TransportConnectionBanner, shouldShowTransportConnectionBanner } from '@/components/app-shell/TransportConnectionBanner'
 import {
+  isBackgroundLaunchResult,
   markBackgroundTaskSignal,
   markLiveBackgroundTasksOrphaned,
 } from '@/components/app-shell/background-task-chip-state'
@@ -237,12 +238,7 @@ function handleBackgroundTaskEvent(
     // Remove task when it completes - but NOT if this is the initial backgrounding result
     // Background tasks return immediately with agentId/shell_id/backgroundTaskId,
     // we should only remove when the task actually completes
-    const result = typeof evt.result === 'string' ? evt.result : JSON.stringify(evt.result)
-    const isBackgroundingResult = result && (
-      /agentId:\s*[a-zA-Z0-9_-]+/.test(result) ||
-      /shell_id:\s*[a-zA-Z0-9_-]+/.test(result) ||
-      /"backgroundTaskId":\s*"[a-zA-Z0-9_-]+"/.test(result)
-    )
+    const isBackgroundingResult = isBackgroundLaunchResult(evt.result)
     if (!isBackgroundingResult) {
       const currentTasks = store.get(backgroundTasksAtom)
       store.set(backgroundTasksAtom, currentTasks.filter(t => t.toolUseId !== evt.toolUseId))

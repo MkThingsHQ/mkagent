@@ -71,10 +71,10 @@ export function buildBackendRuntimeSignature(input: BackendRuntimeSignatureInput
         providerType: connection.providerType,
         authType: connection.authType,
         defaultModel: connection.defaultModel,
+        baseUrl: connection.baseUrl,
+        piAuthProvider: connection.piAuthProvider,
         ...(isCompatProvider(connection.providerType)
           ? {
-              baseUrl: connection.baseUrl,
-              piAuthProvider: connection.piAuthProvider,
               customEndpoint: connection.customEndpoint
                 ? definedObject({
                     api: connection.customEndpoint.api,

@@ -367,7 +367,7 @@
       "reason": "Craft Electron runtime adapted for the retained Lite runtime and removed product channels"
     },
     "apps/electron/src/preload/bootstrap.ts": {
-      "sha256": "dbcc4fa318e89569475f7afd5ded5127f6a431203d6376fca3c38bc827a2c354",
+      "sha256": "4fced68c50aab0a4576b1fecd4a91df976b247f78dfc2e548e5a92142e673a42",
       "reason": "Craft preload retains desktop-owned Claude and ChatGPT OAuth browser flows while removed product APIs stay absent"
     },
     "apps/electron/src/preload/browser-toolbar.ts": {
@@ -375,7 +375,7 @@
       "reason": "Craft browser toolbar preload extended with the minimal app-theme update event"
     },
     "apps/electron/src/renderer/App.tsx": {
-      "sha256": "11d4818a139904263e6f0f85b412a66c2c7ff9b31e70ec3082628a6deb8b9d75",
+      "sha256": "b53cce4b1e05255cbd025d129ba3f5542e037391ae546f85983182d3199b5ceb",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
     "apps/electron/src/renderer/atoms/__tests__/browser-pane.test.ts": {
@@ -518,9 +518,17 @@
       "sha256": "17e01e410855fe4fc598ff333baaf6362ea320ce5846d3d0b080ad6ae4aa52be",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
     },
+    "apps/electron/src/renderer/components/app-shell/__tests__/background-task-chip-state.test.ts": {
+      "sha256": "fa4075d34cf0ee3e69e5f1875714f9838f877bf1185980cfb98f3f128584df87",
+      "reason": "Retains upstream lifecycle cases and verifies Pi launch acknowledgements preserve live task chips"
+    },
     "apps/electron/src/renderer/components/app-shell/__tests__/transport-connection-banner.test.ts": {
       "sha256": "22b5051fe16d65c5c111f4206bcee44d3c1d4435f861d6a6be73852883e5af90",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
+    },
+    "apps/electron/src/renderer/components/app-shell/background-task-chip-state.ts": {
+      "sha256": "5f944c24f54abe4c1fa67f3219d423fbf9297b0c287fafbb9950188527d8cd5b",
+      "reason": "Upstream task-chip lifecycle also recognizes Pi background Bash launch acknowledgements"
     },
     "apps/electron/src/renderer/components/app-shell/chat-display/NewChatSuggestions.tsx": {
       "sha256": "4c9be8b47e8745bc1a7027a26663d805587e8926fcdd7e76511132e262a2b30e",
@@ -847,7 +855,7 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/electron/src/transport/__tests__/channel-map-parity.test.ts": {
-      "sha256": "573b8a7ff2acc75bddf141ebc42ca172346008d493a24c77745453b98455a85b",
+      "sha256": "cc7c44efd2e015d36f20f2905f9fa8181326aafc4fc46e24a60629ba3e94c4e5",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "apps/electron/src/transport/__tests__/codec.test.ts": {
@@ -1155,11 +1163,11 @@
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
     },
     "packages/server-core/src/sessions/SessionManager.ts": {
-      "sha256": "463fa1c0a2180db0c8131010f0695bf93376e0851c7bc9af7d558e6dd5eec1a2",
+      "sha256": "9557fb8589ca133cc3af5f2f66da4e12e97793a69687cc6d54276f4a6429e38e",
       "reason": "Compact Lite session lifecycle retains permissions, queueing and child sessions; v0.15 task output/owned stopping APIs replace global command matching"
     },
     "packages/server-core/src/sessions/background-task-stop.test.ts": {
-      "sha256": "f7fc743915e1123e00bcb5fade938700000a542d99f87b22d3497c52abd29a47",
+      "sha256": "342eb29a494100b86413319250f10d587b041bd6d6aa0640d4c56333f995b872",
       "reason": "Retains all upstream stop/output lifecycle cases against the compact MkAgent event sink"
     },
     "packages/server-core/src/sessions/background-task-surface.test.ts": {
@@ -1181,6 +1189,14 @@
     "packages/server-core/src/sessions/pi-turn-anchors.test.ts": {
       "sha256": "e17ba01950f21699a282676af8681ccb9bd7f65fbee8738119adf7e90c87c64d",
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
+    },
+    "packages/server-core/src/sessions/runtime-config.test.ts": {
+      "sha256": "f91ba692893e869a0600574eef788b5157fe9c35f25f170685e34aee480a68aa",
+      "reason": "Tests runtime signatures and attachment capabilities, including native Azure and Cloudflare endpoint-only edits"
+    },
+    "packages/server-core/src/sessions/runtime-config.ts": {
+      "sha256": "f26fe04990a6c476c88dae1335d5e97269d55f620aa8530ae3f2b4060ee896ea",
+      "reason": "Lite live backend signatures track native and compatible endpoint changes while preserving safe restart boundaries"
     },
     "packages/server-core/src/sessions/sendmessage-durability.test.ts": {
       "sha256": "f7484badaba4d2a804ba59358b7e2a794ed00525e5842ba9745081e960ace21c",
@@ -1599,7 +1615,7 @@
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/agent/pi-agent.ts": {
-      "sha256": "f7e40b8570763eeedec99e4acc777b782eebefdcd28e774add00a4bae6dac345",
+      "sha256": "853cb4e5b21509c4e5f1f48d2dc98e9f20437c94b95e1db1318d8f56dde1aa2b",
       "reason": "Pi-only subprocess client retains LLM OAuth and runtime configuration; adds background task event/cancellation transport without Claude SDK"
     },
     "packages/shared/src/agent/plan-types.ts": {
@@ -1811,7 +1827,7 @@
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/protocol/dto.ts": {
-      "sha256": "2fcc5d95e4d3f9329346a39e228ac134e1ccf4559c7f4826e8c33af73154f447",
+      "sha256": "731d133066599efbab4ff7719502f423979f25b3cac86de12394db8882aefb66",
       "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
     },
     "packages/shared/src/protocol/events.ts": {
@@ -2164,6 +2180,10 @@
       "sha256": "20e93978741f19b42f3b2f7a0b24e13ff06fe0391e2236392d4e0f2bc08d83f9",
       "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
     },
+    "apps/electron/src/preload/__tests__/bootstrap-api.test.ts": {
+      "sha256": "e348eb95904727e63ef31132e714f95aeb4bd53946acee25c613fcc15b7c506d",
+      "reason": "Verifies native window material getter exists at contextBridge copy time for macOS, Windows and absent arguments"
+    },
     "apps/electron/src/renderer/assets/mkagent_app_icon.png": {
       "sha256": "8ef2d656c2eb9bbef8d0d8abb646e1ded0e4143046434866d541aaf9e3da6dc5",
       "reason": "MkAgent trademark-safe replacement asset"
@@ -2212,6 +2232,10 @@
       "sha256": "4ff54b22b2f7c3baeea7a7184caa8b7feea14c6b42898585f1f14d7fc784a673",
       "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
     },
+    "packages/server-core/src/sessions/native-endpoint-refresh.isolated.ts": {
+      "sha256": "130f53c0a3bab5e659b296f2ac6d800f2adf1fb28500f01b89e221ebfbbec675",
+      "reason": "Hermetic real config and populated SessionManager signatures verify native Azure and Cloudflare endpoint-only edits reach the live agent"
+    },
     "packages/server-core/src/sessions/retained-session-events.test.ts": {
       "sha256": "45b619808053f88f93d74fc3eb01aa302e4b3ae655bcf078d958ee35a2565a11",
       "reason": "Retained event regressions now assert owned-backend task cancellation rather than global process command matching"
@@ -2227,6 +2251,10 @@
     "packages/session-tools-core/src/skill-helpers.ts": {
       "sha256": "f5d646c53a7341a5b1af21a8d4628a9c9f9658aadb78b70b382205682de65d8c",
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
+    },
+    "packages/shared/src/agent/__tests__/pi-background-stop.test.ts": {
+      "sha256": "b05e00360cb6e23fa27feeb2d4842051fd4e22aacfa7dab52268882501a4ba62",
+      "reason": "Distinguishes confirmed not-running stop results from timeout and unavailable transport, preserving live task state"
     },
     "packages/shared/src/agent/__tests__/pi-context.test.ts": {
       "sha256": "808d9ef4fc5f49d0034007b256fd874f24ac5678d157c64e1ddf6b80a55a1a1e",
@@ -2317,7 +2345,7 @@
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
     },
     "scripts/craft-ui-overrides.json": {
-      "sha256": "f54c09c88c2ad47f275630218032fde6bda7d71a5bd155e769465d605b840baf",
+      "sha256": "610f5e6b98aab61a72775da6dcda76ccdb838156d44c9afc5125f128791d2776",
       "reason": "MkAgent renderer lineage ledger records the selective Craft v0.13.3 retry synchronization"
     },
     "scripts/release-workflow.test.ts": {

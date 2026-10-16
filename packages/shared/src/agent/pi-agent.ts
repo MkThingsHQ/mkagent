@@ -300,14 +300,19 @@ export class PiAgent extends BaseAgent {
 
   // Cached session tool context (lazy-created on first session tool call)
   private _sessionToolContext: SessionToolContext | null = null;
-  private pendingBackgroundStops = new Map<string, { resolve: (stopped: boolean) => void; timer: ReturnType<typeof setTimeout> }>();
+  private pendingBackgroundStops = new Map<string, { resolve: (stopped: boolean) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }>();
+
+  private backgroundStopTimeoutMs = 10_000;
 
   async stopBackgroundTask(taskId: string): Promise<boolean> {
-    if (!this.subprocess) return false;
+    if (!this.subprocess) throw new Error('Background task transport unavailable');
     const id = crypto.randomUUID();
-    return new Promise(resolve => {
-      const timer = setTimeout(() => { this.pendingBackgroundStops.delete(id); resolve(false); }, 10_000);
-      this.pendingBackgroundStops.set(id, { resolve, timer });
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pendingBackgroundStops.delete(id);
+        reject(new Error('Background task stop timed out'));
+      }, this.backgroundStopTimeoutMs);
+      this.pendingBackgroundStops.set(id, { resolve, reject, timer });
       this.send({ type: 'stop_background_task', id, taskId });
     });
   }
@@ -1360,7 +1365,7 @@ export class PiAgent extends BaseAgent {
   }
 
   private rejectAllPendingEphemeral(error: Error): void {
-    for (const pending of this.pendingBackgroundStops.values()) { clearTimeout(pending.timer); pending.resolve(false); }
+    for (const pending of this.pendingBackgroundStops.values()) { clearTimeout(pending.timer); pending.reject(error); }
     this.pendingBackgroundStops.clear();
     this.rejectPendingEphemeralMap(this.pendingMiniCompletions, error);
     this.rejectPendingEphemeralMap(this.pendingLlmQueries, error);

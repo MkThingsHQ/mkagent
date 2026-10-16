@@ -84,3 +84,14 @@ export function markLiveBackgroundTasksOrphaned(
   })
   return changed ? next : tasks
 }
+
+/** Recognize launch acknowledgements before a tool result can remove a live task chip. */
+export function isBackgroundLaunchResult(result: unknown): boolean {
+  const text = typeof result === 'string' ? result : JSON.stringify(result)
+  return !!text && (
+    /agentId:\s*[a-zA-Z0-9_-]+/.test(text) ||
+    /shell_id:\s*[a-zA-Z0-9_-]+/.test(text) ||
+    /"backgroundTaskId":\s*"[a-zA-Z0-9_-]+"/.test(text) ||
+    /Command running in background with ID: [a-zA-Z0-9_-]+\./.test(text)
+  )
+}

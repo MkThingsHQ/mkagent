@@ -2,7 +2,7 @@
   "version": 2,
   "files": {
     "apps/electron/src/renderer/App.tsx": {
-      "sha256": "11d4818a139904263e6f0f85b412a66c2c7ff9b31e70ec3082628a6deb8b9d75",
+      "sha256": "b53cce4b1e05255cbd025d129ba3f5542e037391ae546f85983182d3199b5ceb",
       "reason": "Craft application shell retains Claude and ChatGPT OAuth props while excluded product surfaces remain removed"
     },
     "apps/electron/src/renderer/assets/mkagent_app_icon.png": {
@@ -161,9 +161,17 @@
       "sha256": "17e01e410855fe4fc598ff333baaf6362ea320ce5846d3d0b080ad6ae4aa52be",
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
+    "apps/electron/src/renderer/components/app-shell/__tests__/background-task-chip-state.test.ts": {
+      "sha256": "fa4075d34cf0ee3e69e5f1875714f9838f877bf1185980cfb98f3f128584df87",
+      "reason": "Retains upstream lifecycle cases and verifies Pi launch acknowledgements preserve live task chips"
+    },
     "apps/electron/src/renderer/components/app-shell/__tests__/transport-connection-banner.test.ts": {
       "sha256": "22b5051fe16d65c5c111f4206bcee44d3c1d4435f861d6a6be73852883e5af90",
       "reason": "Craft renderer test adapted to retained Lite behavior"
+    },
+    "apps/electron/src/renderer/components/app-shell/background-task-chip-state.ts": {
+      "sha256": "5f944c24f54abe4c1fa67f3219d423fbf9297b0c287fafbb9950188527d8cd5b",
+      "reason": "Upstream task-chip lifecycle also recognizes Pi background Bash launch acknowledgements"
     },
     "apps/electron/src/renderer/components/app-shell/chat-display/NewChatSuggestions.tsx": {
       "sha256": "4c9be8b47e8745bc1a7027a26663d805587e8926fcdd7e76511132e262a2b30e",

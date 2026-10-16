@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import type { LlmConnection } from '@mkagent/shared/config'
 import type { FileAttachment } from '@mkagent/shared/protocol'
-import { buildBackendRuntimeSignature, filterAttachmentsForModelInput } from './runtime-config'
+import { buildBackendRuntimeSignature, buildRestartRequiredSignature, filterAttachmentsForModelInput } from './runtime-config'
 
 const baseCompat: LlmConnection = {
   slug: 'local',
@@ -52,6 +52,18 @@ describe('buildBackendRuntimeSignature', () => {
     })
 
     expect(disabled).not.toBe(enabled)
+  })
+
+  it('refreshes native Azure and Cloudflare endpoint changes without requiring a restart', () => {
+    for (const piAuthProvider of ['azure-openai-responses', 'cloudflare-ai-gateway']) {
+      const connection: LlmConnection = { ...baseCompat, providerType: 'pi', piAuthProvider }
+      const changed = { ...connection, baseUrl: 'https://new-endpoint.example/v1' }
+      expect(sig(changed)).not.toBe(sig(connection))
+      const restart = (connection: LlmConnection) => buildRestartRequiredSignature({
+        connection, provider: 'pi', authType: 'api_key', resolvedModel: 'gemma',
+      })
+      expect(restart(changed)).toBe(restart(connection))
+    }
   })
 
   it('ignores non-runtime metadata such as lastUsedAt', () => {

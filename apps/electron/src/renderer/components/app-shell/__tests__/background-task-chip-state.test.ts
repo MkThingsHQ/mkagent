@@ -2,6 +2,7 @@ import { describe, expect, it } from 'bun:test'
 import type { BackgroundTask } from '@/atoms/sessions'
 import {
   advanceBackgroundTaskChips,
+  isBackgroundLaunchResult,
   markBackgroundTaskSignal,
   markLiveBackgroundTasksOrphaned,
   ORPHANED_LINGER_MS,
@@ -89,5 +90,14 @@ describe('background task chip lifecycle', () => {
     expect(next.map(item => item.status)).toEqual(['orphaned', 'orphaned', 'completed'])
     expect(next[0]?.completedAt).toBe(NOW)
     expect(next[1]?.completedAt).toBe(NOW)
+  })
+})
+
+describe('background launch result contract', () => {
+  it('retains Pi shell launch acknowledgements while normal results complete the chip', () => {
+    expect(isBackgroundLaunchResult('Command running in background with ID: shell-123. Output is being written to: /tmp/task.output. You will be notified when it completes.')).toBe(true)
+    expect(isBackgroundLaunchResult('shell_id: shell-123')).toBe(true)
+    expect(isBackgroundLaunchResult('command finished')).toBe(false)
+    expect(isBackgroundLaunchResult(undefined)).toBe(false)
   })
 })

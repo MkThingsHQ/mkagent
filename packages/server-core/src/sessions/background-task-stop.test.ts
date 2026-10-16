@@ -61,6 +61,16 @@ describe('background tasks: stop from the chip, and live output', () => {
     expect(await sm.stopBackgroundTask('s4', 'x')).toEqual({ success: false, error: 'failed' })
   })
 
+  it('keeps a task running when stop delivery times out or transport is unavailable', async () => {
+    for (const message of ['Background task stop timed out', 'Background task transport unavailable']) {
+      const { managed } = build('uncertain', { stopBackgroundTask: async () => { throw new Error(message) } })
+      await fire('uncertain', { type: 'shell_backgrounded', toolUseId: 'tu', shellId: 'live' })
+      expect(await sm.stopBackgroundTask('uncertain', 'live')).toEqual({ success: false, error: 'failed' })
+      expect(managed.backgroundTaskRegistry.get('live').status).toBe('running')
+      expect(managed.backgroundTaskRegistry.get('live').stopRequestedAt).toBeUndefined()
+    }
+  })
+
   it("reads a running shell's output from the file its launch acknowledgement names", async () => {
     const { managed } = build('s5')
     const dir = join(tmpRoot, 'tasks')
@@ -68,9 +78,25 @@ describe('background tasks: stop from the chip, and live output', () => {
     const out = join(dir, 'b2.output')
     writeFileSync(out, 'line1\nline2\n')
     await fire('s5', { type: 'shell_backgrounded', toolUseId: 'tu5', shellId: 'b2' })
-    managed.messages.push({ id: 'm1', role: 'tool', content: '', timestamp: 1, toolName: 'Bash', toolUseId: 'tu5', toolResult: `Command running in background with ID: b2. Output is being written to: ${out}. You will be notified when it completes.`, toolStatus: 'completed' })
+    await fire('s5', { type: 'tool_result', toolName: 'Bash', toolUseId: 'tu5', result: `Command running in background with ID: b2. Output is being written to: ${out}. You will be notified when it completes.` })
+    expect(managed.messages).toHaveLength(0)
     expect(await sm.getBackgroundTaskOutput('s5', 'b2', 'shell')).toEqual({ kind: 'text', text: 'line1\nline2\n', truncated: false })
     expect(await sm.getBackgroundTaskOutput('s5', 'unknown', 'shell')).toBeNull()
+  })
+
+  it('preserves live task chips when their foreground turn completes or is interrupted', async () => {
+    const { managed } = build('lifetime', { forceAbort: () => {} })
+    const sent: Any[] = []
+    ;(sm as Any).emit = (_workspaceId: string, event: Any) => sent.push(event)
+    await fire('lifetime', { type: 'shell_backgrounded', toolUseId: 'tool', shellId: 'live' })
+    await fire('lifetime', { type: 'complete' })
+    expect(sent.at(-1)).toMatchObject({ type: 'complete', backgroundTasksAlive: true })
+    managed.isProcessing = true
+    await sm.cancelProcessing('lifetime')
+    expect(sent.at(-1)).toMatchObject({ type: 'interrupted', backgroundTasksAlive: true })
+    await fire('lifetime', { type: 'task_completed', taskId: 'live', status: 'stopped', toolUseId: 'tool', launchedHere: true })
+    await fire('lifetime', { type: 'complete' })
+    expect(sent.at(-1)).toMatchObject({ type: 'complete', backgroundTasksAlive: false })
   })
 
   it('forwards activity only for tasks with a chip', async () => {

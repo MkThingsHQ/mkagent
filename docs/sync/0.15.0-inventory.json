@@ -385,8 +385,8 @@
     {
       "status": "M",
       "path": "apps/electron/src/renderer/components/app-shell/background-task-chip-state.ts",
-      "classification": "NORMALIZED_REUSE",
-      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+      "classification": "LITE_ADAPTATION",
+      "reason": "Upstream task-chip lifecycle also recognizes Pi background Bash launch acknowledgements"
     },
     {
       "status": "A",
