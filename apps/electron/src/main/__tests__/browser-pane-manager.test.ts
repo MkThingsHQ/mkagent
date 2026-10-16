@@ -993,44 +993,61 @@ describe('BrowserPaneManager', () => {
   })
 
   it('recovers screenshot via non-disruptive inactive reveal and restores hidden state', async () => {
-    manager.createInstance('screenshot-rescue-success')
-    const instance = (manager as any).instances.get('screenshot-rescue-success')
+    const platform = Object.getOwnPropertyDescriptor(process, 'platform')!
+    try {
+      for (const platformName of ['darwin', 'win32', 'linux']) {
+        Object.defineProperty(process, 'platform', { value: platformName })
+        const instanceId = `screenshot-rescue-success-${platformName}`
+        manager.createInstance(instanceId)
+        const instance = (manager as any).instances.get(instanceId)
 
-    let captureCalls = 0
-    instance.pageView.webContents.capturePage = mock(async () => {
-      captureCalls += 1
-      if (captureCalls <= 3) {
-        return {
-          isEmpty: () => true,
-          getSize: () => ({ width: 0, height: 0 }),
-          resize: function() { return this },
-          toPNG: () => Buffer.alloc(0),
-          toJPEG: () => Buffer.alloc(0),
+        let captureCalls = 0
+        instance.pageView.webContents.capturePage = mock(async () => {
+          captureCalls += 1
+          if (captureCalls <= 3) {
+            return {
+              isEmpty: () => true,
+              getSize: () => ({ width: 0, height: 0 }),
+              resize: function() { return this },
+              toPNG: () => Buffer.alloc(0),
+              toJPEG: () => Buffer.alloc(0),
+            }
+          }
+
+          const img = {
+            isEmpty: () => false,
+            getSize: () => ({ width: 2400, height: 1800 }),
+            resize: () => img,
+            toPNG: () => Buffer.from('rescued-png'),
+            toJPEG: (_q: number) => Buffer.from('rescued-jpeg'),
+          }
+          return img
+        })
+
+        const result = await manager.screenshot(instanceId, { includeMetadata: true })
+
+        expect(result.imageBuffer.toString()).toBe('rescued-png')
+        expect(instance.window.showInactive).toHaveBeenCalledTimes(1)
+        expect(instance.window.focus).not.toHaveBeenCalled()
+        expect(instance.window.hide).toHaveBeenCalled()
+        expect(result.metadata?.warnings?.some((w: string) => w.includes('shown invisibly'))).toBe(true)
+        // Invisible and click-through while shown, then restored
+        expect(instance.window.setIgnoreMouseEvents.mock.calls).toEqual([[true], [false]])
+        if (platformName === 'linux') {
+          expect(instance.window.setOpacity).not.toHaveBeenCalled()
+          expect(instance.window.setAlwaysOnTop).not.toHaveBeenCalled()
+          expect(instance.window.setPosition).toHaveBeenCalledWith(4580, 60)
+          expect(instance.window.setSkipTaskbar.mock.calls).toEqual([[true], [false]])
+          expect(instance.window.setBounds).toHaveBeenCalledWith({ x: 40, y: 60, width: 1200, height: 900 })
+        } else {
+          expect(instance.window.setOpacity.mock.calls).toEqual([[0], [1]])
+          expect(instance.window.setAlwaysOnTop.mock.calls).toEqual([[true, 'floating'], [false]])
         }
       }
-
-      const img = {
-        isEmpty: () => false,
-        getSize: () => ({ width: 2400, height: 1800 }),
-        resize: () => img,
-        toPNG: () => Buffer.from('rescued-png'),
-        toJPEG: (_q: number) => Buffer.from('rescued-jpeg'),
-      }
-      return img
-    })
-
-    const result = await manager.screenshot('screenshot-rescue-success', { includeMetadata: true })
-
-    expect(result.imageBuffer.toString()).toBe('rescued-png')
-    expect(instance.window.showInactive).toHaveBeenCalledTimes(1)
-    expect(instance.window.focus).not.toHaveBeenCalled()
-    expect(instance.window.hide).toHaveBeenCalled()
-    expect(result.metadata?.warnings?.some((w: string) => w.includes('shown invisibly'))).toBe(true)
-    // Invisible and click-through while shown, then restored
-    expect(instance.window.setOpacity.mock.calls).toEqual([[0], [1]])
-    expect(instance.window.setIgnoreMouseEvents.mock.calls).toEqual([[true], [false]])
-    expect(instance.window.setAlwaysOnTop.mock.calls).toEqual([[true, 'floating'], [false]])
-  })
+    } finally {
+      Object.defineProperty(process, 'platform', platform)
+    }
+  }, 10_000)
 
   it('throws when region screenshot capture returns empty NativeImage', async () => {
     manager.createInstance('region-empty-image')

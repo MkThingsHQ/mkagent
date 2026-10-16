@@ -255,7 +255,7 @@
       "reason": "Retain all upstream CDP regressions and add wrong-native-key-code and pending-command idle-detach cases."
     },
     "apps/electron/src/main/__tests__/browser-pane-manager.test.ts": {
-      "sha256": "b12fd07a3d9b39432d42856188ecbc585ebf84a5a468715cfa2b95f35a3b5a11",
+      "sha256": "11395f560c1a65e6544562a6fa96cb1a40fec0856743bba41294d8b14b1ead11",
       "reason": "Craft browser tests strengthened to cover app-theme hydration and live theme updates that the upstream system-theme-only implementation misses; v0.15.1: Retain all upstream browser/window regressions, MkAgent app-theme cases, and add stalled capture recovery-state regression."
     },
     "apps/electron/src/main/__tests__/connection-setup-logic.test.ts": {
