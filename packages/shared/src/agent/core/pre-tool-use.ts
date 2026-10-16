@@ -560,6 +560,7 @@ export interface PreToolUseInput {
   workingDirectory?: string;
   /** PermissionManager for session-scoped whitelists */
   permissionManager: PermissionManagerLike;
+  prerequisiteManager?: PrerequisiteManagerLike;
   /** Backend metadata (e.g. Pi forwards intent / displayName via input.metadata) */
   backendMetadata?: { intent?: string; displayName?: string };
   /** Keep `_intent` on source tools: Claude's source proxies require it and take it out themselves */
@@ -585,7 +586,8 @@ export interface PermissionManagerLike {
  */
 export interface PrerequisiteManagerLike {
   checkPrerequisites(toolName: string): PrerequisiteCheckResult;
-  trackBashSkillRead(input: Record<string, unknown>): boolean;
+  /** Bash's check: files the command prints (cat, head, sed -n …) count as read. */
+  checkBashPrerequisites(command: string): PrerequisiteCheckResult;
 }
 
 /** File write tools that require permission in ask mode */
@@ -629,6 +631,7 @@ export function runPreToolUseChecks(ctx: PreToolUseInput): PreToolUseCheckResult
     dataFolderPath,
     workingDirectory,
     permissionManager,
+    prerequisiteManager,
     backendMetadata,
     onDebug,
   } = ctx;
@@ -665,6 +668,20 @@ export function runPreToolUseChecks(ctx: PreToolUseInput): PreToolUseCheckResult
     const reasonWithContext = withPermissionModeContext(modeResult.reason, sessionId, effectivePermissionMode);
     onDebug?.(`Permission mode ${effectivePermissionMode}: blocking ${toolName} — ${reasonWithContext}`);
     return { type: 'block', reason: reasonWithContext };
+  }
+
+  // ============================================================
+  // 3. BROWSER AND SKILL PREREQUISITES
+  // ============================================================
+  if (prerequisiteManager) {
+    // A shell read of a browser guide or Skill (cat, head, sed -n) counts like Read.
+    // Pi's `bash` tool arrives here as "Bash" too (PI_TOOL_NAME_MAP).
+    const prereqResult = toolName === 'Bash'
+      ? prerequisiteManager.checkBashPrerequisites(typeof input.command === 'string' ? input.command : '')
+      : prerequisiteManager.checkPrerequisites(toolName);
+    if (!prereqResult.allowed) {
+      return { type: 'block', reason: prereqResult.blockReason! };
+    }
   }
 
   // ============================================================

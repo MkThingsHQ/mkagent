@@ -103,6 +103,7 @@ export function handleToolResult(
       toolStatus: newToolStatus,
       isError: effectiveIsError,
       errorCode: isPersistedOutput ? 'response_too_large' : undefined,
+      ...(event.toolInput ? { toolInput: event.toolInput } : {}),
     })
 
     // Safety net: when a parent Task completes, auto-complete any still-pending child tools.
@@ -152,6 +153,7 @@ export function handleToolResult(
     timestamp: event.timestamp ?? Date.now(),
     toolUseId: event.toolUseId,
     toolName: event.toolName,
+    toolInput: event.toolInput,
     toolResult: event.result,
     toolStatus: effectiveIsError ? 'error' : 'completed',
     isError: effectiveIsError,

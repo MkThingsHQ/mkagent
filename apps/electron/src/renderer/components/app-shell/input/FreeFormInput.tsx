@@ -1,5 +1,7 @@
 import * as React from 'react'
 import { useTranslation } from "react-i18next"
+import { toast } from 'sonner'
+import { checkAttachmentSizes, DEFAULT_MAX_MESSAGE_BYTES, formatAttachmentBytes, type AttachmentSizeInput, type AttachmentSizeProblem } from '@mkagent/shared/protocol'
 import {
   Paperclip,
   ChevronUp,
@@ -21,6 +23,7 @@ import {
 import { parseMentions } from '@/lib/mentions'
 import { RichTextInput, type RichTextInputHandle } from '@/components/ui/rich-text-input'
 import { useInputAvailableHeight } from '@/hooks/useInputAvailableHeight'
+import { useTransportConnectionState } from '@/hooks/useTransportConnectionState'
 import { getComposerMaxHeight } from './composer-height'
 import { getContextDisplay, getContextDisplayLabels, type ContextStatus } from './context-display'
 import { createPendingPlanDispatcher } from './pending-plan-dispatch'
@@ -416,6 +419,32 @@ export function FreeFormInput({
     attachmentsRef.current = attachments
   }, [attachments])
 
+  // Attachments must fit in one message to the connected server, or the send drops the
+  // connection ("Connection lost"); the server advertises its limit (message-limits.ts).
+  const transportState = useTransportConnectionState()
+  const maxMessageBytesRef = React.useRef(DEFAULT_MAX_MESSAGE_BYTES)
+  React.useEffect(() => {
+    maxMessageBytesRef.current = transportState?.maxMessageBytes ?? DEFAULT_MAX_MESSAGE_BYTES
+  }, [transportState?.maxMessageBytes])
+
+  const showAttachmentSizeProblem = React.useCallback((problem: AttachmentSizeProblem) => {
+    const size = formatAttachmentBytes(problem.size)
+    const limit = formatAttachmentBytes(problem.limit)
+    if (problem.kind === 'file') {
+      toast.error(t('toast.attachmentTooLarge', { name: problem.name }), { description: t('toast.attachmentTooLargeDescription', { size, limit }) })
+    } else {
+      toast.error(t('toast.attachmentsTooLarge'), { description: t('toast.attachmentsTooLargeDescription', { size, limit }) })
+    }
+  }, [t])
+
+  /** Refuse a file that can never be sent, before reading it (reading a huge file can freeze the window). */
+  const refuseOversizedAttachment = React.useCallback((attachment: AttachmentSizeInput): boolean => {
+    const problem = checkAttachmentSizes([attachment], maxMessageBytesRef.current)
+    if (problem?.kind !== 'file') return false
+    showAttachmentSizeProblem(problem)
+    return true
+  }, [showAttachmentSizeProblem])
+
   // Seed from parent when `attachmentsValue` changes (e.g., switching sessions).
   // `skipPersistRef` tells the save effect below that the next `attachments` change
   // is a prop-driven seed, not user intent — otherwise we'd echo the seed back to
@@ -755,8 +784,13 @@ export function FreeFormInput({
       })
 
       for (let i = 0; i < files.length; i++) {
+        const file = files[i]!
+        if (refuseOversizedAttachment({ name: fileNames[i]!, size: file.size, type: file.type.startsWith('image/') ? 'image' : undefined })) {
+          setLoadingCount(prev => prev - 1)
+          continue
+        }
         try {
-          const attachment = await readFileAsAttachment(files[i], fileNames[i])
+          const attachment = await readFileAsAttachment(file, fileNames[i])
           if (attachment) {
             setAttachments(prev => [...prev, attachment])
           }
@@ -772,7 +806,7 @@ export function FreeFormInput({
 
     window.addEventListener('craft:paste-files', handlePasteFiles as unknown as EventListener)
     return () => window.removeEventListener('craft:paste-files', handlePasteFiles as unknown as EventListener)
-  }, [disabled, sessionId, isFocusedPanel, richInputRef])
+  }, [disabled, sessionId, isFocusedPanel, richInputRef, refuseOversizedAttachment])
 
   // Build active commands list for slash command menu
   const activeCommands = React.useMemo(() => {
@@ -862,6 +896,10 @@ export function FreeFormInput({
 
   // Shared helper: read a File, add as attachment, decrement loading count
   const processFileAttachment = async (file: File, overrideName?: string) => {
+    if (refuseOversizedAttachment({ name: overrideName || file.name, size: file.size, type: file.type.startsWith('image/') ? 'image' : undefined })) {
+      setLoadingCount(prev => prev - 1)
+      return
+    }
     try {
       const attachment = await readFileAsAttachment(file, overrideName)
       if (attachment) {
@@ -1030,10 +1068,11 @@ export function FreeFormInput({
       text: text,
       size: new Blob([text]).size,
     }
+    if (refuseOversizedAttachment(attachment)) return
     setAttachments(prev => [...prev, attachment])
     // Focus input after adding attachment
     richInputRef.current?.focus()
-  }, []) // No deps needed - uses ref
+  }, [refuseOversizedAttachment])
 
   const handleDrop = async (e: React.DragEvent) => {
     e.preventDefault()
@@ -1058,6 +1097,12 @@ export function FreeFormInput({
     // Tutorial may disable sending to guide user through specific steps
     if (disableSend) return false
 
+    const sizeProblem = checkAttachmentSizes(attachments, maxMessageBytesRef.current)
+    if (sizeProblem) {
+      showAttachmentSizeProblem(sizeProblem)
+      return false
+    }
+
     // Parse retained Skill mentions.
     const mentions = parseMentions(input, skills.map(s => s.slug))
     const attachmentSnapshot = attachments
@@ -1081,7 +1126,7 @@ export function FreeFormInput({
     })
 
     return true
-  }, [input, attachments, followUpItems, disabled, disableSend, onInputChange, onAttachmentsChange, onSubmit, skills])
+  }, [input, attachments, followUpItems, disabled, disableSend, onInputChange, onAttachmentsChange, onSubmit, skills, showAttachmentSizeProblem])
 
   // Listen for craft:submit-input events (simulate pressing the Send button)
   React.useEffect(() => {

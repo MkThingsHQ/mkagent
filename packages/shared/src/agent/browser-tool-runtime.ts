@@ -35,7 +35,21 @@ interface BrowserPageMetrics {
   activeElementRole?: string;
   activeElementId?: string;
   activeElementName?: string;
+  /** Focused field holds a secret: password input, password autocomplete, or text masked by CSS. */
+  activeElementIsPassword?: boolean;
 }
+
+/**
+ * Opens the output of a fill into a password field, followed by the ref. The session layer
+ * finds the ref after it to redact the value from the stored tool input (browser-tool-redaction.ts).
+ */
+export const PASSWORD_FILL_MARKER = 'Filled password field';
+
+/**
+ * Opens the output of a `type` or `paste` that went into a password field. These name no ref, so
+ * the session layer redacts the text of every type/paste in that call.
+ */
+export const PASSWORD_TEXT_MARKER = 'Entered text into a password field';
 
 export function getBrowserToolHelp(): string {
   return [
@@ -190,6 +204,9 @@ async function getPageMetrics(fns: BrowserPaneFns): Promise<BrowserPageMetrics |
       const scrollX = window.scrollX || window.pageXOffset || 0;
       const scrollY = window.scrollY || window.pageYOffset || 0;
       const active = document.activeElement;
+      // Focus inside an open shadow root reports the host; look through to the field itself.
+      let field = active;
+      while (field?.shadowRoot?.activeElement) field = field.shadowRoot.activeElement;
       return {
         url: window.location.href,
         title: document.title || '',
@@ -205,6 +222,11 @@ async function getPageMetrics(fns: BrowserPaneFns): Promise<BrowserPageMetrics |
         activeElementRole: active?.getAttribute?.('role') || '',
         activeElementId: active?.id || '',
         activeElementName: active?.getAttribute?.('name') || active?.getAttribute?.('aria-label') || active?.textContent?.trim?.().slice(0, 80) || '',
+        activeElementIsPassword: !!field && (
+          field.type === 'password'
+          || /password/i.test(field.getAttribute?.('autocomplete') || '')
+          || (window.getComputedStyle(field).webkitTextSecurity || 'none') !== 'none'
+        ),
       };
     })()`
   );
@@ -240,6 +262,25 @@ const ACTIONABLE_AX_ROLES = new Set([
 
 function countActionableNodes(nodes: Array<{ role: string; disabled?: boolean }>): number {
   return nodes.filter((node) => ACTIONABLE_AX_ROLES.has((node.role || '').toLowerCase()) && !node.disabled).length;
+}
+
+/**
+ * Hands a blocking security challenge to the user, the only one who can solve it: drops
+ * the agent overlay and brings the window up. Returns the line saying what happened.
+ */
+async function handChallengeToUser(fns: BrowserPaneFns): Promise<string> {
+  await fns.releaseControl();
+  try {
+    await fns.focusWindow();
+    return 'Browser shown — please complete the verification check.';
+  } catch {
+    return 'The browser window could not be shown — ask the user to open it and complete the verification check.';
+  }
+}
+
+/** Evidence too weak to hand the page over (e.g. a visible Turnstile widget) only earns a note. */
+function suspectedChallengeNote(challenge: Awaited<ReturnType<BrowserPaneFns['detectChallenge']>>): string | undefined {
+  return challenge.suspected ? `Note: the page may show a verification widget (${challenge.provider}).` : undefined;
 }
 
 function summarizeWindows(windows: Awaited<ReturnType<BrowserPaneFns['listWindows']>>): string {
@@ -342,6 +383,79 @@ function formatLifecycleResultLine(result: BrowserLifecycleActionResult): string
   ].filter(Boolean).join(', ');
 }
 
+const MAX_LISTED_SCREENSHOT_TARGETS = 50;
+
+/** Rounded pixel value, or undefined when metadata (which crosses RPC) holds no finite number. */
+function toPx(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value) ? Math.round(value) : undefined;
+}
+
+function formatScreenshotTarget(target: unknown): string {
+  const { ref, role, name, box, clickPoint } = (target ?? {}) as {
+    ref?: unknown;
+    role?: unknown;
+    name?: unknown;
+    box?: { width?: unknown; height?: unknown };
+    clickPoint?: { x?: unknown; y?: unknown };
+  };
+  let line = typeof ref === 'string' ? ref : '?';
+  if (typeof role === 'string' && role) line += ` ${role}`;
+  if (typeof name === 'string' && name.trim()) line += ` "${shortText(name, 40)}"`;
+  const x = toPx(clickPoint?.x);
+  const y = toPx(clickPoint?.y);
+  if (x !== undefined && y !== undefined) line += ` at (${x},${y})`;
+  const width = toPx(box?.width);
+  const height = toPx(box?.height);
+  if (width !== undefined && height !== undefined) line += ` ${width}x${height}`;
+  return line;
+}
+
+/**
+ * One short line per known screenshot metadata field; unknown fields are skipped.
+ * Annotated captures carry up to 100 targets, which cost ~15k tokens as pretty JSON.
+ */
+function formatScreenshotMetadata(metadata: Record<string, unknown> | undefined): string[] {
+  if (!metadata) return [];
+  const lines: string[] = [];
+
+  const viewport = metadata.viewport as { width?: number; height?: number; dpr?: number } | undefined;
+  if (viewport?.width && viewport?.height) {
+    lines.push(`Viewport: ${viewport.width}x${viewport.height} @ DPR ${viewport.dpr ?? 1}`);
+  }
+
+  const region = metadata.region as { x?: unknown; y?: unknown; width?: unknown; height?: unknown } | undefined;
+  const [regionX, regionY, regionWidth, regionHeight] = [region?.x, region?.y, region?.width, region?.height].map(toPx);
+  if (regionX !== undefined && regionY !== undefined && regionWidth !== undefined && regionHeight !== undefined) {
+    lines.push(`Captured region: (${regionX},${regionY}) ${regionWidth}x${regionHeight}`);
+  }
+
+  if (Array.isArray(metadata.warnings)) {
+    for (const warning of metadata.warnings) lines.push(`Warning: ${String(warning)}`);
+  }
+  if (metadata.annotationPartial === true) lines.push('Annotation incomplete');
+
+  const action = metadata.action as { tool?: unknown; ref?: unknown; status?: unknown; timestamp?: unknown } | undefined;
+  if (typeof action?.tool === 'string') {
+    const parts = [action.tool, action.ref, action.status].filter((part) => typeof part === 'string' && part);
+    const time = typeof action.timestamp === 'number' ? new Date(action.timestamp) : undefined;
+    const at = time && !Number.isNaN(time.getTime()) ? ` at ${time.toISOString()}` : '';
+    lines.push(`Last action: ${parts.join(' ')}${at}`);
+  }
+
+  if (Array.isArray(metadata.targets)) {
+    const targets = metadata.targets;
+    lines.push(`Annotated targets: ${targets.length}${targets.length > 0 ? ' ("at" is the click point)' : ''}`);
+    for (const target of targets.slice(0, MAX_LISTED_SCREENSHOT_TARGETS)) {
+      lines.push(`  ${formatScreenshotTarget(target)}`);
+    }
+    if (targets.length > MAX_LISTED_SCREENSHOT_TARGETS) {
+      lines.push(`  …${targets.length - MAX_LISTED_SCREENSHOT_TARGETS} more targets (use snapshot or find)`);
+    }
+  }
+
+  return lines;
+}
+
 const NAVIGATION_COMMANDS = new Set([
   'navigate',
   'click',
@@ -357,60 +471,80 @@ function decodeEscapes(input: string): string {
     if (ch === '"') return '"';
     if (ch === "'") return "'";
     if (ch === '\\') return '\\';
+    if (ch === ';') return ';';
     return `\\${ch}`;
   });
 }
 
-function splitBatchCommands(input: string): string[] {
+const UNCLOSED_QUOTE_ERROR = 'Parse error: unclosed quote in browser_tool command. '
+  + 'An argument that starts with a quote must end with the same quote (escape inner quotes with \\, or use array mode).';
+
+/**
+ * Quote rule shared by splitBatchCommands and tokenizeCommand, so plain-text
+ * apostrophes (`fill @e5 Don't do this`) stay literal:
+ * - A quote at the start of a token (start of input, after whitespace or a `;`
+ *   separator) opens a span that closes only at the same quote followed by
+ *   whitespace, `;` or the end of input. The tokenizer strips these quotes.
+ * - Any other quote is literal and kept. When the same quote recurs before the
+ *   token ends, the span between still protects `;` from batch splitting, so
+ *   unquoted selectors like `div[data-x='a;b']` survive.
+ *
+ * Returns the index of the closing quote, or -1: unclosed at a token start,
+ * literal elsewhere.
+ */
+function findClosingQuote(input: string, openIndex: number, atTokenStart: boolean): number {
+  const quote = input[openIndex];
+  for (let i = openIndex + 1; i < input.length; i += 1) {
+    const ch = input[i]!;
+    if (ch === '\\') {
+      i += 1;
+      continue;
+    }
+    if (!atTokenStart && /\s/.test(ch)) return -1;
+    if (ch !== quote) continue;
+    if (!atTokenStart) return i;
+    const next = input[i + 1];
+    if (next === undefined || next === ';' || /\s/.test(next)) return i;
+  }
+  return -1;
+}
+
+export function splitBatchCommands(input: string): string[] {
   const commands: string[] = [];
   let current = '';
-  let inSingle = false;
-  let inDouble = false;
-  let escaped = false;
+  let atTokenStart = true;
 
   for (let i = 0; i < input.length; i += 1) {
     const ch = input[i]!;
 
-    if (escaped) {
-      current += ch;
-      escaped = false;
-      continue;
-    }
-
     if (ch === '\\') {
-      current += ch;
-      escaped = true;
+      // Keep escapes verbatim; tokenizeCommand decodes them.
+      current += input.slice(i, i + 2);
+      i += 1;
+      atTokenStart = false;
       continue;
     }
 
-    if (ch === '"' && !inSingle) {
-      inDouble = !inDouble;
-      current += ch;
+    if (ch === '"' || ch === "'") {
+      const close = findClosingQuote(input, i, atTokenStart);
+      if (close === -1 && atTokenStart) throw new Error(UNCLOSED_QUOTE_ERROR);
+      const end = close === -1 ? i : close;
+      current += input.slice(i, end + 1);
+      i = end;
+      atTokenStart = false;
       continue;
     }
 
-    if (ch === "'" && !inDouble) {
-      inSingle = !inSingle;
-      current += ch;
-      continue;
-    }
-
-    if (ch === ';' && !inSingle && !inDouble) {
+    if (ch === ';') {
       const trimmed = current.trim();
       if (trimmed.length > 0) commands.push(trimmed);
       current = '';
+      atTokenStart = true;
       continue;
     }
 
     current += ch;
-  }
-
-  if (escaped) {
-    current += '\\';
-  }
-
-  if (inSingle || inDouble) {
-    throw new Error('Parse error: unclosed quote in browser_tool command.');
+    atTokenStart = /\s/.test(ch);
   }
 
   const trimmed = current.trim();
@@ -418,13 +552,10 @@ function splitBatchCommands(input: string): string[] {
   return commands;
 }
 
-function tokenizeCommand(input: string): string[] {
+export function tokenizeCommand(input: string): string[] {
   const tokens: string[] = [];
   let current = '';
   let tokenStarted = false;
-  let inSingle = false;
-  let inDouble = false;
-  let escaped = false;
 
   const pushCurrent = () => {
     if (!tokenStarted) return;
@@ -436,46 +567,35 @@ function tokenizeCommand(input: string): string[] {
   for (let i = 0; i < input.length; i += 1) {
     const ch = input[i]!;
 
-    if (escaped) {
-      current += `\\${ch}`;
-      tokenStarted = true;
-      escaped = false;
-      continue;
-    }
-
     if (ch === '\\') {
-      escaped = true;
-      continue;
-    }
-
-    if (ch === '"' && !inSingle) {
-      inDouble = !inDouble;
+      // Keep the escape pair; decodeEscapes resolves it when the token ends.
+      current += input.slice(i, i + 2);
+      i += 1;
       tokenStarted = true;
       continue;
     }
 
-    if (ch === "'" && !inDouble) {
-      inSingle = !inSingle;
+    if (ch === '"' || ch === "'") {
+      if (tokenStarted) {
+        // Mid-token quotes are literal (their `;` protection only matters when splitting).
+        current += ch;
+        continue;
+      }
+      const close = findClosingQuote(input, i, true);
+      if (close === -1) throw new Error(UNCLOSED_QUOTE_ERROR);
+      current += input.slice(i + 1, close);
+      i = close;
       tokenStarted = true;
       continue;
     }
 
-    if (!inSingle && !inDouble && /\s/.test(ch)) {
+    if (/\s/.test(ch)) {
       pushCurrent();
       continue;
     }
 
     current += ch;
     tokenStarted = true;
-  }
-
-  if (escaped) {
-    current += '\\';
-    tokenStarted = true;
-  }
-
-  if (inSingle || inDouble) {
-    throw new Error('Parse error: unclosed quote in browser_tool command.');
   }
 
   pushCurrent();
@@ -640,11 +760,15 @@ export async function executeBrowserToolCommand(args: {
   }
 
   const commands = splitBatchCommands(trimmed);
+  if (commands.length === 0) {
+    throw new Error('Missing command. Use "--help" to see supported browser_tool commands.');
+  }
   if (commands.length > 1) {
     return executeBatchCommands({ ...args, commands });
   }
 
-  return executeSingleCommand(args);
+  // Run the split command so a stray separator (`click @e1;`) never reaches the tokenizer.
+  return executeSingleCommand({ ...args, command: commands[0]! });
 }
 
 async function executeBatchCommands(args: {
@@ -659,7 +783,17 @@ async function executeBatchCommands(args: {
 
   for (let i = 0; i < args.commands.length; i++) {
     const command = args.commands[i]!;
-    const result = await executeSingleCommand({ ...args, command });
+    let result: BrowserCommandResult;
+    try {
+      result = await executeSingleCommand({ ...args, command });
+    } catch (error) {
+      // Keep what the earlier commands did: the agent needs it, and a password fill's output line is
+      // what lets the host redact the stored input. Same error object (its code survives); the
+      // failing command itself is not quoted, as it may hold the value.
+      if (outputs.length === 0 || !(error instanceof Error)) throw error;
+      error.message = `${outputs.join('\n')}\n\nCommand ${i + 1} of ${args.commands.length} failed: ${error.message}`;
+      throw error;
+    }
 
     outputs.push(result.output);
     if (result.image) lastImage = result.image;
@@ -752,14 +886,14 @@ async function executeSingleCommand(args: {
     // Check for security challenge after navigation
     const challenge = await fns.detectChallenge();
     if (challenge.detected) {
-      await fns.releaseControl();
+      const handOff = await handChallengeToUser(fns);
       return {
         output: [
           `Security verification detected (${challenge.provider}).`,
           `Signals: ${challenge.signals.join(', ')}`,
           `URL: ${result.url}`,
           '',
-          'Browser shown — please complete the verification check.',
+          handOff,
           'After verification, run "snapshot" to continue.',
         ].join('\n'),
         appendReleaseHint: false,
@@ -776,6 +910,8 @@ async function executeSingleCommand(args: {
     if (after) {
       lines.push(`Viewport: ${after.viewportWidth}x${after.viewportHeight}, scroll=(${after.scrollX}, ${after.scrollY})`);
     }
+    const challengeNote = suspectedChallengeNote(challenge);
+    if (challengeNote) lines.push(challengeNote);
 
     return { output: lines.join('\n'), appendReleaseHint: true };
   }
@@ -813,10 +949,11 @@ async function executeSingleCommand(args: {
     const nearEmpty = snapshot.nodes.length === 0 || actionableCount <= 2;
 
     if (nearEmpty) {
-      // Check if sparse/empty snapshot is caused by a security challenge
+      // A sparse view is worth a challenge check, but sparseness itself is no evidence: open
+      // menus, consent screens and error cards are sparse too. Only the detector's verdict counts.
       const challenge = await fns.detectChallenge();
       if (challenge.detected) {
-        await fns.releaseControl();
+        const handOff = await handChallengeToUser(fns);
 
         // Auto-take screenshot for visual confirmation
         let screenshotImage: BrowserCommandImage | undefined;
@@ -840,8 +977,7 @@ async function executeSingleCommand(args: {
           `URL: ${snapshot.url}`,
           '',
           `Detected only ${actionableCount} actionable element(s) out of ${snapshot.nodes.length} accessibility nodes.`,
-          'This is consistent with a security challenge page blocking normal interaction.',
-          'Browser shown — please complete the verification check.',
+          handOff,
           'After verification, run "snapshot" to continue.',
         ];
 
@@ -851,6 +987,9 @@ async function executeSingleCommand(args: {
           image: screenshotImage,
         };
       }
+
+      const challengeNote = suspectedChallengeNote(challenge);
+      if (challengeNote) lines.push('', challengeNote);
 
       if (snapshot.nodes.length === 0) {
         lines.push('');
@@ -926,7 +1065,7 @@ async function executeSingleCommand(args: {
 
     const before = await getPageMetrics(fns);
     const started = Date.now();
-    await fns.click(ref, { waitFor, timeoutMs });
+    const clicked = await fns.click(ref, { waitFor, timeoutMs });
     const elapsedMs = Date.now() - started;
     const after = await getPageMetrics(fns);
 
@@ -935,14 +1074,14 @@ async function executeSingleCommand(args: {
     // Check challenge after click regardless of URL change (same-URL challenges are common)
     const challenge = await fns.detectChallenge();
     if (challenge.detected) {
-      await fns.releaseControl();
+      const handOff = await handChallengeToUser(fns);
       return {
         output: [
           `Clicked element ${ref} — security challenge detected (${challenge.provider}).`,
           `URL changed: ${urlChanged}`,
           `Signals: ${challenge.signals.join(', ')}`,
           '',
-          'Browser shown — please complete the verification check.',
+          handOff,
           'After verification, run "snapshot" to continue.',
         ].join('\n'),
         appendReleaseHint: false,
@@ -958,6 +1097,13 @@ async function executeSingleCommand(args: {
     if (before && after) {
       lines.push(`Scroll Y: ${Math.round(before.scrollY)} → ${Math.round(after.scrollY)}`);
     }
+    // A DOM-event click acts like element.click(); say why the mouse could not be used.
+    if (clicked?.via === 'script') {
+      lines.push(`Clicked with DOM events instead of the mouse${clicked.note ? `: ${clicked.note}` : ''}.`);
+    }
+    if (clicked?.popup) lines.push(clicked.popup);
+    const challengeNote = suspectedChallengeNote(challenge);
+    if (challengeNote) lines.push(challengeNote);
 
     return { output: lines.join('\n'), appendReleaseHint: true };
   }
@@ -1036,10 +1182,17 @@ async function executeSingleCommand(args: {
     await fns.fill(ref, value);
     const after = await getPageMetrics(fns);
 
+    // fill focuses its target, so the focused field afterwards is the one filled. Echo the
+    // value only when that field is known not to be a password, so secrets stay out of transcripts.
+    const summary = after?.activeElementIsPassword
+      ? [`${PASSWORD_FILL_MARKER} ${ref} (${value.length} characters)`]
+      : after
+        ? [`Filled element ${ref} with "${value}"`, `Value length: ${value.length} characters`]
+        : [`Filled element ${ref} (${value.length} characters)`];
+
     return {
       output: [
-        `Filled element ${ref} with "${value}"`,
-        `Value length: ${value.length} characters`,
+        ...summary,
         `Active element before: ${describeActive(before)}`,
         `Active element after: ${describeActive(after)}`,
       ].join('\n'),
@@ -1057,7 +1210,9 @@ async function executeSingleCommand(args: {
 
     return {
       output: [
-        `Typed ${text.length} characters into focused element`,
+        after?.activeElementIsPassword
+          ? `${PASSWORD_TEXT_MARKER} (${text.length} characters)`
+          : `Typed ${text.length} characters into focused element`,
         `Active element before: ${describeActive(before)}`,
         `Active element after: ${describeActive(after)}`,
       ].join('\n'),
@@ -1177,13 +1332,14 @@ async function executeSingleCommand(args: {
     const platform = args.platform ?? process.platform;
     const isMac = platform === 'darwin';
     await fns.sendKey({ key: 'v', modifiers: [isMac ? 'meta' : 'control'] });
+    const after = await getPageMetrics(fns);
 
     const lineCount = text.length === 0 ? 0 : text.split(/\r?\n/).length;
     const tabCount = (text.match(/\t/g) ?? []).length;
 
     return {
       output: [
-        `Pasted ${text.length} characters`,
+        after?.activeElementIsPassword ? `${PASSWORD_TEXT_MARKER} (${text.length} characters)` : `Pasted ${text.length} characters`,
         `Shortcut used: ${isMac ? 'Cmd+V' : 'Ctrl+V'}`,
         `Lines: ${lineCount}, tabs: ${tabCount}`,
       ].join('\n'),
@@ -1212,19 +1368,8 @@ async function executeSingleCommand(args: {
         ? `Annotated screenshot captured (${formatBytes(buf.length)} ${ext}) — element refs (@eN) are overlaid on interactive elements`
         : `Screenshot captured (${formatBytes(buf.length)} ${ext})`,
       `Capture time: ${elapsedMs}ms`,
+      ...formatScreenshotMetadata(result.metadata),
     ];
-    const metadata = result.metadata as Record<string, unknown> | undefined;
-    const viewport = metadata?.viewport as { width?: number; height?: number; dpr?: number } | undefined;
-    if (viewport?.width && viewport?.height) {
-      lines.push(`Viewport: ${viewport.width}x${viewport.height} @ DPR ${viewport.dpr ?? 1}`);
-    }
-    const targets = (metadata?.targets as Array<unknown> | undefined)?.length;
-    if (typeof targets === 'number') {
-      lines.push(`Annotated targets: ${targets}`);
-    }
-    if (result.metadata) {
-      lines.push('', 'Metadata:', JSON.stringify(result.metadata, null, 2));
-    }
 
     return {
       output: lines.join('\n'),
@@ -1303,10 +1448,8 @@ async function executeSingleCommand(args: {
       `Region screenshot captured (${formatBytes(buf.length)} ${ext})`,
       `Target: ${targetDescription}${typeof padding === 'number' ? `, padding=${padding}` : ''}`,
       `Capture time: ${elapsedMs}ms`,
+      ...formatScreenshotMetadata(result.metadata),
     ];
-    if (result.metadata) {
-      lines.push('', 'Metadata:', JSON.stringify(result.metadata, null, 2));
-    }
 
     return {
       output: lines.join('\n'),

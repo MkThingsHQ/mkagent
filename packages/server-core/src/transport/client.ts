@@ -72,6 +72,8 @@ export interface TransportConnectionState {
   nextRetryInMs?: number
   lastError?: TransportConnectionError
   lastClose?: TransportCloseInfo
+  /** Largest message the connected server accepts (from handshake_ack); absent for older servers */
+  maxMessageBytes?: number
   updatedAt: number
 }
 
@@ -544,6 +546,8 @@ export class WsRpcClient implements RpcClient {
           nextRetryInMs: undefined,
           lastError: undefined,
           lastClose: undefined,
+          // Replaced on every handshake, so a server switch never keeps the previous limit
+          maxMessageBytes: envelope.maxMessageBytes,
         })
         this.startAckTimer()
         this.resolveReady?.()

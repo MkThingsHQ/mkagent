@@ -19,6 +19,7 @@ import type {
   RecoveryMessage,
 } from './backend/types.ts';
 import { AbortReason } from './backend/types.ts';
+import { PrerequisiteManager } from './core/prerequisite-manager.ts';
 import { PermissionManager } from './core/permission-manager.ts';
 import { ConfigWatcherManager } from './core/config-watcher-manager.ts';
 import { buildCallLlmRequest, type LLMQueryRequest, type LLMQueryResult } from './llm-tool.ts';
@@ -73,6 +74,7 @@ export abstract class BaseAgent implements AgentBackend {
   protected _model: string;
   protected _thinkingLevel: ThinkingLevel;
   protected permissionManager: PermissionManager;
+  protected prerequisiteManager: PrerequisiteManager;
   protected configWatcherManager: ConfigWatcherManager | null = null;
   protected _currentTurnUserMessage: string | null = null;
 
@@ -89,6 +91,10 @@ export abstract class BaseAgent implements AgentBackend {
     this._sessionId = config.session?.id ?? `agent-${Date.now()}`;
     this._model = config.model ?? defaultModel;
     this._thinkingLevel = normalizeThinkingLevel(config.thinkingLevel) ?? DEFAULT_THINKING_LEVEL;
+    this.prerequisiteManager = new PrerequisiteManager({
+      workspaceRootPath: config.workspace.rootPath,
+      onDebug: message => this.debug(message),
+    });
     this.permissionManager = new PermissionManager({
       workspaceId: config.workspace.id,
       sessionId: this._sessionId,
@@ -177,7 +183,7 @@ export abstract class BaseAgent implements AgentBackend {
   }
 
   clearHistory(): void {}
-  resetPrerequisiteState(): void {}
+  resetPrerequisiteState(): void { this.prerequisiteManager.resetReadState(); }
 
   updateWorkingDirectory(path: string): void {
     this.workingDirectory = path;
@@ -261,6 +267,7 @@ export abstract class BaseAgent implements AgentBackend {
       const skillPath = skill ? join(skill.path, 'SKILL.md') : undefined;
       if (skillPath && existsSync(skillPath)) skillPaths.set(slug, skillPath);
     }
+    this.prerequisiteManager.registerSkillPrerequisites([...skillPaths.values()]);
     const names = new Map(skills.map(skill => [skill.slug, skill.metadata.name]));
     const resolved = resolveFileMentions(
       resolveSkillMentions(message, names),

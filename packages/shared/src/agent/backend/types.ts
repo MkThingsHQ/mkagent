@@ -277,6 +277,13 @@ export interface AgentBackend {
   forceAbort(reason: AbortReason): void;
 
   /**
+   * Stop the running turn but keep the session's background work (background agents, Workflows,
+   * shells) alive, like Esc in Claude Code. Returns false when the backend can't (no live
+   * keep-alive turn); the caller then hard-stops with forceAbort.
+   */
+  stopTurn?(): boolean;
+
+  /**
    * WS2: register a sink for background task events that arrive BETWEEN turns
    * (when no chat() generator is being consumed) under keep-alive mode. Backends
    * without a persistent cross-turn query may leave this unimplemented.

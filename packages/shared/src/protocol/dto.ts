@@ -88,7 +88,7 @@ export type SessionEvent =
   | { type: 'text_delta'; sessionId: string; delta: string; turnId?: string }
   | { type: 'text_complete'; sessionId: string; text: string; isIntermediate?: boolean; turnId?: string; parentToolUseId?: string; timestamp?: number; messageId?: string }
   | { type: 'tool_start'; sessionId: string; toolName: string; toolUseId: string; toolInput: Record<string, unknown>; toolIntent?: string; toolDisplayName?: string; toolDisplayMeta?: ToolDisplayMeta; turnId?: string; parentToolUseId?: string; timestamp?: number }
-  | { type: 'tool_result'; sessionId: string; toolUseId: string; toolName: string; result: string; turnId?: string; parentToolUseId?: string; isError?: boolean; timestamp?: number }
+  | { type: 'tool_result'; sessionId: string; toolUseId: string; toolName: string; result: string; turnId?: string; parentToolUseId?: string; isError?: boolean; timestamp?: number; toolInput?: Record<string, unknown> }
   | { type: 'error'; sessionId: string; error: string; timestamp?: number; backgroundTasksAlive?: boolean }
   | { type: 'typed_error'; sessionId: string; error: TypedError; timestamp?: number }
   | { type: 'complete'; sessionId: string; tokenUsage?: Session['tokenUsage']; hasUnread?: boolean; backgroundTasksAlive?: boolean }
@@ -279,4 +279,19 @@ export interface StopBackgroundTaskResult {
   success: boolean
   /** Why nothing was stopped (e.g. the task ended with the turn that ran it) */
   error?: string
+}
+
+/**
+ * Verdict of a security-challenge check on a browser page (Cloudflare interstitial,
+ * captcha challenge, …). Classified in apps/electron/src/main/security-challenge.ts.
+ */
+export interface BrowserSecurityChallenge {
+  /** A blocking challenge from a known provider: the user has to solve it. */
+  detected: boolean
+  /** Provider behind the evidence ('cloudflare', 'google', 'hcaptcha', …), or 'none'. */
+  provider: string
+  /** Evidence seen, including context that never decides a verdict. */
+  signals: string[]
+  /** Evidence too weak for a hand-off, e.g. a visible Turnstile widget: worth a note only. */
+  suspected?: boolean
 }

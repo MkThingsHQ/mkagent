@@ -90,6 +90,8 @@ describe('background task completion surfacing (idle keep-alive)', () => {
     // Loop guard: the nudge must tell the agent not to re-spawn a background agent.
     expect(calls[0]!.msg).toContain('Do NOT spawn another background agent')
     // Must be hidden so it never renders as a user-authored transcript bubble.
+    expect(calls[0]!.msg).toContain('<system-notification>')
+    expect(calls[0]!.msg).toContain('not a reply to, or approval')
     expect(calls[0]!.hidden).toBe(true)
   })
 
@@ -127,6 +129,8 @@ describe('background task completion surfacing (idle keep-alive)', () => {
     expect(calls.length).toBe(1)
     expect(calls[0]!.msg).toContain('background-task-failed')
     expect(calls[0]!.msg).toContain('did not complete successfully')
+    expect(calls[0]!.msg).toContain('<system-notification>')
+    expect(calls[0]!.msg).toContain('not a reply to, or approval')
     expect(calls[0]!.hidden).toBe(true)
   })
 })

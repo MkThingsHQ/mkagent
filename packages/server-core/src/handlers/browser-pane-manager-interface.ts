@@ -8,7 +8,7 @@
  * so releaseBrowserOwnershipOnForcedStop() accepts IBrowserPaneManager.
  */
 
-import type { BrowserInstanceInfo } from '@mkagent/shared/protocol'
+import type { BrowserInstanceInfo, BrowserSecurityChallenge } from '@mkagent/shared/protocol'
 
 // ---------------------------------------------------------------------------
 // Supporting types — minimal subsets of BPM's internal types
@@ -21,6 +21,14 @@ export interface BrowserInstanceSnapshot {
   isVisible: boolean
   title: string
   currentUrl: string
+}
+
+/** How a click reached the element: trusted mouse input, or DOM events (`note` says why). */
+export interface BrowserClickResult {
+  via: 'mouse' | 'script'
+  note?: string
+  /** A popup the click opened, or a sign-in window refused because another browser window has one open. */
+  popup?: string
 }
 
 export interface BrowserScreenshotOptions {
@@ -229,7 +237,8 @@ export interface IBrowserPaneManager {
   // -- Interaction ---------------------------------------------------------
 
   getAccessibilitySnapshot(id: string): Promise<AccessibilitySnapshot>
-  clickElement(id: string, ref: string, options?: { waitFor?: 'none' | 'navigation' | 'network-idle'; timeoutMs?: number }): Promise<void>
+  /** Older remote hosts resolve to undefined. */
+  clickElement(id: string, ref: string, options?: { waitFor?: 'none' | 'navigation' | 'network-idle'; timeoutMs?: number }): Promise<BrowserClickResult | void>
   clickAtCoordinates(id: string, x: number, y: number): Promise<void>
   drag(id: string, x1: number, y1: number, x2: number, y2: number): Promise<void>
   fillElement(id: string, ref: string, value: string): Promise<void>
@@ -254,5 +263,5 @@ export interface IBrowserPaneManager {
   getNetworkLogs(id: string, options?: BrowserNetworkOptions): BrowserNetworkEntry[]
   waitFor(id: string, args: BrowserWaitArgs): Promise<BrowserWaitResult>
   getDownloads(id: string, options?: BrowserDownloadOptions): Promise<BrowserDownloadEntry[]>
-  detectSecurityChallenge(id: string): Promise<{ detected: boolean; provider: string; signals: string[] }>
+  detectSecurityChallenge(id: string): Promise<BrowserSecurityChallenge>
 }

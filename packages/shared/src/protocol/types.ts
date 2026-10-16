@@ -60,6 +60,8 @@ export interface MessageEnvelope {
   stale?: boolean
   /** Server app version, sent in handshake_ack. Clients can use this for compatibility checks. */
   serverVersion?: string
+  /** Largest message the server accepts, in bytes (handshake_ack); a bigger one closes the connection. See message-limits.ts. */
+  maxMessageBytes?: number
 }
 
 export interface WireError {

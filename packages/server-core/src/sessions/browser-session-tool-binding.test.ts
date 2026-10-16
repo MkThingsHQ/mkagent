@@ -8,6 +8,7 @@ describe('SessionManager browser session-tool binding', () => {
       get(_target, property) {
         const name = String(property)
         if (name === 'getOrCreateForSessionAsync') return async () => 'browser-1'
+        if (name === 'setAgentControl') return (sessionId: string) => { calls.push(`control:${sessionId}`) }
         if (name === 'navigate') return async (id: string, url: string) => { calls.push(`${id}:${url}`); return { url, title: 'Example' } }
         if (name === 'getInstanceAsync') return async () => ({ title: 'Example', currentUrl: 'https://example.com' })
         if (name === 'listInstancesAsync') return async () => []
@@ -29,7 +30,7 @@ describe('SessionManager browser session-tool binding', () => {
     const fns = (manager as unknown as { createBrowserPaneFns(value: unknown): any }).createBrowserPaneFns(managed)
 
     expect(await fns.navigate('https://example.com')).toEqual({ url: 'https://example.com', title: 'Example' })
-    expect(calls).toEqual(['browser-1:https://example.com'])
+    expect(calls).toEqual(['control:session', 'browser-1:https://example.com'])
     expect((await fns.screenshot()).imageFormat).toBe('png')
     expect((await fns.releaseControl()).action).toBe('released')
   })

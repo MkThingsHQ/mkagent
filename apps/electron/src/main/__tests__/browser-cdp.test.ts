@@ -22,7 +22,7 @@ mock.module('../logger', () => {
   }
 })
 
-const { BrowserCDP } = await import('../browser-cdp')
+const { BrowserCDP, resolveCdpKey } = await import('../browser-cdp')
 
 // ============================================================================
 // Mock Helpers
@@ -47,6 +47,58 @@ function createMockWebContents(sendCommandImpl?: (method: string, params?: any) 
       for (const cb of listeners['detach'] || []) cb()
     },
   }
+}
+
+/** Name of the page function in a Runtime.callFunctionOn call (its `craft:` marker comment). */
+function pageFunction(params: any): string | undefined {
+  return /craft:([a-z-]+)/.exec(String(params?.functionDeclaration ?? ''))?.[1]
+}
+
+type PageAnswers = Record<string, (params: any, call: number) => unknown>
+
+/**
+ * A page with one clickable button (@e1, backend node 42) answering the CDP calls the input layer
+ * makes. `answers` overrides page functions by marker name (returned value, or `{ objectId }` for
+ * element results); `quads` overrides the element's content quads.
+ */
+function createPage(options: { answers?: PageAnswers; quads?: number[][]; viewport?: { clientWidth: number; clientHeight: number }; role?: string } = {}) {
+  const sent: Array<{ method: string; params: any }> = []
+  const calls = new Map<string, number>()
+  const defaults: PageAnswers = {
+    'hit-test': () => ({ ok: true }),
+    'read-click-probe': () => ({ down: true, click: true }),
+  }
+  const wc = createMockWebContents(async (method, params) => {
+    sent.push({ method, params })
+    if (method === 'Accessibility.getFullAXTree') {
+      return { nodes: [{ role: { value: options.role ?? 'button' }, name: { value: 'Go' }, backendDOMNodeId: 42 }] }
+    }
+    if (method === 'DOM.resolveNode') return { object: { objectId: `node-${params.backendNodeId}` } }
+    if (method === 'DOM.getBoxModel') return { model: { content: [10, 10, 50, 10, 50, 50, 10, 50] } }
+    if (method === 'DOM.getContentQuads') return { quads: options.quads ?? [[10, 10, 50, 10, 50, 50, 10, 50]] }
+    if (method === 'Page.getLayoutMetrics') return { cssLayoutViewport: options.viewport ?? { clientWidth: 800, clientHeight: 600 } }
+    if (method === 'Runtime.callFunctionOn') {
+      const name = pageFunction(params) ?? ''
+      const call = (calls.get(name) ?? 0) + 1
+      calls.set(name, call)
+      const answer = options.answers?.[name] ?? defaults[name]
+      const value = answer ? answer(params, call) : true
+      if (value && typeof value === 'object' && 'objectId' in (value as object)) return { result: value }
+      if (value instanceof Error) throw value
+      return { result: { type: typeof value, value } }
+    }
+    return {}
+  })
+  const mouse = () => sent.filter((c) => c.method === 'Input.dispatchMouseEvent').map((c) => c.params)
+  const keys = () => sent.filter((c) => c.method === 'Input.dispatchKeyEvent').map((c) => c.params)
+  const ran = (name: string) => calls.get(name) ?? 0
+  return { wc, sent, mouse, keys, ran }
+}
+
+async function cdpOnPage(page: ReturnType<typeof createPage>) {
+  const cdp = new BrowserCDP(page.wc as any)
+  await cdp.getAccessibilitySnapshot()
+  return cdp
 }
 
 // ============================================================================
@@ -267,33 +319,15 @@ describe('BrowserCDP', () => {
     })
 
     it('keeps fallback nodes clickable through ref mapping', async () => {
-      const sentCommands: string[] = []
-      const wc = createMockWebContents(async (method) => {
-        sentCommands.push(method)
-        if (method === 'Accessibility.getFullAXTree') {
-          return {
-            nodes: [
-              { role: { value: 'pane' }, name: { value: 'Canvas Action' }, backendDOMNodeId: 42 },
-            ],
-          }
-        }
-        if (method === 'DOM.resolveNode') {
-          return { object: { objectId: 'obj-42' } }
-        }
-        if (method === 'DOM.getBoxModel') {
-          return { model: { content: [10, 10, 50, 10, 50, 50, 10, 50] } }
-        }
-        return {}
-      })
-
-      const cdp = new BrowserCDP(wc as any)
+      const page = createPage({ role: 'pane' })
+      const cdp = new BrowserCDP(page.wc as any)
       const snapshot = await cdp.getAccessibilitySnapshot()
 
       expect(snapshot.nodes).toHaveLength(1)
       await cdp.clickElement('@e1')
 
-      expect(sentCommands).toContain('DOM.resolveNode')
-      expect(sentCommands).toContain('Input.dispatchMouseEvent')
+      expect(page.sent.map((c) => c.method)).toContain('DOM.resolveNode')
+      expect(page.mouse().some((e) => e.type === 'mousePressed')).toBe(true)
     })
   })
 
@@ -305,41 +339,109 @@ describe('BrowserCDP', () => {
       await expect(cdp.clickElement('@e99')).rejects.toThrow('not found')
     })
 
-    it('resolves node and dispatches mouse events', async () => {
-      const sentCommands: string[] = []
-      const wc = createMockWebContents(async (method, params) => {
-        sentCommands.push(method)
-        if (method === 'Accessibility.getFullAXTree') {
-          return {
-            nodes: [
-              { role: { value: 'button' }, name: { value: 'Click' }, backendDOMNodeId: 42 },
-            ],
-          }
-        }
-        if (method === 'DOM.resolveNode') {
-          return { object: { objectId: 'obj-42' } }
-        }
-        if (method === 'DOM.getBoxModel') {
-          return { model: { content: [10, 10, 50, 10, 50, 50, 10, 50] } }
-        }
-        return {}
-      })
+    it('clicks the centre of the visible element with trusted CDP input, no window focus needed', async () => {
+      const page = createPage()
+      const cdp = await cdpOnPage(page)
 
-      const cdp = new BrowserCDP(wc as any)
-      await cdp.getAccessibilitySnapshot() // Populate refMap
+      const outcome = await cdp.clickElement('@e1')
+
+      expect(outcome.via).toBe('mouse')
+      const pressed = page.mouse().filter((e) => e.type === 'mousePressed')
+      expect(pressed).toHaveLength(1)
+      expect(pressed[0]).toMatchObject({ x: 30, y: 30, button: 'left', buttons: 1, clickCount: 1 })
+      expect(page.mouse().at(-1)).toMatchObject({ type: 'mouseReleased', x: 30, y: 30, buttons: 0 })
+      // Scrolled into view (instantly) before measuring, and the delivery probe was read.
+      expect(page.ran('scroll-into-view')).toBe(1)
+      expect(page.ran('read-click-probe')).toBe(1)
+      expect(page.ran('script-click')).toBe(0)
+    })
+
+    it('aims at the largest part of the element inside the viewport', async () => {
+      // A card taller than the viewport and a sliver: the box centre (y=550) is off screen.
+      const page = createPage({ quads: [[100, 300, 300, 300, 300, 800, 100, 800], [0, 0, 1, 0, 1, 1, 0, 1]], viewport: { clientWidth: 800, clientHeight: 600 } })
+      const cdp = await cdpOnPage(page)
 
       await cdp.clickElement('@e1')
 
-      expect(sentCommands).toContain('DOM.resolveNode')
-      expect(sentCommands).toContain('DOM.getBoxModel')
-      expect(sentCommands).toContain('Runtime.callFunctionOn')
-      expect(sentCommands).toContain('Input.dispatchMouseEvent')
+      expect(page.mouse().find((e) => e.type === 'mousePressed')).toMatchObject({ x: 200, y: 450 })
+    })
 
-      const scrollIndex = sentCommands.indexOf('Runtime.callFunctionOn')
-      const boxModelIndex = sentCommands.indexOf('DOM.getBoxModel')
-      expect(scrollIndex).toBeGreaterThan(-1)
-      expect(boxModelIndex).toBeGreaterThan(-1)
-      expect(scrollIndex).toBeLessThan(boxModelIndex)
+    it('clicks with DOM events when something covers the element, and says what', async () => {
+      const page = createPage({ answers: { 'hit-test': () => ({ ok: false, covering: 'div.modal-backdrop' }) } })
+      const cdp = await cdpOnPage(page)
+
+      const outcome = await cdp.clickElement('@e1')
+
+      expect(outcome).toMatchObject({ via: 'script', note: 'it was covered by div.modal-backdrop' })
+      expect(page.mouse().some((e) => e.type === 'mousePressed')).toBe(false)
+      expect(page.ran('script-click')).toBe(1)
+    })
+
+    it('clicks with DOM events when the mouse click never reached the element', async () => {
+      const page = createPage({ answers: { 'read-click-probe': () => ({ down: false, click: false }) } })
+      const cdp = await cdpOnPage(page)
+
+      const outcome = await cdp.clickElement('@e1')
+
+      expect(outcome).toMatchObject({ via: 'script', note: 'the mouse click did not reach it' })
+      expect(page.ran('script-click')).toBe(1)
+    })
+
+    it('clicks with DOM events when no part of the element is on screen', async () => {
+      const page = createPage({ quads: [] })
+      const cdp = await cdpOnPage(page)
+
+      const outcome = await cdp.clickElement('@e1')
+
+      expect(outcome.via).toBe('script')
+      expect(page.mouse()).toHaveLength(0)
+    })
+
+    it('does not click twice when the click navigated the page', async () => {
+      const page = createPage({ answers: { 'read-click-probe': () => new Error('Execution context was destroyed.') } })
+      const cdp = await cdpOnPage(page)
+
+      const outcome = await cdp.clickElement('@e1')
+
+      expect(outcome.via).toBe('mouse')
+      expect(page.ran('script-click')).toBe(0)
+    })
+  })
+
+  describe('pressKey', () => {
+    it('sends named keys through CDP with their key codes', async () => {
+      const page = createPage()
+      const cdp = new BrowserCDP(page.wc as any)
+
+      expect(await cdp.pressKey('Escape')).toBe(true)
+      expect(await cdp.pressKey('Enter')).toBe(true)
+
+      expect(page.keys().every(event => event.nativeVirtualKeyCode === undefined)).toBe(true)
+      expect(page.keys()).toEqual([
+        expect.objectContaining({ type: 'rawKeyDown', key: 'Escape', code: 'Escape', windowsVirtualKeyCode: 27 }),
+        expect.objectContaining({ type: 'keyUp', key: 'Escape' }),
+        expect.objectContaining({ type: 'keyDown', key: 'Enter', text: '\r', windowsVirtualKeyCode: 13 }),
+        expect.objectContaining({ type: 'keyUp', key: 'Enter' }),
+      ])
+    })
+
+    it('leaves Ctrl/Cmd shortcuts and unknown keys to the native path', async () => {
+      const page = createPage()
+      const cdp = new BrowserCDP(page.wc as any)
+
+      expect(await cdp.pressKey('a', ['meta'])).toBe(false)
+      expect(await cdp.pressKey('a', ['control'])).toBe(false)
+      expect(await cdp.pressKey('MediaPlayPause')).toBe(false)
+      expect(page.keys()).toHaveLength(0)
+    })
+
+    it('maps accelerator names, letters with shift, and function keys', () => {
+      expect(resolveCdpKey('Up')).toMatchObject({ key: 'ArrowUp', keyCode: 38 })
+      expect(resolveCdpKey('page_down')).toMatchObject({ key: 'PageDown', keyCode: 34 })
+      expect(resolveCdpKey('a', true)).toMatchObject({ key: 'A', code: 'KeyA', keyCode: 65, text: 'A' })
+      expect(resolveCdpKey('7')).toMatchObject({ code: 'Digit7', text: '7' })
+      expect(resolveCdpKey('F5')).toMatchObject({ key: 'F5', keyCode: 116 })
+      expect(resolveCdpKey('?')).toBeNull()
     })
   })
 
@@ -377,34 +479,105 @@ describe('BrowserCDP', () => {
     })
   })
 
+  describe('fillElement value settling', () => {
+    // React-controlled inputs ignore value writes React's tracker did not see; the native setter
+    // plus an input event is what React listens to.
+    it('clears and settles through the page, and reports a password field', async () => {
+      const page = createPage({ role: 'textbox', answers: { 'settle-value': () => ({ isPassword: true }) } })
+      const cdp = await cdpOnPage(page)
+
+      const result = await cdp.fillElement('@e1', 'pw')
+
+      expect(result.isPassword).toBe(true)
+      expect(page.ran('clear-value')).toBe(1)
+      expect(page.sent.find((c) => pageFunction(c.params) === 'settle-value')?.params.arguments).toEqual([{ value: 'pw' }])
+    })
+  })
+
   describe('selectOption', () => {
-    it('sets value and dispatches events', async () => {
-      const sentCommands: string[] = []
-      const wc = createMockWebContents(async (method) => {
-        sentCommands.push(method)
-        if (method === 'Accessibility.getFullAXTree') {
-          return {
-            nodes: [
-              { role: { value: 'combobox' }, name: { value: 'Country' }, backendDOMNodeId: 20 },
-            ],
-          }
-        }
-        if (method === 'DOM.resolveNode') {
-          return { object: { objectId: 'obj-20' } }
-        }
-        if (method === 'DOM.getBoxModel') {
-          return { model: { content: [10, 10, 50, 10, 50, 50, 10, 50] } }
-        }
-        return {}
+    it('chooses a native <select> option in the page', async () => {
+      const page = createPage({ role: 'combobox', answers: { 'select-native': () => ({ ok: true }) } })
+      const cdp = await cdpOnPage(page)
+
+      await cdp.selectOption('@e1', 'United States')
+
+      const call = page.sent.find((c) => pageFunction(c.params) === 'select-native')
+      expect(call?.params.arguments).toEqual([{ value: 'United States' }])
+      expect(page.mouse()).toHaveLength(0)
+    })
+
+    it('reports the options when a native select has no match', async () => {
+      const page = createPage({ role: 'combobox', answers: { 'select-native': () => ({ ok: false, options: ['Canada', 'Mexico'] }) } })
+      const cdp = await cdpOnPage(page)
+
+      await expect(cdp.selectOption('@e1', 'Peru')).rejects.toThrow('no option matches "Peru" (options: Canada, Mexico)')
+    })
+
+    // Found 2026-10-11: Radix Select renders its listbox in a portal after the click, so the old
+    // single-pass search ran before it existed ("option not found in active listbox").
+    it('opens a custom select, waits for its listbox, and clicks the option', async () => {
+      const page = createPage({
+        role: 'combobox',
+        answers: {
+          'select-native': () => null,
+          'popup-baseline': () => false,
+          'find-popup': (_params, call) => (call < 3 ? null : { objectId: 'listbox-1' }),
+          'find-option': () => ({ objectId: 'option-us' }),
+          'option-text': () => 'United States',
+          'verify-selection': () => ({ ok: true }),
+        },
       })
+      const cdp = await cdpOnPage(page)
 
-      const cdp = new BrowserCDP(wc as any)
-      await cdp.getAccessibilitySnapshot()
+      await cdp.selectOption('@e1', 'united')
 
-      await cdp.selectOption('@e1', 'US')
+      expect(page.ran('find-popup')).toBe(3)
+      // Two trusted clicks: the trigger, then the option.
+      expect(page.mouse().filter((e) => e.type === 'mousePressed')).toHaveLength(2)
+      const verify = page.sent.find((c) => pageFunction(c.params) === 'verify-selection')
+      expect(verify?.params.arguments).toEqual([{ objectId: 'listbox-1' }, { objectId: 'option-us' }, { value: 'United States' }])
+    })
 
-      expect(sentCommands).toContain('DOM.resolveNode')
-      expect(sentCommands).toContain('Runtime.callFunctionOn')
+    it('types into the search box when the option is not rendered yet', async () => {
+      const page = createPage({
+        role: 'combobox',
+        answers: {
+          'select-native': () => null,
+          'popup-baseline': () => true,
+          'find-popup': () => ({ objectId: 'list-1' }),
+          'find-option': (params) => (page.ran('type-search') > 0 ? { objectId: 'option-1' } : null),
+          'find-search-input': () => ({ objectId: 'search-1' }),
+          'option-text': () => 'Zimbabwe',
+          'verify-selection': () => ({ ok: true }),
+        },
+      })
+      const cdp = await cdpOnPage(page)
+
+      await cdp.selectOption('@e1', 'Zimb')
+
+      expect(page.ran('type-search')).toBe(1)
+      // Already open: only the option was clicked.
+      expect(page.mouse().filter((e) => e.type === 'mousePressed')).toHaveLength(1)
+    })
+
+    it('falls back to Enter on the option when the click did not change the control', async () => {
+      const page = createPage({
+        role: 'combobox',
+        answers: {
+          'select-native': () => null,
+          'popup-baseline': () => true,
+          'find-popup': () => ({ objectId: 'list-1' }),
+          'find-option': () => ({ objectId: 'option-1' }),
+          'option-text': () => 'Medium',
+          'verify-selection': (_params, call) => ({ ok: call > 1 }),
+        },
+      })
+      const cdp = await cdpOnPage(page)
+
+      await cdp.selectOption('@e1', 'Medium')
+
+      expect(page.ran('focus')).toBe(1)
+      expect(page.keys().some((k) => k.key === 'Enter')).toBe(true)
     })
   })
 
@@ -485,3 +658,23 @@ describe('BrowserCDP', () => {
     })
   })
 })
+
+
+it('does not idle-detach while a CDP command is still in flight', async () => {
+  let finish!: (value: unknown) => void
+  const wc = createMockWebContents(async method => {
+    if (method === 'Runtime.evaluate') return new Promise(resolve => { finish = resolve })
+    return { nodes: [] }
+  })
+  const cdp = new BrowserCDP(wc as never)
+  await cdp.getAccessibilitySnapshot()
+  const pending = cdp.getViewportMetrics()
+  try {
+    await new Promise(resolve => setTimeout(resolve, 5_100))
+    expect(wc.debugger.detach).not.toHaveBeenCalled()
+  } finally {
+    finish({ result: { value: { width: 800, height: 600 } } })
+    await pending
+    cdp.detach()
+  }
+}, 10_000)

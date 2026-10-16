@@ -64,7 +64,10 @@ function createMockWebContents() {
       }
       return img
     }),
-    executeJavaScript: mock(async (expr: string) => eval(expr)),
+    // The paint probe (two animation frames) resolves at once; tests that need a page that isn't
+    // painting override it.
+    executeJavaScript: mock(async (expr: string) => (expr.includes('requestAnimationFrame') ? true : eval(expr))),
+    setBackgroundThrottling: mock((_allowed: boolean) => {}),
     focus: mock(() => {}),
     setWindowOpenHandler: mock((_handler: any) => {}),
     send: mock((_channel: string, _payload?: unknown) => {}),
@@ -132,6 +135,15 @@ function createMockWindow(opts?: { width?: number; height?: number; minWidth?: n
     restore: mock(() => {}),
     show: mock(() => {}),
     showInactive: mock(() => {}),
+    moveTop: mock(() => {}),
+    getOpacity: mock(() => 1),
+    setOpacity: mock((_opacity: number) => {}),
+    getBounds: mock(() => ({ x: 40, y: 60, width: contentWidth, height: contentHeight })),
+    setBounds: mock((_bounds: { x: number; y: number; width: number; height: number }) => {}),
+    setPosition: mock((_x: number, _y: number) => {}),
+    setSkipTaskbar: mock((_skip: boolean) => {}),
+    setIgnoreMouseEvents: mock((_ignore: boolean) => {}),
+    setAlwaysOnTop: mock((_flag: boolean, _level?: string) => {}),
     setWindowButtonVisibility: mock((_visible: boolean) => {}),
     hide: mock(() => {
       win._emit('hide')
@@ -185,6 +197,12 @@ mock.module('electron', () => ({
   },
   nativeTheme: {
     shouldUseDarkColors: false,
+  },
+  screen: {
+    getAllDisplays: mock(() => [
+      { bounds: { x: 0, y: 0, width: 1920, height: 1080 } },
+      { bounds: { x: 1920, y: 0, width: 2560, height: 1440 } },
+    ]),
   },
   shell: {
     openExternal: mockShellOpenExternal,
@@ -256,7 +274,7 @@ mock.module('../browser-cdp', () => ({
   },
 }))
 
-const { BrowserPaneManager } = await import('../browser-pane-manager')
+const { BrowserPaneManager, isSignInPopupUrl } = await import('../browser-pane-manager')
 
 describe('BrowserPaneManager', () => {
   let manager: InstanceType<typeof BrowserPaneManager>
@@ -759,6 +777,8 @@ describe('BrowserPaneManager', () => {
   it('captures and filters console entries', () => {
     manager.createInstance('console-1')
     const instance = (manager as any).instances.get('console-1')
+    // Off the app's empty-state page, whose console output is never logged
+    instance.pageView.webContents._emit('did-start-navigation', 'https://example.com/', false, true)
 
     instance.pageView.webContents._emit('console-message', 2, 'warn message')
     instance.pageView.webContents._emit('console-message', 3, 'error message')
@@ -1005,7 +1025,11 @@ describe('BrowserPaneManager', () => {
     expect(instance.window.showInactive).toHaveBeenCalledTimes(1)
     expect(instance.window.focus).not.toHaveBeenCalled()
     expect(instance.window.hide).toHaveBeenCalled()
-    expect(result.metadata?.warnings?.some((w: string) => w.includes('temporary inactive reveal'))).toBe(true)
+    expect(result.metadata?.warnings?.some((w: string) => w.includes('shown invisibly'))).toBe(true)
+    // Invisible and click-through while shown, then restored
+    expect(instance.window.setOpacity.mock.calls).toEqual([[0], [1]])
+    expect(instance.window.setIgnoreMouseEvents.mock.calls).toEqual([[true], [false]])
+    expect(instance.window.setAlwaysOnTop.mock.calls).toEqual([[true, 'floating'], [false]])
   })
 
   it('throws when region screenshot capture returns empty NativeImage', async () => {
@@ -1099,6 +1123,243 @@ describe('BrowserPaneManager', () => {
 
     // BrowserWindow minHeight is 500, toolbar is 48, so effective viewport height is 452.
     expect(resized).toEqual({ width: 700, height: 452 })
+  })
+
+  // Found 2026-10-11: parallel sessions each opened their own Google sign-in popup, though all
+  // browser windows share one cookie partition.
+  describe('sign-in popups across browser windows', () => {
+    const HANDLER = 'https://liza.firebaseapp.com/__/auth/handler?providerId=google.com'
+    const openHandlerOf = (instance: any) => instance.pageView.webContents.setWindowOpenHandler.mock.calls[0][0]
+
+    it('lets one open sign-in popup serve every window', () => {
+      manager.createInstance('signin-a')
+      manager.createInstance('signin-b')
+      const a = (manager as any).instances.get('signin-a')
+      const b = (manager as any).instances.get('signin-b')
+      const popupWindow = createMockWindow({ width: 520, height: 720 })
+      emitDidCreateWindow(a.pageView.webContents, popupWindow, { url: HANDLER })
+
+      expect(openHandlerOf(b)({ url: HANDLER, disposition: 'new-popup' })).toEqual({ action: 'deny' })
+      expect(popupWindow.moveTop).toHaveBeenCalledTimes(1)
+      // Other popups, and the owner's own retries, still open.
+      expect(openHandlerOf(b)({ url: 'https://example.com/share', disposition: 'new-popup' }).action).toBe('allow')
+      expect(openHandlerOf(a)({ url: HANDLER, disposition: 'new-popup' }).action).toBe('allow')
+
+      popupWindow.destroy() // closed: the next window may sign in itself
+      expect(openHandlerOf(b)({ url: HANDLER, disposition: 'new-popup' }).action).toBe('allow')
+    })
+
+    it('tells the agent what a click did with popups', async () => {
+      manager.createInstance('signin-owner')
+      manager.createInstance('signin-click')
+      const owner = (manager as any).instances.get('signin-owner')
+      const clicker = (manager as any).instances.get('signin-click')
+      const geometry = { ref: '@e1', box: { x: 0, y: 0, width: 10, height: 10 }, clickPoint: { x: 5, y: 5 }, via: 'mouse' }
+
+      owner.cdp.clickElement = mock(async () => {
+        emitDidCreateWindow(owner.pageView.webContents, createMockWindow(), { url: HANDLER })
+        return geometry
+      })
+      const opened = await manager.clickElement('signin-owner', '@e1')
+      expect(opened.popup).toContain(`The page opened a popup window (${HANDLER})`)
+
+      clicker.cdp.clickElement = mock(async () => {
+        openHandlerOf(clicker)({ url: HANDLER, disposition: 'new-popup' })
+        return geometry
+      })
+      const joined = await manager.clickElement('signin-click', '@e1')
+      expect(joined.popup).toContain('already open from another browser window (signin-owner)')
+
+      clicker.cdp.clickElement = mock(async () => geometry)
+      expect((await manager.clickElement('signin-click', '@e1')).popup).toBeUndefined()
+    })
+
+    it('recognizes sign-in popup URLs', () => {
+      expect(isSignInPopupUrl(HANDLER)).toBe(true)
+      expect(isSignInPopupUrl('https://accounts.google.com/o/oauth2/v2/auth?x=1')).toBe(true)
+      expect(isSignInPopupUrl('https://github.com/login/oauth/authorize')).toBe(true)
+      expect(isSignInPopupUrl('https://app.example.com/login')).toBe(true)
+      expect(isSignInPopupUrl('https://example.com/share?u=1')).toBe(false)
+      expect(isSignInPopupUrl('https://example.com/authors')).toBe(false)
+    })
+  })
+
+  // Found 2026-10-11: the network log of a site's window also held the app's own localhost:5173
+  // requests (its empty-state page), and console entries from the previous site.
+  describe('console and network logs', () => {
+    const electron = () => require('electron') as any
+    const observers = () => {
+      const results = electron().session.fromPartition.mock.results
+      for (let i = results.length - 1; i >= 0; i--) {
+        const ses = results[i].value
+        const before = ses.webRequest.onBeforeRequest.mock.calls[0]?.[0]
+        if (before) return { before, completed: ses.webRequest.onCompleted.mock.calls[0][0] }
+      }
+      throw new Error('no partition observers registered')
+    }
+
+    it('skips the empty-state page and keeps only the current site', async () => {
+      manager.createInstance('logs')
+      const instance = (manager as any).instances.get('logs')
+      const wc = instance.pageView.webContents
+      const { before, completed } = observers()
+      let id = 0
+      const request = (url: string) => {
+        const details = { id: ++id, url, webContentsId: wc.id, method: 'GET', statusCode: 200, resourceType: 'script' }
+        before(details, () => {})
+        completed(details)
+      }
+      const navigate = async (url: string) => {
+        await Bun.sleep(2) // distinct millisecond timestamps
+        wc._emit('did-start-navigation', url, false, true)
+        await Bun.sleep(1)
+        request(url)
+        await wc.loadURL(url)
+        wc._emit('did-navigate', url)
+      }
+      const urls = () => manager.getNetworkLogs('logs').map((entry: any) => entry.url)
+
+      // The empty-state page (the Vite dev server in development) is loaded first.
+      request('http://localhost:5173/@vite/client')
+      wc._emit('console-message', 1, '[vite] connected.')
+      expect(urls()).toEqual([])
+      expect(manager.getConsoleLogs('logs')).toEqual([])
+
+      await navigate('https://slack.com/invite')
+      wc._emit('console-message', 2, 'slack warning')
+      await navigate('https://slack.com/welcome') // same site: history kept
+      expect(urls()).toEqual(['https://slack.com/invite', 'https://slack.com/welcome'])
+
+      await navigate('https://platform.example.com/')
+      request('https://platform.example.com/app.js')
+      expect(urls()).toEqual(['https://platform.example.com/', 'https://platform.example.com/app.js'])
+      expect(manager.getConsoleLogs('logs')).toEqual([])
+    })
+  })
+
+  it('annotates the elements on screen, not the first ones in the document', async () => {
+    manager.createInstance('annotate-viewport')
+    const instance = (manager as any).instances.get('annotate-viewport')
+    const box = (y: number, height = 20) => ({ x: 10, y, width: 100, height })
+    const boxes: Record<string, { x: number; y: number; width: number; height: number }> = {
+      '@e1': box(-200), // scrolled past
+      '@e2': box(100),
+      '@e3': box(2000), // below the fold
+      '@e4': box(300, 0), // collapsed
+    }
+    instance.cdp.getAccessibilitySnapshot = mock(async () => ({ url: 'https://example.com', title: 'Example', nodes: Object.keys(boxes).map((ref) => ({ ref, role: 'button', name: ref })) }))
+    instance.cdp.getElementGeometry = mock(async (ref: string) => ({ ref, box: boxes[ref], clickPoint: { x: 60, y: boxes[ref]!.y + 10 } }))
+    instance.cdp.getViewportMetrics = mock(async () => ({ width: 1000, height: 800, dpr: 1, scrollX: 0, scrollY: 0 }))
+
+    const result = await manager.screenshot('annotate-viewport', { annotate: true })
+
+    expect((result.metadata?.targets as Array<{ ref: string }>).map((t) => t.ref)).toEqual(['@e2'])
+  })
+
+  // Found 2026-10-11: screenshots of a hidden window showed an old frame. A throttled background
+  // page stops painting and capturePage copies its last composited frame.
+  describe('captures of a hidden page', () => {
+    const image = (label: string) => {
+      const img = {
+        isEmpty: () => false,
+        getSize: () => ({ width: 2400, height: 1800 }),
+        resize: () => img,
+        toPNG: () => Buffer.from(label),
+        toJPEG: (_q: number) => Buffer.from(label),
+      }
+      return img
+    }
+    /** The paint probe never resolves until `paints()` is called (a hidden, throttled page). */
+    const paintProbe = (instance: any) => {
+      let painting = false
+      const original = instance.pageView.webContents.executeJavaScript
+      instance.pageView.webContents.executeJavaScript = mock(async (expr: string) => {
+        if (!expr.includes('requestAnimationFrame')) return original(expr)
+        return painting ? true : new Promise(() => {})
+      })
+      return { paints: () => { painting = true } }
+    }
+
+    it('lets the page render for the capture and throttles it again afterwards', async () => {
+      manager.createInstance('cap-throttle')
+      const instance = (manager as any).instances.get('cap-throttle')
+
+      await manager.screenshot('cap-throttle')
+
+      expect(instance.pageView.webContents.setBackgroundThrottling.mock.calls).toEqual([[false], [true]])
+      expect(instance.rendersWhileHidden).toBe(false)
+    })
+
+    it('keeps the page rendering while an agent controls the window', () => {
+      manager.createInstance('cap-agent')
+      manager.bindSession('cap-agent', 'sess-cap')
+      const instance = (manager as any).instances.get('cap-agent')
+
+      manager.setAgentControl('sess-cap', { displayName: 'Browser' })
+      expect(instance.pageView.webContents.setBackgroundThrottling).toHaveBeenLastCalledWith(false)
+
+      manager.clearAgentControl('sess-cap')
+      expect(instance.pageView.webContents.setBackgroundThrottling).toHaveBeenLastCalledWith(true)
+    })
+
+    it('skips hidden captures of a page that is not painting and reveals it briefly instead', async () => {
+      manager.createInstance('cap-stale')
+      const instance = (manager as any).instances.get('cap-stale')
+      const probe = paintProbe(instance)
+      instance.window.showInactive = mock(() => { probe.paints() })
+      instance.pageView.webContents.capturePage = mock(async (_rect: unknown, opts: unknown) => image(opts ? 'stale-hidden' : 'fresh'))
+
+      const result = await manager.screenshot('cap-stale')
+
+      expect(result.imageBuffer.toString()).toBe('fresh')
+      expect(instance.pageView.webContents.capturePage).toHaveBeenCalledTimes(1)
+      expect(instance.window.showInactive).toHaveBeenCalledTimes(1)
+      expect(instance.window.hide).toHaveBeenCalled()
+      // Raw screenshots report warnings without includeMetadata.
+      expect(result.metadata?.warnings?.some((w: string) => w.includes('shown invisibly'))).toBe(true)
+    })
+
+    it('bounds a stalled native capture and restores the hidden window', async () => {
+      manager.createInstance('cap-stalled')
+      const instance = (manager as any).instances.get('cap-stalled')
+      paintProbe(instance)
+      instance.pageView.webContents.capturePage = mock(() => new Promise(() => {}))
+      await expect(manager.screenshot('cap-stalled')).rejects.toThrow('current display surface is unavailable')
+      expect(instance.isVisible).toBe(false)
+      expect(instance.window.hide).toHaveBeenCalled()
+    }, 10_000)
+
+    // setOpacity does nothing on Linux, so a transparent reveal would flash the window there.
+    it('parks the window beyond every display on Linux instead of making it transparent', async () => {
+      const platform = Object.getOwnPropertyDescriptor(process, 'platform')!
+      Object.defineProperty(process, 'platform', { value: 'linux' })
+      try {
+        manager.createInstance('cap-linux')
+        const instance = (manager as any).instances.get('cap-linux')
+        const probe = paintProbe(instance)
+        instance.window.showInactive = mock(() => { probe.paints() })
+
+        await manager.screenshot('cap-linux')
+
+        expect(instance.window.setOpacity).not.toHaveBeenCalled()
+        expect(instance.window.setPosition).toHaveBeenCalledWith(4580, 60) // right of both displays
+        expect(instance.window.setSkipTaskbar.mock.calls).toEqual([[true], [false]])
+        expect(instance.window.setBounds).toHaveBeenCalledWith({ x: 40, y: 60, width: 1200, height: 900 })
+        expect(instance.window.hide).toHaveBeenCalled()
+      } finally {
+        Object.defineProperty(process, 'platform', platform)
+      }
+    })
+
+    it('warns when even a reveal produced no new frame', async () => {
+      manager.createInstance('cap-never')
+      const instance = (manager as any).instances.get('cap-never')
+      paintProbe(instance)
+
+      const result = await manager.screenshot('cap-never')
+
+      expect(result.metadata?.warnings).toContain('The page did not paint a new frame, so this capture may show an older one.')
+    })
   })
 
   describe('agent control overlay', () => {
@@ -1264,6 +1525,97 @@ describe('BrowserPaneManager', () => {
       const instance = (manager as any).instances.get('ac-8')
       expect(instance.agentControl).toBeNull()
       expect(instance.nativeOverlayView.webContents.executeJavaScript).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('security challenge detection', () => {
+    const NONE = { detected: false, provider: 'none', signals: [], suspected: false }
+    const ordinaryPage = {
+      readyState: 'complete',
+      title: 'Example',
+      cfChallengeOptions: false,
+      challengeForm: false,
+      challengeStage: false,
+      text: 'Welcome',
+      frames: [],
+      turnstile: [],
+      pxCaptcha: null,
+      overlayOpen: false,
+    }
+    const interstitial = { ...ordinaryPage, title: 'Just a moment...', cfChallengeOptions: true }
+
+    /** A settled page whose page script returns `pages` in turn; the confirm delay is stubbed out. */
+    function setUpPage(id: string, pages: unknown[], options: { loading?: boolean } = {}) {
+      manager.createInstance(id)
+      const instance = (manager as any).instances.get(id)
+      instance.currentUrl = 'https://example.com/'
+      instance.pageView.webContents.isLoading = mock(() => options.loading ?? false)
+      let call = 0
+      instance.pageView.webContents.executeJavaScript = mock(async () => pages[Math.min(call++, pages.length - 1)])
+      const sleep = mock(async (_ms: number) => {})
+      ;(manager as any).sleep = sleep
+      return { instance, sleep }
+    }
+
+    it('gives no verdict while the page is loading', async () => {
+      const { instance, sleep } = setUpPage('sc-loading', [interstitial], { loading: true })
+
+      expect(await manager.detectSecurityChallenge('sc-loading')).toEqual(NONE)
+      expect(instance.pageView.webContents.executeJavaScript).not.toHaveBeenCalled()
+      expect(sleep).not.toHaveBeenCalled()
+    })
+
+    it('does not flag a sparse page that shows no challenge', async () => {
+      const { instance, sleep } = setUpPage('sc-sparse', [{ ...ordinaryPage, text: 'Invalid connect link' }])
+      instance.cdp.getAccessibilitySnapshot = mock(async () => ({
+        url: 'https://example.com/',
+        title: 'Example',
+        nodes: [
+          { ref: '@e1', role: 'heading', name: 'Invalid connect link' },
+          { ref: '@e2', role: 'paragraph', name: 'Ask for a new one.' },
+          { ref: '@e3', role: 'link', name: 'Home' },
+        ],
+      }))
+
+      expect(await manager.detectSecurityChallenge('sc-sparse')).toEqual({ ...NONE, signals: ['ax:near-empty(1/3)'] })
+      expect(sleep).not.toHaveBeenCalled()
+    })
+
+    it('reports a challenge only after a second look confirms it', async () => {
+      const { SECURITY_CHALLENGE_CONFIRM_DELAY_MS } = await import('../security-challenge')
+      const { instance, sleep } = setUpPage('sc-confirmed', [interstitial, interstitial])
+
+      const verdict = await manager.detectSecurityChallenge('sc-confirmed')
+
+      expect(verdict).toEqual({ detected: true, provider: 'cloudflare', signals: ['js:cf-chl-opt', 'title:just-a-moment'], suspected: false })
+      expect(sleep).toHaveBeenCalledTimes(1)
+      expect(sleep).toHaveBeenCalledWith(SECURITY_CHALLENGE_CONFIRM_DELAY_MS)
+      expect(instance.pageView.webContents.executeJavaScript).toHaveBeenCalledTimes(2)
+    })
+
+    it('drops a verdict that does not hold on the second look', async () => {
+      const { sleep } = setUpPage('sc-passed', [interstitial, ordinaryPage])
+
+      expect(await manager.detectSecurityChallenge('sc-passed')).toEqual(NONE)
+      expect(sleep).toHaveBeenCalledTimes(1)
+    })
+
+    it('gives no verdict when the URL changes while facts are collected', async () => {
+      const { instance } = setUpPage('sc-moved', [])
+      instance.pageView.webContents.executeJavaScript = mock(async () => {
+        instance.currentUrl = 'https://example.com/next'
+        return interstitial
+      })
+
+      expect(await manager.detectSecurityChallenge('sc-moved')).toEqual(NONE)
+    })
+
+    it('gives no verdict when the page script fails or the instance is gone', async () => {
+      const { instance } = setUpPage('sc-script-error', [])
+      instance.pageView.webContents.executeJavaScript = mock(async () => { throw new Error('Script failed to execute') })
+
+      expect(await manager.detectSecurityChallenge('sc-script-error')).toEqual(NONE)
+      expect(await manager.detectSecurityChallenge('sc-missing')).toEqual(NONE)
     })
   })
 

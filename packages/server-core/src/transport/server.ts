@@ -18,6 +18,8 @@ import {
   EVENT_BUFFER_MAX_SIZE,
   EVENT_BUFFER_TTL_MS,
   DISCONNECTED_CLIENT_TTL_MS,
+  NODE_WS_MAX_MESSAGE_BYTES,
+  runtimeMaxMessageBytes,
   isErrorCode,
   type MessageEnvelope,
   type PushTarget,
@@ -141,6 +143,8 @@ export class WsRpcServer implements RpcServer {
   private readonly serverId: string
   private readonly tlsOptions: WsRpcTlsOptions | null
   private readonly serverVersion: string
+  /** Largest message this server accepts, advertised in handshake_ack (Bun ignores `maxPayload`). */
+  private readonly maxMessageBytes = runtimeMaxMessageBytes()
   private readonly maxClients: number
   private readonly onClientConnected: WsRpcServerOptions['onClientConnected']
   private readonly onClientDisconnected: WsRpcServerOptions['onClientDisconnected']
@@ -278,7 +282,7 @@ export class WsRpcServer implements RpcServer {
           this.httpHandler,
         )
 
-        this.wss = new WebSocketServer({ server: this.httpsServer })
+        this.wss = new WebSocketServer({ server: this.httpsServer, maxPayload: NODE_WS_MAX_MESSAGE_BYTES })
 
         this.httpsServer.on('error', (err) => reject(err))
 
@@ -294,7 +298,7 @@ export class WsRpcServer implements RpcServer {
         // Plain WS + HTTP handler: create an HTTP server for both.
         this._protocol = 'ws'
         this.httpServer = createHttpServer(this.httpHandler)
-        this.wss = new WebSocketServer({ server: this.httpServer })
+        this.wss = new WebSocketServer({ server: this.httpServer, maxPayload: NODE_WS_MAX_MESSAGE_BYTES })
 
         this.httpServer.on('error', (err) => reject(err))
 
@@ -312,6 +316,7 @@ export class WsRpcServer implements RpcServer {
         this.wss = new WebSocketServer({
           host: this.host,
           port: this.requestedPort,
+          maxPayload: NODE_WS_MAX_MESSAGE_BYTES,
         })
 
         this.wss.on('listening', () => {
@@ -493,6 +498,7 @@ export class WsRpcServer implements RpcServer {
                   type: 'handshake_ack',
                   protocolVersion: PROTOCOL_VERSION,
                   serverVersion: this.serverVersion || undefined,
+                  maxMessageBytes: this.maxMessageBytes,
                   clientId: prevClient.id,
                   registeredChannels: [...this.handlers.keys()],
                   reconnected: true,
@@ -516,6 +522,7 @@ export class WsRpcServer implements RpcServer {
                   type: 'handshake_ack',
                   protocolVersion: PROTOCOL_VERSION,
                   serverVersion: this.serverVersion || undefined,
+                  maxMessageBytes: this.maxMessageBytes,
                   clientId: prevClient.id,
                   registeredChannels: [...this.handlers.keys()],
                   reconnected: true,
@@ -577,6 +584,7 @@ export class WsRpcServer implements RpcServer {
           type: 'handshake_ack',
           protocolVersion: PROTOCOL_VERSION,
           serverVersion: this.serverVersion || undefined,
+          maxMessageBytes: this.maxMessageBytes,
           clientId,
           registeredChannels: [...this.handlers.keys()],
         }

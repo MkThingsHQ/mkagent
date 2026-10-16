@@ -9,6 +9,7 @@
 
 import type {
   IBrowserPaneManager,
+  BrowserClickResult,
   AccessibilitySnapshot,
   BrowserConsoleEntry,
   BrowserConsoleOptions,
@@ -24,7 +25,7 @@ import type {
   BrowserWaitArgs,
   BrowserWaitResult,
 } from '../handlers/browser-pane-manager-interface'
-import type { BrowserInstanceInfo } from '@mkagent/shared/protocol'
+import type { BrowserInstanceInfo, BrowserSecurityChallenge } from '@mkagent/shared/protocol'
 
 const NOT_AVAILABLE = 'Browser automation is not available in headless mode'
 
@@ -71,7 +72,7 @@ export class NullBrowserPaneManager implements IBrowserPaneManager {
 
   // -- Interaction --
   async getAccessibilitySnapshot(_id: string): Promise<AccessibilitySnapshot> { unavailable('getAccessibilitySnapshot') }
-  async clickElement(_id: string, _ref: string, _options?: { waitFor?: 'none' | 'navigation' | 'network-idle'; timeoutMs?: number }): Promise<void> { unavailable('clickElement') }
+  async clickElement(_id: string, _ref: string, _options?: { waitFor?: 'none' | 'navigation' | 'network-idle'; timeoutMs?: number }): Promise<BrowserClickResult | void> { unavailable('clickElement') }
   async clickAtCoordinates(_id: string, _x: number, _y: number): Promise<void> { unavailable('clickAtCoordinates') }
   async drag(_id: string, _x1: number, _y1: number, _x2: number, _y2: number): Promise<void> { unavailable('drag') }
   async fillElement(_id: string, _ref: string, _value: string): Promise<void> { unavailable('fillElement') }
@@ -94,7 +95,7 @@ export class NullBrowserPaneManager implements IBrowserPaneManager {
   getNetworkLogs(_id: string, _options?: BrowserNetworkOptions): BrowserNetworkEntry[] { return [] }
   async waitFor(_id: string, _args: BrowserWaitArgs): Promise<BrowserWaitResult> { return unavailable('waitFor') }
   async getDownloads(_id: string, _options?: BrowserDownloadOptions): Promise<BrowserDownloadEntry[]> { return [] }
-  async detectSecurityChallenge(_id: string): Promise<{ detected: boolean; provider: string; signals: string[] }> {
+  async detectSecurityChallenge(_id: string): Promise<BrowserSecurityChallenge> {
     return { detected: false, provider: 'none', signals: [] }
   }
 }

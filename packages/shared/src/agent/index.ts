@@ -86,4 +86,13 @@ export {
   normalizeBrowserToolName,
   normalizeCanonicalBrowserToolName,
 } from './browser-tool-names.ts';
+
+// Keep passwords typed with browser_tool fill out of stored tool inputs
+export {
+  passwordFillRefs,
+  redactBrowserToolInput,
+  redactBrowserPasswordFills,
+} from './browser-tool-redaction.ts';
+
+// Export PowerShell validator root setter (for Electron startup on Windows)
 export { setPowerShellValidatorRoot } from './powershell-validator.ts';

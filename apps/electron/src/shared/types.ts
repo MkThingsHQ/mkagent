@@ -165,6 +165,8 @@ export interface TransportConnectionState {
   nextRetryInMs?: number
   lastError?: TransportConnectionError
   lastClose?: TransportCloseInfo
+  /** Largest message the connected server accepts (from handshake_ack); absent for older servers */
+  maxMessageBytes?: number
   updatedAt: number
 }
 
