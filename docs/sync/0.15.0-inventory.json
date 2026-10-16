@@ -1255,8 +1255,8 @@
     {
       "status": "M",
       "path": "apps/electron/src/renderer/components/ui/button.tsx",
-      "classification": "NORMALIZED_REUSE",
-      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+      "classification": "LITE_ADAPTATION",
+      "reason": "v0.15 semantic buttons import the tooltip subpath so primitive-only consumers do not evaluate PDF and rich-preview modules"
     },
     {
       "status": "M",

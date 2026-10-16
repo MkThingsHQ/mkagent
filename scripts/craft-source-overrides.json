@@ -650,6 +650,10 @@
       "sha256": "2910ca919db761812e2fa78e35c21b3ad98334b5d1959f6947117be8a1c8efa7",
       "reason": "Craft rich-text input test retains the xagent-proven placeholder visibility regression coverage"
     },
+    "apps/electron/src/renderer/components/ui/button.tsx": {
+      "sha256": "575f75dde10a102d1bd25a30fbe05b4a1060fef166663d6d475477f223d0411d",
+      "reason": "v0.15 semantic buttons import the tooltip subpath so primitive-only consumers do not evaluate PDF and rich-preview modules"
+    },
     "apps/electron/src/renderer/components/ui/mention-badge.tsx": {
       "sha256": "4da29597b0eb0f3a15ce34b52db61dfdfbd6eb02ff72f70cd520a031a902547e",
       "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
@@ -1987,7 +1991,7 @@
       "reason": "Craft shared UI package reduced to components used by retained interfaces"
     },
     "packages/ui/package.json": {
-      "sha256": "08419b19e27a2bfa98abdbac0df709c9e530d7a4d3211ded53237dd925659d1c",
+      "sha256": "4ed607933c37bfedefb4132b07a9fdf87055e174f87bfd97478268648a7b0a02",
       "reason": "Craft shared UI package reduced to components used by retained interfaces"
     },
     "packages/ui/src/components/annotations/block-markers.ts": {
@@ -2345,7 +2349,7 @@
       "reason": "MkAgent lineage, build, or validation guard required by the derivative release workflow"
     },
     "scripts/craft-ui-overrides.json": {
-      "sha256": "610f5e6b98aab61a72775da6dcda76ccdb838156d44c9afc5125f128791d2776",
+      "sha256": "d37c47dade3b7ead976311540a4bf1c5b08ddf2fc5d4c35257f17c6d02ee7d4c",
       "reason": "MkAgent renderer lineage ledger records the selective Craft v0.13.3 retry synchronization"
     },
     "scripts/release-workflow.test.ts": {

@@ -17,7 +17,8 @@
     "./context": "./src/context/index.ts",
     "./styles": "./src/styles/index.css",
     "./motion": "./src/motion/index.ts",
-    "./utils": "./src/lib/utils.ts"
+    "./utils": "./src/lib/utils.ts",
+    "./ui/tooltip": "./src/components/tooltip.tsx"
   },
   "dependencies": {
     "@mkagent/core": "workspace:*",

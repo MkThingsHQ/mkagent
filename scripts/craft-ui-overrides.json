@@ -297,6 +297,10 @@
       "sha256": "2910ca919db761812e2fa78e35c21b3ad98334b5d1959f6947117be8a1c8efa7",
       "reason": "Craft rich-text input test retains the xagent-proven placeholder visibility regression coverage"
     },
+    "apps/electron/src/renderer/components/ui/button.tsx": {
+      "sha256": "575f75dde10a102d1bd25a30fbe05b4a1060fef166663d6d475477f223d0411d",
+      "reason": "v0.15 semantic buttons import the tooltip subpath so primitive-only consumers do not evaluate PDF and rich-preview modules"
+    },
     "apps/electron/src/renderer/components/ui/mention-badge.tsx": {
       "sha256": "4da29597b0eb0f3a15ce34b52db61dfdfbd6eb02ff72f70cd520a031a902547e",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
