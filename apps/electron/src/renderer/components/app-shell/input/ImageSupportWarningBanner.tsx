@@ -24,15 +24,15 @@ export function ImageSupportWarningBanner({
 }: ImageSupportWarningBannerProps) {
   const { t } = useTranslation()
   return (
-    <div className="flex items-center gap-2 px-3 py-2 mx-2 mt-2 rounded-md bg-amber-500/10 text-foreground/70 text-xs">
-      <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+    <div className="mx-1.5 mt-1.5 flex items-center gap-2 rounded-lg bg-info-tint px-3 py-2 text-label-sm text-secondary">
+      <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-info" />
       <span className="flex-1 min-w-0">
         {t('chat.imageWarning.title', { modelName })}
       </span>
       <button
         type="button"
         onClick={onEnable}
-        className="shrink-0 underline underline-offset-2 hover:text-foreground"
+        className="min-h-control-sm shrink-0 font-medium text-foreground underline underline-offset-2"
       >
         {t('chat.imageWarning.action')}
       </button>

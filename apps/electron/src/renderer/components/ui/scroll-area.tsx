@@ -41,7 +41,8 @@ function ScrollBar({
       data-slot="scroll-bar"
       orientation={orientation}
       className={cn(
-        "flex touch-none select-none transition-colors",
+        // z-scrollbar: sticky content in the viewport (list group headers) must not paint over the thumb
+        "z-scrollbar flex touch-none select-none",
         orientation === "vertical" &&
           "h-full w-2 border-l border-l-transparent p-[1px]",
         orientation === "horizontal" &&
@@ -50,7 +51,7 @@ function ScrollBar({
       )}
       {...props}
     >
-      <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-border" />
+      <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-[var(--border-strong)] hover:bg-[var(--border-control)]" />
     </ScrollAreaPrimitive.ScrollAreaScrollbar>
   )
 }

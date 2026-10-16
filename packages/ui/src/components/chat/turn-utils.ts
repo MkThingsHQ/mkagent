@@ -1013,6 +1013,11 @@ export interface ActivityGroup {
   children: ActivityItem[]
   /** Data from TaskOutput result (duration, tokens) */
   taskOutputData?: TaskOutputData
+  /**
+   * The subagent was launched in an earlier turn (a background agent still at work): `parent` is a
+   * stand-in carrying its toolUseId and a status derived from the rows.
+   */
+  continued?: boolean
 }
 
 /**
@@ -1058,13 +1063,16 @@ function extractTaskOutputData(activity: ActivityItem): TaskOutputData | undefin
 }
 
 /**
- * Groups activities by their parent Task tool.
+ * Groups activities by the subagent (Task/Agent tool) that produced them.
  *
- * This transforms a flat chronological list into a grouped structure:
- * - Maintains chronological order of top-level items (orphans and Task groups)
- * - Each Task tool becomes a group containing its child activities
- * - Maintains chronological order within each group
- * - TaskOutput activities are hidden but their data enriches the parent Task
+ * - Top-level items keep chronological order: standalone activities and one group per subagent.
+ * - A group holds every descendant of its subagent (a nested subagent's rows too), oldest first,
+ *   with depth made relative to the group (its direct children at 0, so the group's rail is the
+ *   only indent).
+ * - Rows whose subagent was launched in an earlier turn (a background agent still at work) form a
+ *   `continued` group at the position of their first row, instead of interleaving with this turn's
+ *   rows under an indent that points at nothing.
+ * - TaskOutput activities are hidden; their data enriches the parent Task.
  *
  * @param activities - Flat list of activities sorted by timestamp
  * @returns Mixed array of standalone activities and activity groups
@@ -1072,33 +1080,35 @@ function extractTaskOutputData(activity: ActivityItem): TaskOutputData | undefin
 export function groupActivitiesByParent(
   activities: ActivityItem[]
 ): (ActivityItem | ActivityGroup)[] {
-  // First, build a set of valid Task toolUseIds (parents that actually exist)
-  const taskToolUseIds = new Set<string>()
+  const byToolUseId = new Map<string, ActivityItem>()
   for (const activity of activities) {
-    if (isParentTaskTool(activity.toolName ?? '') && activity.toolUseId) {
-      taskToolUseIds.add(activity.toolUseId)
-    }
+    if (activity.toolUseId) byToolUseId.set(activity.toolUseId, activity)
   }
 
-  // Build a map of parentId -> children for efficient lookup
-  // Only include children whose parent Task actually exists
-  const childrenByParent = new Map<string, ActivityItem[]>()
-  for (const activity of activities) {
-    if (activity.parentId && taskToolUseIds.has(activity.parentId)) {
-      const existing = childrenByParent.get(activity.parentId) || []
-      existing.push(activity)
-      childrenByParent.set(activity.parentId, existing)
+  // The group an activity belongs to: its topmost subagent ancestor in this turn, or the subagent
+  // outside it (`missing:` key) that its chain leads to. Null for top-level activities.
+  const groupKeyOf = (activity: ActivityItem): string | null => {
+    let key: string | null = null
+    let parentId = activity.parentId
+    for (let guard = 0; parentId && guard < 10; guard++) {
+      const parent = byToolUseId.get(parentId)
+      if (!parent) return `missing:${parentId}`
+      if (isParentTaskTool(parent.toolName ?? '')) key = parentId
+      parentId = parent.parentId
     }
+    return key
   }
 
-  // Build set of child activity IDs to skip (they're included in their parent's group)
-  // Activities with parentId pointing to non-existent parents are NOT added here,
-  // so they'll appear as orphan activities at root level instead of being dropped
-  const childIds = new Set<string>()
-  for (const children of childrenByParent.values()) {
-    for (const child of children) {
-      childIds.add(child.id)
-    }
+  const descendantsByKey = new Map<string, ActivityItem[]>()
+  const keyById = new Map<string, string>()
+  for (const activity of activities) {
+    if (activity.toolName === 'TaskOutput') continue
+    const key = groupKeyOf(activity)
+    if (!key) continue
+    keyById.set(activity.id, key)
+    const list = descendantsByKey.get(key) ?? []
+    list.push(activity)
+    descendantsByKey.set(key, list)
   }
 
   // Build a map of task_id (agent ID) -> TaskOutput data
@@ -1121,53 +1131,63 @@ export function groupActivitiesByParent(
   const taskToAgentId = new Map<string, string>()
   for (const activity of activities) {
     if (isParentTaskTool(activity.toolName ?? '') && (activity.status === 'completed' || activity.status === 'backgrounded') && activity.content) {
-      // Parse agent ID from Task result - look for "agentId: xyz" pattern
-      const agentIdMatch = activity.content.match(/agentId:\s*([a-zA-Z0-9_-]+)/)
-      const capturedAgentId = agentIdMatch?.[1]
+      const capturedAgentId = activity.content.match(/agentId:\s*([a-zA-Z0-9_-]+)/)?.[1]
       if (capturedAgentId && activity.toolUseId) {
         taskToAgentId.set(activity.toolUseId, capturedAgentId)
       }
     }
   }
 
-  // Build the grouped result maintaining chronological order
+  // Descendants with depth relative to the group: `baseDepth` is the depth of the group's own row.
+  const groupChildren = (key: string, baseDepth: number): ActivityItem[] =>
+    (descendantsByKey.get(key) ?? [])
+      .slice()
+      .sort((a, b) => a.timestamp - b.timestamp)
+      .map(child => ({ ...child, depth: Math.max(0, (child.depth ?? 0) - baseDepth - 1) }))
+
   const result: (ActivityItem | ActivityGroup)[] = []
+  const emittedContinued = new Set<string>()
 
   for (const activity of activities) {
-    // Skip activities that are children of a Task (they're in their parent's group)
-    if (childIds.has(activity.id)) {
-      continue
-    }
+    if (activity.toolName === 'TaskOutput') continue
 
-    // Skip TaskOutput activities - their data is attached to parent Task groups
-    if (activity.toolName === 'TaskOutput') {
-      continue
-    }
-
-    // Task/Agent tools become groups with their children
-    if (isParentTaskTool(activity.toolName ?? '')) {
-      const children = activity.toolUseId
-        ? (childrenByParent.get(activity.toolUseId) || [])
-        : []
-
-      // Look up TaskOutput data for this Task via the agent ID chain:
-      // Task.toolUseId -> agentId -> TaskOutput data
-      let taskOutputData: TaskOutputData | undefined
-      if (activity.toolUseId) {
-        const agentId = taskToAgentId.get(activity.toolUseId)
-        if (agentId) {
-          taskOutputData = taskOutputByAgentId.get(agentId)
-        }
+    const key = keyById.get(activity.id)
+    if (key) {
+      // A row of a subagent launched in an earlier turn opens its `continued` group (once)
+      if (key.startsWith('missing:') && !emittedContinued.has(key)) {
+        emittedContinued.add(key)
+        const children = groupChildren(key, 0)
+        const status: ActivityItem['status'] = children.some(c => c.status === 'running' || c.status === 'pending')
+          ? 'running'
+          : children.some(c => c.status === 'error') ? 'error' : 'completed'
+        result.push({
+          type: 'group',
+          parent: {
+            id: `continued:${key.slice('missing:'.length)}`,
+            type: 'tool',
+            toolName: 'Agent',
+            toolUseId: key.slice('missing:'.length),
+            status,
+            timestamp: activity.timestamp,
+            depth: 0,
+          },
+          children,
+          continued: true,
+        })
       }
+      continue
+    }
 
+    // Task/Agent tools become groups with every descendant
+    if (isParentTaskTool(activity.toolName ?? '') && activity.toolUseId) {
+      const agentId = taskToAgentId.get(activity.toolUseId)
       result.push({
         type: 'group',
         parent: activity,
-        children: children.sort((a, b) => a.timestamp - b.timestamp),
-        taskOutputData,
+        children: groupChildren(activity.toolUseId, activity.depth ?? 0),
+        taskOutputData: agentId ? taskOutputByAgentId.get(agentId) : undefined,
       })
     } else {
-      // Orphan activity - add directly
       result.push(activity)
     }
   }

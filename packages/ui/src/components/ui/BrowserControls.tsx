@@ -4,6 +4,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { cn } from '../../lib/utils'
 import { useTranslation } from 'react-i18next'
 import { Spinner } from './LoadingIndicator'
+import { TWEEN } from '../../motion/presets'
 
 /* ------------------------------------------------------------------ */
 /*  NavButton – small internal button matching TopBarButton styling   */
@@ -23,7 +24,7 @@ const NavButton = forwardRef<HTMLButtonElement, NavButtonProps>(
         'h-7 w-7 flex items-center justify-center rounded-[6px]',
         'hover:bg-foreground/5 focus:outline-none focus-visible:ring-0',
         'disabled:opacity-30 disabled:pointer-events-none',
-        'transition-colors duration-100',
+        'transition-colors duration-micro',
         className,
       )}
       {...props}
@@ -251,7 +252,7 @@ export function BrowserControls({
           onKeyDown={handleKeyDown}
           placeholder={t('browser.urlPlaceholder')}
           className={cn(
-            'w-full rounded-[8px] bg-transparent px-3 pl-8 text-[13px] text-foreground/70 outline-none transition-all',
+            'w-full rounded-[8px] bg-transparent px-3 pl-8 text-[13px] text-foreground/70 outline-none transition-[background-color,border-color,box-shadow,color]',
             compact ? 'h-[28px]' : 'h-[30px]',
             !safeThemeColor && (isFocused
               ? 'bg-background border border-transparent shadow-minimal'
@@ -295,7 +296,7 @@ export function BrowserControls({
           }}
           exit={{ opacity: 0 }}
           transition={{
-            opacity: { duration: 0.2, ease: 'easeOut' },
+            opacity: TWEEN.base,
             backgroundPosition: { duration: 1.6, repeat: Infinity, ease: 'easeInOut' },
           }}
         />

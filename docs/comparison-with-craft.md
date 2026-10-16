@@ -1,5 +1,7 @@
 # MkAgent vs. Craft Agents — current comparison
 
+Current sync: MkAgent 0.2.0 uses the scoped [Craft v0.15.0 baseline](upstream-sync.md). The measurements below are historical snapshots; consult the current [changed-path inventory](sync/0.15.0-inventory.json) and [validation report](sync/0.15.0-validation.md) for this release.
+
 > Snapshot refreshed on **2026-09-01** against the MkAgent sync worktree based on `242306a` and the upstream tag [`craft-ai-agents/craft-agents-oss` `v0.12.1` / `d7592c481216`](https://github.com/craft-ai-agents/craft-agents-oss). Numbers are repository snapshots, not live release metrics; installer-size figures remain the last measured build artifacts.
 
 This document explains, with evidence, what MkAgent keeps from Craft Agents, what it physically removes, and how those choices change the artifact you ship. MkAgent is the "Lite" derivative built on the same architecture and renderer; the table below is the canonical answer to "what's actually different?".

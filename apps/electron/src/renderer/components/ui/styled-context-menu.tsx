@@ -37,7 +37,7 @@ export const StyledContextMenuContent = React.forwardRef<
   <ContextMenuContent
     ref={ref}
     className={cn(
-      "w-fit font-sans whitespace-nowrap text-xs flex flex-col gap-0.5",
+      "w-fit font-sans whitespace-nowrap flex flex-col",
       minWidth,
       className
     )}
@@ -59,12 +59,8 @@ export const StyledContextMenuItem = React.forwardRef<
 >(({ className, variant = "default", ...props }, ref) => (
   <ContextMenuItem
     ref={ref}
-    className={cn(
-      "gap-3 pr-4 rounded-[4px] hover:bg-foreground/[0.03] focus:bg-foreground/[0.03]",
-      "[&_svg]:size-auto [&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0",
-      variant === "destructive" && "text-destructive focus:text-destructive hover:text-destructive [&_svg]:!text-destructive",
-      className
-    )}
+    variant={variant}
+    className={cn("pr-3", className)}
     {...props}
   />
 ))
@@ -77,7 +73,7 @@ export const StyledContextMenuSeparator = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ContextMenuSeparator
     ref={ref}
-    className={cn("bg-foreground/10", className)}
+    className={className}
     {...props}
   />
 ))
@@ -93,11 +89,7 @@ export const StyledContextMenuSubTrigger = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <ContextMenuSubTrigger
     ref={ref}
-    className={cn(
-      "gap-3 pr-4 rounded-[4px] hover:bg-foreground/10 focus:bg-foreground/10 data-[state=open]:bg-foreground/10",
-      "[&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0",
-      className
-    )}
+    className={cn("pr-1.5", className)}
     {...props}
   />
 ))
@@ -119,8 +111,7 @@ export const StyledContextMenuSubContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        "popover-styled w-fit font-sans whitespace-nowrap text-xs flex flex-col gap-0.5 z-dropdown overflow-hidden p-1",
-        "data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95",
+        "popover-styled motion-popover w-fit font-sans whitespace-nowrap flex flex-col z-dropdown overflow-hidden p-1 origin-(--radix-context-menu-content-transform-origin)",
         minWidth,
         className
       )}

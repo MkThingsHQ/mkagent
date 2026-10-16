@@ -6,6 +6,9 @@
  */
 
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
+import { Info } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@mkagent/ui'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
@@ -15,6 +18,10 @@ export interface SettingsToggleProps {
   label: React.ReactNode
   /** Optional description below label */
   description?: string
+  /** Optional longer help, shown from an info icon next to the label */
+  tooltip?: React.ReactNode
+  /** Optional small line under the description (e.g. usage numbers) */
+  note?: string
   /** Current checked state */
   checked: boolean
   /** Change handler */
@@ -43,6 +50,8 @@ export interface SettingsToggleProps {
 export function SettingsToggle({
   label,
   description,
+  tooltip,
+  note,
   checked,
   onCheckedChange,
   disabled,
@@ -50,22 +59,43 @@ export function SettingsToggle({
   inCard = true,
 }: SettingsToggleProps) {
   const id = React.useId()
+  const { t } = useTranslation()
 
   return (
     <div
       data-layout="settings-row"
       className={cn(
         'flex items-center justify-between',
-        inCard ? 'px-4 py-3.5' : 'py-3',
+        inCard ? settingsUI.row : settingsUI.rowBare,
         disabled && 'opacity-50',
         className
       )}
     >
       <label htmlFor={id} className="flex-1 min-w-0 cursor-pointer select-none">
-        <div className={settingsUI.label}>{label}</div>
+        <div className={cn(settingsUI.label, tooltip && 'flex items-center gap-1')}>
+          {label}
+          {tooltip && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {/* A button so keyboard and screen-reader users reach the help; preventDefault keeps a
+                    click on it from toggling the switch this label controls. */}
+                <button
+                  type="button"
+                  aria-label={t('common.info')}
+                  className="-my-1 inline-grid size-6 shrink-0 place-items-center rounded-sm text-tertiary transition-colors duration-micro ease-out-subtle hover:text-secondary hover:duration-instant"
+                  onClick={(event) => event.preventDefault()}
+                >
+                  <Info className="size-3.5" aria-hidden />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-xs">{tooltip}</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
         {description && (
           <div className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</div>
         )}
+        {note && <div className={cn(settingsUI.descriptionSmall, 'mt-0.5 tabular-nums')}>{note}</div>}
       </label>
       <Switch
         id={id}
@@ -73,7 +103,6 @@ export function SettingsToggle({
         onCheckedChange={onCheckedChange}
         disabled={disabled}
         data-layout="settings-control"
-        className="ml-4 shrink-0"
       />
     </div>
   )

@@ -10,7 +10,11 @@ import { SessionFilesSection } from '../right-sidebar/SessionFilesSection'
 interface SessionInfoPopoverProps {
   sessionId: string
   sessionFolderPath?: string
-  trigger: React.ReactElement
+  /** Opens the panel; omit it and drive `open` instead (the compact chat header opens it from its drawer) */
+  trigger?: React.ReactElement
+  /** Controlled open state; when omitted the component owns it */
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
   side?: 'top' | 'right' | 'bottom' | 'left'
   align?: 'start' | 'center' | 'end'
   sideOffset?: number
@@ -18,19 +22,18 @@ interface SessionInfoPopoverProps {
   presentation?: 'popover' | 'drawer'
 }
 
-const DEFAULT_POPOVER_CONTENT_CLASS = 'w-[360px] h-[460px] min-w-[200px] max-w-[420px] overflow-hidden rounded-[8px] bg-background text-foreground shadow-modal-small p-0'
-const DEFAULT_DRAWER_CONTENT_CLASS = [
-  'data-[vaul-drawer-direction=bottom]:inset-x-2',
-  'data-[vaul-drawer-direction=bottom]:bottom-2',
-  'data-[vaul-drawer-direction=bottom]:mt-0',
-  'data-[vaul-drawer-direction=bottom]:max-h-[min(82vh,42rem)]',
-  'overflow-hidden rounded-[14px] border border-border/60 bg-background shadow-modal-small',
-].join(' ')
+// The popover and sheet materials come from PopoverContent / DrawerContent; these only size them.
+// The popover hugs its content up to 460px (the file list scrolls inside); a fixed height left a
+// mostly empty card for sessions with few files.
+const DEFAULT_POPOVER_CONTENT_CLASS = 'flex w-[360px] max-h-[460px] min-w-[200px] max-w-[420px] flex-col overflow-hidden p-0'
+const DEFAULT_DRAWER_CONTENT_CLASS = 'overflow-hidden'
 
 export function SessionInfoPopover({
   sessionId,
   sessionFolderPath,
   trigger,
+  open: controlledOpen,
+  onOpenChange,
   side = 'top',
   align = 'end',
   sideOffset = 6,
@@ -38,10 +41,12 @@ export function SessionInfoPopover({
   presentation = 'popover',
 }: SessionInfoPopoverProps) {
   const { t } = useTranslation()
-  const [open, setOpen] = React.useState(false)
+  const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false)
+  const open = controlledOpen ?? uncontrolledOpen
 
   const handleOpenChange = React.useCallback((nextOpen: boolean) => {
-    setOpen(nextOpen)
+    if (controlledOpen === undefined) setUncontrolledOpen(nextOpen)
+    onOpenChange?.(nextOpen)
 
     if (!nextOpen) {
       requestAnimationFrame(() => {
@@ -50,22 +55,24 @@ export function SessionInfoPopover({
         }))
       })
     }
-  }, [sessionId])
+  }, [controlledOpen, onOpenChange, sessionId])
 
   if (presentation === 'drawer') {
     return (
       <Drawer open={open} onOpenChange={handleOpenChange} direction="bottom">
-        <DrawerTrigger asChild>
-          {trigger}
-        </DrawerTrigger>
+        {trigger && (
+          <DrawerTrigger asChild>
+            {trigger}
+          </DrawerTrigger>
+        )}
         <DrawerContent
           className={cn(DEFAULT_DRAWER_CONTENT_CLASS, contentClassName)}
           onOpenAutoFocus={(e) => {
             e.preventDefault()
           }}
         >
-          <DrawerHeader className="border-b border-border/50 px-4 py-3 group-data-[vaul-drawer-direction=bottom]/drawer-content:text-left">
-            <DrawerTitle className="text-sm font-medium">{t('chat.sessionInfo')}</DrawerTitle>
+          <DrawerHeader className="border-b border-subtle px-4 py-3">
+            <DrawerTitle>{t('chat.sessionInfo')}</DrawerTitle>
           </DrawerHeader>
           <div className="flex-1 min-h-0 overflow-hidden">
             <SessionInfoPopoverContent sessionId={sessionId} sessionFolderPath={sessionFolderPath} />
@@ -77,9 +84,11 @@ export function SessionInfoPopover({
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
-      <PopoverTrigger asChild>
-        {trigger}
-      </PopoverTrigger>
+      {trigger && (
+        <PopoverTrigger asChild>
+          {trigger}
+        </PopoverTrigger>
+      )}
       <PopoverContent
         className={contentClassName ?? DEFAULT_POPOVER_CONTENT_CLASS}
         side={side}
@@ -135,18 +144,17 @@ function SessionInfoPopoverContent({ sessionId, sessionFolderPath }: { sessionId
 
   return (
     <div className="h-full min-h-0 flex flex-col">
-      <div className="shrink-0 p-3 border-b border-border/50">
-        <label className="text-xs font-medium text-muted-foreground block mb-1.5 select-none">
+      {/* 16px insets, the same edge as the Session Files header and rows below */}
+      <div className="shrink-0 px-4 py-3 border-b border-subtle">
+        <label htmlFor={`session-info-title-${sessionId}`} className="text-label-sm font-medium text-secondary block mb-1.5 select-none">
           {t("chat.title")}
         </label>
-        <div className="rounded-lg bg-foreground-2 has-[:focus]:bg-background shadow-minimal transition-colors">
-          <Input
-            value={name}
-            onChange={handleNameChange}
-            placeholder={t("chat.titlePlaceholder")}
-            className="h-9 py-2 text-sm border-0 shadow-none bg-transparent focus-visible:ring-0"
-          />
-        </div>
+        <Input
+          id={`session-info-title-${sessionId}`}
+          value={name}
+          onChange={handleNameChange}
+          placeholder={t("chat.titlePlaceholder")}
+        />
       </div>
       <div className="flex-1 min-h-0 overflow-hidden">
         <SessionFilesSection

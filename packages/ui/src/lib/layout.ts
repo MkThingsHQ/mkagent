@@ -17,33 +17,39 @@ export const OVERLAY_LAYOUT = {
   modalMaxWidth: 1100,
   /** Modal max height as percentage of viewport */
   modalMaxHeightPercent: 85,
-  /** Backdrop class for modal mode (semi-transparent) */
-  modalBackdropClass: 'bg-black/50',
+  /** Backdrop class for modal mode (semi-transparent scrim role) */
+  modalBackdropClass: 'bg-scrim',
   /** Backdrop class for fullscreen mode (solid) */
   fullscreenBackdropClass: 'bg-background',
 } as const
 
 /**
- * Chat layout configuration
+ * Chat layout configuration (design spec §4/§7.4, mockup `.column` / `.tx`):
+ * a 720px text column with 24px gutters (14px in compact), turns 20px apart.
+ * The composer zone shares `maxWidth`, so it lines up with the transcript.
  */
 export const CHAT_LAYOUT = {
-  /** Max width for chat content area */
-  maxWidth: 'max-w-[840px]',
+  /** Max width for chat content area: 720px column + 2 × 24px gutters */
+  maxWidth: 'max-w-[768px]',
 
   /** Horizontal padding for main container */
-  containerPaddingX: 'px-5',
+  containerPaddingX: 'px-6',
 
-  /** Vertical padding for main container */
-  containerPaddingY: 'py-8',
+  /** Vertical padding for main container (clears the 32px edge fade of the scroll area) */
+  containerPaddingY: 'pt-6 pb-8',
 
   /** Combined container padding */
-  containerPadding: 'px-5 py-8',
+  containerPadding: 'px-6 pt-6 pb-8',
 
-  /** Vertical spacing between messages/turns */
-  messageSpacing: 'space-y-2.5',
+  /** Container padding in compact layouts (compact shell ≤ 767px, popovers): the 16px panel gutter,
+   *  shared with the compact header's glyphs and the composer card, so the screen has one left edge */
+  compactContainerPadding: 'px-gutter pt-4 pb-6',
 
-  /** Extra padding for user messages (visual separation from AI responses) */
-  userMessagePadding: 'pt-4 pb-2',
+  /** Vertical spacing between messages/turns (20px) */
+  messageSpacing: 'flex flex-col gap-5',
+
+  /** Extra padding for user messages — none: the column rhythm separates turns */
+  userMessagePadding: '',
 
   /** Bottom branding area padding */
   brandingPadding: 'pt-16 pb-24',

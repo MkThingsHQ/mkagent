@@ -21,6 +21,7 @@ import {
   Info_Section,
   Info_Table,
   Info_Markdown,
+  Info_HeaderMenu,
 } from '@/components/info'
 import type { LoadedSkill } from '../../shared/types'
 
@@ -147,19 +148,21 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
       error={error ?? undefined}
       empty={!skill && !loading && !error ? t('skillInfo.notFound') : undefined}
     >
+      {/* The name lives in the hero; the header carries the actions menu (same items as before) */}
       <Info_Page.Header
-        title={skillName}
-        titleMenu={
-          <SkillMenu
-            skillSlug={skillSlug}
-            skillName={skillName}
-            onOpenInNewWindow={handleOpenInNewWindow}
-            onShowInFinder={handleOpenInFinder}
-            canShowInFinder={canRevealLocally}
-            onDelete={canDeleteSkill ? handleDelete : undefined}
-            canDelete={canDeleteSkill}
-            deleteLabel={canDeleteSkill ? t('skillInfo.deleteSkill') : t('skillInfo.managedByProject')}
-          />
+        actions={
+          <Info_HeaderMenu>
+            <SkillMenu
+              skillSlug={skillSlug}
+              skillName={skillName}
+              onOpenInNewWindow={handleOpenInNewWindow}
+              onShowInFinder={handleOpenInFinder}
+              canShowInFinder={canRevealLocally}
+              onDelete={canDeleteSkill ? handleDelete : undefined}
+              canDelete={canDeleteSkill}
+              deleteLabel={canDeleteSkill ? t('skillInfo.deleteSkill') : t('skillInfo.managedByProject')}
+            />
+          </Info_HeaderMenu>
         }
       />
 
@@ -188,7 +191,9 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
             }
           >
             <Info_Table>
-              <Info_Table.Row label={t('common.slug')} value={skill.slug} />
+              <Info_Table.Row label={t('common.slug')}>
+                <span className="font-mono text-mono-ui">{skill.slug}</span>
+              </Info_Table.Row>
               <Info_Table.Row label={t('common.name')}>{skill.metadata.name}</Info_Table.Row>
               <Info_Table.Row label={t('common.description')}>
                 {skill.metadata.description}
@@ -201,7 +206,7 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
               <Info_Table.Row label={t('common.location')}>
                 <button
                   onClick={handleLocationClick}
-                  className="hover:underline cursor-pointer text-left"
+                  className="-my-1 cursor-pointer rounded-xs py-1 text-left font-mono text-mono-ui [overflow-wrap:anywhere] hover:underline"
                 >
                   {formatPath(skill.path)}
                 </button>
@@ -212,32 +217,32 @@ export default function SkillInfoPage({ skillSlug, workspaceId, workingDirectory
           {/* Permission Modes */}
           {skill.metadata.alwaysAllow && skill.metadata.alwaysAllow.length > 0 && (
             <Info_Section title={t('skillInfo.permissionModes')}>
-              <div className="space-y-2 px-4 py-3">
-                <p className="text-xs text-muted-foreground mb-3">
+              <div className="space-y-2 px-3.5 py-3">
+                <p className="text-label-sm text-tertiary">
                   {t('skillInfo.permissionModesDesc')}
                 </p>
-                <div className="rounded-[8px] border border-border/50 overflow-hidden">
-                  <table className="w-full text-sm">
+                <div className="overflow-hidden rounded-md shadow-elev-0">
+                  <table className="w-full text-label">
                     <tbody>
-                      <tr className="border-b border-border/30">
-                        <td className="px-3 py-2 font-medium text-muted-foreground w-[140px]">{t('skillInfo.explore')}</td>
+                      <tr className="border-b border-subtle">
+                        <td className="w-[140px] px-3 py-2 font-medium text-secondary">{t('skillInfo.explore')}</td>
                         <td className="px-3 py-2 flex items-center gap-2">
-                          <X className="h-3.5 w-3.5 text-destructive shrink-0" />
-                          <span className="text-foreground/80">{t('skillInfo.exploreDesc')}</span>
+                          <X className="size-3.5 shrink-0 text-destructive" aria-hidden />
+                          <span className="text-foreground">{t('skillInfo.exploreDesc')}</span>
                         </td>
                       </tr>
-                      <tr className="border-b border-border/30">
-                        <td className="px-3 py-2 font-medium text-muted-foreground">{t('skillInfo.askToEdit')}</td>
+                      <tr className="border-b border-subtle">
+                        <td className="px-3 py-2 font-medium text-secondary">{t('skillInfo.askToEdit')}</td>
                         <td className="px-3 py-2 flex items-center gap-2">
-                          <Check className="h-3.5 w-3.5 text-success shrink-0" />
-                          <span className="text-foreground/80">{t('skillInfo.askToEditDesc')}</span>
+                          <Check className="size-3.5 shrink-0 text-success" aria-hidden />
+                          <span className="text-foreground">{t('skillInfo.askToEditDesc')}</span>
                         </td>
                       </tr>
                       <tr>
-                        <td className="px-3 py-2 font-medium text-muted-foreground">{t('skillInfo.auto')}</td>
+                        <td className="px-3 py-2 font-medium text-secondary">{t('skillInfo.auto')}</td>
                         <td className="px-3 py-2 flex items-center gap-2">
-                          <Minus className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                          <span className="text-foreground/80">{t('skillInfo.autoDesc')}</span>
+                          <Minus className="size-3.5 shrink-0 text-tertiary" aria-hidden />
+                          <span className="text-foreground">{t('skillInfo.autoDesc')}</span>
                         </td>
                       </tr>
                     </tbody>

@@ -13,6 +13,7 @@ import { useAtomValue } from 'jotai'
 import { CrossfadeAvatar } from './avatar'
 import { cn } from '@/lib/utils'
 import { workspaceAvatarColorsAtom } from '@/atoms/workspace-avatar-colors'
+import { workspaceAvatarBackground } from './workspace-avatar-color'
 
 function hashString(str: string): number {
   let hash = 5381
@@ -50,7 +51,7 @@ export function WorkspaceAvatar({
   const bgStyle = hasId
     ? {
         backgroundColor:
-          override || `hsl(${getWorkspaceHue(workspaceId!)}, 45%, 52%)`,
+          override || workspaceAvatarBackground(getWorkspaceHue(workspaceId!)),
       }
     : undefined
 

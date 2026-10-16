@@ -11,12 +11,11 @@
 import * as React from 'react'
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { routes } from '@/lib/navigate'
 import { Spinner } from '@mkagent/ui'
 import {
+  SettingsPage,
   SettingsSection,
   SettingsCard,
   SettingsInput,
@@ -181,98 +180,95 @@ export default function PreferencesPage() {
   if (isLoading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <Spinner className="text-lg text-muted-foreground" />
+        <Spinner className="text-lg text-tertiary" />
       </div>
     )
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <PanelHeader title={t("settings.preferences.title")} actions={<HeaderMenu route={routes.view.settings('preferences')} helpFeature="preferences" />} />
-      <div className="flex-1 min-h-0 mask-fade-y">
-        <ScrollArea className="h-full">
-          <div className="px-5 py-7 max-w-3xl mx-auto space-y-8">
-          {/* Basic Info */}
-          <SettingsSection
-            title={t("settings.preferences.basicInfo")}
-            description={t("settings.preferences.basicInfoDesc")}
-          >
-            <SettingsCard divided>
-              <SettingsInput
-                label={t("settings.preferences.name")}
-                description={t("settings.preferences.nameDesc")}
-                value={formState.name}
-                onChange={(v) => updateField('name', v)}
-                placeholder={t("settings.preferences.namePlaceholder")}
-                inCard
-              />
-              <SettingsInput
-                label={t("settings.preferences.timezone")}
-                description={t("settings.preferences.timezoneDesc")}
-                value={formState.timezone}
-                onChange={(v) => updateField('timezone', v)}
-                placeholder={t("settings.preferences.timezonePlaceholder")}
-                inCard
-              />
-            </SettingsCard>
-          </SettingsSection>
+    <SettingsPage
+      title={t("settings.preferences.title")}
+      description={t("settings.preferences.description")}
+      actions={<HeaderMenu route={routes.view.settings('preferences')} helpFeature="preferences" />}
+    >
+      {/* Basic Info */}
+      <SettingsSection
+        title={t("settings.preferences.basicInfo")}
+        description={t("settings.preferences.basicInfoDesc")}
+      >
+        <SettingsCard divided>
+          <SettingsInput
+            label={t("settings.preferences.name")}
+            description={t("settings.preferences.nameDesc")}
+            value={formState.name}
+            onChange={(v) => updateField('name', v)}
+            placeholder={t("settings.preferences.namePlaceholder")}
+            inCard
+          />
+          <SettingsInput
+            label={t("settings.preferences.timezone")}
+            description={t("settings.preferences.timezoneDesc")}
+            value={formState.timezone}
+            onChange={(v) => updateField('timezone', v)}
+            placeholder={t("settings.preferences.timezonePlaceholder")}
+            inCard
+          />
+        </SettingsCard>
+      </SettingsSection>
 
-          {/* Location */}
-          <SettingsSection
-            title={t("settings.preferences.location")}
-            description={t("settings.preferences.locationDesc")}
-          >
-            <SettingsCard divided>
-              <SettingsInput
-                label={t("settings.preferences.city")}
-                description={t("settings.preferences.cityDesc")}
-                value={formState.city}
-                onChange={(v) => updateField('city', v)}
-                placeholder={t("settings.preferences.cityPlaceholder")}
-                inCard
-              />
-              <SettingsInput
-                label={t("settings.preferences.country")}
-                description={t("settings.preferences.countryDesc")}
-                value={formState.country}
-                onChange={(v) => updateField('country', v)}
-                placeholder={t("settings.preferences.countryPlaceholder")}
-                inCard
-              />
-            </SettingsCard>
-          </SettingsSection>
+      {/* Location */}
+      <SettingsSection
+        title={t("settings.preferences.location")}
+        description={t("settings.preferences.locationDesc")}
+      >
+        <SettingsCard divided>
+          <SettingsInput
+            label={t("settings.preferences.city")}
+            description={t("settings.preferences.cityDesc")}
+            value={formState.city}
+            onChange={(v) => updateField('city', v)}
+            placeholder={t("settings.preferences.cityPlaceholder")}
+            inCard
+          />
+          <SettingsInput
+            label={t("settings.preferences.country")}
+            description={t("settings.preferences.countryDesc")}
+            value={formState.country}
+            onChange={(v) => updateField('country', v)}
+            placeholder={t("settings.preferences.countryPlaceholder")}
+            inCard
+          />
+        </SettingsCard>
+      </SettingsSection>
 
-          {/* Notes */}
-          <SettingsSection
-            title={t("settings.preferences.notes")}
-            description={t("settings.preferences.notesDesc")}
-            action={
-              // EditPopover for AI-assisted notes editing with "Edit File" as secondary action
-              preferencesPath ? (
-                <EditPopover
-                  trigger={<EditButton />}
-                  {...getEditConfig('preferences-notes', preferencesPath)}
-                  secondaryAction={{
-                    label: t("common.editFile"),
-                    filePath: preferencesPath!,
-                  }}
-                />
-              ) : null
-            }
-          >
-            <SettingsCard divided={false}>
-              <SettingsTextarea
-                value={formState.notes}
-                onChange={(v) => updateField('notes', v)}
-                placeholder={t("settings.preferences.notesPlaceholder")}
-                rows={5}
-                inCard
-              />
-            </SettingsCard>
-          </SettingsSection>
-        </div>
-        </ScrollArea>
-      </div>
-    </div>
+      {/* Notes */}
+      <SettingsSection
+        title={t("settings.preferences.notes")}
+        description={t("settings.preferences.notesDesc")}
+        action={
+          // EditPopover for AI-assisted notes editing with "Edit File" as secondary action
+          preferencesPath ? (
+            <EditPopover
+              trigger={<EditButton />}
+              {...getEditConfig('preferences-notes', preferencesPath)}
+              secondaryAction={{
+                label: t("common.editFile"),
+                filePath: preferencesPath!,
+              }}
+            />
+          ) : null
+        }
+      >
+        <SettingsCard divided={false}>
+          <SettingsTextarea
+            value={formState.notes}
+            onChange={(v) => updateField('notes', v)}
+            placeholder={t("settings.preferences.notesPlaceholder")}
+            rows={5}
+            inCard
+          />
+        </SettingsCard>
+      </SettingsSection>
+    </SettingsPage>
   )
 }

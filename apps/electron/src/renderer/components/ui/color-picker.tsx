@@ -99,7 +99,7 @@ export function ColorPicker({
                     type="button"
                     onClick={() => onChange(swatch)}
                     className={cn(
-                      'relative h-5 w-5 rounded-full transition-all flex items-center justify-center',
+                      'motion-press relative h-5 w-5 rounded-full flex items-center justify-center',
                       isActive
                         ? 'ring-2 ring-offset-2 ring-foreground ring-offset-background'
                         : 'ring-1 ring-foreground/10 hover:ring-foreground/40 hover:scale-110'

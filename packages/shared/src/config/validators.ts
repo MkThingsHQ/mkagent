@@ -1,3 +1,4 @@
+import { isParseableColor } from './theme-roles.ts'
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, join, relative, resolve } from 'node:path';
 import matter from 'gray-matter';
@@ -177,31 +178,203 @@ export function isValidPermissionsFile(filePath: string): boolean {
   return validatePermissionsFile(filePath).valid;
 }
 
-const ColorSchema = z.string().regex(/^(#[0-9a-fA-F]{3,8}|[a-zA-Z][a-zA-Z0-9-]*)$/);
+const CSSColorSchema = z.string().min(1);
+
+const ThemeDarkOverrideSchema = z.object({
+  background: CSSColorSchema.optional(),
+  foreground: CSSColorSchema.optional(),
+  accent: CSSColorSchema.optional(),
+  info: CSSColorSchema.optional(),
+  success: CSSColorSchema.optional(),
+  destructive: CSSColorSchema.optional(),
+  paper: CSSColorSchema.optional(),
+  navigator: CSSColorSchema.optional(),
+  input: CSSColorSchema.optional(),
+  popover: CSSColorSchema.optional(),
+  popoverSolid: CSSColorSchema.optional(),
+}).strict();
+
+/**
+ * Zod schema for app-level theme override files (~/.craft-agent/theme.json).
+ * Allows partial overrides but rejects unknown keys.
+ */
 export const ThemeOverrideSchema = z.object({
-  light: z.record(z.string(), ColorSchema).optional(),
-  dark: z.record(z.string(), ColorSchema).optional(),
-}).passthrough();
+  // Semantic colors
+  background: CSSColorSchema.optional(),
+  foreground: CSSColorSchema.optional(),
+  accent: CSSColorSchema.optional(),
+  info: CSSColorSchema.optional(),
+  success: CSSColorSchema.optional(),
+  destructive: CSSColorSchema.optional(),
+  // Surface colors
+  paper: CSSColorSchema.optional(),
+  navigator: CSSColorSchema.optional(),
+  input: CSSColorSchema.optional(),
+  popover: CSSColorSchema.optional(),
+  popoverSolid: CSSColorSchema.optional(),
+  // Scenic mode
+  mode: z.enum(['solid', 'scenic']).optional(),
+  backgroundImage: z.string().optional(),
+  // Dark mode overrides
+  dark: ThemeDarkOverrideSchema.optional(),
+}).strict()
+  .refine(
+    (data) => {
+      const keys = Object.keys(data);
+      return keys.length > 0;
+    },
+    { message: 'Theme override must include at least one supported field' }
+  )
+  .refine(
+    (data) => data.mode !== 'scenic' || Boolean(data.backgroundImage),
+    { message: 'backgroundImage is required when mode is scenic', path: ['backgroundImage'] }
+  );
+
+/**
+ * Zod schema for preset theme files.
+ * Validates theme structure and requires at least one color property.
+ */
 export const PresetThemeSchema = z.object({
-  id: z.string().min(1),
-  name: z.string().min(1),
-  light: z.record(z.string(), ColorSchema).optional(),
-  dark: z.record(z.string(), ColorSchema).optional(),
-}).passthrough();
+  name: z.string().min(1, 'Theme name is required'),
+  description: z.string().optional(),
+  author: z.string().optional(),
+  license: z.string().optional(),
+  source: z.string().optional(),
+  supportedModes: z.array(z.enum(['light', 'dark'])).optional(),
+  // Semantic colors
+  background: CSSColorSchema.optional(),
+  foreground: CSSColorSchema.optional(),
+  accent: CSSColorSchema.optional(),
+  info: CSSColorSchema.optional(),
+  success: CSSColorSchema.optional(),
+  destructive: CSSColorSchema.optional(),
+  // Surface colors
+  paper: CSSColorSchema.optional(),
+  navigator: CSSColorSchema.optional(),
+  input: CSSColorSchema.optional(),
+  popover: CSSColorSchema.optional(),
+  popoverSolid: CSSColorSchema.optional(),
+  // Scenic mode
+  mode: z.enum(['solid', 'scenic']).optional(),
+  backgroundImage: z.string().optional(),
+  // Dark mode overrides
+  dark: z.object({}).passthrough().optional(),
+  // Shiki theme for syntax highlighting
+  shikiTheme: z.object({
+    light: z.string().optional(),
+    dark: z.string().optional(),
+  }).optional(),
+}).refine(
+  (data) => {
+    const colorProps = ['background', 'foreground', 'accent', 'info', 'success', 'destructive'];
+    return colorProps.some(prop => prop in data);
+  },
+  { message: 'Theme must have at least one color property (background, foreground, accent, info, success, or destructive)' }
+);
 
-function validateTheme(jsonString: string, file: string, schema: z.ZodType): ValidationResult {
-  const parsed = parseJson(jsonString, file);
-  if (parsed.result) return parsed.result;
-  const result = schema.safeParse(parsed.data);
-  return result.success ? { valid: true, errors: [], warnings: [] } : fromZod(file, result.error);
+/**
+ * Warn about theme colors the role solver can't parse (e.g. `var(--x)`, `lab()`, typos). They are not
+ * errors — the app falls back to the default theme's color for that key — but users should know.
+ */
+function collectThemeColorWarnings(content: unknown, displayFile: string): ValidationIssue[] {
+  if (!content || typeof content !== 'object') return [];
+  const keys = ['background', 'foreground', 'accent', 'info', 'success', 'destructive', 'paper', 'navigator', 'input', 'popover', 'popoverSolid'];
+  const warnings: ValidationIssue[] = [];
+  const check = (obj: Record<string, unknown>, prefix: string) => {
+    for (const key of keys) {
+      const value = obj[key];
+      if (typeof value !== 'string' || isParseableColor(value)) continue;
+      warnings.push({
+        file: displayFile,
+        path: prefix + key,
+        message: `"${value}" is not a supported CSS color; the default theme's color is used instead`,
+        severity: 'warning',
+        suggestion: 'Use hex, rgb(), hsl(), oklch(), oklab() or a CSS color name',
+      });
+    }
+  };
+  const record = content as Record<string, unknown>;
+  check(record, '');
+  if (record.dark && typeof record.dark === 'object') check(record.dark as Record<string, unknown>, 'dark.');
+  return warnings;
 }
 
-export function validateThemeContent(jsonString: string, displayFile = 'theme.json'): ValidationResult {
-  return validateTheme(jsonString, displayFile, PresetThemeSchema);
+/**
+ * Validate theme content from a JSON string (no disk reads).
+ * Used to check if an existing theme file is valid before deciding to overwrite.
+ */
+export function validateThemeContent(jsonString: string, displayFile: string = 'theme.json'): ValidationResult {
+  const errors: ValidationIssue[] = [];
+
+  // Parse JSON
+  let content: unknown;
+  try {
+    content = JSON.parse(jsonString);
+  } catch (e) {
+    return {
+      valid: false,
+      errors: [{
+        file: displayFile,
+        path: '',
+        message: `Invalid JSON: ${e instanceof Error ? e.message : 'Unknown error'}`,
+        severity: 'error',
+      }],
+      warnings: [],
+    };
+  }
+
+  // Validate schema
+  const result = PresetThemeSchema.safeParse(content);
+  if (!result.success) {
+    errors.push(...fromZod(displayFile, result.error).errors);
+    return { valid: false, errors, warnings: [] };
+  }
+
+  return {
+    valid: true,
+    errors: [],
+    warnings: collectThemeColorWarnings(content, displayFile),
+  };
 }
-export function validateThemeOverrideContent(jsonString: string, displayFile = 'theme.json'): ValidationResult {
-  return validateTheme(jsonString, displayFile, ThemeOverrideSchema);
+
+/**
+ * Validate app-level theme override content from a JSON string (no disk reads).
+ * Unlike preset validation, this accepts partial ThemeOverrides objects and rejects unknown keys.
+ */
+export function validateThemeOverrideContent(jsonString: string, displayFile: string = 'theme.json'): ValidationResult {
+  const errors: ValidationIssue[] = [];
+
+  // Parse JSON
+  let content: unknown;
+  try {
+    content = JSON.parse(jsonString);
+  } catch (e) {
+    return {
+      valid: false,
+      errors: [{
+        file: displayFile,
+        path: '',
+        message: `Invalid JSON: ${e instanceof Error ? e.message : 'Unknown error'}`,
+        severity: 'error',
+      }],
+      warnings: [],
+    };
+  }
+
+  // Validate schema
+  const result = ThemeOverrideSchema.safeParse(content);
+  if (!result.success) {
+    errors.push(...fromZod(displayFile, result.error).errors);
+    return { valid: false, errors, warnings: [] };
+  }
+
+  return {
+    valid: true,
+    errors: [],
+    warnings: collectThemeColorWarnings(content, displayFile),
+  };
 }
+
 export function isValidThemeFile(filePath: string): boolean {
   if (!existsSync(filePath)) return false;
   return validateThemeContent(readFileSync(filePath, 'utf-8'), filePath).valid;
@@ -270,4 +443,11 @@ export function validateConfigFileContent(
     case 'theme': return validateThemeOverrideContent(content, detection.path);
     case 'tool-icons': return validateToolIconsContent(content);
   }
+}
+
+function validateTheme(jsonString: string, file: string, schema: z.ZodType): ValidationResult {
+  const parsed = parseJson(jsonString, file);
+  if (parsed.result) return parsed.result;
+  const result = schema.safeParse(parsed.data);
+  return result.success ? { valid: true, errors: [], warnings: [] } : fromZod(file, result.error);
 }

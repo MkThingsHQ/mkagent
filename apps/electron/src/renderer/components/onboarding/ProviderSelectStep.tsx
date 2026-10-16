@@ -19,6 +19,7 @@ interface ProviderOption {
   icon: React.ReactNode
 }
 
+// Marks follow the text color (OpenAI and Copilot are monochrome); Claude keeps its brand color.
 const PROVIDER_ICONS: Record<ProviderChoice, React.ReactNode> = {
   claude: <img src={claudeIcon} alt="" className="size-5 rounded-[3px]" />,
   chatgpt: <img src={openaiIcon} alt="" className="size-5 rounded-[3px]" />,
@@ -58,13 +59,13 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
     {
       id: 'api_key',
       name: t("onboarding.providerSelect.otherProvider"),
-      description: 'Anthropic, OpenAI, OpenRouter, Google or any compatible provider.',
+      description: t("onboarding.providerSelect.otherProviderDesc"),
       icon: PROVIDER_ICONS.api_key,
     },
     {
       id: 'local',
       name: t("onboarding.providerSelect.localModel"),
-      description: 'Run models locally with Ollama.',
+      description: t("onboarding.providerSelect.localModelDesc"),
       icon: PROVIDER_ICONS.local,
     },
   ]
@@ -79,30 +80,28 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
       title={t("onboarding.providerSelect.title")}
       description={t("onboarding.providerSelect.description")}
     >
-      <div className="space-y-2 sm:space-y-3">
+      {/* Provider tiles (mockup .prov-opt): hairline ring, mark in the text color, name + one-line
+          description. Choosing one still advances immediately. */}
+      <div className="flex flex-col gap-1.5">
         {PROVIDER_OPTIONS.map((option) => (
           <button
             key={option.id}
+            type="button"
             onClick={() => onSelect(option.id)}
             className={cn(
-              "flex w-full items-center gap-3 rounded-xl bg-foreground-2 p-3 text-left transition-all",
-              "sm:items-start sm:gap-4 sm:p-4",
-              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              "hover:bg-foreground/[0.02] shadow-minimal",
+              "motion-press flex w-full min-h-[52px] items-center gap-3 rounded-md px-3 py-2 text-left",
+              "ring-1 ring-inset ring-border hover:bg-fill-hover active:bg-fill-pressed",
             )}
           >
-            {/* Icon */}
-            <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+            <span className="flex size-6 shrink-0 items-center justify-center text-foreground">
               {option.icon}
-            </div>
-
-            {/* Content */}
-            <div className="flex-1 min-w-0">
-              <span className="font-medium text-sm">{option.name}</span>
-              <p className="mt-0 hidden sm:block text-xs text-muted-foreground">
+            </span>
+            <span className="flex-1 min-w-0">
+              <span className="block text-label font-medium text-foreground">{option.name}</span>
+              <span className="block text-label-sm text-secondary">
                 {option.description}
-              </p>
-            </div>
+              </span>
+            </span>
           </button>
         ))}
       </div>
@@ -110,8 +109,9 @@ export function ProviderSelectStep({ onSelect, onSkip }: ProviderSelectStepProps
       {onSkip && (
         <div className="mt-4 text-center">
           <button
+            type="button"
             onClick={onSkip}
-            className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+            className="min-h-6 text-label text-accent underline underline-offset-2 decoration-accent/40 hover:decoration-accent"
           >
             {t("onboarding.providerSelect.setupLater")}
           </button>

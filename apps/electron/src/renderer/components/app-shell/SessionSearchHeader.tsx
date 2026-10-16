@@ -59,11 +59,11 @@ export function SessionSearchHeader({
 }: SessionSearchHeaderProps) {
   const { t } = useTranslation()
   return (
-    <div className="shrink-0 px-2 pt-2 pb-1.5 border-b border-border/50">
-      {/* Search input */}
-      <div className="relative rounded-[8px] shadow-minimal bg-muted/50 has-[:focus-visible]:bg-background">
+    <div className="shrink-0 px-2 pt-1 pb-2">
+      {/* Search input — sunken field with the focus tint (field-surface) */}
+      <div className="field-surface relative rounded-md">
         {/* Search icon - always static, never changes to spinner */}
-        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+        <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-tertiary" />
         <input
           ref={inputRef}
           type="text"
@@ -74,29 +74,31 @@ export function SessionSearchHeader({
           onBlur={onBlur}
           readOnly={readOnly}
           placeholder={placeholder}
-          className="w-full h-8 pl-8 pr-8 text-sm bg-transparent border-0 rounded-[8px] outline-none focus-visible:ring-0 focus-visible:outline-none placeholder:text-muted-foreground/50"
+          className="w-full h-control-lg pl-8 pr-8 text-label bg-transparent border-0 rounded-md outline-none placeholder:text-tertiary"
         />
         {onSearchClose && (
           <button
+            type="button"
             onClick={onSearchClose}
-            className="absolute right-2 top-1/2 -translate-y-1/2 p-0.5 hover:bg-foreground/10 rounded"
+            className="absolute right-1 top-1/2 -translate-y-1/2 inline-grid place-items-center size-6 rounded-sm text-tertiary hover:bg-fill-hover hover:text-foreground"
             title={t("session.closeSearch")}
+            aria-label={t("session.closeSearch")}
           >
-            <X className="h-3.5 w-3.5 text-muted-foreground" />
+            <X className="size-3.5" />
           </button>
         )}
       </div>
 
       {/* Search status row - shown when search mode is active (2+ characters) */}
       {searchQuery.length >= 2 && (
-        <div className="px-2 pt-2.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="px-2 pt-2 flex items-center gap-1.5 text-label-sm text-tertiary">
           {isSearching ? (
             <>
-              <Spinner className="text-[9px] text-foreground/50" />
+              <Spinner className="text-caption text-tertiary" />
               <span>{t('common.loading')}</span>
             </>
           ) : isUnavailable ? (
-            <span className="text-destructive/70">{t('session.searchUnavailable')}</span>
+            <span className="text-destructive">{t('session.searchUnavailable')}</span>
           ) : (
             <span>{t('session.results', { count: exceededLimit ? '100+' : (resultCount ?? 0) })}</span>
           )}

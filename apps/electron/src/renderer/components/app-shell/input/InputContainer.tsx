@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { motion, AnimatePresence, useMotionValue, useMotionValueEvent, animate } from 'motion/react'
+import { DURATION, EASE, prefersReducedMotion } from '@mkagent/ui/motion'
 import { cn } from '@/lib/utils'
 import { FreeFormInput, type FreeFormInputProps } from './FreeFormInput'
 import { StructuredInput } from './StructuredInput'
@@ -9,6 +10,8 @@ import type { StructuredInputState, StructuredResponse, InputMode } from './stru
 import { getComposerMaxHeight } from './composer-height'
 import { useInputAvailableHeight } from '@/hooks/useInputAvailableHeight'
 import { BackgroundFinishedChip } from '../BackgroundFinishedChip'
+import { decisionRingClass } from './structured/DecisionCard'
+import { getDecisionTone } from './structured/decision-tone'
 
 interface InputContainerProps extends Omit<FreeFormInputProps, 'inputRef' | 'maxHeight'> {
   /** Structured input state - when present, shows structured UI instead of freeform */
@@ -21,9 +24,9 @@ interface InputContainerProps extends Omit<FreeFormInputProps, 'inputRef' | 'max
   onAnimatedHeightChange?: (delta: number) => void
 }
 
-// Animation timing - synced across height and opacity
-const TRANSITION_DURATION = 0.25
-const TRANSITION_EASE = [0.4, 0, 0.2, 1] as const
+// Animation timing - synced across height and opacity (motion tokens: component swap, on-screen move)
+const TRANSITION_DURATION = DURATION.base
+const TRANSITION_EASE = EASE.standard
 
 // Fallback heights (used on first render before measurement)
 const FALLBACK_HEIGHTS: Record<InputMode | string, number> = {
@@ -193,7 +196,8 @@ export function InputContainer({
   React.useEffect(() => {
     if (shouldAnimateHeight) {
       const animation = animate(heightMotionValue, targetHeight, {
-        duration: TRANSITION_DURATION,
+        // Reduced motion: the size change lands at once (the content crossfade still plays)
+        duration: prefersReducedMotion() ? 0 : TRANSITION_DURATION,
         ease: TRANSITION_EASE
       })
       // A keyboard resize can replace a transition before its animation settles.
@@ -236,8 +240,12 @@ export function InputContainer({
     )
   }
 
+  // Decision prompts draw their status ring on the composer card (info, or destructive for risky calls)
+  const decisionTone = mode === 'freeform' ? null : getDecisionTone(structuredInput)
+
   return (
-    <div ref={containerRef} className="relative">
+    // `peer/composer` lets the hint line under the card react to focus inside it (ChatInputZone)
+    <div ref={containerRef} className="peer/composer relative">
       {/* Hidden measuring div - only needed for structured inputs (freeform uses onHeightChange) */}
       {mode !== 'freeform' && (
         <div
@@ -245,18 +253,22 @@ export function InputContainer({
           className="absolute top-0 left-0 right-0 invisible pointer-events-none"
           aria-hidden="true"
         >
-          <div className="rounded-[8px] bg-background overflow-hidden">
+          <div className="overflow-hidden rounded-xl">
             {renderContent(true)}
           </div>
         </div>
       )}
 
-      {/* Visible animated container */}
+      {/* Visible animated container — ONE raised card (spec §7.5): radius 16, a quiet elev-1 lift
+          (hairline only in an unfocused panel; the large elev-2 blur read as a cheap drop shadow),
+          focus shown instantly as a tint ring; decision prompts swap in their status ring. */}
       <motion.div
         className={cn(
-          "input-container relative rounded-[12px] overflow-hidden transition-colors",
-          isFocusedPanel ? "shadow-middle" : "shadow-minimal",
-          "bg-background"
+          "input-container relative overflow-hidden rounded-xl bg-raised",
+          isFocusedPanel ? "shadow-elev-1" : "shadow-elev-0",
+          decisionTone
+            ? decisionRingClass(decisionTone)
+            : "focus-within:ring-1 focus-within:ring-focus/55",
         )}
         style={{
           height: heightMotionValue,
@@ -278,11 +290,10 @@ export function InputContainer({
         </AnimatePresence>
       </motion.div>
 
-      {/* Background-completion chip — floats in the input box's top-right corner.
-       * Self-contained (its own atoms + navigation); renders nothing when idle.
-       * Freeform-only so it never overlaps a structured prompt's header. The outer
-       * wrapper is `relative` and (unlike the visible box) not `overflow-hidden`,
-       * so the chip's soft shadow isn't clipped. */}
+      {/* Background-completion chip — floats just above the input box, right-aligned, so it
+       * never covers the draft. Self-contained (its own atoms + navigation); renders nothing
+       * when idle. Freeform-only. The outer wrapper is `relative` and (unlike the visible box)
+       * not `overflow-hidden`, so the chip isn't clipped. */}
       {mode === 'freeform' && freeFormProps.sessionId && (
         <BackgroundFinishedChip sessionId={freeFormProps.sessionId} />
       )}

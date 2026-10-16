@@ -45,17 +45,19 @@ export function TableExportDropdown({ columns, rows, filename }: TableExportDrop
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
+        {/* Ghost menu button (copy icon + chevron), 28px like the overlay header's other controls */}
         <button
+          type="button"
           className={cn(
-            'flex items-center gap-1 px-2 py-1.5 rounded-[6px] cursor-pointer select-none',
-            'bg-background shadow-minimal',
-            'opacity-70 hover:opacity-100 transition-opacity',
-            'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring',
+            'motion-press inline-flex h-control flex-none items-center gap-0.5 rounded-md pl-1.5 pr-1 select-none',
+            'text-secondary hover:bg-fill-hover hover:text-foreground active:bg-fill-pressed',
+            'data-[state=open]:bg-fill-hover data-[state=open]:text-foreground',
           )}
           title={t('table.exportTable')}
+          aria-label={t('table.exportTable')}
         >
-          <Copy className="w-4 h-4" />
-          <ChevronDown className="w-3 h-3" />
+          <Copy aria-hidden className="size-4" />
+          <ChevronDown aria-hidden className="size-3 text-tertiary" />
         </button>
       </DropdownMenuTrigger>
       <StyledDropdownMenuContent sideOffset={6} align="end" style={{ zIndex: 'var(--z-floating-menu, 400)' }}>

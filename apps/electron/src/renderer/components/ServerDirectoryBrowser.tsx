@@ -190,23 +190,23 @@ export function ServerDirectoryBrowser({
             if (e.key === 'Enter') handlePathSubmit()
           }}
           placeholder={t("common.enterPath")}
-          className="flex-1 font-mono text-xs"
+          className="flex-1 font-mono md:text-mono-ui"
         />
-        <Button variant="outline" size="sm" onClick={handlePathSubmit} disabled={loading}>
+        <Button variant="secondary" size="lg" onClick={handlePathSubmit} disabled={loading}>
           Go
         </Button>
       </div>
 
       {/* Breadcrumbs */}
       {listing && (
-        <div className="flex items-center gap-0.5 text-xs text-muted-foreground overflow-x-auto py-1 min-h-[24px]">
+        <div className="flex items-center gap-0.5 text-label-sm text-tertiary overflow-x-auto py-1 min-h-6">
           {listing.breadcrumbs.map((crumb, i) => (
             <span key={crumb.path} className="flex items-center gap-0.5 shrink-0">
-              {i > 0 && <ChevronRightIcon className="size-3 text-muted-foreground/50" />}
+              {i > 0 && <ChevronRightIcon className="size-3 text-tertiary" />}
               <button
                 type="button"
                 onClick={() => navigateTo(crumb.path)}
-                className="hover:text-foreground hover:underline transition-colors px-0.5"
+                className="hover:text-foreground hover:underline px-0.5"
               >
                 {crumb.name}
               </button>
@@ -216,29 +216,29 @@ export function ServerDirectoryBrowser({
       )}
 
       {/* Directory listing */}
-      <div className="border border-foreground/10 rounded-md overflow-hidden flex-1 min-h-0">
+      <div className="border border-subtle rounded-md overflow-hidden flex-1 min-h-0">
         <div className="overflow-y-auto max-h-[300px]">
           {loading && (
-            <div className="flex items-center justify-center gap-2 py-8 text-muted-foreground">
-              <Spinner className="text-sm" />
+            <div className="flex items-center justify-center gap-2 py-8 text-label text-secondary">
+              <Spinner className="text-label" />
               Loading...
             </div>
           )}
 
           {error && (
-            <div className="px-3 py-4 text-sm text-destructive">
+            <div className="px-3 py-4 text-label text-destructive">
               {error}
             </div>
           )}
 
           {!loading && !error && listing?.truncated && (
-            <div className="border-b border-foreground/10 px-3 py-2 text-xs text-muted-foreground">
+            <div className="border-b border-subtle px-3 py-2 text-label-sm text-tertiary">
               Showing the first {listing.entries.length} folders out of {listing.totalEntries}. Narrow the path if the folder you want is missing.
             </div>
           )}
 
           {!loading && !error && listing && listing.entries.length === 0 && (
-            <div className="px-3 py-4 text-sm text-muted-foreground">
+            <div className="px-3 py-4 text-label text-secondary">
               No subdirectories. Use the path input above to navigate.
             </div>
           )}
@@ -249,17 +249,17 @@ export function ServerDirectoryBrowser({
               type="button"
               onClick={() => handleEntryClick(entry.path)}
               onDoubleClick={() => handleEntryDoubleClick(entry.path)}
-              className={`w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left transition-colors hover:bg-foreground/5 ${
-                selectedEntry === entry.path ? 'bg-foreground/5' : ''
+              className={`w-full flex items-center gap-2 px-3 min-h-row-menu text-label text-left -outline-offset-2 ${
+                selectedEntry === entry.path ? 'bg-fill-selected' : 'hover:bg-fill-hover'
               }`}
             >
               {entry.isSymlink
-                ? <FolderSymlinkIcon className="size-4 shrink-0 text-muted-foreground" />
-                : <FolderIcon className="size-4 shrink-0 text-muted-foreground" />
+                ? <FolderSymlinkIcon className="size-4 shrink-0 text-tertiary" />
+                : <FolderIcon className="size-4 shrink-0 text-tertiary" />
               }
               <span className="truncate">{entry.name}</span>
               {entry.isSymlink && (
-                <span className="text-xs text-muted-foreground/60 shrink-0">symlink</span>
+                <span className="text-label-sm text-tertiary shrink-0">symlink</span>
               )}
             </button>
           ))}
@@ -271,7 +271,7 @@ export function ServerDirectoryBrowser({
   // Manual mode content
   const renderManualMode = () => (
     <>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-label text-secondary">
         Enter the full path on the server:
       </p>
       <Input
@@ -282,7 +282,7 @@ export function ServerDirectoryBrowser({
           if (e.key === 'Enter') handleSelect()
         }}
         placeholder="/Users/username/projects/my-project"
-        className="font-mono text-xs"
+        className="font-mono md:text-mono-ui"
         autoFocus
       />
     </>
@@ -300,10 +300,11 @@ export function ServerDirectoryBrowser({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={onCancel}>
+          <Button variant="ghost" onClick={onCancel}>
             Cancel
           </Button>
           <Button
+            variant="primary"
             onClick={handleSelect}
             disabled={mode === 'manual' ? !pathInput.trim() : (!listing && !pathInput.trim())}
           >

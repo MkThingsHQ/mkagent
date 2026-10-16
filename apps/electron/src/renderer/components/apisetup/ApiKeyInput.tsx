@@ -32,6 +32,7 @@ import {
 } from "./submit-helpers"
 
 import type { CustomEndpointApi, CustomEndpointConfig } from '@config/llm-connections'
+import { CLOUDFLARE_AI_GATEWAY_PROVIDER, CLOUDFLARE_AI_GATEWAY_URL_EXAMPLE, parseCloudflareGatewayUrl } from '@config/cloudflare-gateway'
 
 export type ApiKeyStatus = 'idle' | 'validating' | 'success' | 'error'
 
@@ -72,6 +73,7 @@ export interface ApiKeyInputProps {
 }
 
 interface Preset {
+  urlPlaceholder?: string;
   key: PresetKey
   label: string
   url: string
@@ -100,6 +102,8 @@ const PI_PROVIDER_PRESETS: Preset[] = [
   { key: 'moonshotai', label: 'Moonshot AI', url: 'https://api.moonshot.ai/v1', placeholder: 'sk-...' },
   { key: 'moonshotai-cn', label: 'Moonshot AI (CN)', url: 'https://api.moonshot.cn/v1', placeholder: 'sk-...' },
   { key: 'vercel-ai-gateway', label: 'Vercel AI Gateway', url: 'https://ai-gateway.vercel.sh', placeholder: 'Paste your key here...' },
+  // The gateway URL carries the account and gateway ids the Pi SDK needs (cloudflare-gateway.ts).
+  { key: CLOUDFLARE_AI_GATEWAY_PROVIDER, label: 'Cloudflare AI Gateway', url: '', placeholder: 'Cloudflare API token', urlPlaceholder: CLOUDFLARE_AI_GATEWAY_URL_EXAMPLE },
   { key: 'manifest', label: 'Manifest', url: 'https://app.manifest.build/v1', placeholder: 'mnfst_...' },
   { key: 'custom', label: 'Custom', url: '', placeholder: 'Paste your key here...' },
 ]
@@ -278,6 +282,11 @@ export function ApiKeyInput({
 
     const effectivePiAuthProvider = resolvePiAuthProviderForSubmit(activePreset, lastNonCustomPreset)
 
+    if (activePreset === CLOUDFLARE_AI_GATEWAY_PROVIDER && !parseCloudflareGatewayUrl(baseUrl)) {
+      setModelError(`Enter your gateway URL: ${CLOUDFLARE_AI_GATEWAY_URL_EXAMPLE}`)
+      return
+    }
+
     // Pi API key flow with tier dropdowns — submit selected models
     if (hasPiModels) {
       if (!bestModel || !defaultModel || !cheapModel) {
@@ -342,8 +351,7 @@ export function ApiKeyInput({
       <div className="space-y-2">
         <Label htmlFor="api-key">{t('apiSetup.apiKey')}</Label>
         <div className={cn(
-          "relative rounded-md shadow-minimal transition-colors",
-          "bg-foreground-2 focus-within:bg-background"
+          "field-surface relative rounded-md"
         )}>
           <Input
             id="api-key"
@@ -361,8 +369,9 @@ export function ApiKeyInput({
           <button
             type="button"
             onClick={() => setShowValue(!showValue)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            className="absolute right-2 top-1/2 flex size-6 -translate-y-1/2 items-center justify-center text-tertiary hover:text-foreground"
             tabIndex={-1}
+            aria-label={showValue ? t('common.hide') : t('common.show')}
           >
             {showValue ? (
               <EyeOff className="size-4" />
@@ -381,10 +390,10 @@ export function ApiKeyInput({
           <DropdownMenu>
             <DropdownMenuTrigger
               disabled={isDisabled}
-              className="flex h-6 items-center gap-1 rounded-[6px] bg-background shadow-minimal pl-2.5 pr-2 text-[12px] font-medium text-foreground/50 hover:bg-foreground/5 hover:text-foreground focus:outline-none"
+              className="motion-press flex h-control-sm items-center gap-1 rounded-full pl-2.5 pr-2 text-label-sm font-medium text-secondary ring-1 ring-inset ring-border hover:bg-fill-hover hover:text-foreground data-[state=open]:bg-fill-hover data-[state=open]:text-foreground"
             >
               {presets.find(p => p.key === activePreset)?.label}
-              <ChevronDown className="size-2.5 opacity-50" />
+              <ChevronDown className="size-2.5 text-tertiary" />
             </DropdownMenuTrigger>
             <StyledDropdownMenuContent align="end" className="z-floating-menu">
               {presets.map((preset) => (
@@ -403,15 +412,14 @@ export function ApiKeyInput({
         {/* Base URL input - hidden for default provider presets (Anthropic/OpenAI) */}
         {!isDefaultProviderPreset && (
           <div className={cn(
-            "rounded-md shadow-minimal transition-colors",
-            "bg-foreground-2 focus-within:bg-background"
+            "field-surface rounded-md"
           )}>
             <Input
               id="base-url"
               type="text"
               value={baseUrl}
               onChange={(e) => handleBaseUrlChange(e.target.value)}
-              placeholder="https://your-api-endpoint.com"
+              placeholder={activePresetObj?.urlPlaceholder ?? "https://your-api-endpoint.com"}
               className="border-0 bg-transparent shadow-none"
               disabled={isDisabled}
             />
@@ -425,7 +433,7 @@ export function ApiKeyInput({
         <div className="space-y-2">
           <Label>{t('apiSetup.protocol')}</Label>
           <div className={cn(
-            "flex rounded-md shadow-minimal overflow-hidden",
+            "flex gap-0.5 rounded-md bg-fill-hover p-0.5",
             "bg-foreground-2",
             isDisabled && "opacity-50 pointer-events-none"
           )}>
@@ -439,17 +447,17 @@ export function ApiKeyInput({
                 disabled={isDisabled}
                 onClick={() => setCustomApi(value)}
                 className={cn(
-                  "flex-1 py-1.5 text-[12px] font-medium transition-colors",
+                  "flex-1 rounded-sm py-1 text-label-sm font-medium transition-colors duration-micro ease-out-subtle hover:duration-instant",
                   customApi === value
-                    ? "bg-background text-foreground shadow-minimal"
-                    : "text-foreground/50 hover:text-foreground/70"
+                    ? "bg-raised text-foreground shadow-elev-1"
+                    : "text-secondary hover:text-foreground"
                 )}
               >
                 {label}
               </button>
             ))}
           </div>
-          <p className="text-xs text-foreground/30">
+          <p className="text-label-sm text-tertiary">
             Most third-party APIs (Ollama, vLLM, DashScope) use OpenAI Compatible.
           </p>
         </div>
@@ -459,7 +467,7 @@ export function ApiKeyInput({
       {hasPiModels ? (
         <div className="space-y-3">
           {piModelsLoading ? (
-            <div className="flex items-center gap-2 py-3 text-muted-foreground">
+            <div className="flex items-center gap-2 py-3 text-tertiary">
               <Loader2 className="size-3.5 animate-spin" />
               <span className="text-xs">{t("apiSetup.loadingModels")}</span>
             </div>
@@ -467,9 +475,9 @@ export function ApiKeyInput({
             <>
               {tierConfigs.map(({ label, desc, value }) => (
                 <div key={label} className="space-y-1.5">
-                  <Label className="text-muted-foreground font-normal text-xs">
+                  <Label className="text-label-sm font-normal text-secondary">
                     {label}{' '}
-                    <span className="text-foreground/30">· {desc}</span>
+                    <span className="text-tertiary">· {desc}</span>
                   </Label>
                   <button
                     type="button"
@@ -487,16 +495,14 @@ export function ApiKeyInput({
                       }
                     }}
                     className={cn(
-                      "flex h-9 w-full items-center justify-between rounded-md px-3 text-sm",
-                      "bg-foreground-2 shadow-minimal transition-colors",
-                      "hover:bg-background focus:outline-none focus:bg-background",
+                      "field-surface flex h-9 w-full items-center justify-between rounded-md px-3 text-label",
                       isDisabled && "opacity-50 pointer-events-none"
                     )}
                   >
                     <span className="truncate text-foreground">
                       {piModels.find(m => m.id === value)?.name ?? 'Select model...'}
                     </span>
-                    <ChevronDown className="size-3 opacity-50 shrink-0" />
+                    <ChevronDown className="size-3 shrink-0 text-tertiary" />
                   </button>
                 </div>
               ))}
@@ -507,7 +513,7 @@ export function ApiKeyInput({
                     onClick={() => { setOpenTier(null); setTierFilter('') }}
                   />
                   <div
-                    className="fixed z-floating-menu min-w-[200px] overflow-hidden rounded-[8px] bg-background text-foreground shadow-modal-small"
+                    className="popover-styled fixed z-floating-menu min-w-[200px] overflow-hidden text-foreground"
                     style={{
                       top: tierDropdownPosition.top,
                       left: tierDropdownPosition.left,
@@ -518,14 +524,14 @@ export function ApiKeyInput({
                       className="min-w-[200px]"
                       shouldFilter={false}
                     >
-                      <div className="border-b border-border/50 px-3 py-2">
+                      <div className="border-b border-subtle px-3 py-2">
                         <CommandPrimitive.Input
                           ref={tierFilterInputRef}
                           value={tierFilter}
                           onValueChange={setTierFilter}
                           placeholder={t("apiSetup.searchModels")}
                           autoFocus
-                          className="w-full bg-transparent text-sm outline-none placeholder:text-muted-foreground placeholder:select-none"
+                          className="w-full bg-transparent text-label outline-none placeholder:text-tertiary placeholder:select-none"
                         />
                       </div>
                       <CommandPrimitive.List className="max-h-[240px] overflow-y-auto p-1">
@@ -541,14 +547,14 @@ export function ApiKeyInput({
                                 setTierFilter('')
                               }}
                               className={cn(
-                                "flex cursor-pointer select-none items-center justify-between gap-3 rounded-[6px] px-3 py-2 text-[13px]",
-                                "outline-none data-[selected=true]:bg-foreground/5"
+                                "flex min-h-row-menu cursor-pointer select-none items-center justify-between gap-3 rounded-md px-3 text-label",
+                                "outline-none data-[selected=true]:bg-fill-hover"
                               )}
                             >
                               <div className="flex items-center gap-2 min-w-0">
                                 <span className="truncate">{model.name}</span>
                                 {model.reasoning && (
-                                  <span className="text-[10px] text-foreground/30 shrink-0">reasoning</span>
+                                  <span className="shrink-0 text-caption text-tertiary">reasoning</span>
                                 )}
                               </div>
                               <Check className={cn("size-3 shrink-0", activeTierConfig.value === model.id ? "opacity-100" : "opacity-0")} />
@@ -567,15 +573,14 @@ export function ApiKeyInput({
         </div>
       ) : !isDefaultProviderPreset && (
         <div className="space-y-2">
-          <Label htmlFor="connection-default-model" className="text-muted-foreground font-normal">
+          <Label htmlFor="connection-default-model" className="font-normal text-secondary">
             Default Model{' '}
-            <span className="text-foreground/30">
+            <span className="text-tertiary">
               · {baseUrl.trim() ? 'required' : 'optional'}
             </span>
           </Label>
           <div className={cn(
-            "rounded-md shadow-minimal transition-colors",
-            "bg-foreground-2 focus-within:bg-background",
+            "field-surface rounded-md",
             modelError && "ring-1 ring-destructive/40"
           )}>
             <Input
@@ -594,11 +599,11 @@ export function ApiKeyInput({
           {modelError && (
             <p className="text-xs text-destructive">{modelError}</p>
           )}
-          <p className="text-xs text-foreground/30">
+          <p className="text-label-sm text-tertiary">
             Comma-separated list. The first model is the default. The last is used for summarization.
           </p>
           {(activePreset === 'custom' || !activePreset) && (
-            <p className="text-xs text-foreground/30">
+            <p className="text-label-sm text-tertiary">
               Required for custom endpoints. Use the provider-specific model ID.
             </p>
           )}

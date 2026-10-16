@@ -71,7 +71,7 @@ function renderSubmenuItem(
       <StyledDropdownMenuItem key={item.id} onClick={() => window.electronAPI.openUrl(item.url)}>
         {Icon && <Icon className="h-3.5 w-3.5" />}
         {t(item.labelKey)}
-        <Icons.ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
+        <Icons.ExternalLink className="h-3 w-3 ml-auto text-tertiary" />
       </StyledDropdownMenuItem>
     )
   }
@@ -235,7 +235,7 @@ export function DesktopAppMenu({
                 >
                   {Icon && <Icon className="h-3.5 w-3.5" />}
                   {t(link.labelKey)}
-                  <Icons.ExternalLink className="h-3 w-3 ml-auto text-muted-foreground" />
+                  <Icons.ExternalLink className="h-3 w-3 ml-auto text-tertiary" />
                 </StyledDropdownMenuItem>
               )
             })}

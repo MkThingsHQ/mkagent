@@ -67,16 +67,16 @@ export function GitBashWarning({
     >
       <div className="space-y-4">
         {/* Primary action: Download Git */}
-        <div className="rounded-lg border border-border bg-foreground-2 p-4">
-          <h3 className="text-sm font-medium text-foreground">
+        <div className="rounded-lg bg-sunken p-4 ring-1 ring-inset ring-separator">
+          <h3 className="text-label font-medium text-foreground">
             {t("onboarding.gitBash.installTitle")}
           </h3>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-label-sm text-tertiary">
             {t("onboarding.gitBash.installDesc")}
           </p>
           <Button
             onClick={handleDownload}
-            className="mt-3 w-full bg-background shadow-minimal text-foreground hover:bg-foreground/5 rounded-lg"
+            className="mt-3 w-full"
             size="sm"
           >
             <Download className="mr-2 size-4" />
@@ -85,11 +85,11 @@ export function GitBashWarning({
         </div>
 
         {/* Secondary: Already have Git? */}
-        <div className="rounded-lg border border-border bg-foreground-2 p-4">
-          <h3 className="text-sm font-medium text-foreground">
+        <div className="rounded-lg bg-sunken p-4 ring-1 ring-inset ring-separator">
+          <h3 className="text-label font-medium text-foreground">
             {t("onboarding.gitBash.alreadyInstalled")}
           </h3>
-          <p className="mt-1 text-xs text-muted-foreground">
+          <p className="mt-1 text-label-sm text-tertiary">
             {t("onboarding.gitBash.customPath")}
           </p>
 
@@ -102,18 +102,18 @@ export function GitBashWarning({
                   onClearError?.()
                 }}
                 placeholder={t("onboarding.gitBash.pathPlaceholder")}
-                className="text-xs"
+                className="text-label-sm"
               />
               <Button
                 onClick={handleUsePath}
                 disabled={!customPath.trim()}
-                className="w-full bg-background shadow-minimal text-foreground hover:bg-foreground/5 rounded-lg"
+                className="w-full "
                 size="sm"
               >
                 {t("onboarding.gitBash.useThisPath")}
               </Button>
               {errorMessage && (
-                <p className="text-xs text-red-500">{errorMessage}</p>
+                <p className="text-label-sm text-red-500">{errorMessage}</p>
               )}
             </div>
           ) : (
@@ -122,7 +122,7 @@ export function GitBashWarning({
                 onClick={onRecheck}
                 disabled={isRechecking}
                 size="sm"
-                className="flex-1 bg-background text-foreground hover:bg-foreground/5 rounded-lg shadow-minimal"
+                className="flex-1 bg-background text-foreground hover:bg-fill-hover rounded-lg shadow-minimal"
               >
                 <RefreshCw className={`mr-2 size-4 ${isRechecking ? 'animate-spin' : ''}`} />
                 {isRechecking ? t("common.checking") : t("onboarding.gitBash.recheck")}
@@ -130,7 +130,7 @@ export function GitBashWarning({
               <Button
                 onClick={handleBrowse}
                 size="sm"
-                className="flex-1 bg-background text-foreground hover:bg-foreground/5 rounded-lg shadow-minimal"
+                className="flex-1 bg-background text-foreground hover:bg-fill-hover rounded-lg shadow-minimal"
               >
                 <FolderOpen className="mr-2 size-4" />
                 {t("onboarding.gitBash.browse")}

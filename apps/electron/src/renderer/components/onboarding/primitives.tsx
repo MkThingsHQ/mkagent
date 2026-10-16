@@ -100,11 +100,12 @@ export function StepHeader({
 }: StepHeaderProps) {
   return (
     <div className={cn(centered && "text-center", className)}>
-      <h1 className="step-title text-lg font-semibold tracking-tight">
+      {/* Display moment (spec §3): serif 30/36; the lede is reading copy */}
+      <h1 className="step-title font-serif text-display text-foreground text-balance">
         {title}
       </h1>
       {description && (
-        <p className="step-description mt-2 text-sm max-w-sm text-muted-foreground">
+        <p className={cn("step-description mt-2 text-copy text-secondary", centered && "mx-auto")}>
           {description}
         </p>
       )}
@@ -141,11 +142,10 @@ interface StepFormLayoutProps {
 /**
  * StepFormLayout - Unified layout for onboarding steps
  *
- * Use for all steps. Supports:
- * - Optional icon at top (wrapped in StepIcon, or raw via iconElement)
- * - Centered header (title + description)
- * - Full-width content below (forms, lists, etc.)
- * - Flex action buttons at bottom
+ * One visual language for onboarding, login and reauth (spec §7.15): a paper card on the navigator
+ * canvas (radius 16, elev-1) with the brand/status mark above it, a left-aligned serif title, a
+ * copy lede, full-width content and the actions row. In narrow windows the card flattens onto the
+ * canvas (no ring or shadow) so it reads as the page.
  */
 export function StepFormLayout({
   icon,
@@ -161,40 +161,46 @@ export function StepFormLayout({
 }: StepFormLayoutProps) {
   return (
     <div className={cn(
-      "flex w-full max-w-[28rem] flex-col items-center",
-      grow && !fillHeight && "h-full max-h-[600px]",
+      "flex w-full max-w-[440px] flex-col items-center",
+      grow && !fillHeight && "h-full max-h-[680px]",
       fillHeight && "h-full",
       className
     )}>
       {iconElement && (
-        <div className="mb-6 shrink-0">
+        <div className="mb-4 shrink-0">
           {iconElement}
         </div>
       )}
       {icon && !iconElement && (
-        <StepIcon variant={iconVariant}>
+        <StepIcon variant={iconVariant} className="mb-4">
           {icon}
         </StepIcon>
       )}
 
-      <div className="shrink-0">
-        <StepHeader title={title} description={description} />
-      </div>
-
-      {children && (
-        <div className={cn(
-          "mt-6 w-full",
-          (grow || fillHeight) && "flex-1 min-h-0"
-        )}>
-          {children}
+      <div className={cn(
+        "flex w-full flex-col rounded-xl bg-paper shadow-elev-1 px-7 pt-7 pb-6",
+        "max-sm:bg-transparent max-sm:shadow-none max-sm:px-1 max-sm:pt-2",
+        (grow || fillHeight) && "flex-1 min-h-0",
+      )}>
+        <div className="shrink-0">
+          <StepHeader title={title} description={description} centered={false} />
         </div>
-      )}
 
-      {actions && (
-        <StepActions variant="flex" className="mt-6 w-full shrink-0">
-          {actions}
-        </StepActions>
-      )}
+        {children && (
+          <div className={cn(
+            "mt-5 w-full",
+            (grow || fillHeight) && "flex-1 min-h-0"
+          )}>
+            {children}
+          </div>
+        )}
+
+        {actions && (
+          <StepActions variant="flex" className="mt-6 w-full shrink-0">
+            {actions}
+          </StepActions>
+        )}
+      </div>
     </div>
   )
 }
@@ -221,8 +227,8 @@ export function StepActions({ children, variant = 'stack', className }: StepActi
     <div
       className={cn(
         "step-actions mt-8",
-        variant === 'stack' && "flex flex-col gap-3",
-        variant === 'flex' && "flex gap-3 justify-center",
+        variant === 'stack' && "flex flex-col gap-2",
+        variant === 'flex' && "flex gap-2 justify-center",
         className
       )}
     >
@@ -240,11 +246,11 @@ interface BackButtonProps extends Omit<ButtonProps, 'variant' | 'children'> {
 }
 
 /**
- * BackButton - Consistent back/cancel button
+ * BackButton - Back/cancel is a ghost button (spec D5) — never heavier than the primary action
  */
 export function BackButton({ children = 'Back', className, ...props }: BackButtonProps) {
   return (
-    <Button variant="ghost" className={cn("flex-1 max-w-[320px] bg-foreground-2 shadow-minimal text-foreground hover:bg-foreground/5 rounded-lg", className)} {...props}>
+    <Button variant="ghost" size="lg" className={cn("flex-1", className)} {...props}>
       {children}
     </Button>
   )
@@ -257,7 +263,7 @@ interface ContinueButtonProps extends Omit<ButtonProps, 'children'> {
 }
 
 /**
- * ContinueButton - Consistent primary action button
+ * ContinueButton - The step's one primary action: solid accent (spec D5)
  */
 export function ContinueButton({
   children = 'Continue',
@@ -268,7 +274,7 @@ export function ContinueButton({
   ...props
 }: ContinueButtonProps) {
   return (
-    <Button className={cn("flex-1 max-w-[320px] bg-background shadow-minimal text-foreground hover:bg-foreground/5 rounded-lg", className)} disabled={disabled || loading} {...props}>
+    <Button variant="primary" size="lg" className={cn("flex-1", className)} disabled={disabled || loading} {...props}>
       {loading ? (
         <>
           <Spinner className="mr-2" />

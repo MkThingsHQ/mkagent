@@ -12,16 +12,14 @@
  * Animation rules:
  * - GPU-only properties: transform + opacity (per apps/electron/CLAUDE.md).
  * - Forward (navigator → detail): navigator parallaxes left to -30%; detail
- *   slides in from 100%. Same snappy spring as the mobile menu sub-page slide.
+ *   slides in from 100%, on the `panel` spring (spec §6.2: sidebar and panels).
  * - Back (detail → navigator): symmetric reverse.
- * - prefers-reduced-motion: 120ms tween fallback.
+ * - Reduced motion: MotionConfig (MotionPreferenceProvider) turns the slide into an instant swap.
  */
 
 import * as React from 'react'
-import { motion, useReducedMotion } from 'motion/react'
-
-const SNAPPY_SPRING = { type: 'spring' as const, stiffness: 400, damping: 36, mass: 0.8 }
-const REDUCED_TWEEN = { type: 'tween' as const, duration: 0.12 }
+import { motion } from 'motion/react'
+import { SPRING } from '@mkagent/ui/motion'
 
 export type CompactPanelRole = 'navigator' | 'detail'
 
@@ -44,9 +42,6 @@ export function CompactPanelTransition({
   isDetailActive,
   children,
 }: CompactPanelTransitionProps) {
-  const reduceMotion = useReducedMotion()
-  const transition = reduceMotion ? REDUCED_TWEEN : SNAPPY_SPRING
-
   const isOffscreen = role === 'navigator' ? isDetailActive : !isDetailActive
   // Navigator parallaxes (-30%) to feel layered behind the incoming detail panel.
   // Detail slides fully off (100%) so it never bleeds in over the navigator.
@@ -67,7 +62,7 @@ export function CompactPanelTransition({
       aria-hidden={isOffscreen || undefined}
       initial={false}
       animate={{ x: isOffscreen ? offscreenX : '0%' }}
-      transition={transition}
+      transition={SPRING.panel}
     >
       {children}
     </motion.div>

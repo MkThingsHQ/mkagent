@@ -1,3 +1,4 @@
+import type { BackgroundTaskOutput, StopBackgroundTaskResult } from '@mkagent/shared/protocol'
 // =============================================================================
 // Protocol re-exports (channels, DTOs, events, wire types)
 // =============================================================================
@@ -204,6 +205,9 @@ import type {
   ClaudeOAuthResult,
 } from '@mkagent/shared/protocol'
 
+/** Native window material the renderer may paint translucently over (see ThemeContext data-vibrancy). */
+export type WindowVibrancy = 'under-window' | 'mica'
+
 export interface ElectronAPI {
   // Session management
   getSessions(): Promise<Session[]>
@@ -215,6 +219,8 @@ export interface ElectronAPI {
   sendMessage(sessionId: string, message: string, attachments?: FileAttachment[], storedAttachments?: StoredAttachmentType[], options?: SendMessageOptions): Promise<void>
   cancelProcessing(sessionId: string, silent?: boolean): Promise<void>
   killShell(sessionId: string, shellId: string): Promise<{ success: boolean; error?: string }>
+  getBackgroundTaskOutput(sessionId: string, taskId: string, kind?: 'agent' | 'shell' | 'workflow'): Promise<BackgroundTaskOutput | null>
+  stopBackgroundTask(sessionId: string, taskId: string): Promise<StopBackgroundTaskResult>
 
   respondToPermission(sessionId: string, requestId: string, allowed: boolean, alwaysAllow: boolean, options?: PermissionResponseOptions): Promise<boolean>
 
@@ -322,6 +328,9 @@ export interface ElectronAPI {
 
   // System warnings (startup checks)
   getSystemWarnings(): Promise<{ vcredistMissing: boolean; downloadUrl?: string }>
+
+  /** Native material behind this window (macOS vibrancy, Windows 11 22H2+ Mica); null when the window is opaque. */
+  getWindowVibrancy(): WindowVibrancy | null
 
   // Shell operations
   openUrl(url: string): Promise<void>
@@ -488,8 +497,8 @@ export interface ElectronAPI {
   onNotificationNavigate(callback: (data: { workspaceId: string; sessionId: string }) => void): () => void
 
   // Theme preferences sync across windows
-  broadcastThemePreferences(preferences: { mode: string; colorTheme: string; font: string }): Promise<void>
-  onThemePreferencesChange(callback: (preferences: { mode: string; colorTheme: string; font: string }) => void): () => void
+  broadcastThemePreferences(preferences: { mode: string; colorTheme: string; font: string; motion?: string }): Promise<void>
+  onThemePreferencesChange(callback: (preferences: { mode: string; colorTheme: string; font: string; motion?: string }) => void): () => void
 
   // Workspace theme sync across windows
   broadcastWorkspaceThemeChange(workspaceId: string, themeId: string | null): Promise<void>

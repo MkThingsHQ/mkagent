@@ -8,6 +8,25 @@ All notable changes to MkAgent are documented in this file. The format follows
 
 Add user-visible changes here before running `bun run release:prepare <version>`.
 
+## [0.2.0] - 2026-10-16
+
+### Added
+
+- Rebuilt Desktop and mobile WebUI around the Craft v0.15.0 design: a joined paper layout, quieter transcript, raised composer, shared settings pages, contrast-solved themes, and motion preferences.
+- Added Cloudflare AI Gateway connections and shell Run actions with live task output and individual task cancellation through Pi.
+- Added local files, web news, and Skills starter prompts.
+
+### Changed
+
+- Pinned the Pi SDK and coordinated runtime dependencies to 1.1.0; refreshed Sonnet/Haiku 5.5 and GPT-6.1 Sol models and provider-aware Luna/Haiku/Flash utility routing.
+- Preserved MkAgent branding, existing local configuration, Pi/Lite features and the established excluded-module boundary.
+
+### Fixed
+
+- Isolated Pi main and utility sessions from project/global extensions and preserved failed tool results in model responses and transcripts.
+- Fixed Azure provider renaming and edited endpoint hot updates, WebUI deep links/workspace parameters and login styling, mobile shortcut hints, and Windows window-material fallback.
+- Replaced global command-line matching when stopping background shells with cancellation through the owning task.
+
 ## [0.1.3] - 2026-10-08
 
 ### Changed
@@ -70,6 +89,7 @@ Add user-visible changes here before running `bun run release:prepare <version>`
 - Local session search, flags, archives, import, export, and branching.
 
 [Unreleased]: https://github.com/MkThingsHQ/mkagent/releases
+[0.2.0]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.0
 [0.1.3]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.1.3
 [0.1.2]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.1.2
 [0.1.1]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.1.1

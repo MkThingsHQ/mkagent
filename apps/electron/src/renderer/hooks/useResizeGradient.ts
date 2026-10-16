@@ -20,7 +20,7 @@ export function getResizeGradientStyle(
 ): React.CSSProperties {
   if (mouseY === null || !handleHeight || handleHeight <= 0) {
     return {
-      transition: 'opacity 150ms ease-out',
+      transition: 'opacity var(--dur-fast) var(--ease-out)',
       opacity: 0,
       background: 'none',
     }
@@ -39,7 +39,7 @@ export function getResizeGradientStyle(
   const stopBottomFar = clamp(centerY + farCenterDelta, 0, height)
 
   return {
-    transition: 'opacity 150ms ease-out',
+    transition: 'opacity var(--dur-fast) var(--ease-out)',
     opacity: 1,
     background: `linear-gradient(
       to bottom,

@@ -13,6 +13,12 @@
  * The in-memory manager starts from the SDK defaults and pins the retry policy
  * explicitly. The main process surfaces the resulting `auto_retry_*` events —
  * see `packages/shared/src/agent/backend/pi/event-adapter.ts`.
+ *
+ * The working directory is never a trusted Pi project: trust would auto-load
+ * `<cwd>/.pi/extensions` (code that runs in this process and can hook every
+ * provider request), `.pi`/`.agents` skills, prompts and `SYSTEM.md` from
+ * whatever repository the user opened. Craft owns the system prompt, skills
+ * and tools for its sessions, so none of that is wanted.
  */
 import { SettingsManager } from '@earendil-works/pi-coding-agent';
 import { LLM_QUERY_TIMEOUT_MS } from '../../shared/src/agent/llm-tool.ts';
@@ -43,6 +49,10 @@ export const MKAGENT_PI_RETRY_SETTINGS = {
   enabled: true,
   maxRetries: 4,
   baseDelayMs: 2_000,
+  // Cap for one agent-level backoff sleep (`retryDelayMs` in pi-ai, SDK default
+  // 60 s). Four retries at a 2 s base never reach it; pinned so the policy is
+  // fully explicit.
+  maxAgentDelayMs: 60_000,
   provider: {
     maxRetries: 2,
     maxRetryDelayMs: 60_000,
@@ -62,6 +72,7 @@ export const MKAGENT_PI_EPHEMERAL_RETRY_SETTINGS = {
   enabled: true,
   maxRetries: 2,
   baseDelayMs: 2_000,
+  maxAgentDelayMs: 60_000,
   provider: {
     maxRetries: 2,
     maxRetryDelayMs: 10_000,
@@ -88,12 +99,19 @@ export function buildMkAgentPiSettings(purpose: MkAgentPiSessionPurpose = 'main'
       enabled: retry.enabled,
       maxRetries: retry.maxRetries,
       baseDelayMs: retry.baseDelayMs,
+      maxAgentDelayMs: retry.maxAgentDelayMs,
       provider: { ...retry.provider },
     },
     // PiAgent re-asserts auto-compaction on every subprocess start
     // (requestSetAutoCompaction(true)); keep the SDK default explicit here so
     // the intent is visible next to the retry policy.
     compaction: { enabled: true },
+    // Pi >=1.0 keeps the prompt cache warm while a run is in progress (a long
+    // tool call, a pending permission prompt) by replaying the last request
+    // with a 1-token output cap shortly before the cache expires, only when
+    // the expected saving is at least $0.05. Keep that SDK default for chats;
+    // utility sessions are one-shot and disposed right after their prompt.
+    cacheWarming: purpose === 'ephemeral' ? 'off' : 'streaming',
   };
 }
 
@@ -105,5 +123,5 @@ export function buildMkAgentPiSettings(purpose: MkAgentPiSessionPurpose = 'main'
 export function createMkAgentSettingsManager(
   purpose: MkAgentPiSessionPurpose = 'main',
 ): SettingsManager {
-  return SettingsManager.inMemory(buildMkAgentPiSettings(purpose));
+  return SettingsManager.inMemory(buildMkAgentPiSettings(purpose), { projectTrusted: false });
 }

@@ -70,16 +70,14 @@ function displayPath(filePath: string): string {
 // ============================================================================
 
 const contextMenuContentClasses = cn(
-  'popover-styled z-dropdown min-w-40 overflow-hidden p-1',
-  'w-fit font-sans whitespace-nowrap text-xs flex flex-col gap-0.5',
-  'animate-in fade-in-0 zoom-in-95'
+  'popover-styled motion-popover z-dropdown min-w-40 overflow-hidden p-1',
+  'w-fit font-sans whitespace-nowrap flex flex-col'
 )
 
 const contextMenuItemClasses = cn(
-  'relative flex cursor-default items-center gap-2 px-2 py-1.5 text-sm outline-hidden select-none',
-  '[&_svg]:pointer-events-none [&_svg]:shrink-0',
-  'pr-4 rounded-[4px] hover:bg-foreground/[0.03] focus:bg-foreground/[0.03]',
-  '[&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0'
+  'relative flex min-h-row-menu cursor-default items-center gap-2 rounded-md px-2 pr-3 text-label outline-hidden select-none',
+  'hover:bg-fill-hover focus:bg-fill-hover',
+  "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&>svg:not([class*='text-'])]:text-secondary"
 )
 
 // ============================================================================

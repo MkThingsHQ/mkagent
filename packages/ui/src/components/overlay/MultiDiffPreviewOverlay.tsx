@@ -344,7 +344,7 @@ export function MultiDiffPreviewOverlay({
                       <div className="px-4 py-4">
                         <div
                           className="flex items-start gap-3 px-4 py-3 rounded-[8px] bg-[color-mix(in_oklab,var(--destructive)_5%,var(--background))] shadow-tinted"
-                          style={{ '--shadow-color': 'var(--destructive-rgb)' } as React.CSSProperties}
+                          style={{ '--shadow-color': 'var(--destructive)' } as React.CSSProperties}
                         >
                           <X className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
                           <div className="flex-1 min-w-0">

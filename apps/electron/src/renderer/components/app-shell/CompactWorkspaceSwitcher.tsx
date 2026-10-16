@@ -103,14 +103,14 @@ export function CompactWorkspaceSwitcher({
           <button
             type="button"
             data-workspace-switcher="topbar"
-            className="titlebar-no-drag ml-1 h-9 flex-1 min-w-0 flex items-center justify-start gap-1 px-3 rounded-[8px] border border-foreground/6 text-sm text-foreground/55 hover:bg-foreground/5 hover:text-foreground transition-colors cursor-pointer data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground"
+            className="titlebar-no-drag ml-1 h-9 min-w-0 max-w-full flex items-center justify-start gap-2 pl-1 pr-2 rounded-md text-label-lg font-medium text-foreground hover:bg-fill-hover data-[state=open]:bg-fill-hover transition-[background-color] duration-micro ease-out-subtle hover:duration-instant cursor-pointer"
             aria-label={t('workspace.selectWorkspace')}
           >
             <WorkspaceAvatar
               workspaceId={selectedWorkspace?.id}
               workspaceName={selectedWorkspace?.name}
               src={selectedWorkspace ? workspaceIconMap.get(selectedWorkspace.id) : undefined}
-              className="h-5 w-5 mr-1.5 rounded-full ring-1 ring-border/50"
+              className="size-6 rounded-sm shadow-elev-0"
               fallbackClassName="rounded-full text-[11px]"
             />
             <span className="truncate min-w-0 flex-1 text-left">{selectedWorkspace?.name || 'Workspace'}</span>
@@ -142,19 +142,19 @@ export function CompactWorkspaceSwitcher({
                   <button
                     type="button"
                     onClick={handleSelect}
-                    className="flex-1 min-w-0 flex items-center gap-3 text-left outline-none"
+                    className="flex-1 min-w-0 flex items-center gap-3 text-left -outline-offset-2"
                   >
                     <WorkspaceAvatar
                       workspaceId={workspace.id}
                       workspaceName={workspace.name}
                       src={workspaceIconMap.get(workspace.id)}
-                      className="h-7 w-7 rounded-full ring-1 ring-border/50 shrink-0"
-                      fallbackClassName="rounded-full text-sm"
+                      className="size-7 rounded-sm shadow-elev-0 shrink-0"
+                      fallbackClassName="rounded-sm text-label"
                     />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="truncate text-sm font-medium">{workspace.name}</span>
-                        {workspaceUnreadMap?.[workspace.id] && <span className="h-2 w-2 rounded-full bg-accent shrink-0" />}
+                        <span className="truncate text-copy font-medium">{workspace.name}</span>
+                        {workspaceUnreadMap?.[workspace.id] && <span className="size-1.5 rounded-full bg-accent-solid shrink-0" />}
                       </div>
                     </div>
                   </button>
@@ -162,7 +162,7 @@ export function CompactWorkspaceSwitcher({
                     <button
                       type="button"
                       onClick={() => handleRemoveWorkspace(workspace)}
-                      className="shrink-0 h-9 w-9 rounded-[8px] flex items-center justify-center text-foreground/50 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                      className="shrink-0 size-9 rounded-md flex items-center justify-center text-secondary hover:text-destructive hover:bg-destructive-tint"
                       aria-label={t("workspace.removeWorkspace")}
                     >
                       <Trash2 className="h-4 w-4" />
@@ -172,14 +172,14 @@ export function CompactWorkspaceSwitcher({
                     <button
                       type="button"
                       onClick={() => { onSelect(workspace.id, true); setOpen(false) }}
-                      className="shrink-0 h-9 w-9 rounded-[8px] flex items-center justify-center text-foreground/50 hover:text-foreground hover:bg-foreground/10 transition-colors"
+                      className="shrink-0 size-9 rounded-md flex items-center justify-center text-secondary hover:text-foreground hover:bg-fill-hover"
                       aria-label={t("sidebarMenu.openInNewWindow")}
                     >
                       <ExternalLink className="h-4 w-4" />
                     </button>
                   )}
                   {isActive && (
-                    <Check className="h-4 w-4 shrink-0 text-foreground/60 mr-2" />
+                    <Check className="size-4 shrink-0 text-accent mr-2" />
                   )}
                 </div>
               )
@@ -189,12 +189,12 @@ export function CompactWorkspaceSwitcher({
               <button
                 type="button"
                 onClick={handleNewWorkspace}
-                className="mt-1 flex items-center gap-3 px-3 py-3 rounded-[10px] hover:bg-foreground/5 transition-colors text-left"
+                className="mt-1 flex items-center gap-3 px-2 min-h-row-touch py-2 rounded-md hover:bg-fill-hover transition-[background-color] duration-micro ease-out-subtle hover:duration-instant text-left"
               >
-                <div className="h-7 w-7 rounded-full bg-foreground/5 flex items-center justify-center shrink-0">
-                  <FolderPlus className="h-4 w-4 text-foreground/60" />
+                <div className="size-7 rounded-sm bg-fill-hover flex items-center justify-center shrink-0">
+                  <FolderPlus className="size-4 text-secondary" />
                 </div>
-                <span className="text-sm font-medium">{t("workspace.addWorkspace")}</span>
+                <span className="text-copy font-medium">{t("workspace.addWorkspace")}</span>
               </button>
             </DrawerClose>
           </div>

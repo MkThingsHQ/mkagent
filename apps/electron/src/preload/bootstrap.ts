@@ -1,3 +1,4 @@
+import type { ElectronAPI } from '../shared/types'
 import '@sentry/electron/preload'
 import { contextBridge, ipcRenderer, shell, webUtils } from 'electron'
 import {
@@ -110,3 +111,11 @@ api.startChatGptOAuth = async (connectionSlug: string) => {
 }
 
 contextBridge.exposeInMainWorld('electronAPI', api)
+
+// Native window material, passed by the main process as a launch argument (window-manager.ts).
+// Read synchronously so the first paint already knows whether the canvas may be translucent.
+const WINDOW_VIBRANCY_ARG = '--craft-window-vibrancy='
+;(api as ElectronAPI).getWindowVibrancy = () => {
+  const value = process.argv.find(arg => arg.startsWith(WINDOW_VIBRANCY_ARG))?.slice(WINDOW_VIBRANCY_ARG.length)
+  return value === 'under-window' || value === 'mica' ? value : null
+}

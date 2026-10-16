@@ -23,12 +23,19 @@
  */
 
 import * as React from 'react'
-import { Maximize2 } from 'lucide-react'
+import { Maximize2, Sheet } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { CodeBlock } from './CodeBlock'
 import { DataTableOverlay } from '../overlay/DataTableOverlay'
 import { useScrollFade } from './useScrollFade'
 import { TableExportDropdown } from './TableExportDropdown'
+import {
+  PreviewBlockAction,
+  PreviewBlockError,
+  PreviewBlockFrame,
+  PreviewBlockHeader,
+  PreviewBlockLoading,
+} from './PreviewBlockChrome'
 import { usePlatform } from '../../context/PlatformContext'
 import { useTranslation } from 'react-i18next'
 
@@ -58,7 +65,7 @@ interface SpreadsheetSpec {
 // ── Cell formatting ──────────────────────────────────────────────────────────
 
 function formatCell(value: unknown, type?: ColumnDef['type']): React.ReactNode {
-  if (value === null || value === undefined) return <span className="text-muted-foreground/40">—</span>
+  if (value === null || value === undefined) return <span className="text-tertiary">—</span>
   switch (type) {
     case 'currency': {
       const num = typeof value === 'number' ? value : Number(value)
@@ -188,16 +195,18 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
   const [isFullscreen, setIsFullscreen] = React.useState(false)
   const { scrollRef, maskImage } = useScrollFade()
 
+  // A file-backed sheet whose read hasn't started yet (the effect runs after the first paint) shows
+  // the loading well instead of flashing the JSON fallback for a frame.
+  const awaitingFile = !!spec?.src && !!onReadFile && !fileData && !fileError
+
   // Loading state for file-backed spreadsheet
-  if (spec?.src && fileLoading) {
-    const loadingLabel = [spec.filename, spec.sheetName].filter(Boolean).join(' — ') || t('spreadsheet.defaultTitle')
+  if ((spec?.src && fileLoading) || awaitingFile) {
+    const loadingLabel = [spec?.filename, spec?.sheetName].filter(Boolean).join(' — ') || t('spreadsheet.defaultTitle')
     return (
-      <div className={cn('rounded-[8px] overflow-hidden border bg-muted/10', className)}>
-        <div className="px-3 py-2 bg-muted/50 border-b">
-          <span className="text-[12px] text-muted-foreground font-medium">{loadingLabel}</span>
-        </div>
-        <div className="py-8 text-center text-muted-foreground text-[13px]">{t('datatable.loadingData')}</div>
-      </div>
+      <PreviewBlockFrame className={className}>
+        <PreviewBlockHeader icon={<Sheet />} title={loadingLabel} />
+        <PreviewBlockLoading className="py-8">{t('datatable.loadingData')}</PreviewBlockLoading>
+      </PreviewBlockFrame>
     )
   }
 
@@ -205,12 +214,10 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
   if (spec?.src && fileError) {
     const errorLabel = [spec.filename, spec.sheetName].filter(Boolean).join(' — ') || t('spreadsheet.defaultTitle')
     return (
-      <div className={cn('rounded-[8px] overflow-hidden border bg-muted/10', className)}>
-        <div className="px-3 py-2 bg-muted/50 border-b">
-          <span className="text-[12px] text-muted-foreground font-medium">{errorLabel}</span>
-        </div>
-        <div className="py-6 text-center text-destructive/70 text-[13px]">{fileError}</div>
-      </div>
+      <PreviewBlockFrame className={className}>
+        <PreviewBlockHeader icon={<Sheet />} title={errorLabel} />
+        <PreviewBlockError>{fileError}</PreviewBlockError>
+      </PreviewBlockFrame>
     )
   }
 
@@ -232,33 +239,33 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
         WebkitMaskImage: maskImage,
       } : { overflowX: 'auto' }}
     >
-      <table className="w-max min-w-full text-[13px]">
-        {/* Column letter headers */}
+      <table className="w-max min-w-full text-label text-foreground">
+        {/* Column letter headers: the sheet's gutter row */}
         <thead>
-          <tr className="border-b border-foreground/[0.08] bg-foreground/[0.03]">
-            <th className="text-center py-1 px-2 font-normal text-muted-foreground/40 w-10 border-r border-foreground/[0.06] text-[11px]" />
+          <tr className="border-b border-subtle bg-fill-hover">
+            <th className="w-10 border-r border-subtle px-2 py-1 text-center text-caption font-normal text-tertiary" />
             {colLetters.map((letter) => (
-              <th key={letter} className="text-center py-1 px-3 font-normal text-muted-foreground/40 border-r border-foreground/[0.06] last:border-0 text-[11px]">{letter}</th>
+              <th key={letter} className="border-r border-subtle px-3 py-1 text-center text-caption font-normal text-tertiary last:border-0">{letter}</th>
             ))}
           </tr>
           {/* Row 1: column labels */}
-          <tr className="border-b border-foreground/[0.06] bg-foreground/[0.02]">
-            <td className="text-center py-1.5 px-2 text-muted-foreground/40 border-r border-foreground/[0.06] text-[11px] font-mono">1</td>
+          <tr className="border-b border-subtle">
+            <td className="border-r border-subtle bg-fill-hover px-2 py-1.5 text-center font-mono text-caption font-normal text-tertiary">1</td>
             {parsed.columns.map((col) => (
-              <td key={col.key} className="py-1.5 px-3 font-semibold text-foreground border-r border-foreground/[0.06] last:border-0">{col.label}</td>
+              <td key={col.key} className="border-r border-subtle px-3 py-1.5 font-semibold last:border-0">{col.label}</td>
             ))}
           </tr>
         </thead>
         <tbody>
           {parsed.rows.map((row, i) => (
-            <tr key={i} className="border-b border-foreground/[0.03] last:border-0 hover:bg-foreground/[0.015] transition-colors">
-              <td className="text-center py-1.5 px-2 text-muted-foreground/40 border-r border-foreground/[0.06] text-[11px] font-mono">{i + 2}</td>
+            <tr key={i} className="border-b border-subtle last:border-0 transition-colors duration-micro ease-out-subtle hover:bg-fill-hover hover:duration-instant">
+              <td className="border-r border-subtle bg-fill-hover px-2 py-1.5 text-center font-mono text-caption font-normal text-tertiary">{i + 2}</td>
               {parsed.columns.map((col) => {
                 const val = row[col.key]
                 const numeric = isNumericType(col.type) || isNumericValue(val)
                 return (
                   <td key={col.key} className={cn(
-                    'py-1.5 px-3 border-r border-foreground/[0.06] last:border-0 tabular-nums',
+                    'border-r border-subtle px-3 py-1.5 tabular-nums last:border-0',
                     numeric && 'text-right',
                     col.type === 'formula' && 'text-info',
                   )}>
@@ -275,30 +282,19 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
 
   return (
     <SpreadsheetErrorBoundary fallback={fallback}>
-      <div className={cn('relative group rounded-[8px] overflow-hidden border bg-muted/10', className)}>
-        {/* Expand button */}
-        <button
-          onClick={() => setIsFullscreen(true)}
-          className={cn(
-            "absolute top-[7px] right-2 p-1 rounded-[6px] transition-all z-10 select-none",
-            "opacity-0 group-hover:opacity-100",
-            "bg-background shadow-minimal",
-            "text-muted-foreground/50 hover:text-foreground",
-            "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100"
-          )}
-          title={t('common.viewFullscreen')}
-        >
-          <Maximize2 className="w-3.5 h-3.5" />
-        </button>
-
-        {/* Header */}
-        <div className="px-3 py-2 bg-muted/50 border-b">
-          <span className="text-[12px] text-muted-foreground font-medium">{label}</span>
-        </div>
+      <PreviewBlockFrame className={className}>
+        {/* Header: file — sheet · fullscreen */}
+        <PreviewBlockHeader icon={<Sheet />} title={label}>
+          <PreviewBlockAction
+            aria-label={t('common.viewFullscreen')}
+            icon={<Maximize2 />}
+            onClick={() => setIsFullscreen(true)}
+          />
+        </PreviewBlockHeader>
 
         {/* Table with max height and scroll fade */}
         {tableContent(true, true)}
-      </div>
+      </PreviewBlockFrame>
 
       {/* Fullscreen overlay */}
       <DataTableOverlay
@@ -309,7 +305,7 @@ export function MarkdownSpreadsheetBlock({ code, className }: MarkdownSpreadshee
         headerActions={<TableExportDropdown columns={parsed.columns} rows={parsed.rows} filename={parsed.filename || parsed.sheetName || t('spreadsheet.defaultTitle')} />}
       >
         <div className="px-6">
-          <div className="bg-background shadow-minimal rounded-[12px] overflow-hidden">
+          <div className="overflow-hidden rounded-lg bg-raised shadow-elev-1">
             {tableContent(false)}
           </div>
         </div>

@@ -60,7 +60,7 @@ export function CredentialsStep({
         )}
       >
         <div className="space-y-4">
-          <div className="rounded-xl bg-foreground-2 p-4 text-sm text-muted-foreground">
+          <div className="rounded-lg bg-sunken p-4 text-label text-secondary">
             <p>{t("onboarding.credentials.chatGPTInstructions")}</p>
           </div>
           {status === 'error' && errorMessage && <div className="rounded-lg bg-destructive/10 text-destructive text-sm p-3">{errorMessage}</div>}

@@ -58,6 +58,37 @@ export function isDeniedMiniModelId(modelId: string, piAuthProvider?: string): b
   return bare === 'codex-mini-latest';
 }
 
+export const PI_PREFERRED_MINI_MODELS: Record<string, string[]> = {
+  openai: ['gpt-6-luna', 'gpt-5.6-luna', 'gpt-5.4-nano', 'gpt-5.4-mini'],
+  'openai-codex': ['gpt-6-luna', 'gpt-5.6-luna'],
+  anthropic: ['claude-haiku-5-5', 'claude-haiku-4-5'],
+  'amazon-bedrock': ['claude-haiku-5-5', 'claude-haiku-4-5'],
+  moonshotai: ['kimi-k2.6'],
+  'moonshotai-cn': ['kimi-k2.6'],
+  'cloudflare-ai-gateway': ['claude-haiku-4-5', 'gpt-6-luna', 'gpt-5.6-luna'],
+};
+
+/**
+ * Index of a model id in a preferred list (bare ids, `pi/` optional, `{id}-*`
+ * snapshots and Bedrock inference profiles match their bare id), or -1.
+ */
+export function preferredModelRank(id: string, preferred: readonly string[]): number {
+  const bare = id.startsWith('pi/') ? id.slice(3) : id
+  // Deprecated IDs normalize to their replacement for stored-config migration.
+  // Rank them as unranked: fromBedrockNativeId() applies the same normalization,
+  // and letting a retired snapshot (e.g. claude-opus-4-5-20251101) inherit its
+  // replacement's rank made the stable sort pick it as the connection default.
+  if (normalizeDeprecatedModelId(bare) !== bare) return -1
+  const matchIndex = (candidate: string): number =>
+    preferred.findIndex(p => candidate === p || candidate.startsWith(`${p}-`))
+  const direct = matchIndex(bare)
+  if (direct >= 0) return direct
+  // Bedrock: reverse-map the native inference-profile ID to bare, then match
+  const reversed = bare.replace(/^(?:(?:[a-z]{2}|global)\.)?anthropic\./, '')
+  return reversed !== bare ? matchIndex(reversed) : -1
+}
+
+
 function findSmallModel(
   connection: Pick<LlmConnection, 'models' | 'piAuthProvider'>,
 ): string | undefined {
@@ -69,8 +100,11 @@ function findSmallModel(
       ? model.toLowerCase()
       : `${model.id} ${model.name} ${model.shortName}`.toLowerCase();
   const allowed = connection.models.filter(model => !isDeniedMiniModelId(idOf(model), connection.piAuthProvider));
-  const preferred = allowed.find(model =>
-    ['mini', 'haiku', 'flash'].some(keyword => searchText(model).includes(keyword))
+  const preferredIds = connection.piAuthProvider ? PI_PREFERRED_MINI_MODELS[connection.piAuthProvider] ?? [] : [];
+  const ranked = allowed.map(model => ({ model, rank: preferredModelRank(idOf(model), preferredIds) }))
+    .filter(item => item.rank >= 0).sort((a, b) => a.rank - b.rank);
+  const preferred = ranked[0]?.model ?? allowed.find(model =>
+    ['mini', 'luna', 'haiku', 'flash'].some(keyword => new RegExp(`(^|[^a-z])${keyword}([^a-z]|$)`).test(searchText(model)))
   );
   const fallback = preferred ?? allowed.at(-1) ?? connection.models.at(-1);
   return fallback ? idOf(fallback) : undefined;
@@ -191,22 +225,21 @@ export const PI_PREFERRED_DEFAULTS: Record<string, string[]> = {
   // when Opus 4.6 is deprecated.
   // Opus 5.5 (in the Pi catalog since SDK 0.87.1) is the default for new
   // connections, matching the Claude Agent SDK path; older Opus generations follow.
-  anthropic: ['claude-opus-5-5', 'claude-opus-5', 'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6', 'claude-fable-5-1', 'claude-fable-5', 'claude-sonnet-5', 'claude-sonnet-4-6', 'claude-haiku-4-5'],
+  anthropic: ['claude-opus-5-5', 'claude-opus-5', 'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6', 'claude-fable-5-1', 'claude-fable-5', 'claude-sonnet-5-5', 'claude-sonnet-5', 'claude-sonnet-4-6', 'claude-haiku-5-5', 'claude-haiku-4-5'],
   // GPT-6 Astra entered the Pi catalog in SDK 0.85.1 for both the API-key and
   // the ChatGPT-account (openai-codex) flows; new connections default to it.
-  openai: ['gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.2', 'gpt-5.1', 'gpt-5', 'o4-mini', 'o3', 'gpt-4o'],
-  'openai-codex': ['gpt-6-astra', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.2', 'gpt-5.1', 'gpt-5', 'o4-mini', 'o3', 'gpt-4o'],
+  openai: ['gpt-6-astra', 'gpt-6.1-sol', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.2', 'gpt-5.1', 'gpt-5', 'o4-mini', 'o3', 'gpt-4o'],
+  'openai-codex': ['gpt-6-astra', 'gpt-6.1-sol', 'gpt-5.6-sol', 'gpt-5.6-terra', 'gpt-5.6-luna', 'gpt-5.5', 'gpt-5.2', 'gpt-5.1', 'gpt-5', 'o4-mini', 'o3', 'gpt-4o'],
   google: ['gemini-2.5-flash', 'gemini-2.5-pro', 'gemini-3-flash-preview', 'gemini-3.1-flash-lite-preview'],
   // Pi 0.86.0 replaced the retired `deepseek-v4-flash` alias (and the experimental
   // vision variant) with `deepseek-flash`; stored ids migrate via DEPRECATED_MODEL_REPLACEMENTS.
   deepseek: ['deepseek-v4-pro', 'deepseek-flash'],
-  // Kimi has no mini/flash-named model, so findSmallModel falls back to the
-  // last entry of the connection's model list; keep the cheaper K2.6 second
-  // so 3-tier setups get a sensible summarizer default.
+  // K2.6 is also the utility model (PI_PREFERRED_MINI_MODELS).
   moonshotai: ['kimi-k3', 'kimi-k2.6'],
   'moonshotai-cn': ['kimi-k3', 'kimi-k2.6'],
   'kimi-coding': ['k3', 'kimi-for-coding', 'kimi-for-coding-highspeed'],
-  'amazon-bedrock': ['claude-opus-5-5', 'claude-opus-5', 'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6', 'claude-sonnet-5', 'claude-sonnet-4-6', 'claude-haiku-4-5'],
+  'cloudflare-ai-gateway': ['claude-opus-5-5', 'claude-sonnet-5-5', 'claude-fable-5-1', 'gpt-6-astra', 'gpt-6.1-sol', 'claude-haiku-4-5'],
+  'amazon-bedrock': ['claude-opus-5-5', 'claude-opus-5', 'claude-opus-4-8', 'claude-opus-4-7', 'claude-opus-4-6', 'claude-sonnet-5-5', 'claude-sonnet-5', 'claude-sonnet-4-6', 'claude-haiku-5-5', 'claude-haiku-4-5'],
 };
 
 export function getDefaultModelsForConnection(

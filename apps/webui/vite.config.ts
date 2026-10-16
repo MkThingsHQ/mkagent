@@ -17,6 +17,17 @@ export default defineConfig({
   ],
   root: resolve(__dirname, 'src'),
   base: './',
+  experimental: {
+    renderBuiltUrl(filename, { hostType, hostId }) {
+      // Both /login and /login/ are supported. Only the login page's public
+      // stylesheet needs an absolute URL; keep the app's relative-base contract.
+      if (hostType === 'html' && /(?:^|[/\\])login\.html$/.test(hostId)
+        && filename.startsWith('login-assets/')) {
+        return `/${filename}`
+      }
+      return { relative: true }
+    },
+  },
   build: {
     outDir: resolve(__dirname, 'dist'),
     emptyDirBeforeWrite: true,
@@ -25,6 +36,17 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'src/index.html'),
         login: resolve(__dirname, 'src/login.html'),
+      },
+      output: {
+        // Login is served before authentication; /assets/* is not. Keep only its
+        // stylesheet in the existing public prefix, without widening the auth gate.
+        assetFileNames: (asset) => {
+          const isLoginStylesheet = asset.names.includes('login.css')
+            || asset.originalFileNames.some((name) => /(?:^|[/\\])login\.css$/.test(name))
+          return isLoginStylesheet
+            ? 'login-assets/[name]-[hash][extname]'
+            : 'assets/[name]-[hash][extname]'
+        },
       },
       // Suppress warnings for Node.js externalized modules — these are
       // referenced by shared code but only used in server/Electron codepaths.

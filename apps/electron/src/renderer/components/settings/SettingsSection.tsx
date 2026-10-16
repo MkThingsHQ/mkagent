@@ -27,7 +27,10 @@ export interface SettingsSectionProps {
 }
 
 /**
- * SettingsSection - A semantic section with title and description
+ * SettingsSection - A group: a quiet 12px semibold secondary label, optional tertiary hint, then its
+ * card(s). The label is metadata, so it sits a step below the rows it heads (13px foreground titles)
+ * instead of competing with them; the cards carry the content. An action (e.g. Edit) is centred on a
+ * one-line header and bottom-aligned with a hint.
  *
  * @example
  * <SettingsSection title="Billing" description="Choose how you pay">
@@ -43,19 +46,19 @@ export function SettingsSection({
   action,
 }: SettingsSectionProps) {
   return (
-    <section className={cn('space-y-3', className)}>
-      <div className="flex items-start justify-between gap-4 pl-1">
-        <div className="space-y-0.5">
+    <section className={cn('space-y-2', className)}>
+      <div className={cn('flex justify-between gap-4', description ? 'items-end' : 'items-center')}>
+        <div className="min-w-0 space-y-1">
           <h3
             className={cn(
-              'text-base font-semibold',
+              'text-label-sm font-semibold text-secondary',
               variant === 'danger' && 'text-destructive'
             )}
           >
             {title}
           </h3>
           {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <p className="text-label-sm text-tertiary">{description}</p>
           )}
         </div>
         {action && <div className="shrink-0">{action}</div>}
@@ -70,7 +73,7 @@ export function SettingsSection({
 // ============================================
 
 export interface SettingsGroupProps {
-  /** Group title (displayed uppercase) */
+  /** Group title */
   title: string
   /** Content - usually multiple SettingsSection components */
   children: React.ReactNode
@@ -90,10 +93,10 @@ export interface SettingsGroupProps {
 export function SettingsGroup({ title, children, className }: SettingsGroupProps) {
   return (
     <div className={cn('space-y-6', className)}>
-      <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide pb-2 border-b border-border">
+      <h2 className="border-b border-subtle pb-2 text-label-sm font-medium text-tertiary">
         {title}
       </h2>
-      <div className="space-y-8">{children}</div>
+      <div className="space-y-6">{children}</div>
     </div>
   )
 }
@@ -113,5 +116,5 @@ export interface SettingsDividerProps {
  * Use sparingly - vertical spacing is usually enough.
  */
 export function SettingsDivider({ className }: SettingsDividerProps) {
-  return <div className={cn('h-px bg-border', className)} />
+  return <div className={cn('h-px bg-separator', className)} />
 }

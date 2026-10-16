@@ -90,7 +90,7 @@ export function LocalModelStep({
           <Label htmlFor="local-base-url">{t("onboarding.localModel.endpoint")}</Label>
           <div className={cn(
             "rounded-md shadow-minimal transition-colors",
-            "bg-foreground-2 focus-within:bg-background"
+            "bg-sunken focus-within:bg-background"
           )}>
             <Input
               id="local-base-url"
@@ -103,7 +103,7 @@ export function LocalModelStep({
               autoFocus
             />
           </div>
-          <p className="text-xs text-foreground/30">
+          <p className="text-label-sm text-tertiary">
             {t("onboarding.localModel.endpointHelper")}
           </p>
         </div>
@@ -112,11 +112,11 @@ export function LocalModelStep({
         <div className="space-y-2">
           <Label htmlFor="local-model">
             {t("onboarding.localModel.model")}{' '}
-            <span className="text-foreground/30">· {t("onboarding.localModel.required")}</span>
+            <span className="text-tertiary">· {t("onboarding.localModel.required")}</span>
           </Label>
           <div className={cn(
             "rounded-md shadow-minimal transition-colors",
-            "bg-foreground-2 focus-within:bg-background",
+            "bg-sunken focus-within:bg-background",
             modelError && "ring-1 ring-destructive/40"
           )}>
             <Input
@@ -133,16 +133,16 @@ export function LocalModelStep({
             />
           </div>
           {modelError && (
-            <p className="text-xs text-destructive">{modelError}</p>
+            <p className="text-label-sm text-destructive">{modelError}</p>
           )}
-          <p className="text-xs text-foreground/30">
+          <p className="text-label-sm text-tertiary">
             {t("onboarding.localModel.modelHelper")}
           </p>
         </div>
 
         {/* Error message */}
         {status === 'error' && errorMessage && (
-          <p className="text-sm text-destructive">{errorMessage}</p>
+          <p className="text-label text-destructive">{errorMessage}</p>
         )}
       </form>
     </StepFormLayout>

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'bun:test';
 import { getPiApiKeyProviders, getPiModelsForAuthProvider } from '../src/config/models-pi.ts';
+import { fromPiProviderId, toPiProviderId } from '../src/config/pi-provider-ids.ts';
 
 describe('models-pi filtering', () => {
   it('excludes codex-mini-latest for openai models', () => {
@@ -75,5 +76,28 @@ describe('models-pi filtering', () => {
 
     const cnIds = getPiModelsForAuthProvider('moonshotai-cn').map(m => m.id);
     expect(cnIds).toContain('pi/kimi-k3');
+  });
+
+  it("keeps Craft's Azure provider id across the Pi 1.0.3 rename (azure-openai-responses -> azure)", () => {
+    expect(toPiProviderId('azure-openai-responses')).toBe('azure');
+    expect(fromPiProviderId('azure')).toBe('azure-openai-responses');
+    expect(toPiProviderId('openai')).toBe('openai');
+    expect(fromPiProviderId('openai')).toBe('openai');
+
+    // Stored Azure connections keep resolving their catalog…
+    expect(getPiModelsForAuthProvider('azure-openai-responses').length).toBeGreaterThan(0);
+    // …and the API-key provider list keeps Craft's key and label.
+    const providers = getPiApiKeyProviders();
+    expect(providers.some(p => p.key === 'azure-openai-responses' && p.label === 'Azure OpenAI')).toBe(true);
+    expect(providers.some(p => p.key === 'azure')).toBe(false);
+  });
+
+  it('offers Cloudflare AI Gateway in the API key provider list with its Claude and GPT catalog', () => {
+    expect(getPiApiKeyProviders().some(p => p.key === 'cloudflare-ai-gateway' && p.label === 'Cloudflare AI Gateway')).toBe(true);
+    const ids = getPiModelsForAuthProvider('cloudflare-ai-gateway').map(m => m.id);
+    // Pi 1.1.0 switched the gateway's Claude ids from dotted (claude-opus-4.8) to dashed.
+    expect(ids).toContain('pi/claude-opus-5-5');
+    expect(ids).toContain('pi/claude-sonnet-5-5');
+    expect(ids).toContain('pi/gpt-6-luna');
   });
 });

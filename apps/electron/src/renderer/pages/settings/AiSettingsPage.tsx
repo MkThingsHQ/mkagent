@@ -1,3 +1,7 @@
+import { AnimatedCollapsibleContent } from '@mkagent/ui'
+import { loadAiSettings } from './ai-settings-loader'
+import { Skeleton } from '@/components/ui/skeleton'
+import { SettingsPage } from '@/components/settings'
 import { RtkUpdateDialog, type RtkStatusInfo } from '@/components/RtkUpdateDialog'
 /**
  * AiSettingsPage
@@ -22,7 +26,6 @@ import type { CredentialHealthStatus, CredentialHealthIssue } from '../../../sha
 import { Spinner, FullscreenOverlayBase } from '@mkagent/ui'
 import { useSetAtom } from 'jotai'
 import { fullscreenOverlayOpenAtom } from '@/atoms/overlay'
-import { motion, AnimatePresence } from 'motion/react'
 import type { LlmConnectionWithStatus, ThinkingLevel, WorkspaceSettings, Workspace } from '../../../shared/types'
 import { DEFAULT_THINKING_LEVEL, THINKING_LEVELS } from '@mkagent/shared/agent/thinking-levels'
 import type { DetailsPageMeta } from '@/lib/navigation-registry'
@@ -132,14 +135,14 @@ function CredentialHealthBanner({ issues, onResolve }: CredentialHealthBannerPro
   if (issues.length === 0) return null
 
   return (
-    <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 mb-6">
+    <div className="rounded-lg border border-info bg-info-tint p-4 mb-6">
       <div className="flex items-start gap-3">
-        <AlertTriangle className="h-5 w-5 text-amber-500 flex-shrink-0 mt-0.5" />
+        <AlertTriangle className="h-5 w-5 text-info flex-shrink-0 mt-0.5" />
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-medium text-amber-700 dark:text-amber-400">
+          <h4 className="text-label font-medium text-info">
             {t("settings.ai.credentialIssue")}
           </h4>
-          <p className="mt-1 text-sm text-amber-600 dark:text-amber-300/80">
+          <p className="mt-1 text-sm text-info">
             {getHealthIssueMessage(issues[0], t)}
           </p>
         </div>
@@ -147,7 +150,7 @@ function CredentialHealthBanner({ issues, onResolve }: CredentialHealthBannerPro
           variant="outline"
           size="sm"
           onClick={onResolve}
-          className="flex-shrink-0 border-amber-500/30 text-amber-700 dark:text-amber-400 hover:bg-amber-500/10"
+          className="flex-shrink-0 border-info text-info hover:bg-info-tint"
         >
           {t("common.edit")}
         </Button>
@@ -482,13 +485,13 @@ function WorkspaceOverrideCard({ workspace, llmConnections, onSettingsChange }: 
       <button
         type="button"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between py-3 px-4 hover:bg-foreground/[0.02] transition-colors"
+        className="w-full flex items-center justify-between py-3 px-4 hover:bg-fill-hover transition-colors"
       >
         <div className="flex items-center gap-3">
           <div
             className={cn(
               'w-6 h-6 rounded-full overflow-hidden bg-foreground/5 flex items-center justify-center',
-              'ring-1 ring-border/50'
+              'ring-1 ring-border'
             )}
           >
             {iconUrl ? (
@@ -500,8 +503,8 @@ function WorkspaceOverrideCard({ workspace, llmConnections, onSettingsChange }: 
             )}
           </div>
           <div className="text-left">
-            <div className="text-sm font-medium">{workspace.name}</div>
-            <div className="text-xs text-muted-foreground">
+            <div className="text-label font-medium">{workspace.name}</div>
+            <div className="text-label-sm text-tertiary">
               {isLoading ? t("common.loading") : getSummary()}
             </div>
           </div>
@@ -513,15 +516,7 @@ function WorkspaceOverrideCard({ workspace, llmConnections, onSettingsChange }: 
         )}
       </button>
 
-      <AnimatePresence initial={false}>
-        {isExpanded && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
-            className="overflow-hidden"
-          >
+      <AnimatedCollapsibleContent isOpen={isExpanded}>
             <div className="border-t border-border/50 px-4 py-2">
               <SettingsMenuSelectRow
                 label={t("settings.ai.connection")}
@@ -565,9 +560,7 @@ function WorkspaceOverrideCard({ workspace, llmConnections, onSettingsChange }: 
                 ]}
               />
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      </AnimatedCollapsibleContent>
     </SettingsCard>
   )
 }
@@ -633,40 +626,24 @@ export default function AiSettingsPage() {
   const [renamingConnection, setRenamingConnection] = useState<{ slug: string; name: string } | null>(null)
   const [renameValue, setRenameValue] = useState('')
 
-  // Load workspaces, default settings, and credential health
+  const [settingsLoading, setSettingsLoading] = useState(true)
+
   useEffect(() => {
-    const load = async () => {
-      if (!window.electronAPI) return
-      try {
-        const ws = await window.electronAPI.getWorkspaces()
-        setWorkspaces(ws)
-
-        const defaultThinkingLevel = await window.electronAPI.getDefaultThinkingLevel()
-        setDefaultThinking(defaultThinkingLevel)
-
-        const extendedCache = await window.electronAPI.getExtendedPromptCache()
-        setExtendedPromptCache(extendedCache)
-
-        const enable1M = await window.electronAPI.getEnable1MContext()
-        setEnable1MContext(enable1M)
-
-        const rtkOn = await window.electronAPI.getRtkEnabled()
-        setRtkEnabled(rtkOn)
-
-        const status = await window.electronAPI.getRtkStatus()
-        setRtkStatus(status)
-
-        // Check credential health for potential issues (corruption, machine migration)
-        const health = await window.electronAPI.getCredentialHealth()
-        if (!health.healthy) {
-          setCredentialHealthIssues(health.issues)
-        }
-      } catch (error) {
-        console.error('Failed to load settings:', error)
-      }
-    }
-    load()
-  }, [activeWorkspaceId])
+    let cancelled = false
+    setSettingsLoading(true)
+    loadAiSettings(window.electronAPI, refreshLlmConnections).then(snapshot => {
+      if (cancelled) return
+      setWorkspaces(snapshot.workspaces)
+      setDefaultThinking(snapshot.thinking)
+      setExtendedPromptCache(snapshot.extendedCache)
+      setEnable1MContext(snapshot.enable1M)
+      setRtkEnabled(snapshot.rtkEnabled)
+      setRtkStatus(snapshot.rtkStatus)
+      setCredentialHealthIssues(snapshot.health.healthy ? [] : snapshot.health.issues)
+    }).catch(error => console.error('Failed to load settings:', error))
+      .finally(() => { if (!cancelled) setSettingsLoading(false) })
+    return () => { cancelled = true }
+  }, [activeWorkspaceId, refreshLlmConnections])
 
   // Helpers to open/close the fullscreen API setup overlay
   const openApiSetup = useCallback((connectionSlug?: string) => {
@@ -979,19 +956,11 @@ export default function AiSettingsPage() {
     refreshLlmConnections?.()
   }, [refreshLlmConnections])
 
-  return (
-    <div className="h-full flex flex-col">
-      <PanelHeader title={t("settings.ai.title")} actions={<HeaderMenu route={routes.view.settings('ai')} />} />
-      <div className="flex-1 min-h-0 mask-fade-y">
-        <ScrollArea className="h-full">
-          <div className="px-5 py-7 max-w-3xl mx-auto">
-            {/* Credential Health Warning Banner */}
-            <CredentialHealthBanner
-              issues={credentialHealthIssues}
-              onResolve={handleResolveCredentialIssue}
-            />
+  if (settingsLoading) return <SettingsPage title={t('settings.ai.title')}><div role="status" aria-label={t('common.loading')} className="space-y-6"><Skeleton className="h-40 rounded-lg" /><Skeleton className="h-32 rounded-lg" /></div></SettingsPage>
 
-            <div className="space-y-8">
+  return (
+    <SettingsPage title={t("settings.ai.title")} description={t("settings.ai.description")} actions={<HeaderMenu route={routes.view.settings('ai')} />}>
+      <CredentialHealthBanner issues={credentialHealthIssues} onResolve={handleResolveCredentialIssue} />
               {/* Default Settings - only show if connections exist */}
               {llmConnections.length > 0 && (
               <SettingsSection title={t("settings.ai.defaultSection")} description={t("settings.ai.defaultSectionDesc")}>
@@ -1053,7 +1022,7 @@ export default function AiSettingsPage() {
               <SettingsSection title={t("settings.ai.connections")} description={t("settings.ai.connectionsDesc")}>
                 <SettingsCard>
                   {llmConnections.length === 0 ? (
-                    <div className="px-4 py-6 text-center text-sm text-muted-foreground">
+                    <div className="px-4 py-6 text-center text-label text-tertiary">
                       {t("settings.ai.noConnections")}
                     </div>
                   ) : (
@@ -1083,7 +1052,7 @@ export default function AiSettingsPage() {
                 <div className="pt-0">
                   <button
                     onClick={() => openApiSetup()}
-                    className="inline-flex items-center h-8 px-3 text-sm rounded-lg bg-background shadow-minimal hover:bg-foreground/[0.02] transition-colors"
+                    className="inline-flex items-center h-8 px-3 text-sm rounded-lg bg-background shadow-minimal hover:bg-fill-hover transition-colors"
                   >
                     {t("settings.ai.addConnection")}
                   </button>
@@ -1132,7 +1101,7 @@ export default function AiSettingsPage() {
                       )}
                       {rtkEnabled && rtkGain && rtkGain.totalCommands > 0 && (
                         <div className="px-4 pb-4 -mt-1">
-                          <div className="flex items-center justify-between text-xs text-foreground/60">
+                          <div className="flex items-center justify-between text-label-sm text-tertiary">
                             <span>
                               {t("settings.ai.rtk.gainSummary", {
                                 saved: formatTokenCount(rtkGain.totalSaved),
@@ -1149,10 +1118,10 @@ export default function AiSettingsPage() {
                               <RefreshCcw className="size-3" />
                             </button>
                           </div>
-                          <div className="mt-2 h-1.5 rounded-full bg-foreground/10 overflow-hidden">
+                          <div className="mt-2 h-1.5 rounded-full bg-fill-pressed overflow-hidden">
                             <div
-                              className="h-full bg-foreground/60 transition-all"
-                              style={{ width: `${Math.min(100, Math.max(0, rtkGain.avgSavingsPct))}%` }}
+                              className="h-full w-full origin-left bg-[var(--border-control)] transition-transform duration-base ease-out"
+                              style={{ transform: `scaleX(${Math.min(100, Math.max(0, rtkGain.avgSavingsPct)) / 100})` }}
                             />
                           </div>
                         </div>
@@ -1187,7 +1156,7 @@ export default function AiSettingsPage() {
               <FullscreenOverlayBase
                 isOpen={showApiSetup}
                 onClose={handleCloseApiSetup}
-                className="z-splash flex flex-col bg-foreground-2"
+                className="z-splash flex flex-col bg-navigator"
               >
                 <OnboardingWizard
                   state={apiSetupOnboarding.state}
@@ -1211,7 +1180,7 @@ export default function AiSettingsPage() {
                 >
                   <button
                     onClick={handleCloseApiSetup}
-                    className="p-1.5 rounded-[6px] transition-all bg-background shadow-minimal text-muted-foreground/50 hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    className="p-1.5 rounded-[6px] transition-colors bg-background shadow-minimal text-muted-foreground/50 hover:text-foreground focus:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                     title={t("common.closeEsc")}
                   >
                     <X className="w-3.5 h-3.5" />
@@ -1229,10 +1198,6 @@ export default function AiSettingsPage() {
                 onSubmit={handleRenameSubmit}
                 placeholder={t("settings.ai.enterConnectionName")}
               />
-            </div>
-          </div>
-        </ScrollArea>
-      </div>
-    </div>
+    </SettingsPage>
   )
 }

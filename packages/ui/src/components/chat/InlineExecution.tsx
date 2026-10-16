@@ -53,7 +53,7 @@ function InlineActivityRow({ activity }: { activity: InlineActivityItem }) {
   return (
     <div
       className={cn(
-        "flex items-center gap-2 py-0.5 text-muted-foreground",
+        "flex min-h-7 items-center gap-2 text-secondary",
         SIZE_CONFIG.fontSize
       )}
     >
@@ -61,8 +61,8 @@ function InlineActivityRow({ activity }: { activity: InlineActivityItem }) {
       <span className="shrink-0">{activity.name}</span>
       {activity.description && (
         <>
-          <span className="opacity-60 shrink-0">·</span>
-          <span className="truncate min-w-0 flex-1">{activity.description}</span>
+          <span aria-hidden className="shrink-0 text-tertiary">·</span>
+          <span className="truncate min-w-0 flex-1 text-tertiary">{activity.description}</span>
         </>
       )}
     </div>
@@ -91,7 +91,7 @@ export function InlineExecution({
         {/* Header with spinner */}
         <div className="flex items-center gap-2">
           <LoadingIndicator animated showElapsed />
-          <span className={cn("text-foreground/80", SIZE_CONFIG.fontSize)}>
+          <span className={cn("text-secondary", SIZE_CONFIG.fontSize)}>
             {t('common.editing')}
           </span>
         </div>
@@ -106,12 +106,12 @@ export function InlineExecution({
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-start pt-1 border-t border-border/30">
+        <div className="flex items-center justify-start pt-1 border-t border-subtle">
           <button
             type="button"
             onClick={onCancel}
             className={cn(
-              "text-muted-foreground hover:text-foreground transition-colors",
+              "text-tertiary transition-colors duration-micro ease-out-subtle hover:text-foreground hover:duration-instant",
               SIZE_CONFIG.fontSize
             )}
           >
@@ -128,7 +128,7 @@ export function InlineExecution({
       <div className={cn("space-y-3", className)}>
         {/* Header with checkmark */}
         <div className="flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-success" />
+          <CheckCircle2 aria-hidden className="size-4 text-success" />
           <span className={cn("text-foreground font-medium", SIZE_CONFIG.fontSize)}>
             {t('common.done')}
           </span>
@@ -136,22 +136,22 @@ export function InlineExecution({
 
         {/* Result message - rendered as markdown */}
         {result && (
-          <div className={cn("text-muted-foreground leading-relaxed prose-compact", SIZE_CONFIG.fontSize)}>
+          <div className={cn("text-secondary leading-relaxed prose-compact", SIZE_CONFIG.fontSize)}>
             <Markdown>{result}</Markdown>
           </div>
         )}
 
         {/* Actions */}
-        <div className="flex items-center justify-end pt-1 border-t border-border/30">
+        <div className="flex items-center justify-end pt-1 border-t border-subtle">
           <button
             type="button"
             onClick={onDismiss}
             className={cn(
-              "flex items-center gap-1 px-2 py-1 rounded-md bg-success/10 text-success hover:bg-success/20 transition-colors",
+              "state-overlay flex items-center gap-1 px-2 py-1 rounded-md bg-success-tint text-success",
               SIZE_CONFIG.fontSize
             )}
           >
-            <CheckCircle2 className="w-3 h-3" />
+            <CheckCircle2 aria-hidden className="size-3" />
             {t('common.done')}
           </button>
         </div>
@@ -164,7 +164,7 @@ export function InlineExecution({
     <div className={cn("space-y-3", className)}>
       {/* Header with error icon */}
       <div className="flex items-center gap-2">
-        <XCircle className="w-4 h-4 text-destructive" />
+        <XCircle aria-hidden className="size-4 text-destructive" />
         <span className={cn("text-foreground font-medium", SIZE_CONFIG.fontSize)}>
           {t('common.failed')}
         </span>
@@ -172,22 +172,22 @@ export function InlineExecution({
 
       {/* Error message - rendered as markdown */}
       {error && (
-        <div className={cn("text-destructive/80 leading-relaxed prose-compact", SIZE_CONFIG.fontSize)}>
+        <div className={cn("text-destructive leading-relaxed prose-compact", SIZE_CONFIG.fontSize)}>
           <Markdown>{error}</Markdown>
         </div>
       )}
 
       {/* Actions */}
-      <div className="flex items-center justify-end gap-2 pt-1 border-t border-border/30">
+      <div className="flex items-center justify-end gap-2 pt-1 border-t border-subtle">
         <button
           type="button"
           onClick={onDismiss}
           className={cn(
-            "flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors",
+            "flex items-center gap-1 text-tertiary transition-colors duration-micro ease-out-subtle hover:text-foreground hover:duration-instant",
             SIZE_CONFIG.fontSize
           )}
         >
-          <X className="w-3 h-3" />
+          <X aria-hidden className="size-3" />
           {t('common.dismiss')}
         </button>
         {onRetry && (
@@ -195,7 +195,7 @@ export function InlineExecution({
             type="button"
             onClick={onRetry}
             className={cn(
-              "px-2 py-1 rounded-md bg-accent/10 text-accent hover:bg-accent/20 transition-colors",
+              "state-overlay px-2 py-1 rounded-md bg-accent-tint text-accent",
               SIZE_CONFIG.fontSize
             )}
           >

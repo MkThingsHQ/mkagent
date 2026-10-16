@@ -45,8 +45,10 @@ export function createSystemPromptOverride(): SystemPromptOverride {
 
 /**
  * The resource loader `createAgentSession` would build on its own (same cwd,
- * agentDir and settings), plus the system-prompt override extension. Discovery of
- * skills, context files and on-disk extensions is unchanged.
+ * agentDir and settings), plus the system-prompt override extension. Discovery
+ * follows the SDK rules for what it is given: Craft passes an empty agentDir
+ * (`agent-dir.ts`) and settings that never trust the working directory
+ * (`session-settings.ts`), so no on-disk extension, skill or prompt loads.
  */
 export async function createCraftResourceLoader(options: {
   cwd: string;

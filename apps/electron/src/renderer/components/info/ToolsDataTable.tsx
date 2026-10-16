@@ -8,10 +8,10 @@
 import * as React from 'react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
+import { cn } from '@/lib/utils'
 import type { TFunction } from 'i18next'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Info_DataTable, SortableHeader } from './Info_DataTable'
-import { Info_Badge } from './Info_Badge'
+import { Info_DataTable, SortableHeader, INFO_TABLE_HEADER_CLASS, INFO_TABLE_SORTABLE_HEADER_CLASS } from './Info_DataTable'
 import { Info_StatusBadge } from './Info_StatusBadge'
 
 export type ToolPermission = 'allowed' | 'requires-permission'
@@ -33,26 +33,17 @@ interface ToolsDataTableProps {
   className?: string
 }
 
+/** Tools list (mockup `.tools-list`): mono tool name, its description, then the access chip. */
 function getColumns(t: TFunction): ColumnDef<ToolRow>[] {
   return [
     {
-      accessorKey: 'permission',
-      header: ({ column }) => <SortableHeader column={column} title={t("table.access")} />,
-      cell: ({ row }) => (
-        <div className="p-1.5 pl-2.5">
-          <Info_StatusBadge status={row.original.permission} className="whitespace-nowrap" />
-        </div>
-      ),
-      minSize: 80,
-    },
-    {
       accessorKey: 'name',
-      header: ({ column }) => <SortableHeader column={column} title={t("table.tool")} />,
+      header: ({ column }) => <SortableHeader column={column} title={t("table.tool")} className={INFO_TABLE_SORTABLE_HEADER_CLASS} />,
       cell: ({ row }) => (
         <div className="p-1.5 pl-2.5">
-          <Info_Badge color="muted" className="whitespace-nowrap">
+          <code className="whitespace-nowrap font-mono text-mono-ui font-medium text-foreground">
             {row.original.name}
-          </Info_Badge>
+          </code>
         </div>
       ),
       minSize: 100,
@@ -60,13 +51,25 @@ function getColumns(t: TFunction): ColumnDef<ToolRow>[] {
     {
       id: 'description',
       accessorKey: 'description',
-      header: () => <span className="p-1.5 pl-2.5">{t("common.description")}</span>,
+      header: () => <span className={cn("p-1.5 pl-2.5", INFO_TABLE_HEADER_CLASS)}>{t("common.description")}</span>,
+      // Descriptions wrap to two lines (mockup .tools-list) so long ones neither stretch the row nor
+      // push the access column out of view
       cell: ({ row }) => (
         <div className="p-1.5 pl-2.5 min-w-0">
-          <span className="truncate block">{row.original.description}</span>
+          <span className="line-clamp-2 break-words text-label text-secondary">{row.original.description}</span>
         </div>
       ),
-      meta: { fillWidth: true, truncate: true },
+      meta: { fillWidth: true },
+    },
+    {
+      accessorKey: 'permission',
+      header: ({ column }) => <SortableHeader column={column} title={t("table.access")} className={INFO_TABLE_SORTABLE_HEADER_CLASS} />,
+      cell: ({ row }) => (
+        <div className="p-1.5 pl-2.5 pr-3.5">
+          <Info_StatusBadge status={row.original.permission} className="whitespace-nowrap" />
+        </div>
+      ),
+      minSize: 80,
     },
   ]
 }

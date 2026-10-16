@@ -49,6 +49,8 @@ export function createWebApi(options: WebApiOptions): { api: ElectronAPI; client
   const local: Partial<ElectronAPI> = {
     getVersions: () => ({ node: 'n/a', chrome: navigator.userAgent, electron: 'web' }),
     getRuntimeEnvironment: () => 'web',
+    getSystemWarnings: () => Promise.resolve({ vcredistMissing: false }),
+    getWindowVibrancy: () => null, // browsers paint an opaque canvas
     isDebugMode: () => Promise.resolve(import.meta.env.DEV),
     getWindowWorkspace: () => Promise.resolve(options.workspaceId ?? null),
     getWindowMode: () => Promise.resolve('main'),
@@ -179,7 +181,6 @@ export function createWebApi(options: WebApiOptions): { api: ElectronAPI; client
         }
       })
     },
-    getSystemWarnings: () => Promise.resolve({ vcredistMissing: false }),
     getFilePath: file => file.name,
     isChannelAvailable: channel => client.isChannelAvailable(channel),
   }

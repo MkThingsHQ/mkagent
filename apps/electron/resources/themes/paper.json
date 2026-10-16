@@ -1,0 +1,25 @@
+{
+  "name": "Paper",
+  "description": "Warm paper with ink-blue accents",
+  "author": "Craft Agent",
+  "license": "MIT",
+  "supportedModes": ["light", "dark"],
+  "shikiTheme": {
+    "light": "github-light",
+    "dark": "github-dark"
+  },
+  "background": "#fcf9f7",
+  "foreground": "#2b2826",
+  "accent": "oklch(0.50 0.12 255)",
+  "info": "#c47f17",
+  "success": "#3f8a4f",
+  "destructive": "#c2412d",
+  "dark": {
+    "background": "#1c1b1a",
+    "foreground": "#ece8e4",
+    "accent": "oklch(0.74 0.10 255)",
+    "info": "#e2a54a",
+    "success": "#7cc28a",
+    "destructive": "#ef7a63"
+  }
+}

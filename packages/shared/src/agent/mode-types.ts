@@ -309,3 +309,7 @@ export const PERMISSION_MODE_CONFIG: Record<PermissionMode, {
     },
   },
 };
+
+export const DEFAULT_PERMISSION_MODES = PERMISSION_MODE_ORDER
+export function isPermissionMode(value: unknown): value is PermissionMode { return typeof value === 'string' && (PERMISSION_MODE_ORDER as readonly string[]).includes(value) }
+export function planExecutionMode(current: PermissionMode, previous?: PermissionMode): PermissionMode { return current === 'safe' ? previous && previous !== 'safe' ? previous : 'ask' : current }

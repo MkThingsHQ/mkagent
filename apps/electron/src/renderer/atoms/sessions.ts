@@ -710,6 +710,10 @@ export interface BackgroundTask {
   outputFile?: string
   /** Short summary, set when task_completed arrives */
   summary?: string
+  /** What a running task is doing (task_activity): the agent's one-line summary, its last tool, its step count */
+  activity?: { summary?: string; lastToolName?: string; toolUses?: number }
+  /** A stop was requested; the stopped status arrives as task_completed */
+  stopping?: boolean
 }
 
 /**

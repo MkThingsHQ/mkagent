@@ -43,7 +43,20 @@ export interface SettingsMenuSelectProps {
   searchable?: boolean
   /** Placeholder for search input */
   searchPlaceholder?: string
+  /** Accessible name for the trigger (defaults to the visible value) */
+  'aria-label'?: string
 }
+
+/**
+ * Chip trigger (mockup `.chip-btn`): pill with a hairline, secondary label, fill on hover/open.
+ * 28px; 36px in a compact panel.
+ */
+const menuSelectTriggerClass = cn(
+  'motion-press inline-flex h-control max-w-full items-center gap-1 rounded-full pl-2.5 pr-2 in-data-compact:h-9',
+  'text-label font-medium text-secondary inset-ring inset-ring-border',
+  'hover:bg-fill-hover hover:text-foreground data-[state=open]:bg-fill-hover data-[state=open]:text-foreground',
+  'disabled:cursor-not-allowed disabled:text-disabled disabled:hover:bg-transparent'
+)
 
 /**
  * SettingsMenuSelect - Menu-style dropdown with descriptions
@@ -63,6 +76,7 @@ export function SettingsMenuSelect({
   onHover,
   searchable,
   searchPlaceholder,
+  'aria-label': ariaLabel,
 }: SettingsMenuSelectProps) {
   const { t } = useTranslation()
   const effectiveSearchPlaceholder = searchPlaceholder ?? t("common.search")
@@ -112,48 +126,38 @@ export function SettingsMenuSelect({
       <PopoverTrigger asChild disabled={disabled}>
         <button
           type="button"
-          className={cn(
-            'inline-flex items-center h-8 px-3 gap-1 text-sm rounded-lg',
-            'bg-background shadow-minimal',
-            'hover:bg-foreground/[0.02] transition-colors',
-            'disabled:cursor-not-allowed disabled:opacity-50',
-            isOpen && 'bg-foreground/[0.02]',
-            className
-          )}
+          aria-label={ariaLabel}
+          className={cn(menuSelectTriggerClass, className)}
         >
           <span className="truncate">{selectedOption?.label || placeholder}</span>
-          <ChevronDown className="opacity-50 shrink-0 size-3.5" />
+          <ChevronDown className="size-3.5 shrink-0 text-tertiary" aria-hidden />
         </button>
       </PopoverTrigger>
       <PopoverContent
         align="end"
         sideOffset={4}
         collisionPadding={8}
-        className="p-1.5"
+        className="p-1"
         style={{ width: menuWidth }}
         onMouseLeave={() => onHover?.(null)}
       >
         {showSearch && (
-          <div className="relative mb-1.5">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground" />
+          <div className="relative mb-1">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-tertiary" aria-hidden />
             <input
               ref={searchInputRef}
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={effectiveSearchPlaceholder}
-              className={cn(
-                'w-full h-8 pl-8 pr-3 text-sm rounded-md',
-                'bg-foreground/5 border-0',
-                'placeholder:text-muted-foreground/50',
-                'focus:outline-none focus:ring-1 focus:ring-foreground/20'
-              )}
+              aria-label={effectiveSearchPlaceholder}
+              className="field-surface h-control-lg w-full rounded-md pl-8 pr-3 text-label"
             />
           </div>
         )}
-        <div className="space-y-0.5 max-h-64 overflow-auto">
+        <div className="max-h-64 space-y-px overflow-auto">
           {filteredOptions.length === 0 ? (
-            <div className="px-2.5 py-3 text-sm text-muted-foreground text-center">
+            <div className="px-2.5 py-3 text-center text-label text-tertiary">
               No results found
             </div>
           ) : (
@@ -166,13 +170,12 @@ export function SettingsMenuSelect({
                   onClick={() => handleSelect(option.value)}
                   onMouseEnter={() => onHover?.(option.value)}
                   className={cn(
-                    'w-full flex items-center justify-between px-2.5 py-2 rounded-lg',
-                    'hover:bg-foreground/5 transition-colors text-left',
-                    isSelected && 'bg-foreground/3'
+                    'flex min-h-row-menu w-full items-center justify-between gap-3 rounded-md px-2 py-1.5 text-left -outline-offset-2',
+                    'transition-colors duration-micro ease-out-subtle hover:bg-fill-hover hover:duration-instant'
                   )}
                 >
                   <div className="flex-1 min-w-0">
-                    <div className={settingsUI.label}>{option.label}</div>
+                    <div className="text-label text-foreground">{option.label}</div>
                     {option.description && (
                       <div className={cn(settingsUI.descriptionSmall, settingsUI.labelDescriptionGap)}>
                         {option.description}
@@ -180,7 +183,7 @@ export function SettingsMenuSelect({
                     )}
                   </div>
                   {isSelected && (
-                    <Check className="size-4 text-foreground shrink-0 ml-3" />
+                    <Check className="size-4 shrink-0 text-accent" aria-hidden />
                   )}
                 </button>
               )
@@ -244,7 +247,7 @@ export function SettingsMenuSelectRow({
       data-layout="settings-row"
       className={cn(
         'flex items-center justify-between',
-        inCard ? 'px-4 py-3.5' : 'py-3',
+        inCard ? settingsUI.row : settingsUI.rowBare,
         className
       )}
     >
@@ -254,7 +257,7 @@ export function SettingsMenuSelectRow({
           <p className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
         )}
       </div>
-      <div data-layout="settings-control" className="ml-4 shrink-0">
+      <div data-layout="settings-control" className="shrink-0">
         <SettingsMenuSelect
           value={value}
           onValueChange={onValueChange}

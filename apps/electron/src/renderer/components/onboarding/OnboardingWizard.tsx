@@ -183,7 +183,8 @@ export function OnboardingWizard({
   return (
     <div
       className={cn(
-        "bg-foreground-2 overflow-y-auto",
+        // The navigator canvas; each step is a paper card on it (StepFormLayout)
+        "bg-navigator overflow-y-auto",
         !className?.includes('h-full') && "h-dvh",
         className
       )}

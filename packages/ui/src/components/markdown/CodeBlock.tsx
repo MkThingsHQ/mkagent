@@ -1,8 +1,12 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { codeToHtml, bundledLanguages, type BundledLanguage } from 'shiki'
+import { Check, Copy, Play } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { TurnIconButton } from '../chat/turn/TurnIconButton'
 import { useShikiTheme } from '../../context/ShikiThemeContext'
+import { useRunCommand } from './RunCommandContext'
+import { shellCommandFromBlock } from './shell-command'
 
 export interface CodeBlockProps {
   code: string
@@ -67,6 +71,10 @@ export function CodeBlock({ code, language = 'text', className, mode = 'full', f
   const [highlighted, setHighlighted] = React.useState<string | null>(null)
   const [isLoading, setIsLoading] = React.useState(true)
   const [copied, setCopied] = React.useState(false)
+  const [started, setStarted] = React.useState(false)
+  // Shell/console blocks get "Run in background" where the host provides a runner (the chat transcript)
+  const runCommand = useRunCommand()
+  const command = runCommand && mode === 'full' ? shellCommandFromBlock(code, language) : null
 
   // Get shiki theme from context (set by ShikiThemeProvider in the app).
   // This correctly handles edge cases like dark-only themes in light system mode.
@@ -151,6 +159,13 @@ export function CodeBlock({ code, language = 'text', className, mode = 'full', f
     }
   }, [code])
 
+  const handleRun = React.useCallback(() => {
+    if (!runCommand || !command) return
+    runCommand(command)
+    setStarted(true)
+    setTimeout(() => setStarted(false), 2000)
+  }, [runCommand, command])
+
   // Terminal mode: raw monospace with minimal styling
   if (mode === 'terminal') {
     return (
@@ -178,40 +193,40 @@ export function CodeBlock({ code, language = 'text', className, mode = 'full', f
     )
   }
 
-  // Full mode: rich styling with header and copy button
+  // Full mode: sunken well with a 32px header (language · Copy); long lines scroll inside the
+  // well so a code block never widens the page (spec §7.4 code blocks)
   return (
-    <div className={cn('relative group rounded-[8px] overflow-hidden border bg-muted/30', className)}>
-      {/* Language label + copy button */}
-      <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 border-b text-xs">
-        <span className="text-muted-foreground font-medium uppercase tracking-wide">
+    <div className={cn('relative overflow-hidden rounded-md border border-subtle bg-sunken', className)}>
+      <div className="flex h-8 items-center gap-2 border-b border-subtle pl-3 pr-1 text-label-sm text-tertiary">
+        <span className="min-w-0 truncate font-mono text-secondary">
           {resolvedLang !== 'text' ? resolvedLang : 'plain text'}
         </span>
-        <button
+        <span className="flex-1" />
+        {command && (
+          <TurnIconButton
+            aria-label={started ? t('chat.runCommandStarted') : t('chat.runCommandInBackground')}
+            tooltip
+            icon={started ? <Check className="size-3.5 text-success" /> : <Play />}
+            onClick={handleRun}
+            disabled={started}
+          />
+        )}
+        <TurnIconButton
+          aria-label={copied ? t('common.copied') : t('common.copyCode')}
+          icon={copied ? <Check className="size-3.5 text-success" /> : <Copy />}
           onClick={handleCopy}
-          className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
-          aria-label={t('common.copyCode')}
-        >
-          {copied ? (
-            <svg className="w-4 h-4 text-success" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-            </svg>
-          ) : (
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-            </svg>
-          )}
-        </button>
+        />
       </div>
 
       {/* Code content */}
-      <div className="p-3 overflow-x-auto">
+      <div className="overflow-x-auto px-3 py-2 font-mono text-mono-ui leading-5 text-diff">
         {isLoading || !highlighted ? (
-          <pre className="font-mono text-sm whitespace-pre-wrap break-all">
+          <pre className="m-0 w-max min-w-full font-mono">
             <code>{code}</code>
           </pre>
         ) : (
           <div
-            className="font-mono text-sm [&_pre]:!bg-transparent [&_pre]:!m-0 [&_pre]:!p-0 [&_pre]:whitespace-pre-wrap [&_pre]:break-all [&_code]:!bg-transparent"
+            className="w-max min-w-full [&_pre]:!m-0 [&_pre]:!bg-transparent [&_pre]:!p-0 [&_pre]:font-mono [&_code]:!bg-transparent"
             dangerouslySetInnerHTML={{ __html: highlighted }}
           />
         )}
@@ -222,12 +237,13 @@ export function CodeBlock({ code, language = 'text', className, mode = 'full', f
 
 /**
  * InlineCode - Styled inline code span
- * Features: subtle background (3%), no border, 75% opacity text
+ * 13px mono on the hover fill, radius-xs; long tokens wrap anywhere so they never widen the
+ * column. `inline-code` is a hook for hosts that resize it (14px in the compact answer).
  */
 export function InlineCode({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <code className={cn(
-      'pl-1 pr-1 py-0 rounded bg-foreground/[0.04] font-mono text-[13px]',
+      'inline-code rounded-xs bg-fill-hover px-1.25 py-px font-mono text-label wrap-anywhere',
       className
     )}>
       {children}

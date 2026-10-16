@@ -7,7 +7,13 @@
 
 import { useAtom } from 'jotai'
 import { useCallback } from 'react'
+import { toast } from 'sonner'
+import i18n from 'i18next'
+import type { StopBackgroundTaskResult } from '@mkagent/shared/protocol'
 import { backgroundTasksAtomFamily, type BackgroundTask } from '@/atoms/sessions'
+
+/** How long a chip waits for the SDK's stopped notification before offering Stop again. */
+const STOP_CONFIRM_TIMEOUT_MS = 15_000
 
 export interface UseBackgroundTasksOptions {
   /** Session ID to track tasks for */
@@ -23,8 +29,10 @@ export interface UseBackgroundTasksResult {
   updateTaskProgress: (toolUseId: string, elapsedSeconds: number) => void
   /** Remove a task (when completed or killed) */
   removeTask: (toolUseId: string) => void
-  /** Kill a task (sends kill request via IPC) */
-  killTask: (taskId: string, type: 'agent' | 'shell') => Promise<void>
+  /** Ask the agent to stop a task (shell, agent or workflow) */
+  stopTask: (task: BackgroundTask) => Promise<void>
+  /** Hide a task's chip (renderer-only: it never stops the task) */
+  dismissTask: (task: BackgroundTask) => void
 }
 
 /**
@@ -56,34 +64,47 @@ export function useBackgroundTasks({ sessionId }: UseBackgroundTasksOptions): Us
     setTasks(prev => prev.filter(t => t.toolUseId !== toolUseId))
   }, [setTasks])
 
-  const killTask = useCallback(async (taskId: string, type: 'agent' | 'shell') => {
-    // Find the task to get its toolUseId
-    const task = tasks.find(t => t.id === taskId)
-
-    if (type === 'shell') {
-      // Use KillShell IPC for shells
-      try {
-        await window.electronAPI.killShell(sessionId, taskId)
-      } catch {
-        // Shell may already be gone - that's OK, still remove from UI
-      }
+  /**
+   * The chip shows "Stopping…" until the SDK confirms with task_completed (status stopped). When no
+   * live agent could take the request, the task already ended with the turn that ran it: show it
+   * stopped. Any other failure is reported and the chip goes back to running — as it does when no
+   * confirmation arrives in time, so it can be stopped again or dismissed (never shown as stopped
+   * without proof).
+   */
+  const stopTask = useCallback(async (task: BackgroundTask) => {
+    const update = (patch: Partial<BackgroundTask>) =>
+      setTasks(prev => prev.map(t => (t.id === task.id ? { ...t, ...patch } : t)))
+    update({ stopping: true })
+    let result: StopBackgroundTaskResult
+    try {
+      result = await window.electronAPI.stopBackgroundTask(sessionId, task.id)
+    } catch (error) {
+      result = { success: false, error: error instanceof Error ? error.message : String(error) }
+    }
+    if (result.success) {
+      setTimeout(() => {
+        setTasks(prev => prev.map(t => (t.id === task.id && t.stopping ? { ...t, stopping: false } : t)))
+      }, STOP_CONFIRM_TIMEOUT_MS)
+      return
+    }
+    if (result.error === 'not-running') {
+      update({ stopping: false, status: 'stopped', completedAt: Date.now() })
     } else {
-      // For agents, we don't have a direct kill mechanism yet
-      // The model would need to use TaskOutput to check status
-      console.warn('Killing agent tasks not yet implemented')
+      update({ stopping: false })
+      toast.error(i18n.t('chat.backgroundTask.stopFailed'), { description: result.error })
     }
+  }, [sessionId, setTasks])
 
-    // Always remove from UI after kill attempt
-    if (task) {
-      setTasks(prev => prev.filter(t => t.id !== taskId))
-    }
-  }, [sessionId, tasks, setTasks])
+  const dismissTask = useCallback((task: BackgroundTask) => {
+    setTasks(prev => prev.filter(t => t.id !== task.id))
+  }, [setTasks])
 
   return {
     tasks,
     addTask,
     updateTaskProgress,
     removeTask,
-    killTask,
+    stopTask,
+    dismissTask,
   }
 }

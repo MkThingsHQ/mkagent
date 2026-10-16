@@ -9,6 +9,13 @@
  * - Preset themes:  ~/.mkagent/themes/*.json
  */
 
+import {
+  backgroundIsDark,
+  deriveThemeRoles,
+  isParseableColor,
+  type ThemeRoleInput,
+} from './theme-roles.ts';
+
 /**
  * CSS color string - any valid CSS color format:
  * - Hex: #8b5cf6, #8b5cf6cc
@@ -38,7 +45,7 @@ export interface ThemeColors {
 export interface SurfaceColors {
   paper?: CSSColor; // AI messages, cards, elevated content
   navigator?: CSSColor; // Left sidebar background
-  input?: CSSColor; // Input field background
+  input?: CSSColor; // Input field background (emitted as --surface-input; never shadcn's --input border)
   popover?: CSSColor; // Dropdowns, modals, context menus (always solid, no transparency)
   popoverSolid?: CSSColor; // Guaranteed 100% opaque popover bg (required for scenic mode)
 }
@@ -129,109 +136,75 @@ function mergeThemes(
 }
 
 /**
- * Resolve theme from app-level source
- * (Workspace cascading has been removed for simplicity)
+ * Resolve the effective theme from layered sources, lowest priority first
+ * (e.g. `resolveTheme(presetTheme, appThemeOverrides)`). Missing layers are skipped.
  */
 export function resolveTheme(
-  app?: ThemeOverrides
+  ...layers: (ThemeOverrides | null | undefined)[]
 ): ThemeOverrides {
-  return mergeThemes(undefined, app) || {};
+  // Seed with undefined so the first layer is returned as-is (keeps preset metadata such as shikiTheme).
+  return layers.reduce<ThemeOverrides | undefined>((acc, layer) => mergeThemes(acc, layer ?? undefined), undefined) ?? {};
 }
 
+const ROLE_INPUT_KEYS = ['background', 'foreground', 'accent', 'info', 'success', 'destructive'] as const;
+
 /**
- * Convert hex color to RGB values string (e.g., "255, 128, 0")
- * Optionally darkens the color by a factor (0-1, where 0.7 = 70% brightness)
- * Returns null if not a valid hex color
+ * The 6-color contract (+ surface overrides) a theme feeds into the role solver for one mode.
+ * Colors the theme leaves out — or that don't parse — fall back to DEFAULT_THEME for that mode,
+ * so partial themes (e.g. a `theme.json` that only sets `accent`) layer on top of the default.
  */
-function hexToRgbValues(hex: string, darkenFactor: number = 1): string | null {
-  let r: number, g: number, b: number;
+export function resolveThemeRoleInput(theme: ThemeOverrides, isDark: boolean): ThemeRoleInput {
+  const colors: ThemeColors & SurfaceColors = isDark && theme.dark ? { ...theme, ...theme.dark } : theme;
+  const defaults: ThemeColors = isDark ? { ...DEFAULT_THEME, ...DEFAULT_THEME.dark } : DEFAULT_THEME;
+  const pick = (value: CSSColor | undefined) => (value && isParseableColor(value) ? value : undefined);
 
-  // Match 6 digit hex colors
-  const match = hex.match(/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i);
-  if (match) {
-    r = parseInt(match[1]!, 16);
-    g = parseInt(match[2]!, 16);
-    b = parseInt(match[3]!, 16);
-  } else {
-    // Try 3-digit hex
-    const shortMatch = hex.match(/^#?([a-f\d])([a-f\d])([a-f\d])$/i);
-    if (!shortMatch) return null;
-    r = parseInt(shortMatch[1]! + shortMatch[1]!, 16);
-    g = parseInt(shortMatch[2]! + shortMatch[2]!, 16);
-    b = parseInt(shortMatch[3]! + shortMatch[3]!, 16);
-  }
-
-  // Apply darkening factor
-  r = Math.round(r * darkenFactor);
-  g = Math.round(g * darkenFactor);
-  b = Math.round(b * darkenFactor);
-
-  return `${r}, ${g}, ${b}`;
+  const input = {} as ThemeRoleInput;
+  for (const key of ROLE_INPUT_KEYS) input[key] = pick(colors[key]) ?? defaults[key]!;
+  const paper = pick(colors.paper);
+  const navigator = pick(colors.navigator);
+  const popover = pick(colors.popover);
+  const popoverSolid = pick(colors.popoverSolid);
+  if (paper) input.paper = paper;
+  if (navigator) input.navigator = navigator;
+  if (popover) input.popover = popover;
+  if (popoverSolid) input.popoverSolid = popoverSolid;
+  return input;
 }
 
 /**
- * Generate CSS variable declarations from theme
+ * Generate CSS variable declarations for a theme: the 6 base colors plus every contrast-solved role
+ * (surfaces, text tiers, status/accent text and solids, focus ring — see theme-roles.ts).
+ * The default theme's roles are static CSS in packages/ui/src/styles/tokens.css; this is only needed
+ * for presets and overrides.
  * @param theme - Resolved theme object
  * @param isDark - Whether to apply dark mode overrides
- * @returns CSS string with variable declarations
+ * @returns CSS declarations (no selector)
  */
 export function themeToCSS(theme: ThemeOverrides, isDark: boolean = false): string {
-  const vars: string[] = [];
+  const input = resolveThemeRoleInput(theme, isDark);
+  const vars: string[] = ROLE_INPUT_KEYS.map((key) => `--${key}: ${input[key]};`);
 
-  // Get effective colors (merge dark overrides if in dark mode)
-  const colors: ThemeColors & SurfaceColors =
-    isDark && theme.dark ? { ...theme, ...theme.dark } : theme;
+  const colors: SurfaceColors = isDark && theme.dark ? { ...theme, ...theme.dark } : theme;
+  if (colors.input && isParseableColor(colors.input)) vars.push(`--surface-input: ${colors.input};`);
 
-  // Semantic color variables
-  if (colors.background) vars.push(`--background: ${colors.background};`);
-  if (colors.foreground) {
-    vars.push(`--foreground: ${colors.foreground};`);
-    // Also output RGB version for shadow borders (only works with hex colors)
-    const rgbValues = hexToRgbValues(colors.foreground);
-    if (rgbValues) {
-      vars.push(`--foreground-rgb: ${rgbValues};`);
-    }
+  // Solve for the mode the background actually is: a light-only theme shown in dark mode keeps
+  // light-mode roles instead of being "solved" toward white text on a light background.
+  const roleMode = backgroundIsDark(input.background) ? 'dark' : 'light';
+  for (const [name, value] of Object.entries(deriveThemeRoles(input, roleMode).vars)) {
+    vars.push(`${name}: ${value};`);
   }
-  if (colors.accent) {
-    vars.push(`--accent: ${colors.accent};`);
-    // Also output darkened RGB version for shadow-tinted (only works with hex colors)
-    // Use 70% brightness for a proper shadow effect
-    const rgbValues = hexToRgbValues(colors.accent, 0.7);
-    if (rgbValues) {
-      vars.push(`--accent-rgb: ${rgbValues};`);
-    }
-  }
-  if (colors.info) vars.push(`--info: ${colors.info};`);
-  if (colors.success) vars.push(`--success: ${colors.success};`);
-  if (colors.destructive) vars.push(`--destructive: ${colors.destructive};`);
-
-  // Surface color variables (fall back to background if not set)
-  // These enable fine-grained control over specific UI regions
-  const bg = colors.background || 'var(--background)';
-  vars.push(`--paper: ${colors.paper || bg};`);
-  vars.push(`--navigator: ${colors.navigator || bg};`);
-  vars.push(`--input: ${colors.input || bg};`);
-  vars.push(`--popover: ${colors.popover || bg};`);
-  // popoverSolid: guaranteed 100% opaque for scenic mode popovers
-  // Falls back to popover, then background (should always be solid in scenic themes)
-  vars.push(`--popover-solid: ${colors.popoverSolid || colors.popover || bg};`);
-
-  // Theme mode (background image is set directly on document.documentElement.style
-  // to avoid style sheet size limits with large data URLs)
-  const mode = theme.mode || 'solid';
-  vars.push(`--theme-mode: ${mode};`);
 
   return vars.join('\n  ');
 }
 
 /**
- * Hex equivalents of background colors for Electron BrowserWindow.
- * The main process cannot use CSS/oklch colors, so we provide hex values
- * that visually match the DEFAULT_THEME oklch colors.
+ * Hex equivalents of the window canvas (--surface-navigator) for Electron BrowserWindow.
+ * The main process cannot use CSS/oklch colors. Kept equal to the solver output for
+ * DEFAULT_THEME by __tests__/theme-roles.test.ts.
  */
 export const BACKGROUND_HEX = {
-  light: '#faf9fb', // matches oklch(0.98 0.003 265)
-  dark: '#302f33', // matches oklch(0.2 0.005 270)
+  light: '#f2f3f4',
+  dark: '#0d0e10',
 } as const;
 
 /**
@@ -243,22 +216,23 @@ export function getBackgroundColor(isDark: boolean): string {
 }
 
 /**
- * Default theme values (matches current index.css)
+ * Default theme ("Craft Agents"): cool neutrals from the Craft app and the brand purple (design spec §2.2).
+ * Its solved roles are static CSS in packages/ui/src/styles/tokens.css (asserted by theme-roles.test.ts).
  */
 export const DEFAULT_THEME: ThemeOverrides = {
-  background: 'oklch(0.98 0.003 265)',
-  foreground: 'oklch(0.185 0.01 270)',
-  accent: 'oklch(0.58 0.22 293)',
-  info: 'oklch(0.75 0.16 70)',
-  success: 'oklch(0.55 0.17 145)',
-  destructive: 'oklch(0.58 0.24 28)',
+  background: '#fcfdfe',
+  foreground: '#1a1c1e',
+  accent: 'oklch(0.52 0.19 292)',
+  info: 'oklch(0.76 0.15 72)',
+  success: 'oklch(0.62 0.15 150)',
+  destructive: 'oklch(0.58 0.21 27)',
   dark: {
-    background: 'oklch(0.145 0.015 270)',
-    foreground: 'oklch(0.95 0.01 270)',
-    accent: 'oklch(0.65 0.22 293)',
-    info: 'oklch(0.78 0.14 70)',
-    success: 'oklch(0.60 0.17 145)',
-    destructive: 'oklch(0.65 0.22 28)',
+    background: 'oklch(0.165 0.004 265)',
+    foreground: 'oklch(0.945 0.003 265)',
+    accent: 'oklch(0.70 0.15 292)',
+    info: 'oklch(0.80 0.14 75)',
+    success: 'oklch(0.74 0.15 150)',
+    destructive: 'oklch(0.70 0.18 25)',
   },
 };
 

@@ -3,7 +3,8 @@
  *
  * Layout: [Sidebar] [Menu] [Back] [Forward] [Workspace selector] ... [Browser strip] [+] [Help]
  *
- * Fixed at top of window, 48px tall.
+ * Fixed at top of window, 44px tall (56px in compact) — recessive chrome on the navigator canvas
+ * (design spec §7.1). Icon buttons are 28px ghost buttons with names and tooltips.
  * macOS: offset left to avoid stoplight controls.
  */
 
@@ -125,9 +126,12 @@ export function TopBar({
 
   // Stoplight padding clears macOS traffic-light controls, which only exist
   // in the Electron desktop window. The webui runs in a regular browser tab
-  // and has no traffic lights regardless of host OS — collapse to a normal
-  // 12px inset so the logo sits at the edge.
-  const menuLeftPadding = isMac && !isWebUI ? 86 : 12
+  // and has no traffic lights regardless of host OS — there the first glyph
+  // lands on the 16px gutter (28px desktop buttons pad 6px, 36px compact ones 8px).
+  const menuLeftPadding = isMac && !isWebUI ? 86 : isCompact ? 8 : 10
+  // The last glyph lines up with the panel headers' trailing glyphs: 6px window inset + 16px gutter,
+  // minus the button's 6px inner padding.
+  const menuRightPadding = 16
 
   return (
     <div
@@ -148,7 +152,7 @@ export function TopBar({
         <Tooltip>
           <TooltipTrigger asChild>
             <TopBarButton onClick={onToggleSidebar} aria-label={t("menu.toggleSidebar")}>
-              <PanelLeftRounded className="h-[18px] w-[18px] text-foreground/70" />
+              <PanelLeftRounded className="size-4" />
             </TopBarButton>
           </TooltipTrigger>
           <TooltipContent side="bottom">{t("menu.toggleSidebar")}</TooltipContent>
@@ -178,7 +182,7 @@ export function TopBar({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <TopBarButton onClick={onBack} disabled={!canGoBack} aria-label={t("common.back")}>
-                    <Icons.ChevronLeft className="h-[18px] w-[18px] text-foreground/70" strokeWidth={1.5} />
+                    <Icons.ChevronLeft className="size-4" strokeWidth={1.75} />
                   </TopBarButton>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">{t("common.back")} {goBackHotkey}</TooltipContent>
@@ -187,7 +191,7 @@ export function TopBar({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <TopBarButton onClick={onForward} disabled={!canGoForward} aria-label={t("common.forward")}>
-                    <Icons.ChevronRight className="h-[18px] w-[18px] text-foreground/70" strokeWidth={1.5} />
+                    <Icons.ChevronRight className="size-4" strokeWidth={1.75} />
                   </TopBarButton>
                 </TooltipTrigger>
                 <TooltipContent side="bottom">{t("common.forward")} {goForwardHotkey}</TooltipContent>
@@ -222,14 +226,14 @@ export function TopBar({
 
       {/* === RIGHT: Browser strip + add + help === */}
       {!isCompact && (
-      <div ref={rightSlotRef} className="flex min-w-0 shrink-0 items-center justify-end gap-1" style={{ paddingRight: 12 }}>
+      <div ref={rightSlotRef} className="flex min-w-0 shrink-0 items-center justify-end gap-1" style={{ paddingRight: menuRightPadding }}>
         <div className="min-w-0">
           <BrowserTabStrip activeSessionId={activeSessionId} maxVisibleBadges={maxVisibleBrowserBadges} />
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <TopBarButton aria-label={t("menu.addPanelMenu")} className="ml-1 h-[26px] w-[26px] rounded-lg">
-              <Icons.Plus className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
+            <TopBarButton aria-label={t("menu.addPanelMenu")} className="ml-1">
+              <Icons.Plus className="size-4" strokeWidth={1.75} />
             </TopBarButton>
           </DropdownMenuTrigger>
           <StyledDropdownMenuContent align="end" minWidth="min-w-56">
@@ -247,20 +251,20 @@ export function TopBar({
         {/* Help button */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <TopBarButton aria-label={t("menu.helpAndDocs")} className="h-[26px] w-[26px] rounded-lg">
-              <Icons.HelpCircle className="h-4 w-4 text-foreground/50" strokeWidth={1.5} />
+            <TopBarButton aria-label={t("menu.helpAndDocs")}>
+              <Icons.HelpCircle className="size-4" strokeWidth={1.75} />
             </TopBarButton>
           </DropdownMenuTrigger>
           <StyledDropdownMenuContent align="end" minWidth="min-w-48">
             <StyledDropdownMenuItem onClick={() => window.electronAPI.openUrl(getDocUrl('skills'))}>
               <Icons.Zap className="h-3.5 w-3.5" />
               <span className="flex-1">{t("sidebar.skills")}</span>
-              <Icons.ExternalLink className="h-3 w-3 text-muted-foreground" />
+              <Icons.ExternalLink className="h-3 w-3 text-tertiary" />
             </StyledDropdownMenuItem>
             <StyledDropdownMenuItem onClick={() => window.electronAPI.openUrl(getDocUrl('permissions'))}>
               <Icons.Settings className="h-3.5 w-3.5" />
               <span className="flex-1">{t("settings.permissions.title")}</span>
-              <Icons.ExternalLink className="h-3 w-3 text-muted-foreground" />
+              <Icons.ExternalLink className="h-3 w-3 text-tertiary" />
             </StyledDropdownMenuItem>
             <StyledDropdownMenuItem onClick={() => window.electronAPI.openUrl('https://github.com/MkThingsHQ/mkagent/tree/main/docs')}>
               <Icons.ExternalLink className="h-3.5 w-3.5" />

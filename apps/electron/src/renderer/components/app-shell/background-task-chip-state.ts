@@ -12,12 +12,14 @@ export const ORPHANED_LINGER_MS = 20_000
 export const RUNNING_SIGNAL_TIMEOUT_MS = 20 * 60_000
 
 /**
- * Advance age-based chip state and prune only states known to be terminal.
+ * Advance age-based chip state and prune only states known to be terminal. `keepId` is the chip
+ * whose card is open: it stays until the card closes, however long ago its task finished.
  * Returns the original array when nothing changed to avoid spurious Jotai renders.
  */
 export function advanceBackgroundTaskChips(
   tasks: BackgroundTask[],
   now: number,
+  keepId?: string | null,
 ): BackgroundTask[] {
   let changed = false
   const next = tasks
@@ -33,7 +35,7 @@ export function advanceBackgroundTaskChips(
       return task
     })
     .filter((task) => {
-      if (task.status === 'running' || task.status === 'stale') return true
+      if (task.status === 'running' || task.status === 'stale' || task.id === keepId) return true
       const age = now - (task.completedAt ?? now)
       const linger = task.status === 'orphaned'
         ? ORPHANED_LINGER_MS
@@ -76,6 +78,7 @@ export function markLiveBackgroundTasksOrphaned(
     return {
       ...task,
       status: 'orphaned' as const,
+      stopping: false,
       completedAt: now,
     }
   })

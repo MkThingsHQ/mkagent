@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { Kbd } from "@/components/ui/kbd"
 import { useRegisterModal } from "@/context/ModalContext"
 
 interface RenameDialogProps {
@@ -59,25 +60,25 @@ export function RenameDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="py-4">
-          <Input
-            ref={inputRef}
-            value={value}
-            onChange={(e) => onValueChange(e.target.value)}
-            placeholder={effectivePlaceholder}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                handleSubmit()
-              }
-            }}
-          />
-        </div>
+        <Input
+          ref={inputRef}
+          value={value}
+          onChange={(e) => onValueChange(e.target.value)}
+          placeholder={effectivePlaceholder}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSubmit()
+            }
+          }}
+        />
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("common.cancel")}
           </Button>
-          <Button onClick={handleSubmit} disabled={!value.trim()}>
+          {/* Enter in the field submits (see onKeyDown); the keycap shows it */}
+          <Button variant="primary" onClick={handleSubmit} disabled={!value.trim()}>
             {t("common.save")}
+            <Kbd aria-hidden>↵</Kbd>
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -79,26 +79,26 @@ function InputErrorFallback({
   const { t } = useTranslation()
 
   return (
-    <div className="rounded-[12px] border border-destructive/20 bg-background px-4 py-4 shadow-minimal">
-      <div className="flex items-start gap-3">
-        <div className="mt-0.5 rounded-full bg-destructive/10 p-2 text-destructive">
+    <div className="rounded-xl bg-raised p-3.5 shadow-elev-2 ring-1 ring-[color:var(--destructive-border)]">
+      <div className="flex items-start gap-2.5">
+        <div className="grid size-control shrink-0 place-items-center rounded-md bg-destructive-tint text-destructive">
           <AlertCircle className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-foreground">{t('chat.inputFailedTitle')}</p>
-          <p className="mt-1 text-xs text-foreground/60">
+          <p className="text-label-lg font-semibold text-foreground">{t('chat.inputFailedTitle')}</p>
+          <p className="mt-1 text-label text-secondary">
             {t('chat.inputFailedDescription')}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button type="button" size="sm" variant="secondary" onClick={onRetry}>
+            <Button type="button" size="lg" variant="secondary" onClick={onRetry}>
               <RefreshCw className="h-4 w-4" />
               {t('common.retry')}
             </Button>
-            <Button type="button" size="sm" variant="outline" onClick={onClearDraft}>
+            <Button type="button" size="lg" variant="secondary" onClick={onClearDraft}>
               <Trash2 className="h-4 w-4" />
               {t('chat.clearDraft')}
             </Button>
-            <Button type="button" size="sm" variant="ghost" onClick={() => window.location.reload()}>
+            <Button type="button" size="lg" variant="ghost" onClick={() => window.location.reload()}>
               {t('common.reload')}
             </Button>
           </div>

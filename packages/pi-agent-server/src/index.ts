@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { BackgroundShells } from './background-shell.ts';
+import type { AgentEvent } from '@mkagent/core/types';
 /**
  * Pi Agent Server
  *
@@ -34,7 +36,6 @@ import {
   createGrepToolDefinition,
   createFindToolDefinition,
   createLsToolDefinition,
-  getAgentDir,
 } from '@earendil-works/pi-coding-agent';
 import type {
   AgentSession,
@@ -102,6 +103,9 @@ import { readContextUsage, deferContextUsage } from './context-usage.ts';
 import { waitForCompaction, MANUAL_COMPACT_WAIT_MS, PROMPT_COMPACT_WAIT_MS } from './compaction-wait.ts';
 import type { PiCompactResult, PiContextUsagePayload } from '../../shared/src/agent/backend/pi/protocol.ts';
 import { adaptCredentialForPiSdk, type PiCredential } from './adapt-credential.ts';
+import { resolveCraftAgentDir } from './agent-dir.ts';
+import { toPiProviderId } from '../../shared/src/config/pi-provider-ids.ts';
+import { providerEndpointEnv } from './provider-endpoint-env.ts';
 
 // ============================================================
 // Types — JSONL Protocol
@@ -146,6 +150,7 @@ interface RuntimeConfigUpdateMessage {
 
 /** Messages from main process (stdin) */
 type InboundMessage =
+  | { type: 'stop_background_task'; id: string; taskId: string }
   | InitMessage
   | { type: 'prompt'; id: string; message: string; systemPrompt: string; images?: Array<{ type: 'image'; data: string; mimeType: string }> }
   | { type: 'register_tools'; tools: ProxyToolDef[] }
@@ -241,6 +246,8 @@ interface OutboundOAuthCredentialUpdate {
 interface OutboundError { type: 'error'; message: string; code?: string; id?: string }
 
 type OutboundMessage =
+  | { type: 'background_task_event'; event: AgentEvent }
+  | { type: 'stop_background_task_result'; id: string; stopped: boolean }
   | OutboundReady
   | OutboundEvent
   | OutboundPreToolUseReq
@@ -315,6 +322,7 @@ let initConfig: Extract<InboundMessage, { type: 'init' }> | null = null;
 
 // Mutable state
 let currentUserMessage = '';
+const backgroundShells = new BackgroundShells(event => send({ type: 'background_task_event', event }));
 
 // Pending promises for async handshakes
 const pendingPreToolUse = new Map<string, { resolve: (response: { action: string; input?: Record<string, unknown>; reason?: string }) => void }>();
@@ -628,15 +636,17 @@ async function ensureSession(): Promise<AgentSession> {
   );
   const webTools = [searchTool, webFetchTool];
 
-  // Pi SDK 0.70.0 registration contract:
-  //   - `customTools` accepts ToolDefinition[] — our hook-wrapped objects go here
-  //   - `tools` is a string[] name allowlist — MUST include every tool we want active,
-  //     otherwise Pi SDK defaults to the built-in [read, bash, edit, write] set and
-  //     silently filters out everything else. Custom tool names with matching built-in
-  //     names override the SDK's raw implementation inside _refreshToolRegistry, so
-  //     our hooked versions take effect (permissions + large-response summarization).
-  //   - Do NOT pass tool *objects* to `tools` — `allowedToolNames = new Set(options.tools)`
-  //     then `.has(name)` returns false for every string lookup → zero tools active.
+  // Pi SDK tool registration contract (1.x):
+  //   - `customTools` accepts ToolDefinition[] — our hook-wrapped objects go here.
+  //     A custom tool replaces the built-in of the same name in _refreshToolRegistry,
+  //     so our hooked versions take effect (permissions + large-response summarization).
+  //   - `tools` is an allowlist of tool names (`*` patterns and `+name`/`-name`
+  //     modifiers also exist — keep plain names) and MUST name every tool we want
+  //     active: unlisted built-in, custom and extension tools are filtered out, and a
+  //     named tool is activated even when it is not a default. Our source proxies are
+  //     `mcp__<slug>__<tool>`, so the allowlist also filters Pi-side MCP tools.
+  //   - Do NOT pass tool *objects* to `tools` — names are matched as strings, so
+  //     objects match nothing → zero tools active.
   const builtinDefs = [
     createReadToolDefinition(cwd),
     createBashToolDefinition(cwd),
@@ -656,26 +666,21 @@ async function ensureSession(): Promise<AgentSession> {
   // instead of the SDK default that merges `<cwd>/.pi/settings.json` from the
   // user's working directory and writes to `<agentDir>/settings.json`.
   const settingsManager = createMkAgentSettingsManager('main');
+  // Resource isolation: never resolve extensions/skills from ~/.pi/agent.
+  const agentDir = resolveCraftAgentDir(initConfig);
+  const shellPath = process.env.MKAGENT_GIT_BASH_PATH?.trim();
+  if (shellPath) settingsManager.applyOverrides({ shellPath });
   const sessionOptions: CreateAgentSessionOptions = {
     cwd,
+    agentDir,
     modelRuntime,
     customTools: wrappedAll,
     tools: toolAllowlist,
     settingsManager,
   };
 
-  // Extension isolation: set agentDir to a temp directory under session path
-  // to prevent loading global Pi extensions from ~/.pi/agent
   if (initConfig.sessionPath) {
-    const agentDir = initConfig.agentDir || join(initConfig.sessionPath, '.pi-agent');
-    mkdirSync(agentDir, { recursive: true });
-    sessionOptions.agentDir = agentDir;
-    const settingsManager = PiSettingsManager.create(cwd, agentDir);
-    const shellPath = process.env.MKAGENT_GIT_BASH_PATH?.trim();
-    if (shellPath) settingsManager.applyOverrides({ shellPath });
-    sessionOptions.settingsManager = settingsManager;
-
-    // Session resume: use a per-MkAgent-session directory so the Pi SDK can
+    // Session resume: use a per-Craft-session directory so the Pi SDK can
     // persist and resume its own session across subprocess restarts.
     // continueRecent() loads the existing session if one exists, otherwise
     // creates a new one — so this handles both first-run and resume.
@@ -719,8 +724,8 @@ async function ensureSession(): Promise<AgentSession> {
       const piModel = resolvePiModel(modelRegistry, initConfig.model, initConfig.piAuth?.provider, shouldPreferCustomEndpoint());
       if (piModel) {
         // Verify resolved model's provider is compatible with the authenticated provider.
-        // Without this, a model that resolves to a different provider would
-        // cause "No API key found" at runtime.
+        // Without this, a model that resolves to a different provider (e.g. azure
+        // when authed as github-copilot) would cause "No API key found" at runtime.
         const resolvedProvider = (piModel as any)?.provider;
         const isCompatible = !initConfig.piAuth ||
           resolvedProvider === initConfig.piAuth.provider ||
@@ -755,7 +760,7 @@ async function ensureSession(): Promise<AgentSession> {
   const systemPromptOverride = createSystemPromptOverride();
   sessionOptions.resourceLoader = await createCraftResourceLoader({
     cwd,
-    agentDir: sessionOptions.agentDir ?? getAgentDir(),
+    agentDir,
     settingsManager,
     systemPromptOverride,
   });
@@ -819,16 +824,11 @@ function wrapToolsWithHooks(tools: ToolDefinition<any, any>[]): ToolDefinition<a
   return tools.map(tool => wrapSingleTool(tool));
 }
 
-function makeErrorResult(message: string): AgentToolResult<any> {
-  return {
-    content: [{ type: 'text', text: message }],
-    details: { isError: true },
-  };
-}
-
 function wrapSingleTool(tool: ToolDefinition<any, any>): ToolDefinition<any, any> {
   const originalExecute = tool.execute;
-  const parameters = allowMkAgentMetadataProperties(tool.parameters);
+  const parameters = allowMkAgentMetadataProperties(tool.name === 'bash'
+    ? { ...tool.parameters, properties: { ...tool.parameters.properties, run_in_background: { type: 'boolean', description: 'Run as a background task with live output and a separate stop control.' } } }
+    : tool.parameters);
 
   const wrappedExecute: ToolDefinition<any, any>['execute'] = async (
     toolCallId,
@@ -856,6 +856,15 @@ function wrapSingleTool(tool: ToolDefinition<any, any>): ToolDefinition<any, any
     // upstream Pi tool implementation always receives clean executable args,
     // even if a future pre-tool-use path returns `allow` without modification.
     inputObj = stripMkAgentMetadata(inputObj);
+
+    if (tool.name === 'bash' && inputObj.run_in_background === true && initConfig) {
+      const { run_in_background: _background, ...args } = inputObj;
+      return backgroundShells.start({
+        directory: join(resolveCraftAgentDir(initConfig), 'tasks'),
+        toolUseId: toolCallId, command: String(args.command ?? ''),
+        execute: (taskSignal, update) => originalExecute(toolCallId, args, taskSignal, update, ctx),
+      });
+    }
 
     // Execute original tool with (potentially modified) input
     const result = await originalExecute(toolCallId, inputObj, signal, onUpdate, ctx);
@@ -895,6 +904,7 @@ function wrapSingleTool(tool: ToolDefinition<any, any>): ToolDefinition<any, any
           return {
             content: [{ type: 'text', text: largeResult.message }],
             details: result.details,
+            ...(result.isError ? { isError: true } : {}),
           };
         }
       } catch (error) {
@@ -917,6 +927,20 @@ function wrapSingleTool(tool: ToolDefinition<any, any>): ToolDefinition<any, any
 // ============================================================
 // Proxy Tools (tools executed in main process)
 // ============================================================
+
+/**
+ * A main-process tool result as a Pi tool result. Failures are flagged with
+ * `isError` (Pi >=0.99) so the model gets an error tool result and
+ * `tool_execution_end.isError` marks the call failed in Craft, as a thrown error
+ * would; before, they reached both as successes.
+ */
+function proxyToolResult(result: { content: string; isError: boolean }): AgentToolResult<undefined> {
+  return {
+    content: [{ type: 'text', text: result.content }],
+    details: undefined,
+    ...(result.isError ? { isError: true } : {}),
+  };
+}
 
 function buildProxyTools(): ToolDefinition<any, any>[] {
   debugLog(`Building proxy tools from ${proxyToolDefs.length} definitions: ${proxyToolDefs.map(t => t.name).join(', ')}`);
@@ -947,10 +971,7 @@ function buildProxyTools(): ToolDefinition<any, any>[] {
         prefetchCache.delete(toolCallId);
         debugLog(`Prefetch cache hit for ${def.name} (toolCallId: ${toolCallId})`);
         const result = await prefetched;
-        return {
-          content: [{ type: 'text', text: result.content }],
-          details: result.isError ? { isError: true } : undefined,
-        };
+        return proxyToolResult(result);
       }
 
       const inputObj = params as Record<string, unknown>;
@@ -972,10 +993,7 @@ function buildProxyTools(): ToolDefinition<any, any>[] {
         pendingToolExecutions.set(requestId, { resolve });
       });
 
-      return {
-        content: [{ type: 'text', text: result.content }],
-        details: result.isError ? { isError: true } : undefined,
-      };
+      return proxyToolResult(result);
     },
   }));
 }
@@ -1043,12 +1061,15 @@ async function queryLlm(
       );
     }
 
-    // Create minimal ephemeral session. The resource loader mirrors the SDK
-    // default (same cwd, default agentDir) plus the system-prompt override.
+    // Create minimal ephemeral session: no tools (an empty allowlist also keeps
+    // extension and MCP tools out), and the same isolated agentDir as the main
+    // session plus the system-prompt override.
     const ephemeralSettings = createMkAgentSettingsManager('ephemeral');
     const ephemeralPromptOverride = createSystemPromptOverride();
+    const ephemeralAgentDir = resolveCraftAgentDir(initConfig!);
     const ephemeralOptions: CreateAgentSessionOptions = {
       cwd: resolvedCwd(),
+      agentDir: ephemeralAgentDir,
       modelRuntime,
       tools: [],
       sessionManager: PiSessionManager.inMemory(),
@@ -1056,7 +1077,7 @@ async function queryLlm(
       model: piModel,
       resourceLoader: await createCraftResourceLoader({
         cwd: resolvedCwd(),
-        agentDir: getAgentDir(),
+        agentDir: ephemeralAgentDir,
         settingsManager: ephemeralSettings,
         systemPromptOverride: ephemeralPromptOverride,
       }),
@@ -1341,6 +1362,27 @@ function handleSessionEvent(event: AgentSessionEvent): void {
 // Command Handlers
 // ============================================================
 
+/**
+ * Tenant-specific endpoints (Azure OpenAI, Cloudflare AI Gateway) reach the Pi SDK
+ * through env vars derived from the connection's base URL. Re-applied on runtime
+ * config updates so an edited endpoint takes effect without a subprocess restart.
+ */
+function applyProviderEndpointEnv(config: InitMessage): void {
+  const env = providerEndpointEnv(config.piAuth?.provider, config.baseUrl);
+  for (const [key, value] of Object.entries(env)) {
+    process.env[key] = value;
+    debugLog(`Set ${key}=${value}`);
+  }
+  if (config.piAuth?.provider === 'cloudflare-ai-gateway' && !env.CLOUDFLARE_GATEWAY_ID) {
+    debugLog(`Cloudflare AI Gateway: base URL ${config.baseUrl ?? '(none)'} has no account/gateway id`);
+  }
+}
+
+/** Craft wire auth with the provider id the Pi SDK knows (see pi-provider-ids.ts). */
+function toPiAuth(piAuth: NonNullable<InitMessage['piAuth']>): NonNullable<InitMessage['piAuth']> {
+  return { ...piAuth, provider: toPiProviderId(piAuth.provider) };
+}
+
 async function handleInit(msg: Extract<InboundMessage, { type: 'init' }>): Promise<void> {
   // A re-init invalidates every utility query created under the old credentials.
   ephemeralQueries.cancelAll(new EphemeralQueryCancelledError('Pi server reinitialized'));
@@ -1361,14 +1403,10 @@ async function handleInit(msg: Extract<InboundMessage, { type: 'init' }>): Promi
   moduleRuntimePromise = null;
   piModelRegistry = null;
 
-  initConfig = msg;
-
-  // Azure OpenAI requires a tenant-specific endpoint URL.
-  // The Pi SDK (via Vercel AI SDK) reads AZURE_OPENAI_BASE_URL from env.
-  if (msg.piAuth?.provider === 'azure-openai-responses' && msg.baseUrl) {
-    process.env.AZURE_OPENAI_BASE_URL = msg.baseUrl;
-    debugLog(`Set AZURE_OPENAI_BASE_URL=${msg.baseUrl}`);
-  }
+  // Craft's stored provider ids → Pi SDK ids, once, so every consumer below
+  // (credential store, model resolution, search) sees the SDK's id.
+  initConfig = msg.piAuth ? { ...msg, piAuth: toPiAuth(msg.piAuth) } : msg;
+  applyProviderEndpointEnv(initConfig);
 
   // Start callback server for call_llm (idempotent — skips if already running)
   await startCallbackServer();
@@ -1641,6 +1679,7 @@ async function handleUpdateRuntimeConfig(msg: RuntimeConfigUpdateMessage): Promi
       customEndpoint: msg.customEndpoint,
       customModels: msg.customModels,
     };
+    applyProviderEndpointEnv(initConfig);
 
     if (piModelRegistry && initConfig.baseUrl?.trim() && initConfig.customEndpoint) {
       const modelEntries: CustomEndpointModelEntry[] = (initConfig.customModels?.length
@@ -1738,7 +1777,8 @@ async function handleSetThinkingLevel(msg: Extract<InboundMessage, { type: 'set_
   }
 }
 
-function handleShutdown(): void {
+async function handleShutdown(): Promise<void> {
+  await backgroundShells.dispose();
   debugLog('Shutdown requested');
 
   // Abort utility sessions independently from the main chat session.
@@ -1779,6 +1819,9 @@ function handleShutdown(): void {
 
 async function processMessage(msg: InboundMessage): Promise<void> {
   switch (msg.type) {
+    case 'stop_background_task':
+      send({ type: 'stop_background_task_result', id: msg.id, stopped: await backgroundShells.stop(msg.taskId) });
+      break;
     case 'init':
       await handleInit(msg);
       break;
@@ -1850,11 +1893,12 @@ async function processMessage(msg: InboundMessage): Promise<void> {
 
     case 'token_update':
       if (moduleCredentialStore) {
-        const { provider, credential } = msg.piAuth;
+        const piAuth = toPiAuth(msg.piAuth);
+        const { provider, credential } = piAuth;
         const adapted = adaptCredentialForPiSdk(provider, credential);
         if (adapted) await moduleCredentialStore.seed(provider, adapted);
         if (initConfig) {
-          initConfig.piAuth = msg.piAuth;
+          initConfig.piAuth = piAuth;
         }
         debugLog(`Updated ${credential.type} credential for provider: ${provider}`);
       } else {

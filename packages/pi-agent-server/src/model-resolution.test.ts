@@ -64,7 +64,7 @@ describe('resolvePiModel', () => {
     it('returns exact match for piAuthProvider', () => {
       const registry = createMockRegistry({
         openai: [{ id: 'gpt-5.2', name: 'GPT 5.2', provider: 'openai' }],
-        'azure-openai-responses': [{ id: 'gpt-5.2', name: 'GPT 5.2', provider: 'azure-openai-responses' }],
+        'azure': [{ id: 'gpt-5.2', name: 'GPT 5.2', provider: 'azure' }],
       });
 
       const result = resolvePiModel(registry, 'gpt-5.2', 'openai');
@@ -137,10 +137,11 @@ describe('resolvePiModel', () => {
 
   describe('provider-safe fallback', () => {
     it('does not return a model from an incompatible provider via getAll fallback', () => {
-      // gpt-5.4 exists under another provider, but not the active provider.
+      // gpt-5.4 exists under azure but NOT provider-a.
+      // With provider-a auth, the fallback must not return the azure model.
       const registry = createMockRegistry({
-        'provider-a': [{ id: 'model-a', name: 'Model A', provider: 'provider-a' }],
-        'azure-openai-responses': [{ id: 'gpt-5.4', name: 'GPT-5.4', provider: 'azure-openai-responses' }],
+        'provider-a': [{ id: 'gpt-5.3-codex', name: 'GPT-5.3-Codex', provider: 'provider-a' }],
+        'azure': [{ id: 'gpt-5.4', name: 'GPT-5.4', provider: 'azure' }],
       });
 
       const result = resolvePiModel(registry, 'gpt-5.4', 'provider-a');
@@ -175,12 +176,12 @@ describe('resolvePiModel', () => {
 
     it('does not filter by provider when piAuthProvider is not set', () => {
       const registry = createMockRegistry({
-        'azure-openai-responses': [{ id: 'gpt-5.4', name: 'GPT-5.4', provider: 'azure-openai-responses' }],
+        'azure': [{ id: 'gpt-5.4', name: 'GPT-5.4', provider: 'azure' }],
       });
 
       const result = resolvePiModel(registry, 'gpt-5.4');
       expect(result).toBeDefined();
-      expect(result!.provider).toBe('azure-openai-responses');
+      expect(result!.provider).toBe('azure');
     });
 
     it('skips incompatible providers in the common-provider fallback loop', () => {

@@ -27,11 +27,15 @@ import {
 } from "@/components/ui/styled-context-menu"
 import { ContextMenuProvider } from "@/components/ui/menu-context"
 import { SidebarMenu } from "./SidebarMenu"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { FadingText } from "@/components/ui/fading-text"
 import { SessionList, type ChatGroupingMode } from "./SessionList"
 import { MainContentPanel } from "./MainContentPanel"
 import { PanelStackContainer } from "./PanelStackContainer"
 import type { ChatDisplayHandle } from "./ChatDisplay"
-import { LeftSidebar, type SidebarItem as LeftSidebarItem } from "./LeftSidebar"
+import type { SidebarItem as SidebarNavItem } from "./LeftSidebar"
+import { SidebarPane } from "./SidebarPane"
+import { ShellResizeHandle } from "./ShellResizeHandle"
 import { useSession } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
 import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
@@ -155,11 +159,11 @@ function AppShellContent({
     return storage.get(storage.KEYS.sidebarVisible, !defaultCollapsed)
   })
   const [sidebarWidth, setSidebarWidth] = React.useState(() => {
-    return storage.get(storage.KEYS.sidebarWidth, 220)
+    return storage.get(storage.KEYS.sidebarWidth, 232)
   })
   // Session list width in pixels (min 240, max 480)
   const [sessionListWidth, setSessionListWidth] = React.useState(() => {
-    return storage.get(storage.KEYS.sessionListWidth, 300)
+    return storage.get(storage.KEYS.sessionListWidth, 304)
   })
 
   // Hides both sidebar and navigator (CMD+. toggle)
@@ -419,6 +423,10 @@ function AppShellContent({
     }
   })
 
+  // Whether the next sidebar/list show-hide animates: pointer toggles glide (FLIP), keyboard toggles
+  // (⌘B, ⌘., menu accelerators) are instant — spec §6.1. Set in the same batch as the toggle.
+  const [animateShellLayout, setAnimateShellLayout] = React.useState(true)
+
   const handleToggleSidebar = useCallback(() => {
     if (isSidebarAndNavigatorHidden) {
       setIsSidebarAndNavigatorHidden(false)
@@ -427,11 +435,27 @@ function AppShellContent({
     setIsSidebarVisible(v => !v)
   }, [isSidebarAndNavigatorHidden])
 
+  const handleToggleSidebarFromPointer = useCallback(() => {
+    setAnimateShellLayout(true)
+    handleToggleSidebar()
+  }, [handleToggleSidebar])
+
+  const handleToggleFocusModeFromPointer = useCallback(() => {
+    setAnimateShellLayout(true)
+    setIsSidebarAndNavigatorHidden(v => !v)
+  }, [])
+
   // Sidebar toggle (CMD+B)
-  useAction('view.toggleSidebar', handleToggleSidebar)
+  useAction('view.toggleSidebar', () => {
+    setAnimateShellLayout(false)
+    handleToggleSidebar()
+  })
 
   // Focus mode toggle (CMD+.) - hides both sidebars
-  useAction('view.toggleFocusMode', () => setIsSidebarAndNavigatorHidden(v => !v))
+  useAction('view.toggleFocusMode', () => {
+    setAnimateShellLayout(false)
+    setIsSidebarAndNavigatorHidden(v => !v)
+  })
 
   // Panel focus navigation (CMD+SHIFT+[ / ])
   const focusNextPanel = useSetAtom(focusNextPanelAtom)
@@ -741,6 +765,7 @@ function AppShellContent({
   // Listen for focus mode toggle from menu (View → Focus Mode)
   React.useEffect(() => {
     const cleanup = window.electronAPI.onMenuToggleFocusMode?.(() => {
+      setAnimateShellLayout(false)
       setIsSidebarAndNavigatorHidden(v => !v)
     })
     return cleanup
@@ -749,6 +774,7 @@ function AppShellContent({
   // Listen for sidebar toggle from menu (View → Toggle Sidebar)
   React.useEffect(() => {
     const cleanup = window.electronAPI.onMenuToggleSidebar?.(() => {
+      setAnimateShellLayout(false)
       handleToggleSidebar()
     })
     return cleanup
@@ -989,6 +1015,42 @@ function AppShellContent({
     return t('sidebar.allSessions')
   }, [navState, t, sessionFilter])
 
+
+  // Sidebar navigation (scrolls) and the pinned footer (Settings, What's New — always visible).
+  const sidebarLinks: SidebarNavItem[] = [
+    { id: 'nav:allSessions', title: t('sidebar.allSessions'), label: String(workspaceSessionMetas.length), icon: Inbox, variant: sessionFilter?.kind === 'allSessions' ? 'default' : 'ghost', onClick: handleAllSessionsClick,
+      expandable: true, expanded: isExpanded('nav:allSessions'), onToggle: () => toggleExpanded('nav:allSessions'),
+      items: [
+        { id: 'nav:flagged', title: t('sidebar.flagged'), label: String(flaggedCount), icon: Flag, variant: sessionFilter?.kind === 'flagged' ? 'default' : 'ghost', onClick: handleFlaggedClick },
+        { id: 'nav:archived', title: t('sidebar.archived'), label: archivedCount ? String(archivedCount) : undefined, icon: Archive, variant: sessionFilter?.kind === 'archived' ? 'default' : 'ghost', onClick: handleArchivedClick },
+      ],
+    },
+    { id: 'nav:skills', title: t('sidebar.skills'), label: String(skills.length), icon: Zap, variant: isSkillsNavigation(navState) ? 'default' : 'ghost', onClick: handleSkillsClick, contextMenu: { type: 'skills', onAddSkill: openAddSkill } },
+  ]
+  const sidebarFooterLinks: SidebarNavItem[] = [
+    // --- Settings ---
+    {
+      id: "nav:settings",
+      title: t("sidebar.settings"),
+      icon: Settings,
+      variant: isSettingsNavigation(navState) ? "default" : "ghost",
+      onClick: () => handleSettingsClick(),
+    },
+    // --- What's New ---
+    {
+      id: "nav:whats-new",
+      title: t("sidebar.whatsNew"),
+      icon: hasUnseenReleaseNotes ? (
+        <span className="relative">
+          <Cake className="h-3.5 w-3.5" />
+          <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-accent" />
+        </span>
+      ) : Cake,
+      variant: "ghost" as const,
+      onClick: handleWhatsNewClick,
+    },
+  ]
+
   return (
     <AppShellProvider value={appShellContextValue}>
         {/* === TOP BAR === */}
@@ -1010,8 +1072,8 @@ function AppShellContent({
           onForward={goForward}
           canGoBack={canGoBack}
           canGoForward={canGoForward}
-          onToggleSidebar={handleToggleSidebar}
-          onToggleFocusMode={() => setIsSidebarAndNavigatorHidden(prev => !prev)}
+          onToggleSidebar={handleToggleSidebarFromPointer}
+          onToggleFocusMode={handleToggleFocusModeFromPointer}
           onAddSessionPanel={() => handleNewChat(true)}
           onAddBrowserPanel={() => { void handleNewBrowserWindow() }}
           isCompact={isAutoCompact}
@@ -1031,135 +1093,19 @@ function AppShellContent({
       >
         <PanelStackContainer
           sidebarSlot={
-            <div
-              ref={sidebarRef}
-              style={{ width: sidebarWidth }}
-              className="h-full font-sans relative"
-              data-focus-zone="sidebar"
-              tabIndex={sidebarFocused ? 0 : -1}
+            <SidebarPane
+              paneRef={sidebarRef}
+              width={sidebarWidth}
+              focused={sidebarFocused}
               onKeyDown={handleSidebarKeyDown}
-            >
-            <div className="flex h-full flex-col select-none">
-              {/* Sidebar Top Section */}
-              <div className="flex-1 flex flex-col min-h-0">
-                {/* New Session Button - Gmail-style, with context menu for "Open in New Window" */}
-                <div className="px-2 pb-2 shrink-0">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <div>
-                        <ContextMenu modal={true}>
-                          <ContextMenuTrigger asChild>
-                            <Button
-                              variant="ghost"
-                              onClick={(e) => handleNewChat(e.metaKey || e.ctrlKey)}
-                              className="w-full justify-start gap-2 py-[7px] px-2 text-[13px] font-normal rounded-[6px] shadow-minimal bg-background"
-                              data-tutorial="new-chat-button"
-                            >
-                              <SquarePenRounded className="h-3.5 w-3.5 shrink-0" />
-                              {t("session.newSession")}
-                            </Button>
-                          </ContextMenuTrigger>
-                          <StyledContextMenuContent>
-                            <ContextMenuProvider>
-                              <SidebarMenu type="newSession" />
-                            </ContextMenuProvider>
-                          </StyledContextMenuContent>
-                        </ContextMenu>
-                      </div>
-                    </TooltipTrigger>
-                    <TooltipContent side="right">{newChatHotkey}</TooltipContent>
-                  </Tooltip>
-                </div>
-                {/* Primary Nav: All Sessions (Flagged, Archived) | Skills | Settings */}
-                {/* pb-4 provides clearance so the last item scrolls above the mask-fade-bottom gradient */}
-                <div className="flex-1 overflow-y-auto min-h-0 mask-fade-bottom pb-4">
-                <LeftSidebar
-                  isCollapsed={false}
-                  getItemProps={getSidebarItemProps}
-                  focusedItemId={focusedSidebarItemId}
-                  links={[
-                    {
-                      id: 'nav:allSessions',
-                      title: t('sidebar.allSessions'),
-                      label: String(workspaceSessionMetas.length),
-                      icon: Inbox,
-                      variant: sessionFilter?.kind === 'allSessions' ? 'default' : 'ghost',
-                      onClick: handleAllSessionsClick,
-                      expandable: true,
-                      expanded: isExpanded('nav:allSessions'),
-                      onToggle: () => toggleExpanded('nav:allSessions'),
-                      contextMenu: {
-                        type: 'allSessions',
-                        onMarkAllRead: () => {
-                          if (!activeWorkspaceId) return
-                          setSessionMetaMap(prev => {
-                            const next = new Map(prev)
-                            for (const [id, meta] of next) {
-                              if (meta.workspaceId === activeWorkspaceId && meta.hasUnread) next.set(id, { ...meta, hasUnread: false })
-                            }
-                            return next
-                          })
-                          void window.electronAPI.markAllSessionsRead(activeWorkspaceId)
-                        },
-                      },
-                      items: [
-                        {
-                          id: 'nav:flagged',
-                          title: t('sidebar.flagged'),
-                          label: String(flaggedCount),
-                          icon: <Flag className="h-3.5 w-3.5" />,
-                          variant: sessionFilter?.kind === 'flagged' ? 'default' : 'ghost',
-                          onClick: handleFlaggedClick,
-                        },
-                        {
-                          id: 'nav:archived',
-                          title: t('sidebar.archived'),
-                          label: archivedCount > 0 ? String(archivedCount) : undefined,
-                          icon: Archive,
-                          variant: sessionFilter?.kind === 'archived' ? 'default' : 'ghost',
-                          onClick: handleArchivedClick,
-                        },
-                      ],
-                    },
-                    { id: 'separator:sessions-skills', type: 'separator' },
-                    {
-                      id: 'nav:skills',
-                      title: t('sidebar.skills'),
-                      label: String(skills.length),
-                      icon: Zap,
-                      variant: isSkillsNavigation(navState) ? 'default' : 'ghost',
-                      onClick: handleSkillsClick,
-                      contextMenu: { type: 'skills', onAddSkill: openAddSkill },
-                    },
-                    { id: 'separator:skills-settings', type: 'separator' },
-                    {
-                      id: 'nav:settings',
-                      title: t('sidebar.settings'),
-                      icon: Settings,
-                      variant: isSettingsNavigation(navState) ? 'default' : 'ghost',
-                      onClick: () => handleSettingsClick(),
-                    },
-                    {
-                      id: 'nav:whats-new',
-                      title: t('sidebar.whatsNew'),
-                      icon: hasUnseenReleaseNotes ? (
-                        <span className="relative">
-                          <Cake className="h-3.5 w-3.5" />
-                          <span className="absolute -top-0.5 -right-0.5 h-1.5 w-1.5 rounded-full bg-accent" />
-                        </span>
-                      ) : Cake,
-                      variant: 'ghost',
-                      onClick: handleWhatsNewClick,
-                    },
-                  ] as LeftSidebarItem[]}
-                />
-                {/* Agent Tree: Hierarchical list of agents */}
-                {/* Agents section removed */}
-                </div>
-              </div>
-
-            </div>
-          </div>
+              links={sidebarLinks}
+              footerLinks={sidebarFooterLinks}
+              getItemProps={getSidebarItemProps}
+              focusedItemId={focusedSidebarItemId}
+              onNewSession={(openInNewWindow) => handleNewChat(openInNewWindow)}
+              newSessionLabel={t("session.newSession")}
+              newSessionHotkey={newChatHotkey}
+            />
           }
           sidebarWidth={effectiveSidebarAndNavigatorHidden ? 0 : (isSidebarVisible ? sidebarWidth : 0)}
           navigatorSlot={
@@ -1271,74 +1217,31 @@ function AppShellContent({
           isRightSidebarVisible={false}
           isCompact={isAutoCompact}
           isResizing={!!isResizing}
+          animateLayout={animateShellLayout}
         />
 
-        {/* Sidebar Resize Handle (absolute, hidden in focused mode) */}
+        {/* Seam handles (absolute, hidden in focused mode) — instant, never animated */}
         {!effectiveSidebarAndNavigatorHidden && (
-        <div
-          ref={resizeHandleRef}
-          onMouseDown={(e) => { e.preventDefault(); setIsResizing('sidebar') }}
-          onMouseMove={(e) => {
-            if (resizeHandleRef.current) {
-              const rect = resizeHandleRef.current.getBoundingClientRect()
-              setSidebarHandleY(e.clientY - rect.top)
-            }
-          }}
-          onMouseLeave={() => { if (!isResizing) setSidebarHandleY(null) }}
-          className="absolute cursor-col-resize z-panel flex justify-center"
-          style={{
-            width: PANEL_SASH_HIT_WIDTH,
-            top: PANEL_STACK_VERTICAL_OVERFLOW,
-            bottom: PANEL_STACK_VERTICAL_OVERFLOW,
-            left: isSidebarVisible
-              ? sidebarWidth + (PANEL_GAP / 2) - PANEL_SASH_HALF_HIT_WIDTH
-              : -PANEL_GAP,
-            transition: isResizing === 'sidebar' ? undefined : 'left 0.15s ease-out',
-          }}
-        >
-          <div
-            className="h-full"
-            style={{
-              ...getResizeGradientStyle(sidebarHandleY, resizeHandleRef.current?.clientHeight ?? null),
-              width: PANEL_SASH_LINE_WIDTH,
-            }}
+          <ShellResizeHandle
+            handleRef={resizeHandleRef}
+            left={isSidebarVisible ? sidebarWidth + (PANEL_GAP / 2) - PANEL_SASH_HALF_HIT_WIDTH : -PANEL_GAP}
+            hoverY={sidebarHandleY}
+            onHoverYChange={setSidebarHandleY}
+            keepHoverOnLeave={!!isResizing}
+            onDragStart={() => setIsResizing('sidebar')}
           />
-        </div>
         )}
-
-        {/* Session List Resize Handle (absolute, hidden in focused mode and board view) */}
+        {/* The list and the content share one card, so the list seam is the card's inner hairline
+            (hidden in board view and pages, where the list is collapsed) */}
         {!effectiveSidebarAndNavigatorHidden && (
-        <div
-          ref={sessionListHandleRef}
-          onMouseDown={(e) => { e.preventDefault(); setIsResizing('session-list') }}
-          onMouseMove={(e) => {
-            if (sessionListHandleRef.current) {
-              const rect = sessionListHandleRef.current.getBoundingClientRect()
-              setSessionListHandleY(e.clientY - rect.top)
-            }
-          }}
-          onMouseLeave={() => { if (isResizing !== 'session-list') setSessionListHandleY(null) }}
-          className="absolute cursor-col-resize z-panel flex justify-center"
-          style={{
-            width: PANEL_SASH_HIT_WIDTH,
-            top: PANEL_STACK_VERTICAL_OVERFLOW,
-            bottom: PANEL_STACK_VERTICAL_OVERFLOW,
-            left:
-              (isSidebarVisible ? sidebarWidth + PANEL_GAP : PANEL_EDGE_INSET) +
-              sessionListWidth +
-              (PANEL_GAP / 2) -
-              PANEL_SASH_HALF_HIT_WIDTH,
-            transition: isResizing === 'session-list' ? undefined : 'left 0.15s ease-out',
-          }}
-        >
-          <div
-            className="h-full"
-            style={{
-              ...getResizeGradientStyle(sessionListHandleY, sessionListHandleRef.current?.clientHeight ?? null),
-              width: PANEL_SASH_LINE_WIDTH,
-            }}
+          <ShellResizeHandle
+            handleRef={sessionListHandleRef}
+            left={(isSidebarVisible ? sidebarWidth + PANEL_GAP : PANEL_EDGE_INSET) + sessionListWidth - PANEL_SASH_HALF_HIT_WIDTH}
+            hoverY={sessionListHandleY}
+            onHoverYChange={setSessionListHandleY}
+            keepHoverOnLeave={isResizing === 'session-list'}
+            onDragStart={() => setIsResizing('session-list')}
           />
-        </div>
         )}
 
       </div>

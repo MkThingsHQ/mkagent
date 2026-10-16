@@ -1,0 +1,530 @@
+/* =============================================================================
+   Shared base styles, utilities and motion for every Craft Agents UI.
+   Requires tokens.css (imported right before this file by each app stylesheet).
+   ============================================================================= */
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+
+  /* The window canvas is the navigator surface on every host (no mid-gray chrome, P0-1).
+     Electron sets data-vibrancy only when the native window has a vibrancy/Mica material. */
+  html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    background: var(--surface-navigator);
+  }
+  html[data-vibrancy] {
+    background: color-mix(in srgb, var(--surface-navigator) 72%, transparent);
+  }
+
+  body {
+    font-family: var(--font-default);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  ::selection {
+    background: var(--selection);
+  }
+
+  /* One focus ring for every keyboard-focused control. Text entry shows focus on its field
+     (see .field-surface); programmatic focus targets (tabindex=-1) show their own state. */
+  :focus-visible {
+    outline: 2px solid var(--focus-ring);
+    outline-offset: 2px;
+  }
+  :where(
+    input:not([type="button"], [type="submit"], [type="reset"], [type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]),
+    textarea,
+    select,
+    [contenteditable]:not([contenteditable="false"]),
+    [tabindex="-1"]
+  ):focus-visible {
+    outline: none;
+  }
+
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--border-control);
+  }
+}
+
+html[data-font="inter"] {
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-default: var(--font-sans);
+  font-optical-sizing: auto;
+  font-feature-settings: "cv01", "cv02", "cv03", "cv04", "case";
+}
+
+/* =============================================================================
+   UTILITIES (pre-redesign class names, now on the elevation scale)
+   ============================================================================= */
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide the scrollbar until a parent .group is hovered */
+  .scrollbar-hover::-webkit-scrollbar {
+    width: 4px;
+  }
+  .scrollbar-hover::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .scrollbar-hover::-webkit-scrollbar-thumb {
+    background: transparent;
+    border-radius: 4px;
+  }
+  .group:hover .scrollbar-hover::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+  }
+  .group:hover .scrollbar-hover::-webkit-scrollbar-thumb:hover {
+    background: var(--border-control);
+  }
+
+  /* Thin horizontal scrollbar for the panel stack */
+  .panel-scroll::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  /* Fade content at the edges over transparent/image backgrounds */
+  .mask-fade-y {
+    mask-image: linear-gradient(to bottom, transparent 0%, black 32px, black calc(100% - 32px), transparent 100%);
+  }
+  .mask-fade-bottom {
+    mask-image: linear-gradient(to bottom, black 0%, black calc(100% - 32px), transparent 100%);
+  }
+
+  /* Elevation. New code uses shadow-elev-0…3; these names map onto the same scale. */
+  .shadow-thin {
+    box-shadow: var(--elev-0);
+  }
+  .shadow-minimal,
+  .shadow-middle {
+    box-shadow: var(--elev-1);
+  }
+  .shadow-medium,
+  .shadow-strong,
+  .shadow-modal-small {
+    box-shadow: var(--elev-2);
+  }
+  .shadow-hero {
+    box-shadow: var(--elev-3);
+  }
+  .shadow-dragging {
+    box-shadow: var(--shadow-dragging);
+  }
+
+  /* Inset separators for table rows/headers */
+  .shadow-bottom-border {
+    box-shadow: inset 0 -1.5px 0 var(--border);
+  }
+  .shadow-bottom-border-thin {
+    box-shadow: inset 0 -1px 0 var(--border);
+  }
+
+  /* Tinted elevation for semantic contexts: set --shadow-color to a color (e.g. var(--destructive)). */
+  .shadow-tinted {
+    --shadow-color: var(--fg-base);
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--shadow-color) 22%, transparent),
+      0 1px 1px -0.5px color-mix(in srgb, var(--shadow-color) 10%, transparent),
+      0 3px 3px -1.5px color-mix(in srgb, var(--shadow-color) 8%, transparent);
+  }
+  /* Dark: outline only, at one lightness so every hue reads the same. */
+  .dark .shadow-tinted {
+    box-shadow: 0 0 0 1px oklch(from var(--shadow-color) 0.425 c h / 0.6);
+  }
+
+  .shadow-panel-focused {
+    position: relative;
+    box-shadow: var(--elev-2);
+  }
+  /* Gradient hairline: lighter at the top, stronger at the bottom */
+  .shadow-panel-focused::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--fg-base) 10%, transparent),
+      color-mix(in srgb, var(--fg-base) 30%, transparent)
+    );
+    mask:
+      linear-gradient(#fff 0 0) content-box,
+      linear-gradient(#fff 0 0);
+    mask-composite: exclude;
+    pointer-events: none;
+    z-index: 1;
+  }
+  .shadow-panel-focused > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  /* iOS-style continuous corners where supported */
+  .smooth-corners {
+    corner-shape: superellipse;
+    -webkit-corner-shape: superellipse;
+  }
+
+  /* Floating material: menus, popovers, dialogs */
+  .popover-styled {
+    background: var(--surface-floating);
+    color: var(--text);
+    border: none;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--elev-2);
+  }
+}
+
+/* =============================================================================
+   PRIMITIVE MATERIALS AND MOTION
+   Durations, easings and distances come from tokens.css; under reduced motion
+   --motion-scale is 0, so every scale/translate collapses and only fades remain.
+   ============================================================================= */
+
+@layer components {
+  /* Text field chrome: sunken well, hairline, focus ring tint (Input, Textarea, Select trigger). */
+  .field-surface {
+    background: var(--surface-sunken);
+    color: var(--text);
+    box-shadow: inset 0 0 0 1px var(--border);
+    transition: box-shadow var(--dur-micro) var(--ease-out-subtle);
+  }
+  .field-surface::placeholder,
+  .field-surface ::placeholder {
+    color: var(--text-tertiary);
+    opacity: 1;
+  }
+  .field-surface:focus-visible,
+  .field-surface:has(:focus-visible),
+  .field-surface[data-state="open"] {
+    outline: none;
+    box-shadow: inset 0 0 0 1px var(--focus-ring), 0 0 0 3px var(--accent-tint);
+  }
+  .field-surface[aria-invalid="true"] {
+    box-shadow: inset 0 0 0 1px var(--destructive-text), 0 0 0 3px var(--destructive-tint);
+  }
+  .field-surface:disabled,
+  .field-surface[data-disabled] {
+    color: var(--text-disabled);
+    box-shadow: inset 0 0 0 1px var(--border-subtle);
+  }
+
+  /* Hover-in instant, hover-out 100ms, press scales to .97 (none under reduced motion). */
+  .motion-press {
+    transition-property: background-color, color, box-shadow, transform, scale, opacity;
+    transition-duration: var(--dur-micro);
+    transition-timing-function: var(--ease-out-subtle);
+  }
+  .motion-press:hover {
+    transition-duration: 0s;
+  }
+  .motion-press:active:not(:disabled, [aria-disabled="true"]) {
+    transform: scale(calc(1 - 0.03 * var(--motion-scale)));
+  }
+
+  /* Radix overlays animate from [data-state]; Radix keeps the node mounted until the exit
+     animation ends. Origin comes from var(--radix-*-transform-origin) on each primitive. */
+  .motion-popover {
+    --motion-from-scale: 0.96;
+  }
+  .motion-context-menu {
+    --motion-from-scale: 0.9;
+  }
+  .motion-tooltip,
+  .motion-dialog {
+    --motion-from-scale: 0.97;
+  }
+  .motion-palette {
+    --motion-from-scale: 0.98;
+  }
+
+  .motion-popover[data-state="open"],
+  .motion-context-menu[data-state="open"] {
+    animation: ca-pop-in var(--dur-fast) var(--ease-out);
+  }
+  .motion-popover[data-state="closed"],
+  .motion-context-menu[data-state="closed"] {
+    animation: ca-fade-out var(--dur-exit) var(--ease-out-subtle) forwards;
+  }
+
+  /* Tooltips: 120ms after the delay; instant inside the skip window (data-state=instant-open). */
+  .motion-tooltip[data-state="delayed-open"] {
+    animation: ca-pop-in calc(var(--dur-fast) * 0.8) var(--ease-out);
+  }
+  .motion-tooltip[data-state="closed"] {
+    animation: ca-fade-out calc(var(--dur-exit) * 0.75) var(--ease-out-subtle) forwards;
+  }
+
+  /* Dialogs: 200ms opacity + scale .97 + 6px rise from the centre; exit ≈ 0.7×. */
+  .motion-dialog[data-state="open"] {
+    animation: ca-rise-in var(--dur-base) var(--ease-out);
+  }
+  .motion-dialog[data-state="closed"] {
+    animation: ca-scale-out calc(var(--dur-base) * 0.7) var(--ease-exit) forwards;
+  }
+  .motion-scrim[data-state="open"] {
+    animation: ca-fade-in var(--dur-base) var(--ease-out);
+  }
+  .motion-scrim[data-state="closed"] {
+    animation: ca-fade-out calc(var(--dur-base) * 0.7) var(--ease-exit) forwards;
+  }
+
+  /* Palette: instant from the keyboard (data-motion-instant), 120ms from the pointer.
+     Declared after .motion-dialog so it wins when a palette is rendered inside DialogContent. */
+  .motion-palette[data-state="open"] {
+    animation: ca-pop-in calc(var(--dur-fast) * 0.8) var(--ease-out);
+  }
+  .motion-palette[data-state="open"][data-motion-instant] {
+    animation: none;
+  }
+  .motion-palette[data-state="closed"] {
+    animation: ca-fade-out var(--dur-exit) var(--ease-out-subtle) forwards;
+  }
+
+  /* Enter-only pop for menus that mount conditionally (no Radix data-state). */
+  .motion-pop-in {
+    --motion-from-scale: 0.96;
+    animation: ca-pop-in var(--dur-fast) var(--ease-out);
+  }
+
+  /* Hover/press tint over a filled control without replacing its fill (works on any solid). */
+  .state-overlay:not(:disabled, [aria-disabled="true"]):hover,
+  .state-overlay[data-state="open"] {
+    background-image: linear-gradient(var(--fill-hover), var(--fill-hover));
+  }
+  .state-overlay:not(:disabled, [aria-disabled="true"]):active {
+    background-image: linear-gradient(var(--fill-pressed), var(--fill-pressed));
+  }
+
+  /* Switch: 40×24; the off track uses --border-control (≥ 3:1) so the state is never invisible. */
+  .switch-track {
+    position: relative;
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    width: 40px;
+    height: 24px;
+    border-radius: 999px;
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px var(--border-control);
+    transition:
+      background-color var(--dur-fast) var(--ease-out),
+      box-shadow var(--dur-fast) var(--ease-out);
+  }
+  .switch-track[data-state="checked"] {
+    background: var(--accent-solid);
+    box-shadow: none;
+  }
+  .switch-track:disabled {
+    opacity: 0.5;
+  }
+  .switch-thumb {
+    display: block;
+    width: 16px;
+    height: 16px;
+    margin-left: 4px;
+    border-radius: 999px;
+    background: var(--border-control);
+    pointer-events: none;
+    transition:
+      transform calc(var(--spring-snap-dur) * var(--motion-scale)) var(--spring-snap),
+      background-color var(--dur-fast) var(--ease-out);
+  }
+  .switch-thumb[data-state="checked"] {
+    transform: translateX(16px);
+    background: var(--on-accent);
+  }
+
+  /* Keycap: a raised chip with a hairline and a bottom edge. */
+  .keycap {
+    background: var(--surface-raised);
+    color: var(--text-secondary);
+    box-shadow:
+      inset 0 0 0 1px var(--border),
+      inset 0 -1px 0 var(--border);
+  }
+  /* Keycaps on solid buttons are outlined, so the label keeps the solved on-color contrast */
+  [data-slot="button"]:is([data-variant="primary"], [data-variant="default"], [data-variant="danger-solid"], [data-variant="destructive"]) .keycap {
+    background: transparent;
+    color: inherit;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 45%, transparent);
+  }
+
+  /* vaul drawers (bottom sheets) ship 0.5s slides with no reduced-motion handling: put open/close on
+     the motion tokens (≤ 300ms in, ≈ 0.66× out). Drag snap-back keeps vaul's own transition. */
+  [data-vaul-drawer][data-state],
+  [data-vaul-overlay][data-state] {
+    animation-duration: var(--dur-slow) !important;
+    animation-timing-function: var(--ease-out) !important;
+  }
+  [data-vaul-drawer][data-state="closed"],
+  [data-vaul-overlay][data-state="closed"] {
+    animation-duration: var(--dur-base) !important;
+    animation-timing-function: var(--ease-exit) !important;
+    animation-fill-mode: forwards !important;
+  }
+
+  /* Skeleton: a quiet sweep between two fill strengths; static under reduced motion. */
+  .skeleton {
+    border-radius: var(--radius-sm);
+    background: linear-gradient(90deg, var(--fill-hover), var(--fill-pressed), var(--fill-hover));
+    background-size: 200% 100%;
+    animation: ca-skeleton 1.6s ease-in-out infinite;
+  }
+}
+
+@keyframes ca-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(calc(1 - (1 - var(--motion-from-scale, 0.96)) * var(--motion-scale, 1)));
+  }
+}
+@keyframes ca-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(calc(6px * var(--motion-scale, 1))) scale(calc(1 - (1 - var(--motion-from-scale, 0.97)) * var(--motion-scale, 1)));
+  }
+}
+@keyframes ca-scale-out {
+  to {
+    opacity: 0;
+    transform: scale(calc(1 - (1 - var(--motion-from-scale, 0.97)) * var(--motion-scale, 1)));
+  }
+}
+@keyframes ca-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes ca-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes ca-skeleton {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+/* =============================================================================
+   LOADERS
+   ============================================================================= */
+
+/* SpinKit grid spinner (Spinner / LoadingIndicator): 1em, currentColor */
+.spinner {
+  display: inline-grid;
+  grid-template-columns: repeat(3, 1fr);
+  width: 1em;
+  height: 1em;
+  gap: 0.08em;
+}
+.spinner-cube {
+  background-color: currentColor;
+  animation: spinner-grid 1.3s infinite ease-in-out;
+  transform: scale3d(0.5, 0.5, 1);
+}
+.spinner-cube:nth-child(1) { animation-delay: 0.2s; }
+.spinner-cube:nth-child(2) { animation-delay: 0.3s; }
+.spinner-cube:nth-child(3) { animation-delay: 0.4s; }
+.spinner-cube:nth-child(4) { animation-delay: 0.1s; }
+.spinner-cube:nth-child(5) { animation-delay: 0.2s; }
+.spinner-cube:nth-child(6) { animation-delay: 0.3s; }
+.spinner-cube:nth-child(7) { animation-delay: 0s; }
+.spinner-cube:nth-child(8) { animation-delay: 0.1s; }
+.spinner-cube:nth-child(9) { animation-delay: 0.2s; }
+@keyframes spinner-grid {
+  0%, 70%, 100% { transform: scale3d(0.5, 0.5, 1); }
+  35% { transform: scale3d(0, 0, 1); }
+}
+
+/* Shimmer sweep for optimistic/pending UI */
+.animate-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.animate-shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 0%, color-mix(in srgb, var(--fg-base) 6%, transparent) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  pointer-events: none;
+  border-radius: inherit;
+}
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* Loading line sliding left → right */
+.animate-shimmer-loading {
+  animation: shimmer-loading 1.2s linear infinite;
+}
+@keyframes shimmer-loading {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Opacity pulse for inline text (title regeneration) */
+.animate-shimmer-text {
+  animation: shimmer-text 1.2s ease-in-out infinite;
+}
+@keyframes shimmer-text {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Reduced motion: decorative loops stop (the spinner stays — it is the progress signal) and
+   drawers fade instead of sliding. */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) :is(.skeleton, .animate-shimmer-text, .animate-shimmer-loading),
+  :root:not([data-motion="full"]) .animate-shimmer::after {
+    animation: none;
+  }
+  :root:not([data-motion="full"]) [data-vaul-drawer][data-state="open"] {
+    animation-name: ca-fade-in !important;
+  }
+  :root:not([data-motion="full"]) [data-vaul-drawer][data-state="closed"] {
+    animation-name: ca-fade-out !important;
+  }
+}
+:root[data-motion="reduced"] :is(.skeleton, .animate-shimmer-text, .animate-shimmer-loading),
+:root[data-motion="reduced"] .animate-shimmer::after {
+  animation: none;
+}
+:root[data-motion="reduced"] [data-vaul-drawer][data-state="open"] {
+  animation-name: ca-fade-in !important;
+}
+:root[data-motion="reduced"] [data-vaul-drawer][data-state="closed"] {
+  animation-name: ca-fade-out !important;
+}

@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Button } from '@/components/ui/button'
 import { useTranslation } from 'react-i18next'
 import { Zap } from 'lucide-react'
 import { toast } from 'sonner'
@@ -52,9 +53,9 @@ export function SkillsListPanel({
             <EditPopover
               align="center"
               trigger={
-                <button className="inline-flex items-center h-7 px-3 text-xs font-medium rounded-[8px] bg-background shadow-minimal hover:bg-foreground/[0.03] transition-colors">
+                <Button variant="secondary">
                   {t('skillsList.addSkill')}
-                </button>
+                </Button>
               }
               {...getEditConfig('add-skill', workspaceRootPath)}
             />
@@ -64,16 +65,8 @@ export function SkillsListPanel({
       mapItem={(skill) => ({
         icon: <SkillAvatar skill={skill} size="sm" workspaceId={workspaceId} />,
         title: skill.metadata.name,
-        badges: (
-          <span className="flex items-center gap-1.5 min-w-0">
-            {skill.source === 'project' && (
-              <span className="shrink-0 text-[10px] px-1.5 py-0.5 rounded-full bg-foreground/5 text-muted-foreground">
-                {t('skillsList.projectBadge')}
-              </span>
-            )}
-            <span className="truncate">{skill.metadata.description}</span>
-          </span>
-        ),
+        titleTrailing: skill.source === 'project' ? t('skillsList.projectBadge') : undefined,
+        subtitle: skill.metadata.description || undefined,
         menu: (
           <SkillMenu
             skillSlug={skill.slug}

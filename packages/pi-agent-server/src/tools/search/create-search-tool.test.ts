@@ -52,7 +52,7 @@ describe('createSearchTool', () => {
     const result = await tool.execute('tool-1', { query: 'mkagent', count: 99 });
 
     expect(capturedCount).toBe(10);
-    expect(result.details?.isError).toBeUndefined();
+    expect(result.isError).toBeUndefined();
     expect(result.content[0]?.type).toBe('text');
     expect((result.content[0] as any).text).toContain('(via MockProvider)');
   });
@@ -75,7 +75,7 @@ describe('createSearchTool', () => {
     const tool = createSearchTool(provider, fallbackProvider);
     const result = await tool.execute('tool-2', { query: 'mkagent', count: 5 });
 
-    expect(result.details?.isError).toBeUndefined();
+    expect(result.isError).toBeUndefined();
     expect((result.content[0] as any).text).toContain('automatically fell back to DuckDuckGo');
     expect((result.content[0] as any).text).toContain('401 missing scope');
     expect((result.content[0] as any).text).toContain('https://fallback.example');
@@ -99,7 +99,7 @@ describe('createSearchTool', () => {
     const tool = createSearchTool(provider, fallbackProvider);
     const result = await tool.execute('tool-3', { query: 'mkagent', count: -1 });
 
-    expect(result.details?.isError).toBe(true);
+    expect(result.isError).toBe(true);
     expect((result.content[0] as any).text).toContain('primary (OpenAI) failed');
     expect((result.content[0] as any).text).toContain('fallback (DuckDuckGo) failed');
   });
@@ -121,8 +121,7 @@ describe('createSearchTool', () => {
     const tool = createSearchTool(provider, fallbackProvider);
     const result = await tool.execute('tool-5', { query: 'mkagent' });
     const text = (result.content[0] as any).text as string;
-
-    expect(result.details?.isError).toBe(true);
+    expect(result.isError).toBe(true);
     expect(text).toContain('primary detail');
     expect(text).toContain('fallback detail');
     expect(text).toContain('…');
@@ -140,7 +139,7 @@ describe('createSearchTool', () => {
     const tool = createSearchTool(ddgProvider, ddgProvider);
     const result = await tool.execute('tool-4', { query: 'mkagent' });
 
-    expect(result.details?.isError).toBe(true);
+    expect(result.isError).toBe(true);
     expect((result.content[0] as any).text).toContain('Search failed');
     expect((result.content[0] as any).text).toContain('ddg boom');
   });

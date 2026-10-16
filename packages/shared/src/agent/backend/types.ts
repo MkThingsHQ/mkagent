@@ -284,6 +284,13 @@ export interface AgentBackend {
   setBackgroundEventSink?(sink: ((event: AgentEvent) => void) | null): void;
 
   /**
+   * Stop one background task (shell, agent or workflow) by its task id. Resolves false when there is
+   * no live query to ask, so the task cannot still be running. Backends without background tasks
+   * leave it unimplemented.
+   */
+  stopBackgroundTask?(taskId: string): Promise<boolean>;
+
+  /**
    * Interrupt the current turn because control is being handed to the UI.
    *
    * Used for pause points like plan submission and auth requests, where the

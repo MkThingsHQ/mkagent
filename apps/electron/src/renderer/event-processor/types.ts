@@ -335,6 +335,21 @@ export interface WorkflowAgentCompletedEvent {
 }
 
 /**
+ * Task activity - what a running background task is doing (live summary, step count). The chip is
+ * updated in App.tsx's handleBackgroundTaskEvent; messages and session state do not change.
+ */
+export interface TaskActivityEvent {
+  type: 'task_activity'
+  sessionId: string
+  taskId: string
+  toolUseId?: string
+  summary?: string
+  lastToolName?: string
+  toolUses?: number
+  turnId?: string
+}
+
+/**
  * Shell backgrounded event - background bash shell started
  */
 export interface ShellBackgroundedEvent {
@@ -440,6 +455,7 @@ export type AgentEvent =
   | ShellBackgroundedEvent
   | TaskProgressEvent
   | TaskCompletedEvent
+  | TaskActivityEvent
   | WorkflowAgentCompletedEvent
   | UserMessageEvent
   | MessageAnnotationsUpdatedEvent

@@ -2,7 +2,8 @@
  * HeaderIconButton
  *
  * Unified icon button for panel headers (Navigator and Detail panels).
- * Provides consistent styling for all header action buttons.
+ * 28×28 ghost button (spec §4 controls), secondary icon, fill on hover/open; 36×36 in compact via
+ * `.header-icon-btn`. The tooltip text doubles as the accessible name unless `aria-label` is given.
  */
 
 import * as React from 'react'
@@ -13,7 +14,7 @@ import { cn } from '@/lib/utils'
 interface HeaderIconButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   /** Icon as React element - caller controls size/styling */
   icon: React.ReactNode
-  /** Optional tooltip text */
+  /** Optional tooltip text (also used as the accessible name) */
   tooltip?: string
 }
 
@@ -23,13 +24,14 @@ export const HeaderIconButton = forwardRef<HTMLButtonElement, HeaderIconButtonPr
       <button
         ref={ref}
         type="button"
+        aria-label={props['aria-label'] ?? tooltip}
         className={cn(
           "header-icon-btn inline-flex items-center justify-center",
-          "h-7 w-7 shrink-0 rounded-[4px] titlebar-no-drag",
-          "text-muted-foreground hover:text-foreground hover:bg-foreground/3",
-          "data-[state=open]:text-foreground data-[state=open]:bg-foreground/3",
-          "transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-          "disabled:pointer-events-none disabled:opacity-50",
+          "size-control shrink-0 rounded-md titlebar-no-drag",
+          "text-secondary hover:text-foreground hover:bg-fill-hover active:bg-fill-pressed",
+          "data-[state=open]:text-foreground data-[state=open]:bg-fill-hover",
+          "transition-[background-color,color] duration-micro ease-out-subtle hover:duration-instant",
+          "disabled:pointer-events-none disabled:text-disabled",
           className
         )}
         {...props}

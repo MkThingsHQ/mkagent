@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, useMemo, type ReactNode } from 'react'
+import { MotionPreferenceProvider, isMotionPreference, type MotionPreference } from '@mkagent/ui/motion'
 import * as storage from '@/lib/local-storage'
 import {
   resolveTheme,
   themeToCSS,
-  DEFAULT_THEME,
   DEFAULT_SHIKI_THEME,
   getShikiTheme,
   type ThemeOverrides,
@@ -20,10 +20,13 @@ interface ThemeContextType {
   /** App-level default color theme (used when workspace has no override) */
   colorTheme: string
   font: FontFamily
+  /** Motion setting: follow the OS, always reduce, or always full */
+  motion: MotionPreference
   setMode: (mode: ThemeMode) => void
   /** Set app-level default color theme */
   setColorTheme: (theme: string) => void
   setFont: (font: FontFamily) => void
+  setMotion: (motion: MotionPreference) => void
 
   // Workspace-level theme override
   /** Active workspace ID (null if no workspace context) */
@@ -52,7 +55,9 @@ interface ThemeContextType {
   // Theme resolution (singleton - loaded once)
   /** Loaded preset theme file, null if default or loading */
   presetTheme: ThemeFile | null
-  /** Fully resolved theme (preset merged with any overrides) */
+  /** Color overrides from ~/.mkagent/theme.json (null when absent) */
+  appThemeOverrides: ThemeOverrides | null
+  /** Fully resolved theme (preset merged with theme.json overrides) */
   resolvedTheme: ThemeOverrides
   /** Whether dark mode is active (scenic themes force dark) */
   isDark: boolean
@@ -68,6 +73,7 @@ interface StoredTheme {
   mode: ThemeMode
   colorTheme: string
   font?: FontFamily
+  motion?: MotionPreference
   /** True when user explicitly changed theme in UI (not auto-saved on startup) */
   isUserOverride?: boolean
 }
@@ -131,6 +137,9 @@ export function ThemeProvider({
     return defaultColorTheme // Will be updated by config.json effect
   })
   const [font, setFontState] = useState<FontFamily>(stored?.font ?? defaultFont)
+  const [motion, setMotionState] = useState<MotionPreference>(
+    stored && isMotionPreference(stored.motion) ? stored.motion : 'system'
+  )
   const [systemPreference, setSystemPreference] = useState<'light' | 'dark'>(getSystemPreference)
   const [previewColorTheme, setPreviewColorTheme] = useState<string | null>(null)
   const initialThemePreferences = useRef({ mode, colorTheme, font })
@@ -160,6 +169,16 @@ export function ThemeProvider({
   const [presetTheme, setPresetTheme] = useState<ThemeFile | null>(null)
   const [themeResolvedFrom, setThemeResolvedFrom] = useState<'none' | 'ipc' | 'fallback'>('none')
   const [themeLoadError, setThemeLoadError] = useState<string | null>(null)
+
+  // ~/.mkagent/theme.json color overrides layer on top of the preset (or the default theme)
+  const [appThemeOverrides, setAppThemeOverrides] = useState<ThemeOverrides | null>(null)
+  useEffect(() => {
+    window.electronAPI?.getAppTheme?.().then(setAppThemeOverrides).catch(() => {
+      // No overrides file or no server yet: keep the preset/default theme
+    })
+    const cleanup = window.electronAPI?.onAppThemeChange?.((theme) => setAppThemeOverrides(theme))
+    return () => cleanup?.()
+  }, [])
 
   // === Derived values ===
   const resolvedMode = mode === 'system' ? systemPreference : mode
@@ -246,10 +265,10 @@ export function ThemeProvider({
     }
   }, [effectiveColorTheme])
 
-  // Resolve theme (preset → final)
+  // Resolve theme (preset → theme.json overrides)
   const resolvedTheme = useMemo(() => {
-    return resolveTheme(presetTheme ?? undefined)
-  }, [presetTheme])
+    return resolveTheme(presetTheme, appThemeOverrides)
+  }, [presetTheme, appThemeOverrides])
 
   // Determine scenic mode (background image with glass panels)
   const isScenic = useMemo(() => {
@@ -261,6 +280,9 @@ export function ThemeProvider({
 
   // isDark reflects actual visual appearance: scenic, dark-only themes, or system dark mode
   const isDark = isScenic || isDarkOnlyTheme ? true : isDarkFromMode
+
+  // Native window material (macOS vibrancy, Windows 11 22H2+ Mica); null on web hosts
+  const [windowVibrancy] = useState(() => window.electronAPI?.getWindowVibrancy?.() ?? null)
 
   // Shiki theme configuration
   const shikiConfig = useMemo(() => {
@@ -301,9 +323,6 @@ export function ThemeProvider({
     } else {
       delete root.dataset.theme
     }
-
-    // Always set theme override for semi-transparent background (vibrancy effect)
-    root.dataset.themeOverride = 'true'
   }, [effectiveColorTheme, font])
 
   // Apply dark/light class and theme-specific DOM attributes
@@ -320,18 +339,17 @@ export function ThemeProvider({
     root.classList.remove('light', 'dark')
     root.classList.add(effectiveMode)
 
-    // Handle themeMismatch - set solid background when:
-    // 1. Theme doesn't support current mode (e.g., dark-only Dracula in light mode), OR
-    // 2. Resolved mode differs from system preference (vibrancy mismatch)
+    // The canvas is translucent (data-vibrancy) only over a native vibrancy/Mica material whose
+    // appearance matches what we paint: the material follows the OS, so a mode that differs from
+    // the OS (or a dark-only theme in light mode, or a scenic image) paints solid instead.
     const supportedModes = presetTheme?.supportedModes
     const currentMode = isDarkFromMode ? 'dark' : 'light'
     const themeModeUnsupported = supportedModes && supportedModes.length > 0 && !supportedModes.includes(currentMode)
-    const vibrancyMismatch = resolvedMode !== systemPreference
-
-    if (themeModeUnsupported || vibrancyMismatch) {
-      root.dataset.themeMismatch = 'true'
+    const translucent = !!windowVibrancy && !isScenic && !themeModeUnsupported && resolvedMode === systemPreference
+    if (translucent) {
+      root.dataset.vibrancy = windowVibrancy
     } else {
-      delete root.dataset.themeMismatch
+      delete root.dataset.vibrancy
     }
 
     // Set scenic mode data attribute for CSS targeting
@@ -345,7 +363,7 @@ export function ThemeProvider({
       root.style.removeProperty('--background-image')
     }
 
-  }, [presetTheme, resolvedMode, systemPreference, isScenic, resolvedTheme, isDarkFromMode])
+  }, [presetTheme, resolvedMode, systemPreference, isScenic, resolvedTheme, isDarkFromMode, windowVibrancy])
 
   // Inject CSS variables
   useEffect(() => {
@@ -358,27 +376,20 @@ export function ThemeProvider({
       document.head.appendChild(styleEl)
     }
 
-    // When using default theme, clear custom CSS
-    if (!effectiveColorTheme || effectiveColorTheme === 'default') {
+    const usesPreset = !!effectiveColorTheme && effectiveColorTheme !== 'default'
+
+    // Keep the current CSS while a preset loads (prevents a flash of wrong values)
+    if (usesPreset && !presetTheme && !themeLoadError) return
+
+    // Default theme without theme.json overrides: the static roles in tokens.css apply
+    if (!presetTheme && !appThemeOverrides) {
       styleEl.textContent = ''
       return
     }
 
-    // Only inject CSS when preset is loaded (prevents flash with empty/wrong values)
-    if (!presetTheme) {
-      // Keep existing CSS while loading
-      return
-    }
-
-    // Generate CSS variable declarations
-    const cssVars = themeToCSS(resolvedTheme, isDark)
-
-    if (cssVars) {
-      styleEl.textContent = `:root {\n  ${cssVars}\n}`
-    } else {
-      styleEl.textContent = ''
-    }
-  }, [effectiveColorTheme, presetTheme, resolvedTheme, isDark])
+    // Base colors + contrast-solved roles for the preset and/or theme.json overrides
+    styleEl.textContent = `:root {\n  ${themeToCSS(resolvedTheme, isDark)}\n}`
+  }, [effectiveColorTheme, presetTheme, appThemeOverrides, themeLoadError, resolvedTheme, isDark])
 
   // === System preference listener ===
   useEffect(() => {
@@ -419,11 +430,14 @@ export function ThemeProvider({
       setModeState(preferences.mode as ThemeMode)
       setColorThemeState(preferences.colorTheme)
       setFontState(preferences.font as FontFamily)
+      const syncedMotion = isMotionPreference(preferences.motion) ? preferences.motion : undefined
+      if (syncedMotion) setMotionState(syncedMotion)
       // When syncing from another window, mark as user override since user explicitly changed theme
       saveTheme({
         mode: preferences.mode as ThemeMode,
         colorTheme: preferences.colorTheme,
         font: preferences.font as FontFamily,
+        motion: syncedMotion ?? loadStoredTheme()?.motion,
         isUserOverride: true
       })
       setTimeout(() => {
@@ -446,30 +460,40 @@ export function ThemeProvider({
     setModeState(newMode)
     // Preserve existing isUserOverride flag
     const existing = loadStoredTheme()
-    saveTheme({ mode: newMode, colorTheme, font, isUserOverride: existing?.isUserOverride })
+    saveTheme({ mode: newMode, colorTheme, font, motion, isUserOverride: existing?.isUserOverride })
     if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
-      window.electronAPI.broadcastThemePreferences({ mode: newMode, colorTheme, font })
+      window.electronAPI.broadcastThemePreferences({ mode: newMode, colorTheme, font, motion })
     }
-  }, [colorTheme, font])
+  }, [colorTheme, font, motion])
 
   const setColorTheme = useCallback((newTheme: string) => {
     setColorThemeState(newTheme)
     // Mark as user override - user explicitly changed theme via UI
-    saveTheme({ mode, colorTheme: newTheme, font, isUserOverride: true })
+    saveTheme({ mode, colorTheme: newTheme, font, motion, isUserOverride: true })
     if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
-      window.electronAPI.broadcastThemePreferences({ mode, colorTheme: newTheme, font })
+      window.electronAPI.broadcastThemePreferences({ mode, colorTheme: newTheme, font, motion })
     }
-  }, [mode, font])
+  }, [mode, font, motion])
 
   const setFont = useCallback((newFont: FontFamily) => {
     setFontState(newFont)
     // Preserve existing isUserOverride flag
     const existing = loadStoredTheme()
-    saveTheme({ mode, colorTheme, font: newFont, isUserOverride: existing?.isUserOverride })
+    saveTheme({ mode, colorTheme, font: newFont, motion, isUserOverride: existing?.isUserOverride })
     if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
-      window.electronAPI.broadcastThemePreferences({ mode, colorTheme, font: newFont })
+      window.electronAPI.broadcastThemePreferences({ mode, colorTheme, font: newFont, motion })
     }
-  }, [mode, colorTheme])
+  }, [mode, colorTheme, motion])
+
+  const setMotion = useCallback((newMotion: MotionPreference) => {
+    setMotionState(newMotion)
+    // Preserve existing isUserOverride flag
+    const existing = loadStoredTheme()
+    saveTheme({ mode, colorTheme, font, motion: newMotion, isUserOverride: existing?.isUserOverride })
+    if (!isExternalUpdate.current && window.electronAPI?.broadcastThemePreferences) {
+      window.electronAPI.broadcastThemePreferences({ mode, colorTheme, font, motion: newMotion })
+    }
+  }, [mode, colorTheme, font])
 
   // Set workspace-specific color theme override
   const setWorkspaceColorTheme = useCallback((newTheme: string | null) => {
@@ -501,9 +525,11 @@ export function ThemeProvider({
         mode,
         colorTheme,
         font,
+        motion,
         setMode,
         setColorTheme,
         setFont,
+        setMotion,
 
         // Workspace-level theme override
         activeWorkspaceId,
@@ -522,6 +548,7 @@ export function ThemeProvider({
 
         // Theme resolution (singleton)
         presetTheme,
+        appThemeOverrides,
         resolvedTheme,
         isDark,
         isScenic,
@@ -529,7 +556,7 @@ export function ThemeProvider({
         shikiConfig,
       }}
     >
-      {children}
+      <MotionPreferenceProvider preference={motion}>{children}</MotionPreferenceProvider>
     </ThemeContext.Provider>
   )
 }

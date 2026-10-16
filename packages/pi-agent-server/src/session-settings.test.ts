@@ -23,6 +23,7 @@ describe('createMkAgentSettingsManager', () => {
       enabled: true,
       maxRetries: MKAGENT_PI_RETRY_SETTINGS.maxRetries,
       baseDelayMs: MKAGENT_PI_RETRY_SETTINGS.baseDelayMs,
+      maxAgentDelayMs: MKAGENT_PI_RETRY_SETTINGS.maxAgentDelayMs,
     });
   });
 
@@ -43,6 +44,7 @@ describe('createMkAgentSettingsManager', () => {
       enabled: true,
       maxRetries: MKAGENT_PI_EPHEMERAL_RETRY_SETTINGS.maxRetries,
       baseDelayMs: MKAGENT_PI_EPHEMERAL_RETRY_SETTINGS.baseDelayMs,
+      maxAgentDelayMs: MKAGENT_PI_EPHEMERAL_RETRY_SETTINGS.maxAgentDelayMs,
     });
     expect(settings.getProviderRetrySettings()).toMatchObject({
       maxRetries: MKAGENT_PI_EPHEMERAL_RETRY_SETTINGS.provider.maxRetries,
@@ -57,6 +59,19 @@ describe('createMkAgentSettingsManager', () => {
 
   it('keeps auto-compaction enabled', () => {
     expect(createMkAgentSettingsManager().getCompactionEnabled()).toBe(true);
+  });
+
+  it('warms the prompt cache during chat runs but never for one-shot utility sessions', () => {
+    expect(createMkAgentSettingsManager().getCacheWarmingMode()).toBe('streaming');
+    expect(createMkAgentSettingsManager('ephemeral').getCacheWarmingMode()).toBe('off');
+  });
+
+  it('never trusts the working directory as a Pi project', () => {
+    // A trusted project auto-loads <cwd>/.pi/extensions (code), skills, prompts
+    // and SYSTEM.md. The SDK's in-memory default trusts the project.
+    expect(SettingsManager.inMemory().isProjectTrusted()).toBe(true);
+    expect(createMkAgentSettingsManager().isProjectTrusted()).toBe(false);
+    expect(createMkAgentSettingsManager('ephemeral').isProjectTrusted()).toBe(false);
   });
 
   it('ignores a .pi/settings.json in the working directory', () => {

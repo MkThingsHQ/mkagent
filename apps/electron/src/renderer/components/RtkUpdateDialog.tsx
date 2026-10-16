@@ -77,11 +77,11 @@ export function RtkUpdateDialog({ open, onOpenChange, status, onStatusChange, on
             {t('rtkUpdate.body', { version: status.version ?? '?', min: status.minSafeVersion })}
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-2 text-sm">
-          <p className="text-foreground/80">{t('rtkUpdate.instructions')}</p>
-          <pre className="rounded-lg bg-foreground/5 px-3 py-2 text-xs font-mono whitespace-pre-wrap break-all select-all">{status.updateCommand}</pre>
+        <div className="space-y-2 text-label">
+          <p className="text-secondary">{t('rtkUpdate.instructions')}</p>
+          <pre className="rounded-md bg-sunken px-3 py-2 text-mono-ui whitespace-pre-wrap break-all select-all">{status.updateCommand}</pre>
           {status.foundPath && (
-            <p className="text-xs text-foreground/60">{t('rtkUpdate.foundAt', { path: status.foundPath })}</p>
+            <p className="text-label-sm text-tertiary">{t('rtkUpdate.foundAt', { path: status.foundPath })}</p>
           )}
         </div>
         <DialogFooter>
@@ -91,8 +91,8 @@ export function RtkUpdateDialog({ open, onOpenChange, status, onStatusChange, on
           >
             {t('rtkUpdate.later')}
           </Button>
-          <Button variant="outline" onClick={copyCommand}>{t('rtkUpdate.copy')}</Button>
-          <Button onClick={() => { void recheck() }} disabled={rechecking}>
+          <Button variant="secondary" onClick={copyCommand}>{t('rtkUpdate.copy')}</Button>
+          <Button variant="primary" onClick={() => { void recheck() }} disabled={rechecking}>
             {rechecking ? t('common.checking') : t('rtkUpdate.recheck')}
           </Button>
         </DialogFooter>

@@ -1,3 +1,5 @@
+import { useAtomValue } from 'jotai'
+import { sessionMetaMapAtom } from '@/atoms/sessions'
 /**
  * MainContentPanel - retained Craft content routes for MkAgent Lite.
  *
@@ -11,6 +13,7 @@ import { useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Panel } from './Panel'
 import { MultiSelectPanel } from './MultiSelectPanel'
+import { DetailEmptyState, SessionsEmptyState } from './DetailEmptyState'
 import { useAppShellContext } from '@/context/AppShellContext'
 import { StoplightProvider } from '@/context/StoplightContext'
 import {
@@ -41,6 +44,7 @@ export function MainContentPanel({
   navStateOverride,
 }: MainContentPanelProps) {
   const { t } = useTranslation()
+  const sessionMetaMap = useAtomValue(sessionMetaMapAtom)
   const globalNavState = useNavigationState()
   const navState = navStateOverride ?? globalNavState
   const {
@@ -131,17 +135,15 @@ export function MainContentPanel({
     }
     return wrapWithStoplight(
       <Panel variant="grow" className={className}>
-        <div className="flex items-center justify-center h-full text-muted-foreground">
-          <p className="text-sm">{t('session.noSessionSelected')}</p>
-        </div>
-      </Panel>,
+        <SessionsEmptyState hasSessions={sessionMetaMap.size > 0} />
+      </Panel>
     )
   }
 
   return wrapWithStoplight(
     <Panel variant="grow" className={className}>
-      <div className="flex items-center justify-center h-full text-muted-foreground">
-        <p className="text-sm">{t('session.selectConversation')}</p>
+      <div className="flex items-center justify-center h-full text-tertiary">
+        <p className="text-label">{t("session.selectConversation")}</p>
       </div>
     </Panel>,
   )

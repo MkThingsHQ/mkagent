@@ -2,13 +2,19 @@ import * as React from "react"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 import { cn } from "../lib/utils"
 
+/**
+ * Tooltip timing (design spec §5): 500ms before the first tooltip, then instant for the next
+ * 300ms so moving across a toolbar doesn't flash or wait. Mount once near the app root.
+ */
 function TooltipProvider({
-  delayDuration = 300,
+  delayDuration = 500,
+  skipDelayDuration = 300,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
   return (
     <TooltipPrimitive.Provider
       delayDuration={delayDuration}
+      skipDelayDuration={skipDelayDuration}
       disableHoverableContent
       {...props}
     />
@@ -19,9 +25,10 @@ const Tooltip = TooltipPrimitive.Root
 
 const TooltipTrigger = TooltipPrimitive.Trigger
 
+/** Floating material; fades + scales in after the delay, instantly inside the skip window. */
 function TooltipContent({
   className,
-  sideOffset = 4,
+  sideOffset = 6,
   ...props
 }: React.ComponentProps<typeof TooltipPrimitive.Content>) {
   return (
@@ -30,9 +37,9 @@ function TooltipContent({
         data-slot="tooltip-content"
         sideOffset={sideOffset}
         className={cn(
-          "z-tooltip overflow-hidden rounded-[8px] px-2.5 py-1.5 text-xs",
-          "dark bg-background/80 backdrop-blur-xl backdrop-saturate-150 border border-border/50 text-foreground shadow-modal-small",
-          "animate-in fade-in-0 duration-100 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:duration-75",
+          "motion-tooltip z-tooltip inline-flex max-w-xs items-center gap-2 overflow-hidden rounded-md px-2 py-1 wrap-anywhere",
+          "bg-floating text-label-sm text-foreground shadow-elev-2",
+          "origin-(--radix-tooltip-content-transform-origin)",
           className
         )}
         {...props}

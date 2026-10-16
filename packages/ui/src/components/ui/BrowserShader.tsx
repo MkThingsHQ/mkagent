@@ -15,14 +15,12 @@ function useAccentColor(): string {
   const [color, setColor] = useState(FALLBACK_COLOR)
 
   useEffect(() => {
-    // --accent-rgb is pre-computed as "R, G, B" integers — no oklch resolution needed
-    const raw = getComputedStyle(document.documentElement).getPropertyValue('--accent-rgb').trim()
-    if (!raw) return
-    const parts = raw.split(',').map((s) => Number(s.trim()))
-    if (parts.length !== 3 || parts.some(isNaN)) return
-    const r = parts[0]!
-    const g = parts[1]!
-    const b = parts[2]!
+    // --accent-raw is the theme accent as solved 8-bit hex (tokens.css / themeToCSS) — no oklch resolution needed
+    const raw = getComputedStyle(document.documentElement).getPropertyValue('--accent-raw').trim()
+    const match = raw.match(/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i)
+    if (!match) return
+    // Darken to 70% so the dithering reads as a shadow of the accent, not the accent itself
+    const [r, g, b] = match.slice(1).map((hex) => Math.round(parseInt(hex, 16) * 0.7)) as [number, number, number]
     if (isGreyscale(r, g, b)) return // keep blue fallback for greyscale accents
     setColor(rgbToHex(r, g, b))
   }, [])

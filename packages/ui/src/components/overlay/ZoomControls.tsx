@@ -71,9 +71,7 @@ function ZoomDropdown({
       {isOpen && (
         <div
           className={cn(
-            'absolute top-full right-0 mt-1 min-w-[140px] p-1',
-            'bg-background rounded-[8px] shadow-strong border border-border/50',
-            'animate-in fade-in-0 zoom-in-95 duration-100',
+            'popover-styled motion-pop-in absolute top-full right-0 mt-1 min-w-[140px] origin-top-right p-1',
           )}
         >
           <button

@@ -1,0 +1,162 @@
+/* WebUI login — the onboarding card language (design spec §7.15): a paper card on the navigator
+   canvas, one primary action, a sunken field with the focus tint. Every value comes from the shared
+   token file, so the page follows the default theme in light and dark. */
+@import "tailwindcss" source(none);
+@import "../../../packages/ui/src/styles/tokens.css";
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--surface-navigator);
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 24px;
+  color: var(--text);
+  background: var(--surface-navigator);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-label-lg);
+  line-height: var(--lh-label-lg);
+  font-weight: 600;
+  letter-spacing: var(--tracking-tight);
+}
+
+.brand svg {
+  height: 28px;
+  width: auto;
+  color: var(--accent-text);
+}
+
+.card {
+  width: min(440px, 100%);
+  padding: 28px 28px 24px;
+  border-radius: var(--radius-xl);
+  background: var(--surface-paper);
+  box-shadow: var(--elev-1);
+}
+
+h1 {
+  font-family: var(--font-serif);
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  font-weight: 400;
+  letter-spacing: var(--tracking-display);
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  margin-bottom: 20px;
+  font-size: var(--fs-copy);
+  line-height: var(--lh-copy);
+  letter-spacing: var(--tracking-tight);
+  color: var(--text-secondary);
+}
+
+label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: var(--fs-label);
+  line-height: var(--lh-label);
+  font-weight: 500;
+}
+
+input {
+  width: 100%;
+  height: var(--h-control-xl);
+  padding: 0 12px;
+  font: inherit;
+  font-family: var(--font-mono);
+  font-size: var(--fs-copy-lg); /* ≥ 16px: no iOS zoom on focus */
+  color: var(--text);
+  background: var(--surface-sunken);
+  border: 0;
+  border-radius: var(--radius-md);
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--border);
+  transition: box-shadow var(--dur-micro) var(--ease-out-subtle);
+}
+
+input::placeholder {
+  color: var(--text-tertiary);
+  opacity: 1;
+}
+
+input:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--focus-ring), 0 0 0 3px var(--accent-tint);
+}
+
+button {
+  width: 100%;
+  height: var(--h-control-xl);
+  margin-top: 20px;
+  font: inherit;
+  font-size: var(--fs-label-lg);
+  font-weight: 500;
+  color: var(--on-accent);
+  background: var(--accent-solid);
+  border: 0;
+  border-radius: var(--radius-md);
+  cursor: default;
+  transition: transform var(--dur-micro) var(--ease-out-subtle);
+}
+
+/* Hover/press tint over the solid fill (same as the app's state-overlay) */
+button:not(:disabled):hover {
+  background-image: linear-gradient(var(--fill-hover), var(--fill-hover));
+}
+
+button:not(:disabled):active {
+  background-image: linear-gradient(var(--fill-pressed), var(--fill-pressed));
+  transform: scale(calc(1 - 0.03 * var(--motion-scale)));
+}
+
+button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  color: var(--text-disabled);
+  background: var(--fill-hover);
+}
+
+.error {
+  display: none;
+  margin-top: 16px;
+  padding: 10px 12px;
+  font-size: var(--fs-label);
+  line-height: 20px;
+  color: var(--destructive-text);
+  background: var(--destructive-tint);
+  border-radius: var(--radius-md);
+}
+
+.error.visible {
+  display: block;
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 22px 18px 18px;
+    background: transparent;
+    box-shadow: none;
+  }
+}

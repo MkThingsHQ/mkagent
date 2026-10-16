@@ -2,10 +2,9 @@
  * PanelHeader - Standardized header component for panels
  *
  * Provides consistent header styling with:
- * - Fixed 50px height
- * - Title with optional badge
+ * - Fixed 48px height (design spec §4 chrome); the title is left-aligned on desktop and centered in compact
+ * - Title with optional badge, or a custom title row (the chat header, `ChatHeader`)
  * - Optional action buttons
- * - Optional title dropdown menu (renders chevron and makes title interactive)
  * - Automatic padding compensation for macOS traffic lights (via StoplightContext)
  *
  * Usage:
@@ -13,12 +12,6 @@
  * <PanelHeader
  *   title="Conversations"
  *   actions={<Button>Add</Button>}
- * />
- *
- * // With interactive title menu:
- * <PanelHeader
- *   title="Chat Name"
- *   titleMenu={<><MenuItem>Rename</MenuItem><MenuItem>Delete</MenuItem></>}
  * />
  * ```
  *
@@ -28,20 +21,11 @@
  */
 
 import * as React from 'react'
-import { useState } from 'react'
 import { motion } from 'motion/react'
-import { ChevronDown } from 'lucide-react'
+import { TWEEN } from '@mkagent/ui/motion'
 import { cn } from '@/lib/utils'
 import { useCompensateForStoplight } from '@/context/StoplightContext'
 import { useAppShellContext } from '@/context/AppShellContext'
-import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { StyledDropdownMenuContent } from '@/components/ui/styled-dropdown'
-
-// Spring transition for smooth animations (matches sidebar)
-const springTransition = { type: 'spring' as const, stiffness: 300, damping: 30 }
 
 // Padding to compensate for macOS traffic lights (stoplight buttons)
 // Traffic lights positioned at x:18, ~52px wide = 70px + 14px gap
@@ -68,18 +52,12 @@ export interface PanelHeaderProps {
   title?: string
   /** Optional badge element (e.g., agent badge) */
   badge?: React.ReactNode
-  /** Optional dropdown menu content for interactive title (renders chevron when provided) */
-  titleMenu?: React.ReactNode
   /**
-   * Compact-mode replacement for the interactive title. When provided AND
-   * `isCompactMode === true`, this node is rendered in place of the desktop
-   * Radix DropdownMenu wrapper of `titleMenu`. Caller is responsible for
-   * rendering its own trigger button (matching the title styling) — see
-   * `CompactSessionMenu` for the canonical example. Radix popovers + nested
-   * submenus get clipped by the panel container query on narrow viewports;
-   * this lets consumers swap to a vaul `Drawer` instead.
+   * Custom title row replacing `title`/`badge` (the chat header's status · title · meta · labels).
+   * Rendered in flow and left-aligned in both layouts, without a clipping wrapper, so its controls
+   * keep their focus rings; it must truncate its own text.
    */
-  compactTitleMenu?: React.ReactNode
+  titleRow?: React.ReactNode
   /** Optional leading action rendered before the title (e.g., back button in compact mode) */
   leadingAction?: React.ReactNode
   /** Optional center button rendered between title and right actions */
@@ -88,14 +66,12 @@ export interface PanelHeaderProps {
   actions?: React.ReactNode
   /** Optional right sidebar button (rendered after actions) */
   rightSidebarButton?: React.ReactNode
-  /** When true, animates left margin to avoid macOS traffic lights (use when this is the first panel on screen) */
+  /** When true, pads the left edge to clear the macOS traffic lights (use when this is the first panel on screen) */
   compensateForStoplight?: boolean
   /** Left padding override (e.g., for focused mode with traffic lights) */
   paddingLeft?: string
   /** Optional className for additional styling */
   className?: string
-  /** Whether title is being regenerated (shows shimmer effect) */
-  isRegeneratingTitle?: boolean
 }
 
 /**
@@ -104,8 +80,7 @@ export interface PanelHeaderProps {
 export function PanelHeader({
   title,
   badge,
-  titleMenu,
-  compactTitleMenu,
+  titleRow,
   leadingAction: explicitLeadingAction,
   centerButton,
   actions,
@@ -113,12 +88,10 @@ export function PanelHeader({
   compensateForStoplight,
   paddingLeft,
   className,
-  isRegeneratingTitle,
 }: PanelHeaderProps) {
   // Fall back to AppShellContext.leadingAction so per-panel back buttons (set by
   // PanelSlot in compact mode) propagate to every page's PanelHeader without each
-  // page having to forward the prop manually. ChatPage explicitly passes its own
-  // value, which overrides the context.
+  // page having to forward the prop manually.
   const { leadingAction: contextLeadingAction, isCompactMode } = useAppShellContext()
   const leadingAction = explicitLeadingAction ?? contextLeadingAction
 
@@ -128,79 +101,32 @@ export function PanelHeader({
   const contextCompensate = useCompensateForStoplight()
   const shouldCompensate = leadingAction ? false : (compensateForStoplight ?? contextCompensate)
 
-  // Controlled dropdown state for anchoring to chevron while keeping full title clickable
-  const [dropdownOpen, setDropdownOpen] = useState(false)
-
-  // Force-close the desktop dropdown when compact mode takes over the title
-  // slot — otherwise the open state survives unmount and the dropdown
-  // resurrects open the next time the user resizes back to desktop width.
-  React.useEffect(() => {
-    if (isCompactMode && dropdownOpen) setDropdownOpen(false)
-  }, [isCompactMode, dropdownOpen])
-
-  // Title content - either static or interactive with dropdown
-  // Shimmer effect shows during title regeneration
-  const titleContent = (
+  const titleNode = (
     <motion.div
       initial={false}
       animate={{ opacity: title ? 1 : 0 }}
-      transition={{ duration: 0.15 }}
-      className="flex items-center gap-1"
+      transition={TWEEN.fast}
+      className="flex items-center gap-1 min-w-0"
     >
-      <h1 className={cn(
-        "text-sm font-semibold truncate font-sans leading-tight",
-        isRegeneratingTitle && "animate-shimmer-text"
-      )}>{title}</h1>
+      {/* Pages whose title lives in their content (settings, detail heroes) pass none: no empty heading */}
+      {title && (
+        <h1 className="text-label-lg font-semibold truncate font-sans">{title}</h1>
+      )}
       {badge}
     </motion.div>
   )
 
-  // Title node — wrapped in interactive dropdown trigger when titleMenu is provided,
-  // bare when not. Shared between the desktop and compact layouts below.
-  // In compact mode, `compactTitleMenu` (if provided) takes over the slot so
-  // consumers can render a Drawer-based menu instead of a Radix popover that
-  // would otherwise get clipped by the panel container query.
-  const desktopTitleNode = titleMenu ? (
-    <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
-      {/* Wrapper button for the whole clickable area */}
-      <button
-        onClick={() => setDropdownOpen(true)}
-        className={cn(
-          "flex items-center gap-1 px-2 py-1 rounded-md titlebar-no-drag min-w-0",
-          "hover:bg-foreground/[0.03] transition-colors",
-          "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-          dropdownOpen && "bg-foreground/[0.03]"
-        )}
-      >
-        {titleContent}
-        {/* Chevron is the actual trigger anchor point */}
-        <DropdownMenuTrigger asChild>
-          <span className="shrink-0 flex items-center justify-center">
-            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground translate-y-[1px]" />
-          </span>
-        </DropdownMenuTrigger>
-      </button>
-      <StyledDropdownMenuContent align="center" sideOffset={8}>
-        {titleMenu}
-      </StyledDropdownMenuContent>
-    </DropdownMenu>
-  ) : titleContent
-
-  const titleNode = (isCompactMode && compactTitleMenu) ? compactTitleMenu : desktopTitleNode
-
-  // Compact (mobile) layout puts the title in an absolute-positioned overlay.
+  // Compact (mobile) layout puts a plain title in an absolute-positioned overlay.
   // The side insets are based on the actual number of control slots so a long
   // title truncates before the right-side action cluster instead of overlapping it.
   const compactLeadingControlCount = leadingAction ? 1 : 0
   const compactTrailingControlCount = [centerButton, actions, rightSidebarButton].filter(Boolean).length
-  const compactTitleInsetStyle = isCompactMode
-    ? {
-        left: compactTitleInset(compactLeadingControlCount),
-        right: compactTitleInset(compactTrailingControlCount),
-      }
-    : undefined
+  const compactTitleInsetStyle = {
+    left: compactTitleInset(compactLeadingControlCount),
+    right: compactTitleInset(compactTrailingControlCount),
+  }
 
-  const content = isCompactMode ? (
+  const content = isCompactMode && !titleRow ? (
     <>
       {leadingAction && (
         <div className="titlebar-no-drag shrink-0 z-[1]">
@@ -240,9 +166,11 @@ export function PanelHeader({
         </div>
       )}
       <div className="flex-1 min-w-0 flex items-center select-none">
-        <div className={cn("max-w-full overflow-hidden", !leadingAction && "mx-auto")}>
-          {titleNode}
-        </div>
+        {titleRow ?? (
+          <div className="max-w-full overflow-hidden">
+            {titleNode}
+          </div>
+        )}
       </div>
       {centerButton && (
         <div className="titlebar-no-drag shrink-0">
@@ -262,25 +190,30 @@ export function PanelHeader({
     </>
   )
 
-  // Base padding (16px = pl-4, matches pr-2 when leading action present for symmetry)
-  const basePadding = leadingAction ? 8 : 16
+  // Layout grid: the panel's content edge is the 16px gutter. A plain title starts on it; icon
+  // buttons at either end bleed past it by their inner padding, so their GLYPHS sit on the gutter
+  // (28px desktop buttons: 6px; 44px compact buttons with 24px glyphs: 10px). The compact back button
+  // starts at the panel edge and pads its chevron so the chevron's ink lands on the gutter.
+  const inset = isCompactMode && leadingAction
+    ? 'pl-0'
+    : isCompactMode && titleRow
+      ? 'pl-1.5'
+      : leadingAction || titleRow ? 'pl-2.5' : 'pl-gutter'
 
   const baseClassName = cn(
-    'flex shrink-0 items-center pr-2 min-w-0 gap-1.5 relative z-panel h-[42px]',
-    // Only use static paddingLeft class when not animating
-    !shouldCompensate && (paddingLeft || (leadingAction ? 'pl-2' : 'pl-4')),
+    'flex shrink-0 items-center min-w-0 gap-1.5 relative z-panel h-12',
+    isCompactMode ? 'pr-1.5' : 'pr-2.5',
+    // Traffic-light compensation is a layout change: it applies at once (spec §6.1 — padding never animates).
+    !shouldCompensate && (paddingLeft || inset),
     className
   )
 
-  // Use motion.div with animated paddingLeft to shift content while keeping background full-width
   return (
-    <motion.div
-      initial={false}
-      animate={{ paddingLeft: shouldCompensate ? STOPLIGHT_PADDING : basePadding }}
-      transition={springTransition}
+    <div
       className={baseClassName}
+      style={shouldCompensate ? { paddingLeft: STOPLIGHT_PADDING } : undefined}
     >
       {content}
-    </motion.div>
+    </div>
   )
 }

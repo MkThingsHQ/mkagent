@@ -12,6 +12,7 @@ import {
   getModelIdByShortName,
   normalizeDeprecatedModelId,
   isAdaptiveThinkingAlwaysOnModel,
+  getDefaultSummarizationModel,
 } from '../src/config/models.ts';
 
 describe('isClaudeModel', () => {
@@ -148,8 +149,25 @@ describe('Sonnet registry', () => {
     expect(ids).toContain('claude-sonnet-4-6');
   });
 
-  it('resolves "Sonnet" shortName to Sonnet 5', () => {
-    expect(getModelIdByShortName('Sonnet')).toBe('claude-sonnet-5');
+  it('resolves "Sonnet" shortName to Sonnet 5.5', () => {
+    expect(getModelIdByShortName('Sonnet')).toBe('claude-sonnet-5-5');
+  });
+
+  it('registers the 5.5 Sonnet and Haiku as adaptive-only, 1M-context models', () => {
+    for (const id of ['claude-sonnet-5-5', 'claude-haiku-5-5']) {
+      expect(getModelContextWindow(id)).toBe(1_000_000);
+      expect(isAdaptiveThinkingAlwaysOnModel(id)).toBe(true);
+      expect(isAdaptiveThinkingAlwaysOnModel(`pi/${id}`)).toBe(true);
+      expect(isAdaptiveThinkingAlwaysOnModel(`us.anthropic.${id}`)).toBe(true);
+    }
+    expect(getModelDisplayName('claude-haiku-5-5')).toBe('Haiku 5.5');
+    // Previous generations keep accepting `thinking: disabled`.
+    expect(isAdaptiveThinkingAlwaysOnModel('claude-sonnet-5')).toBe(false);
+    expect(isAdaptiveThinkingAlwaysOnModel('claude-haiku-4-5-20251001')).toBe(false);
+  });
+
+  it('makes Haiku 5.5 the default summarization model', () => {
+    expect(getDefaultSummarizationModel()).toBe('claude-haiku-5-5');
   });
 
   it('exposes Sonnet 5 metadata', () => {

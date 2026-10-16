@@ -45,10 +45,27 @@ html {
   padding-left: calc(env(safe-area-inset-left, 0px) / var(--webui-css-zoom));
 }
 
-/* Preserve the current mobile readability zoom; sizing converts it exactly once. */
+/* Phone widths: a touch type scale instead of the former `zoom: 1.2` (design spec §7.16). UI labels
+ * step up a size (rows 15/20, meta 13/18), reading copy is 16/26, and every text field is at least
+ * 16px so iOS Safari doesn't zoom the page when it gets focus (the zoom used to hide that). Spacing
+ * and targets come from the compact shell rules (36px controls, 60px rows, 44px sheet rows).
+ * Same 768px breakpoint as the shell. The root stays unzoomed (--webui-css-zoom: 1); the
+ * viewport math in viewport.ts / input-viewport.ts still handles any CSS zoom generically. */
 @media (max-width: 768px) {
-  html {
-    zoom: 1.2;
-    --webui-css-zoom: 1.2;
+  :root {
+    --fs-caption: 12px;  --lh-caption: 16px;
+    --fs-label-sm: 13px; --lh-label-sm: 18px;
+    --fs-label: 15px;    --lh-label: 20px;
+    --fs-label-lg: 16px; --lh-label-lg: 22px;
+    --fs-copy: 16px;     --lh-copy: 26px;
+    --fs-mono: 13px;     --lh-mono: 20px;
+  }
+
+  /* Utilities set field sizes with classes, so this platform guard needs !important to win */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="file"]),
+  textarea,
+  select,
+  [contenteditable="true"] {
+    font-size: 16px !important;
   }
 }
