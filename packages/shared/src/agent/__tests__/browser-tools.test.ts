@@ -71,6 +71,27 @@ function createMockFns(): BrowserPaneFns {
   }
 }
 
+/**
+ * evaluate() that runs the runtime's real page-metrics expression against a
+ * minimal fake DOM, so the page-side password detection is exercised too.
+ */
+function fakePageEvaluate(activeElement: Record<string, unknown>, computedStyle: Record<string, string> = {}) {
+  const document = { documentElement: {}, body: {}, title: 'Sign in', activeElement }
+  const window = {
+    innerWidth: 1280,
+    innerHeight: 720,
+    scrollX: 0,
+    scrollY: 0,
+    location: { href: 'https://example.com/login' },
+    getComputedStyle: () => computedStyle,
+  }
+  return async (expression: string) => new Function('document', 'window', `return ${expression}`)(document, window)
+}
+
+function fakeInput(type: string, attributes: Record<string, string> = {}) {
+  return { tagName: 'INPUT', id: '', type, textContent: '', getAttribute: (name: string) => attributes[name] ?? null }
+}
+
 // ============================================================================
 // Helper: execute a tool by name
 // ============================================================================
@@ -268,11 +289,12 @@ describe('createBrowserTools', () => {
       expect(text).toContain('(focused)')
     })
 
-    it('treats near-zero actionable snapshot as challenge state and attaches screenshot', async () => {
+    it('hands a sparse page with a confirmed challenge to the user and attaches a screenshot', async () => {
       let releaseCalls = 0
+      let focusCalls = 0
       mockFns.snapshot = async () => ({
         url: 'https://protected.example.com',
-        title: 'Protected',
+        title: 'Just a moment...',
         nodes: [
           { ref: '@e1', role: 'staticText', name: 'Checking your browser before accessing' },
         ],
@@ -280,17 +302,23 @@ describe('createBrowserTools', () => {
       mockFns.detectChallenge = async () => ({
         detected: true,
         provider: 'cloudflare',
-        signals: ['text:checking-browser'],
+        signals: ['js:cf-chl-opt', 'title:just-a-moment'],
       })
       mockFns.releaseControl = async (_instanceId?: string) => {
         releaseCalls += 1
         return { action: 'released' as const, resolvedInstanceId: 'browser-1', affectedIds: ['browser-1'] }
       }
+      mockFns.focusWindow = async (instanceId?: string) => {
+        focusCalls += 1
+        return { instanceId: instanceId ?? 'browser-1', title: 'Just a moment...', url: 'https://protected.example.com' }
+      }
 
       const result = await executeTool(tools, 'browser_tool', { command: 'snapshot' })
       expect(releaseCalls).toBe(1)
+      expect(focusCalls).toBe(1)
       expect(result.content[0].text).toContain('Security verification detected (cloudflare).')
       expect(result.content[0].text).toContain('Detected only 0 actionable element(s) out of 1 accessibility nodes.')
+      expect(result.content[0].text).toContain('Browser shown — please complete the verification check.')
       expect(result.content[1].type).toBe('image')
       expect((result.content[1] as any).mimeType).toBe('image/jpeg')
       expect(result.content[0].text).not.toContain('When you are done using the browser')
@@ -316,6 +344,80 @@ describe('createBrowserTools', () => {
       expect(result.content[0].text).not.toContain('When you are done using the browser')
     })
 
+    it('keeps control on a sparse snapshot with only weak signals', async () => {
+      let releaseCalls = 0
+      let focusCalls = 0
+      mockFns.snapshot = async () => ({
+        url: 'https://app.example.com/connect',
+        title: 'Connect',
+        nodes: [
+          { ref: '@e1', role: 'heading', name: 'Invalid connect link' },
+          { ref: '@e2', role: 'paragraph', name: 'Ask for a new one.' },
+          { ref: '@e3', role: 'link', name: 'Home' },
+        ],
+      })
+      mockFns.detectChallenge = async () => ({
+        detected: false,
+        provider: 'none',
+        signals: ['ax:near-empty(1/3)'],
+        suspected: false,
+      })
+      mockFns.releaseControl = async (_instanceId?: string) => {
+        releaseCalls += 1
+        return { action: 'released' as const, resolvedInstanceId: 'browser-1', affectedIds: ['browser-1'] }
+      }
+      mockFns.focusWindow = async (instanceId?: string) => {
+        focusCalls += 1
+        return { instanceId: instanceId ?? 'browser-1', title: 'Connect', url: 'https://app.example.com/connect' }
+      }
+
+      const result = await executeTool(tools, 'browser_tool', { command: 'snapshot' })
+      expect(releaseCalls).toBe(0)
+      expect(focusCalls).toBe(0)
+      expect(result.content[0].text).toContain('@e1 [heading] "Invalid connect link"')
+      expect(result.content[0].text).not.toContain('verification')
+      expect(result.content.some((item: any) => item.type === 'image')).toBe(false)
+      expect(result.content[0].text).toContain('When you are done using the browser')
+    })
+
+    it('notes a suspected verification widget without releasing control', async () => {
+      let releaseCalls = 0
+      mockFns.detectChallenge = async () => ({
+        detected: false,
+        provider: 'cloudflare',
+        signals: ['widget:turnstile'],
+        suspected: true,
+      })
+      mockFns.releaseControl = async (_instanceId?: string) => {
+        releaseCalls += 1
+        return { action: 'released' as const, resolvedInstanceId: 'browser-1', affectedIds: ['browser-1'] }
+      }
+
+      for (const command of ['navigate example.com/login', 'click @e1']) {
+        const result = await executeTool(tools, 'browser_tool', { command })
+        expect(result.content[0].text).toContain('Note: the page may show a verification widget (cloudflare).')
+        expect(result.content[0].text).not.toContain('Security verification detected')
+        expect(result.content[0].text).toContain('When you are done using the browser')
+      }
+      expect(releaseCalls).toBe(0)
+    })
+
+    it('does not claim the browser is shown when it cannot be shown', async () => {
+      mockFns.detectChallenge = async () => ({
+        detected: true,
+        provider: 'google',
+        signals: ['url:google-sorry'],
+      })
+      mockFns.focusWindow = async () => {
+        throw new Error('No browser window is currently bound to this session.')
+      }
+
+      const result = await executeTool(tools, 'browser_tool', { command: 'navigate google.com/search?q=craft' })
+      expect(result.content[0].text).toContain('Security verification detected (google).')
+      expect(result.content[0].text).not.toContain('Browser shown')
+      expect(result.content[0].text).toContain('ask the user to open it and complete the verification check')
+    })
+
     it('routes find command and returns matching refs', async () => {
       const result = await executeTool(tools, 'browser_tool', { command: 'find click button' })
       const text = result.content[0].text
@@ -335,6 +437,20 @@ describe('createBrowserTools', () => {
       const result = await executeTool(tools, 'browser_tool', { command: 'click @e1' })
       expect(clickedRef).toBe('@e1')
       expect(result.content[0].text).toContain('Clicked element @e1')
+    })
+
+    it('says when a click fell back to DOM events, and reports popups', async () => {
+      mockFns.click = async () => ({
+        via: 'script' as const,
+        note: 'it was covered by div.modal-backdrop',
+        popup: 'The page opened a popup window (https://accounts.google.com/o/oauth2/v2/auth).',
+      })
+      const text = (await executeTool(tools, 'browser_tool', { command: 'click @e1' })).content[0].text
+      expect(text).toContain('Clicked with DOM events instead of the mouse: it was covered by div.modal-backdrop.')
+      expect(text).toContain('The page opened a popup window (https://accounts.google.com/o/oauth2/v2/auth).')
+
+      mockFns.click = async () => ({ via: 'mouse' as const })
+      expect((await executeTool(tools, 'browser_tool', { command: 'click @e1' })).content[0].text).not.toContain('DOM events')
     })
 
     it('routes click with wait arguments', async () => {
@@ -413,6 +529,41 @@ describe('createBrowserTools', () => {
       expect(result.content[0].text).toContain('Filled element @e2')
     })
 
+    it('echoes the filled value for a field known not to be a password', async () => {
+      mockFns.evaluate = fakePageEvaluate(fakeInput('email', { name: 'email' }))
+      const result = await executeTool(tools, 'browser_tool', { command: 'fill @e2 user@example.com' })
+      expect(result.content[0].text).toContain('Filled element @e2 with "user@example.com"')
+      expect(result.content[0].text).toContain('Active element after: input "email"')
+    })
+
+    const passwordFields: Array<[string, Record<string, unknown>, Record<string, string>?]> = [
+      ['a password input', fakeInput('password')],
+      ['a text input with password autocomplete', fakeInput('text', { autocomplete: 'current-password' })],
+      ['a text input masked by CSS', fakeInput('text'), { webkitTextSecurity: 'disc' }],
+      ['a password input inside a shadow root', {
+        tagName: 'LOGIN-FORM',
+        id: '',
+        textContent: '',
+        getAttribute: () => null,
+        shadowRoot: { activeElement: fakeInput('password') },
+      }],
+    ]
+    for (const [label, activeElement, computedStyle] of passwordFields) {
+      it(`shows only the value length when filling ${label}`, async () => {
+        mockFns.evaluate = fakePageEvaluate(activeElement, computedStyle)
+        const result = await executeTool(tools, 'browser_tool', { command: 'fill @e19 hunter2-secret' })
+        expect(result.content[0].text).toContain('Filled password field @e19 (14 characters)')
+        expect(result.content[0].text).not.toContain('hunter2-secret')
+      })
+    }
+
+    it('does not echo the filled value when the focused field cannot be inspected', async () => {
+      // The default mock evaluate() has no DOM, so page metrics are unavailable.
+      const result = await executeTool(tools, 'browser_tool', { command: 'fill @e2 hello world' })
+      expect(result.content[0].text).toContain('Filled element @e2 (11 characters)')
+      expect(result.content[0].text).not.toContain('hello world')
+    })
+
     it('supports semicolon command batching', async () => {
       const calls: string[] = []
       mockFns.fill = async (ref, value) => { calls.push(`fill:${ref}:${value}`) }
@@ -435,6 +586,7 @@ describe('createBrowserTools', () => {
       const calls: string[] = []
       mockFns.fill = async (ref, value) => { calls.push(`fill:${ref}:${value}`) }
       mockFns.click = async (ref) => { calls.push(`click:${ref}`) }
+      mockFns.evaluate = fakePageEvaluate(fakeInput('text'))
 
       const result = await executeTool(tools, 'browser_tool', {
         command: 'fill @e1 "a;b;c"; click @e2',
@@ -704,6 +856,99 @@ describe('createBrowserTools', () => {
       expect(result.content[1].type).toBe('image')
     })
 
+    it('lists annotated targets as compact lines instead of a metadata dump', async () => {
+      const targets = Array.from({ length: 60 }, (_, i) => ({
+        ref: `@e${i + 1}`,
+        role: 'button',
+        name: `Button ${i + 1}`,
+        box: { x: 580.4, y: 196.2, width: 119.6, height: 32.4 },
+        clickPoint: { x: 640.2, y: 212.4 },
+      }))
+      targets[0]!.name = 'Sign in'
+      targets[1]!.name = 'Accept all cookies and continue to your dashboard'
+      mockFns.screenshot = async () => ({
+        imageBuffer: Buffer.from('fake-jpeg-data'),
+        imageFormat: 'jpeg' as const,
+        metadata: {
+          mode: 'agent',
+          viewport: { width: 1280, height: 720, dpr: 2, scrollX: 0, scrollY: 0 },
+          targets,
+          action: { tool: 'browser_click', ref: '@e12', status: 'succeeded', timestamp: Date.UTC(2026, 9, 11, 10, 0, 0) },
+          annotationPartial: true,
+          warnings: ['Annotation capped at 100 of 245 elements'],
+        },
+      })
+
+      const result = await executeTool(tools, 'browser_tool', { command: 'screenshot --annotated' })
+      const text: string = result.content[0].text
+      expect(text).toContain('Viewport: 1280x720 @ DPR 2')
+      expect(text).toContain('Warning: Annotation capped at 100 of 245 elements')
+      expect(text).toContain('Annotation incomplete')
+      expect(text).toContain('Last action: browser_click @e12 succeeded at 2026-10-11T10:00:00.000Z')
+      expect(text).toContain('Annotated targets: 60')
+      expect(text).toContain('  @e1 button "Sign in" at (640,212) 120x32')
+      expect(text).toContain('  @e2 button "Accept all cookies and continue to your…" at (640,212) 120x32')
+      expect(text.split('\n').filter((line) => /^ {2}@e\d+ /.test(line))).toHaveLength(50)
+      expect(text).toContain('  @e50 button "Button 50"')
+      expect(text).toContain('  …10 more targets (use snapshot or find)')
+      expect(text).not.toContain('Metadata:')
+      expect(text).not.toContain('mode')
+      expect(text).not.toContain('clickPoint')
+    })
+
+    it('omits empty annotation details', async () => {
+      mockFns.screenshot = async () => ({
+        imageBuffer: Buffer.from('fake-jpeg-data'),
+        imageFormat: 'jpeg' as const,
+        metadata: { mode: 'agent', viewport: { width: 800, height: 600, dpr: 1 }, targets: [], annotationPartial: false },
+      })
+
+      const result = await executeTool(tools, 'browser_tool', { command: 'screenshot -a' })
+      const text: string = result.content[0].text
+      expect(text).toContain('Annotated targets: 0')
+      expect(text).not.toContain('Annotation incomplete')
+      expect(text).not.toContain('Last action')
+      expect(text).not.toContain('Warning:')
+    })
+
+    it('prints warnings of a plain screenshot', async () => {
+      mockFns.screenshot = async () => ({
+        imageBuffer: Buffer.from('fake-png-data'),
+        imageFormat: 'png' as const,
+        metadata: { mode: 'raw', warnings: ['Window was hidden; captured after a forced repaint'] },
+      })
+
+      const result = await executeTool(tools, 'browser_tool', { command: 'screenshot' })
+      const text: string = result.content[0].text
+      expect(text).toContain('Screenshot captured')
+      expect(text).toContain('Warning: Window was hidden; captured after a forced repaint')
+      expect(text).not.toContain('mode')
+      expect(text).not.toContain('Annotated targets')
+    })
+
+    it('renders region screenshot metadata as compact lines', async () => {
+      mockFns.screenshotRegion = async () => ({
+        imageBuffer: Buffer.from('fake-png-data'),
+        imageFormat: 'png' as const,
+        metadata: {
+          mode: 'raw',
+          viewport: { width: 1280, height: 720, dpr: 1, scrollX: 0, scrollY: 300 },
+          region: { x: 2, y: 12, width: 116.5, height: 96 },
+          targetMode: 'coords',
+          warnings: ['Capture used the hidden-window rescue path'],
+        },
+      })
+
+      const result = await executeTool(tools, 'browser_tool', { command: 'screenshot-region 10 20 100 80 --padding 8' })
+      const text: string = result.content[0].text
+      expect(text).toContain('Target: box (10, 20, 100x80), padding=8')
+      expect(text).toContain('Viewport: 1280x720 @ DPR 1')
+      expect(text).toContain('Captured region: (2,12) 117x96')
+      expect(text).toContain('Warning: Capture used the hidden-window rescue path')
+      expect(text).not.toContain('targetMode')
+      expect(text).not.toContain('Metadata:')
+    })
+
     it('routes screenshot-region command and returns image block', async () => {
       const result = await executeTool(tools, 'browser_tool', { command: 'screenshot-region 10 20 100 80' })
       expect(result.content[0].text).toContain('Region screenshot captured')
@@ -963,6 +1208,80 @@ describe('createBrowserTools', () => {
       const result = await executeTool(tools, 'browser_tool', { command: 'fill @e1 "unterminated' })
       expect(result.isError).toBe(true)
       expect(result.content[0].text).toContain('Parse error: unclosed quote')
+    })
+
+    it('keeps apostrophes in unquoted text', async () => {
+      const calls: string[] = []
+      mockFns.fill = async (ref, value) => { calls.push(`fill:${ref}:${value}`) }
+      mockFns.type = async (text) => { calls.push(`type:${text}`) }
+
+      const filled = await executeTool(tools, 'browser_tool', { command: "fill @e5 Don't do this" })
+      const typed = await executeTool(tools, 'browser_tool', { command: "type it's Bob's" })
+
+      expect(filled.isError).toBeUndefined()
+      expect(typed.isError).toBeUndefined()
+      expect(calls).toEqual(["fill:@e5:Don't do this", "type:it's Bob's"])
+    })
+
+    it('keeps apostrophes inside a quoted argument', async () => {
+      let filledValue = ''
+      mockFns.fill = async (_ref, value) => { filledValue = value }
+
+      const result = await executeTool(tools, 'browser_tool', { command: "fill @e5 'Don't do this'" })
+
+      expect(result.isError).toBeUndefined()
+      expect(filledValue).toBe("Don't do this")
+    })
+
+    it('splits a batch after a word with an apostrophe', async () => {
+      const calls: string[] = []
+      mockFns.fill = async (ref, value) => { calls.push(`fill:${ref}:${value}`) }
+      mockFns.click = async (ref) => { calls.push(`click:${ref}`) }
+
+      await executeTool(tools, 'browser_tool', { command: "fill @e1 Don't; click @e2" })
+
+      expect(calls).toEqual(["fill:@e1:Don't", 'click:@e2'])
+    })
+
+    it('decodes escaped quotes and semicolons', async () => {
+      const values: string[] = []
+      mockFns.fill = async (_ref, value) => { values.push(value) }
+
+      await executeTool(tools, 'browser_tool', { command: "fill @e1 Don\\'t" })
+      await executeTool(tools, 'browser_tool', { command: 'fill @e1 "say \\"hi\\""' })
+      await executeTool(tools, 'browser_tool', { command: 'fill @e1 a\\;b' })
+
+      expect(values).toEqual(["Don't", 'say "hi"', 'a;b'])
+    })
+
+    it('keeps quotes and semicolons of an unquoted selector attribute value', async () => {
+      let screenshotRegionArgs: any
+      mockFns.screenshotRegion = async (args) => {
+        screenshotRegionArgs = args
+        return { imageBuffer: Buffer.from('fake-png-data'), imageFormat: 'png' as const }
+      }
+
+      const result = await executeTool(tools, 'browser_tool', {
+        command: "screenshot-region --selector div[data-x='a;b'] --padding 8",
+      })
+
+      expect(result.isError).toBeUndefined()
+      expect(screenshotRegionArgs).toMatchObject({ selector: "div[data-x='a;b']", padding: 8 })
+    })
+
+    it('ignores a trailing batch separator', async () => {
+      let clickedRef = ''
+      mockFns.click = async (ref) => { clickedRef = ref }
+
+      await executeTool(tools, 'browser_tool', { command: 'click @e1;' })
+
+      expect(clickedRef).toBe('@e1')
+    })
+
+    it('returns missing command for separator-only input', async () => {
+      const result = await executeTool(tools, 'browser_tool', { command: ' ; ' })
+      expect(result.isError).toBe(true)
+      expect(result.content[0].text).toContain('Missing command')
     })
 
     it('returns error for unknown command', async () => {

@@ -7,31 +7,29 @@ MkAgent 的架构、UI 与运行时继承自 [Craft Agents OSS](https://github.c
 | 项 | 值 |
 |---|---|
 | 仓库 | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.15.0` |
-| Commit | `20e98eed968b9663d80f9efd40c10d363ea0b781` |
+| Tag | `v0.15.1` |
+| Commit | `2e3ba53ff80b229a07e9d1884dc58f6733f22e1f` |
 
 ## 最近一次上游评估
 
 | 项 | 值 |
 |---|---|
 | 评估日期 | `2026-10-16` |
-| 上游 Tag | `v0.15.0` |
-| 上游 Commit | `20e98eed968b9663d80f9efd40c10d363ea0b781` |
+| 上游 Tag | `v0.15.1` |
+| 上游 Commit | `2e3ba53ff80b229a07e9d1884dc58f6733f22e1f` |
 
-MkAgent 0.2.0 从 v0.14.1 基线（`332533f3096d12500012fe089c3f155e32af1c44`）同步到 v0.15.0，不包含 v0.15.1/v0.15.2 的后续变更。[逐路径评估清单](../sync/0.15.0-inventory.json)记录本版本全部变更的处理；[验证报告](../sync/0.15.0-validation.md)记录测试、启动与验证边界。
+MkAgent 0.2.1 本次**仅同步 v0.15.0 → v0.15.1**。之前的基线为 `20e98eed968b9663d80f9efd40c10d363ea0b781`，未混入 v0.15.2/v0.15.3。[逐路径清单](../sync/0.15.1-inventory.json)覆盖全部 129 个上游路径；[验证报告](../sync/0.15.1-validation.md)记录证据与限制。
 
-界面采用导航画布与连体纸张面板、固定侧栏页脚、统一列表网格、会话头部操作、安静的工作日志与回答尾部、内凹代码与 diff、Shell 运行按钮、带权限/模型/上下文标签的浮起输入框、单列设置/详情、弹窗与通知、动效偏好和对比度主题。手机 WebUI 保留触摸目标、较大的输入字号及键盘可用高度。Lite 会话头部和列表删除可配置状态、标签及项目控件，不恢复对应产品模块。
+同步隐藏窗口点击、按键、下拉与最新截图，Linux 屏幕外截图、直接元素点击回退、安全验证延迟确认及人工介入时前置窗口、网站登录 popup 去重、截图/网络/控制台输出精简、单引号命令、浏览器密码脱敏、服务端公布的附件限制，以及 shell 读取指南。Browser/Skill prerequisite 管理器已接到 Pi 实际调用链，并在压缩后重置。停止当前回复会报告取消，其独立后台命令和子会话继续运行；自动完成消息明确标注为应用生成。
 
-Pi 及配套依赖固定为 1.1.0，同步 Sonnet/Haiku 5.5、GPT-6.1 Sol 目录，Luna/Haiku/Flash 小模型路由，Cloudflare AI Gateway，Azure provider 映射与端点热更新，工具失败状态，以及主会话/工具会话扩展加载隔离。Pi 原生 Bash 没有 Claude 的后台参数，因此在现有权限检查之后增加适配：使用 Pi Bash 实现执行命令，由独立 AbortController 管理每项任务并写入实时输出文件；停止时不再扫描全局命令行。运行中和完成任务使用上游新任务标签及输出面板。Windows 不支持透明材质时退回不透明窗口，保留带空格路径、WebUI 登录样式、深链接和工作区 slug 路由修复。
-
-继续排除 Decision model/Guarded、Claude SDK 及其 Source 工具修复、Sources/MCP、Pages/Claude artifacts、Projects/任务编排、Automations/时区与失败钩子、公开分享、标签/自定义状态和消息集成。凭据提示取消属于已裁剪的 Sources 授权界面；本地 LLM OAuth/API key 设置仍由 MkAgent 保留测试覆盖。新会话建议使用本地文件、新闻和 Skills，不展示不可用的邮箱/Source 设置。
+保留 v0.15.0 界面、MkAgent 品牌/配置与 Pi 1.1.0 依赖。Sources/MCP resources/prompts、Source 刷新令牌/授权合并及非默认 Source API key header 在 Lite 中没有实现；Projects 笔记 append、任务编排生成/依赖结果传播、Pages、Automations、公开分享、消息集成、标签/自定义状态、Claude SDK 和 Decision/Guarded 继续排除。网站浏览器登录 popup 去重已单独同步。Pi 原本通过存储路径读取 PDF，不引入 Claude 专用 inline PDF 限制。
 
 ```bash
 # 仅操作独立的临时参考副本，已有参考目录保持只读。
-git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0150
-git -C /tmp/craft-v0150 fetch origin refs/tags/v0.15.0
-git -C /tmp/craft-v0150 checkout --detach 20e98eed968b9663d80f9efd40c10d363ea0b781
-export CRAFT_AGENT_SOURCE=/tmp/craft-v0150
+git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0151
+git -C /tmp/craft-v0151 fetch origin refs/tags/v0.15.1
+git -C /tmp/craft-v0151 checkout --detach 2e3ba53ff80b229a07e9d1884dc58f6733f22e1f
+export CRAFT_AGENT_SOURCE=/tmp/craft-v0151
 ```
 
 当上游发布值得评估的新 tag 时:

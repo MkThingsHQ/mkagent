@@ -122,3 +122,30 @@ describe('shouldPromptInAskMode', () => {
     expect(shouldPromptInAskMode('Grep', { pattern: 'x' }, permissionManager, context)).toBeNull()
   })
 })
+
+describe('Browser and Skill prerequisites in the Pi pre-tool pipeline', () => {
+  it('blocks browser use until a shell guide read passes through the same gate', async () => {
+    const { PrerequisiteManager } = await import('../prerequisite-manager.ts')
+    const guide = '/tmp/mkagent-browser-guide.md'
+    const prerequisites = new PrerequisiteManager({ workspaceRootPath: '/tmp', browserToolEnabled: () => true, browserToolsDocPath: guide, pathExists: () => true })
+    initializeModeState(sessionId, 'allow-all')
+    const call = (toolName: string, input: Record<string, unknown>) => runPreToolUseChecks({ toolName, input, sessionId, permissionMode: 'allow-all', workspaceRootPath: '/tmp', workspaceId: 'ws', permissionManager, prerequisiteManager: prerequisites })
+    expect(call('mcp__session__browser_tool', { command: 'snapshot' }).type).toBe('block')
+    expect(call('Bash', { command: `head -n 100 ${guide}` }).type).toBe('allow')
+    expect(call('mcp__session__browser_tool', { command: 'snapshot' }).type).toBe('allow')
+    prerequisites.resetReadState()
+    expect(call('browser_tool', { command: 'snapshot' }).type).toBe('block')
+  })
+
+  it('does not count a file mention or a shell read blocked by permission mode', async () => {
+    const { PrerequisiteManager } = await import('../prerequisite-manager.ts')
+    const prerequisites = new PrerequisiteManager({ workspaceRootPath: '/tmp' })
+    const guide = '/tmp/SKILL.md'
+    initializeModeState(sessionId, 'safe')
+    const result = runPreToolUseChecks({ toolName: 'Bash', input: { command: `cat ${guide}; rm /tmp/important` }, sessionId, permissionMode: 'safe', workspaceRootPath: '/tmp', workspaceId: 'ws', permissionManager, prerequisiteManager: prerequisites })
+    expect(result.type).toBe('block')
+    expect(prerequisites.hasRead(guide)).toBe(false)
+    prerequisites.checkBashPrerequisites(`echo ${guide}`)
+    expect(prerequisites.hasRead(guide)).toBe(false)
+  })
+})

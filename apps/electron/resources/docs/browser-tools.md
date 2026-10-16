@@ -79,17 +79,18 @@ Batches run left-to-right and stop automatically after navigation commands (`nav
 
 ### Quoting and escaping
 
-`browser_tool` supports quoted arguments:
-- Double quotes: `fill @e5 "Hello world"`
-- Single quotes: `wait text 'welcome back' 5000`
+A quote at the start of an argument (`fill @e5 "Hello world"`, `wait text 'welcome back' 5000`) groups text up to the same quote followed by a space, `;` or the end of the command, and both quotes are removed. Any other quote is literal text, so `fill @e5 Don't do this` and `fill @e5 'Don't do this'` both fill `Don't do this`.
 
 Semicolons inside quotes are treated as literal text (not batch separators):
 - `fill @e1 "a;b;c"; click @e2`
 - `screenshot-region --selector "div[data-x='a;b']" --padding 8`
+- `screenshot-region --selector div[data-x='a;b']` (quotes inside an argument are kept)
 
 Use backslash escaping when needed:
 - `\;` for a literal semicolon outside quotes
-- `\"` for a literal `"` inside double-quoted text
+- `\"` or `\'` for a literal quote character
+
+Array mode (`["fill", "@e5", "any \"text\"; here"]`) skips this parsing entirely.
 
 ---
 
@@ -123,6 +124,8 @@ Get coordinates from `screenshot` or `screenshot --annotated`.
 
 ### `fill <ref> <value>` / `select <ref> <value> [--assert-text <text>] [--assert-value <value>] [--timeout <ms>]`
 Fill text inputs or select dropdown values. Requires an element ref from `snapshot`.
+
+Enter passwords with `fill`, not `type` or `paste`: for a password field the result shows only the value's length, and once the call succeeds the session transcript shows your command with the value replaced by `[password: N characters]`.
 
 For modern React/portal combobox UIs, `select` now performs additional verification and may return a warning when interaction succeeds but form state does not appear to mutate.
 

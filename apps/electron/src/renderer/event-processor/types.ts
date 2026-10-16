@@ -88,6 +88,8 @@ export interface ToolResultEvent {
   parentToolUseId?: string
   /** Timestamp from main process for consistent ordering */
   timestamp?: number
+  /** Replaces the input from tool_start (a browser_tool password fill, redacted once its result is known) */
+  toolInput?: Record<string, unknown>
 }
 
 /**

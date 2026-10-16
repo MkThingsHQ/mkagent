@@ -1,0 +1,672 @@
+{
+  "previousTag": "v0.15.0",
+  "previousCommit": "20e98eed968b9663d80f9efd40c10d363ea0b781",
+  "targetTag": "v0.15.1",
+  "targetCommit": "2e3ba53ff80b229a07e9d1884dc58f6733f22e1f",
+  "changedPaths": 129,
+  "files": [
+    {
+      "path": "apps/cli/package.json",
+      "classification": "RELEASE",
+      "reason": "Use MkAgent 0.2.1 release tooling for existing workspaces; do not restore excluded workspaces or upstream versions."
+    },
+    {
+      "path": "apps/electron/package.json",
+      "classification": "RELEASE",
+      "reason": "Use MkAgent 0.2.1 release tooling for existing workspaces; do not restore excluded workspaces or upstream versions."
+    },
+    {
+      "path": "apps/electron/resources/docs/browser-tools.md",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "apps/electron/resources/docs/sources.md",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "apps/electron/resources/release-notes/0.15.1.md",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Write product-specific MkAgent 0.2.1 release notes without unavailable feature claims."
+    },
+    {
+      "path": "apps/electron/src/main/__tests__/browser-cdp.test.ts",
+      "classification": "SYNC",
+      "reason": "Retain all upstream CDP regressions and add wrong-native-key-code and pending-command idle-detach cases."
+    },
+    {
+      "path": "apps/electron/src/main/__tests__/browser-pane-manager.test.ts",
+      "classification": "SYNC",
+      "reason": "Retain all upstream browser/window regressions, MkAgent app-theme cases, and add stalled capture recovery-state regression."
+    },
+    {
+      "path": "apps/electron/src/main/__tests__/security-challenge.test.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "apps/electron/src/main/browser-cdp.ts",
+      "classification": "SYNC",
+      "reason": "Retain hidden-window CDP input, direct click fallback, native/custom selects, password-aware fill. Correct macOS native key codes and defer idle detach while commands are pending."
+    },
+    {
+      "path": "apps/electron/src/main/browser-pane-manager.ts",
+      "classification": "LITE_SEAM",
+      "reason": "Retain fresh-frame/invisible/Linux capture, challenge reconfirmation, current-site logs, sign-in popup dedupe; keep MkAgent theme/deeplink seams and bound stalled capture."
+    },
+    {
+      "path": "apps/electron/src/main/security-challenge.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "apps/electron/src/preload/bootstrap.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "All release hunks are Sources OAuth orchestration; retained LLM OAuth is independent and unchanged upstream."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx",
+      "classification": "LITE_SEAM",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/TaskEditor.tsx",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/chat/AuthRequestCard.tsx",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "apps/electron/src/renderer/event-processor/handlers/__tests__/tool-result-input.test.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "apps/electron/src/renderer/event-processor/handlers/tool.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "apps/electron/src/renderer/event-processor/types.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "apps/electron/src/shared/__tests__/ipc-channels.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Existing Lite replacement channel-map-parity.test.ts covers retained channel map; new upstream channel is Sources OAuth only."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "classification": "LITE_SEAM",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "apps/electron/src/transport/__tests__/source-oauth.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "apps/electron/src/transport/source-oauth.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "apps/viewer/package.json",
+      "classification": "RELEASE",
+      "reason": "Use MkAgent 0.2.1 release tooling for existing workspaces; do not restore excluded workspaces or upstream versions."
+    },
+    {
+      "path": "apps/webui/package.json",
+      "classification": "RELEASE",
+      "reason": "Use MkAgent 0.2.1 release tooling for existing workspaces; do not restore excluded workspaces or upstream versions."
+    },
+    {
+      "path": "apps/webui/src/adapter/web-api.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "All release hunks are Sources OAuth orchestration; browser website popup dedupe is retained in browser-pane-manager."
+    },
+    {
+      "path": "bun.lock",
+      "classification": "RELEASE",
+      "reason": "Use MkAgent 0.2.1 release tooling for existing workspaces; do not restore excluded workspaces or upstream versions."
+    },
+    {
+      "path": "package.json",
+      "classification": "RELEASE",
+      "reason": "Use MkAgent 0.2.1 release tooling for existing workspaces; do not restore excluded workspaces or upstream versions."
+    },
+    {
+      "path": "packages/core/package.json",
+      "classification": "RELEASE",
+      "reason": "Use MkAgent 0.2.1 release tooling for existing workspaces; do not restore excluded workspaces or upstream versions."
+    },
+    {
+      "path": "packages/messaging-gateway/package.json",
+      "classification": "RELEASE",
+      "reason": "Use MkAgent 0.2.1 release tooling for existing workspaces; do not restore excluded workspaces or upstream versions."
+    },
+    {
+      "path": "packages/messaging-whatsapp-worker/package.json",
+      "classification": "RELEASE",
+      "reason": "Use MkAgent 0.2.1 release tooling for existing workspaces; do not restore excluded workspaces or upstream versions."
+    },
+    {
+      "path": "packages/pi-agent-server/package.json",
+      "classification": "RELEASE",
+      "reason": "Use MkAgent 0.2.1 release tooling for existing workspaces; do not restore excluded workspaces or upstream versions."
+    },
+    {
+      "path": "packages/server-core/package.json",
+      "classification": "RELEASE",
+      "reason": "Use MkAgent 0.2.1 release tooling for existing workspaces; do not restore excluded workspaces or upstream versions."
+    },
+    {
+      "path": "packages/server-core/src/handlers/browser-pane-manager-interface.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/server-core/src/handlers/oauth-flow-store-interface.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/oauth.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/oauth.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/tasks-generate-wait.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/tasks.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/server-core/src/handlers/session-manager-interface.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only conductor activity/final-output and Sources auth fanout interface changes; no corresponding Lite API."
+    },
+    {
+      "path": "packages/server-core/src/runtime/null-browser-pane-manager.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/server-core/src/sessions/RemoteBrowserPaneManager.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/server-core/src/sessions/SessionManager.ts",
+      "classification": "LITE_SEAM",
+      "reason": "Adapt password input replacement and foreground-only Stop to Lite Pi sessions; wire agent control for hidden rendering and frame automatic task notices. Omit Source auth fanout, conductor and project/Decision callbacks."
+    },
+    {
+      "path": "packages/server-core/src/sessions/auth-request-fanout.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/server-core/src/sessions/automation-loop-and-retry.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/server-core/src/sessions/background-task-surface.test.ts",
+      "classification": "LITE_SEAM",
+      "reason": "Retain Pi background surface; adapt automatic system-notification framing."
+    },
+    {
+      "path": "packages/server-core/src/sessions/browser-password-redaction.test.ts",
+      "classification": "LITE_SEAM",
+      "reason": "Adapt regression to Lite SessionManager and export/renderer paths."
+    },
+    {
+      "path": "packages/server-core/src/sessions/pi-retry-streaming.test.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only upstream delta-flush/session-activity mocks; Lite has unbatched deltas and no activity listeners."
+    },
+    {
+      "path": "packages/server-core/src/sessions/session-completion.test.ts",
+      "classification": "LITE_SEAM",
+      "reason": "Assess interrupted/current-turn behavior against Lite session lifecycle; conductor subscription API is absent."
+    },
+    {
+      "path": "packages/server-core/src/sources/mcp-source-tool-callbacks.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/server-core/src/sources/mcp-source-tool-callbacks.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/server-core/src/tasks/TaskRunner.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/server-core/src/tasks/TaskRunner.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/server-core/src/transport/__tests__/server-lifecycle.test.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/server-core/src/transport/client.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/server-core/src/transport/server.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/server-core/src/webui/__tests__/oauth-callback.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/server-core/src/webui/http-server.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only generic Sources OAuth callback route changes; that route is absent from Lite."
+    },
+    {
+      "path": "packages/server/package.json",
+      "classification": "RELEASE",
+      "reason": "Use MkAgent 0.2.1 release tooling for existing workspaces; do not restore excluded workspaces or upstream versions."
+    },
+    {
+      "path": "packages/session-tools-core/package.json",
+      "classification": "RELEASE",
+      "reason": "Use MkAgent 0.2.1 release tooling for existing workspaces; do not restore excluded workspaces or upstream versions."
+    },
+    {
+      "path": "packages/session-tools-core/src/api-auth.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Source credential manager/API auth is removed from Lite; no retained LLM API-key transport uses this module. Browser website login popup dedupe is synchronized separately."
+    },
+    {
+      "path": "packages/session-tools-core/src/api-auth.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Source credential manager/API auth is removed from Lite; no retained LLM API-key transport uses this module. Browser website login popup dedupe is synchronized separately."
+    },
+    {
+      "path": "packages/session-tools-core/src/context.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only MCP source resource/prompt and project memory callbacks/types."
+    },
+    {
+      "path": "packages/session-tools-core/src/handlers/index.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only excluded MCP/project handlers exports."
+    },
+    {
+      "path": "packages/session-tools-core/src/handlers/mcp-sources.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/session-tools-core/src/handlers/mcp-sources.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/session-tools-core/src/handlers/project-memory.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/session-tools-core/src/handlers/project-memory.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/session-tools-core/src/handlers/source-oauth.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/session-tools-core/src/handlers/source-oauth.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/session-tools-core/src/index.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only excluded MCP/project handlers and types exports."
+    },
+    {
+      "path": "packages/session-tools-core/src/tool-defs-filtering.test.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "New case exclusively checks excluded source_list_resources inputSchema."
+    },
+    {
+      "path": "packages/session-tools-core/src/tool-defs.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only excluded MCP resource/prompt and project memory tools."
+    },
+    {
+      "path": "packages/shared/CLAUDE.md",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Upstream development instructions for removed Claude/MCP modules; retain MkAgent instructions."
+    },
+    {
+      "path": "packages/shared/package.json",
+      "classification": "RELEASE",
+      "reason": "Use MkAgent 0.2.1 release tooling for existing workspaces; do not restore excluded workspaces or upstream versions."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/browser-tool-redaction.test.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/browser-tools.test.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/claude-keepalive-stop.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/pdf-inline.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Inline PDF attachment only serves Claude Messages API; Pi already sends PDFs as stored paths."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/session-self-management-bindings.test.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "New cases exclusively bind excluded MCP resources/prompts and project memory."
+    },
+    {
+      "path": "packages/shared/src/agent/backend/types.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/shared/src/agent/base-agent.ts",
+      "classification": "LITE_SEAM",
+      "reason": "Upstream hunk is excluded MCP feature wiring; additionally connect retained Browser/Skill prerequisites to BaseAgent/Pi, replacing the Lite no-op."
+    },
+    {
+      "path": "packages/shared/src/agent/browser-tool-redaction.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/shared/src/agent/browser-tool-runtime.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/shared/src/agent/browser-tools.ts",
+      "classification": "LITE_SEAM",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/shared/src/agent/claude-agent.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/shared/src/agent/core/__tests__/guarded-mode.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/shared/src/agent/core/__tests__/pre-tool-use-checks.isolated.ts",
+      "classification": "LITE_SEAM",
+      "reason": "Adapt prerequisite regression mocks only; upstream Sources/Guarded cases remain excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/core/__tests__/prerequisite-manager.isolated.ts",
+      "classification": "LITE_SEAM",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/shared/src/agent/core/__tests__/source-manager.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/shared/src/agent/core/pre-tool-use.ts",
+      "classification": "LITE_SEAM",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/shared/src/agent/core/prerequisite-manager.ts",
+      "classification": "LITE_SEAM",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/shared/src/agent/core/source-manager.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/shared/src/agent/core/types.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only excluded MCP source-feature types."
+    },
+    {
+      "path": "packages/shared/src/agent/index.ts",
+      "classification": "LITE_SEAM",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/shared/src/agent/pdf-inline.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Inline PDF attachment only serves Claude Messages API; Pi already sends PDFs as stored paths."
+    },
+    {
+      "path": "packages/shared/src/agent/session-scoped-tool-callback-registry.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only excluded MCP source and project memory callbacks."
+    },
+    {
+      "path": "packages/shared/src/agent/session-self-management-bindings.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only excluded MCP source and project memory bindings."
+    },
+    {
+      "path": "packages/shared/src/auth/__tests__/oauth-flow-store.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/shared/src/auth/oauth-flow-store.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/de.json",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Locale is not shipped by MkAgent; retain matching keys in English and Simplified Chinese."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/en.json",
+      "classification": "LITE_SEAM",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/es.json",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Locale is not shipped by MkAgent; retain matching keys in English and Simplified Chinese."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/hu.json",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Locale is not shipped by MkAgent; retain matching keys in English and Simplified Chinese."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ja.json",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Locale is not shipped by MkAgent; retain matching keys in English and Simplified Chinese."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/pl.json",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Locale is not shipped by MkAgent; retain matching keys in English and Simplified Chinese."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "classification": "LITE_SEAM",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/shared/src/mcp/__tests__/fixtures/mcp-server-resources.mjs",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/shared/src/mcp/__tests__/mcp-pool-resources.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/shared/src/mcp/client.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/shared/src/mcp/mcp-pool.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/shared/src/projects/__tests__/storage.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/shared/src/projects/index.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/shared/src/projects/storage.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/shared/src/prompts/__tests__/system.test.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "New cases exclusively check project memory and MCP source instructions."
+    },
+    {
+      "path": "packages/shared/src/prompts/system.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only excluded project memory and MCP source instructions."
+    },
+    {
+      "path": "packages/shared/src/protocol/__tests__/message-limits.test.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only Sources oauth:getFlow channel."
+    },
+    {
+      "path": "packages/shared/src/protocol/dto.ts",
+      "classification": "LITE_SEAM",
+      "reason": "Retain password toolInput replacement and BrowserSecurityChallenge; conductor-only per-turn thinking override and excluded Source/Automation DTOs omitted."
+    },
+    {
+      "path": "packages/shared/src/protocol/index.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/shared/src/protocol/message-limits.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only Sources oauth:getFlow channel."
+    },
+    {
+      "path": "packages/shared/src/protocol/types.ts",
+      "classification": "SYNC",
+      "reason": "Apply v0.15.0 to v0.15.1 delta with existing MkAgent/Lite seams retained."
+    },
+    {
+      "path": "packages/shared/src/sources/__tests__/credential-manager-refresh-dedupe.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Source credential manager/API auth is removed from Lite; no retained LLM API-key transport uses this module. Browser website login popup dedupe is synchronized separately."
+    },
+    {
+      "path": "packages/shared/src/sources/credential-manager.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Source credential manager/API auth is removed from Lite; no retained LLM API-key transport uses this module. Browser website login popup dedupe is synchronized separately."
+    },
+    {
+      "path": "packages/shared/src/tasks/generator-prompt.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/shared/src/tasks/schema.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/shared/src/tasks/storage.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore."
+    },
+    {
+      "path": "packages/ui/package.json",
+      "classification": "RELEASE",
+      "reason": "Use MkAgent 0.2.1 release tooling for existing workspaces; do not restore excluded workspaces or upstream versions."
+    },
+    {
+      "path": "packages/ui/src/components/chat/turn/tool-display.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only display names for excluded MCP source and project memory tools."
+    }
+  ],
+  "additionalAdaptations": [
+    {
+      "path": "packages/shared/src/agent/pi-agent.ts",
+      "reason": "Connect retained prerequisite manager and stopTurn to actual Pi lifecycle; upstream otherwise implements stopTurn only for excluded Claude backend."
+    },
+    {
+      "path": "packages/server-core/src/sessions/browser-session-tool-binding.test.ts",
+      "reason": "Regression for omitted Lite agent-control/rendering wiring."
+    },
+    {
+      "path": "apps/electron/src/main/browser-cdp.ts",
+      "reason": "Live macOS input correction: omit incorrect native key codes; avoid idle detach while commands are pending."
+    },
+    {
+      "path": "apps/electron/src/main/browser-pane-manager.ts",
+      "reason": "Bound stalled native capture before first surface and retain actionable focus/retry recovery."
+    }
+  ]
+}

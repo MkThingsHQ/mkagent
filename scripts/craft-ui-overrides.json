@@ -198,7 +198,7 @@
       "reason": "Retain Lite permission modes and precise approvals; Guarded and decision configuration deferred"
     },
     "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx": {
-      "sha256": "8cc43255fd4f3bbdf5f0db041a7c82d4fee1cdd74050188349e652c79ae8b130",
+      "sha256": "8c797b1eb537ab8d8793cc114e234c0d1dd2f3060234e618d503dcc08a80ba20",
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/input/StructuredInput.tsx": {
@@ -366,7 +366,7 @@
       "reason": "Craft v0.13.3 retry and text-discard events are routed through the retained MkAgent event processor"
     },
     "apps/electron/src/renderer/event-processor/types.ts": {
-      "sha256": "e1b599f12a9ca8301c3363dd50ad04439d737bbdfef702f2590c6731b5ca8833",
+      "sha256": "602ca1993bb50809cd9a3238501ae855f1310510db148218ac0000e4729a35a7",
       "reason": "Craft v0.13.3 retry event types are adapted to the narrower MkAgent protocol surface"
     },
     "apps/electron/src/renderer/hooks/__tests__/useOnboarding.test.ts": {

@@ -962,6 +962,10 @@ export class PiAgent extends BaseAgent {
     // The event adapter expects typed PiAgentEvent/AgentSessionEvent objects,
     // but since we're receiving plain JSON, we cast through unknown.
     for (const agentEvent of this.adapter.adaptEvent(adaptedEvent as any)) {
+      if (agentEvent.type === 'tool_start' && agentEvent.toolName === 'Read') {
+        this.prerequisiteManager.trackReadTool(agentEvent.input as Record<string, unknown>);
+      }
+      if (agentEvent.type === 'info' && agentEvent.message.startsWith('Compacted')) this.resetPrerequisiteState();
       if (!this._isProcessing && this.backgroundEventSink && (
         agentEvent.type === 'shell_backgrounded' ||
         agentEvent.type === 'task_activity' ||
@@ -1046,6 +1050,7 @@ export class PiAgent extends BaseAgent {
       dataFolderPath,
       workingDirectory: this.config.session?.workingDirectory,
       permissionManager: this.permissionManager,
+      prerequisiteManager: this.prerequisiteManager,
       rtkContext,
       onDebug: (msg) => this.debug(`PreToolUse(sessionId=${sessionId}): ${msg}`),
     });
@@ -1144,6 +1149,13 @@ export class PiAgent extends BaseAgent {
     toolName: string;
     args: Record<string, unknown>;
   }): Promise<void> {
+    const prereqResult = this.prerequisiteManager.checkPrerequisites(request.toolName);
+    if (!prereqResult.allowed) {
+      this.send({ type: 'tool_execute_response', requestId: request.requestId,
+        result: { content: prereqResult.blockReason!, isError: true } });
+      return;
+    }
+
     try {
       const result = await this.routeToolCall(request.toolName, request.args);
       this.send({
@@ -1995,6 +2007,13 @@ export class PiAgent extends BaseAgent {
 
     // Clear bridge cache for this interrupted turn.
     this.preToolMetadataByCallId.clear();
+  }
+
+  /** Pi abort stops the foreground SDK turn; background shells own independent controllers. */
+  stopTurn(): boolean {
+    if (!this._isProcessing) return false;
+    this.forceAbort(AbortReason.UserStop);
+    return true;
   }
 
   forceAbort(reason: AbortReason): void {

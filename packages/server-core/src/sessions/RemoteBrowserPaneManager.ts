@@ -14,9 +14,10 @@
  */
 
 import { CodedError } from '@mkagent/shared/protocol'
-import type { BrowserInstanceInfo } from '@mkagent/shared/protocol'
+import type { BrowserInstanceInfo, BrowserSecurityChallenge } from '@mkagent/shared/protocol'
 import type {
   IBrowserPaneManager,
+  BrowserClickResult,
   BrowserScreenshotOptions,
   BrowserScreenshotRegionTarget,
   BrowserScreenshotResult,
@@ -245,8 +246,8 @@ export class RemoteBrowserPaneManager implements IBrowserPaneManager {
   async clickElement(
     id: string, ref: string,
     options?: { waitFor?: 'none' | 'navigation' | 'network-idle'; timeoutMs?: number },
-  ): Promise<void> {
-    await this.invoke('clickElement', [id, ref, options])
+  ): Promise<BrowserClickResult | void> {
+    return await this.invoke('clickElement', [id, ref, options])
   }
   async clickAtCoordinates(id: string, x: number, y: number): Promise<void> {
     await this.invoke('clickAtCoordinates', [id, x, y])
@@ -315,7 +316,7 @@ export class RemoteBrowserPaneManager implements IBrowserPaneManager {
   async getDownloads(id: string, options?: BrowserDownloadOptions): Promise<BrowserDownloadEntry[]> {
     return await this.invoke('getDownloads', [id, options])
   }
-  async detectSecurityChallenge(id: string): Promise<{ detected: boolean; provider: string; signals: string[] }> {
+  async detectSecurityChallenge(id: string): Promise<BrowserSecurityChallenge> {
     return await this.invoke('detectSecurityChallenge', [id])
   }
 

@@ -258,4 +258,47 @@ describe('Pi conversation flow with a local OpenAI-compatible endpoint', () => {
     } finally { agent.destroy() }
   }, 30_000)
 
+  it('Stop ends a live reply while its real background shell finishes and reports back', async () => {
+    let calls = 0
+    const server = Bun.serve({ hostname: '127.0.0.1', port: 0,
+      async fetch(request) {
+        if (!new URL(request.url).pathname.endsWith('/chat/completions')) return new Response('not found', { status: 404 })
+        calls++
+        if (calls === 1) return sse([
+          { id: 'stop-bg', choices: [{ index: 0, delta: { role: 'assistant', tool_calls: [{ index: 0, id: 'call-bg-stop', type: 'function', function: { name: 'bash', arguments: JSON.stringify({ command: 'echo before-stop; sleep 1; echo after-stop', run_in_background: true }) } }] } }] },
+          { id: 'stop-bg', choices: [{ index: 0, delta: {}, finish_reason: 'tool_calls' }] },
+        ])
+        return new Response(new ReadableStream({ start(controller) {
+          controller.enqueue(new TextEncoder().encode('data: ' + JSON.stringify({ id: 'live', choices: [{ index: 0, delta: { role: 'assistant', content: 'Still replying...' } }] }) + '\n\n'))
+        } }), { headers: { 'content-type': 'text/event-stream' } })
+      },
+    })
+    resources.push(server)
+    const root = mkdtempSync(join(tmpdir(), 'mkagent-stop-bg-'))
+    tempDirs.push(root)
+    const { PiAgent } = await import('../pi-agent.ts')
+    const agent = new PiAgent({ provider: 'pi', providerType: 'pi_compat', authType: 'none', model: 'flow-model',
+      workspace: { id: 'stop-workspace', name: 'Flow', slug: 'flow', rootPath: root, createdAt: 1 },
+      session: { id: 'flow-stop-bg', workspaceRootPath: root, createdAt: 1, lastUsedAt: 1, permissionMode: 'allow-all' },
+      isHeadless: true, skipConfigWatcher: true,
+      runtime: { paths: { node: process.execPath, piServer: resolve(import.meta.dir, '../../../../pi-agent-server/src/index.ts') }, baseUrl: `http://127.0.0.1:${server.port}/v1`, customEndpoint: { api: 'openai-completions' }, customModels: [{ id: 'flow-model', contextWindow: 16_384 }] },
+    })
+    const events: AgentEvent[] = []
+    agent.setPermissionMode('allow-all')
+    let report!: (event: Extract<AgentEvent, { type: 'task_completed' }>) => void
+    const completion = new Promise<Extract<AgentEvent, { type: 'task_completed' }>>(resolve => { report = resolve })
+    agent.setBackgroundEventSink(event => { events.push(event); if (event.type === 'task_completed') report(event) })
+    try {
+      for await (const event of agent.chat('Start the background command and keep replying.')) {
+        events.push(event)
+        if (event.type === 'text_delta') expect(agent.stopTurn()).toBe(true)
+      }
+      const completed = await completion
+      expect(completed.status).toBe('completed')
+      expect(completed.outputFile).toBeDefined()
+      expect(await Bun.file(completed.outputFile!).text()).toContain('after-stop')
+      expect(events.some(event => event.type === 'shell_backgrounded')).toBe(true)
+    } finally { agent.destroy() }
+  }, 30_000)
+
 })

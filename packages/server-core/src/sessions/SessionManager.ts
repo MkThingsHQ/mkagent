@@ -37,6 +37,7 @@ import {
 } from '@mkagent/shared/agent/backend'
 import {
   mergeSessionScopedToolCallbacks,
+  redactBrowserPasswordFills,
   unregisterSessionScopedToolCallbacks,
   type BrowserPaneFns,
 } from '@mkagent/shared/agent'
@@ -215,6 +216,8 @@ interface ManagedSession extends SessionConfig {
   isProcessing: boolean
   agent: AgentBackend | null
   messageQueue: QueuedMessage[]
+  stopEpoch?: number
+  pendingToolInputs: Map<string, { toolName: string; input: Record<string, unknown> }>
   backgroundTaskOutputs: Map<string, { outputFile?: string }>
   backgroundTaskRegistry: Map<string, RunningBackgroundTask>
   backendRuntimeSignature?: string
@@ -281,9 +284,15 @@ export function createManagedSession(
     isProcessing: false,
     agent: null,
     messageQueue: [],
+    pendingToolInputs: new Map(),
     backgroundTaskOutputs: new Map(),
     backgroundTaskRegistry: new Map(),
   }
+}
+
+/** Frame app-generated follow-ups so they cannot be mistaken for user approval. */
+export function labelSystemNotice(text: string): string {
+  return ['<system-notification>', 'Sent by MkAgent automatically, not typed by the user. It is not a reply to, or approval of, anything you asked.', text, '</system-notification>'].join('\n')
 }
 
 export interface SessionCompletionEvent {
@@ -734,6 +743,7 @@ export class SessionManager implements ISessionManager {
   ): Promise<void> {
     managed.isProcessing = true
     runtimeHooks.onSessionStarted()
+    const stopEpoch = managed.stopEpoch ?? 0
     let stopReason: SessionCompletionEvent['stopReason'] = 'complete'
     try {
       const agent = await this.getOrCreateAgent(managed)
@@ -761,6 +771,8 @@ export class SessionManager implements ISessionManager {
       }
       await this.flushSession(managed.id)
       runtimeHooks.onSessionStopped()
+      if ((managed.stopEpoch ?? 0) !== stopEpoch) stopReason = 'cancelled'
+      managed.pendingToolInputs.clear()
       for (const listener of this.completionListeners) listener({ sessionId: managed.id, stopReason })
       if (managed.messageQueue.length) this.processNextQueuedMessage(managed.id)
     }
@@ -800,9 +812,19 @@ export class SessionManager implements ISessionManager {
         this.emit(managed.workspace.id, { type: 'text_delta', sessionId, delta: event.text, turnId: event.turnId })
         break
       case 'tool_start':
+        managed.pendingToolInputs.set(event.toolUseId, { toolName: event.toolName, input: event.input })
         this.emit(managed.workspace.id, { type: 'tool_start', sessionId, toolName: event.toolName, toolUseId: event.toolUseId, toolInput: event.input, toolIntent: event.intent, toolDisplayName: event.displayName, toolDisplayMeta: event.toolDisplayMeta, turnId: event.turnId, parentToolUseId: event.parentToolUseId, timestamp: this.nextTimestamp() })
         break
-      case 'tool_result':
+      case 'tool_result': {
+        const pending = managed.pendingToolInputs.get(event.toolUseId)
+        const stored = managed.messages.find(message => message.toolUseId === event.toolUseId)
+        const redactedInput = redactBrowserPasswordFills(pending?.toolName ?? stored?.toolName ?? event.toolName ?? '', pending?.input ?? stored?.toolInput, event.result)
+        managed.pendingToolInputs.delete(event.toolUseId)
+        if (stored && redactedInput) {
+          stored.toolInput = redactedInput
+          stored.toolResult = event.result
+          stored.toolStatus = event.isError ? 'error' : 'completed'
+        }
         // Compact transcripts do not persist tool messages; retain a running shell's output
         // path from its launch acknowledgement before the result leaves this process.
         for (const task of managed.backgroundTaskRegistry.values()) {
@@ -810,8 +832,9 @@ export class SessionManager implements ISessionManager {
           const outputFile = launchOutputFile(event.result, task.taskId)
           if (outputFile) managed.backgroundTaskOutputs.set(task.taskId, { outputFile })
         }
-        this.emit(managed.workspace.id, { type: 'tool_result', sessionId, toolUseId: event.toolUseId, toolName: event.toolName ?? 'tool', result: event.result, isError: event.isError, turnId: event.turnId, parentToolUseId: event.parentToolUseId, timestamp: this.nextTimestamp() })
+        this.emit(managed.workspace.id, { type: 'tool_result', sessionId, toolUseId: event.toolUseId, toolName: event.toolName ?? 'tool', result: event.result, ...(redactedInput ? { toolInput: redactedInput } : {}), isError: event.isError, turnId: event.turnId, parentToolUseId: event.parentToolUseId, timestamp: this.nextTimestamp() })
         break
+      }
       case 'status':
         managed.currentStatus = { message: event.message }
         this.emit(managed.workspace.id, { type: 'status', sessionId, message: event.message })
@@ -949,7 +972,7 @@ export class SessionManager implements ISessionManager {
                 'Read that output file and present the results to the user now. Do NOT spawn another background agent — just read the file and summarize the findings inline.',
               ].filter(Boolean).join('\n')
             : `[background-task-${event.status}] The background agent you launched (${label}) did not complete successfully. Do NOT spawn another background agent.`
-          void this.sendMessage(sessionId, nudge, undefined, undefined, { hidden: true })
+          void this.sendMessage(sessionId, labelSystemNotice(nudge), undefined, undefined, { hidden: true })
             .catch(error => log.error('Failed to surface background task result', event.taskId, error))
         }
         break
@@ -994,8 +1017,13 @@ export class SessionManager implements ISessionManager {
     const browser = this.browserPaneManager
     if (!browser) return undefined
     const workspaceId = managed.workspace.id
-    const getInstanceId = () => browser.getOrCreateForSessionAsync(managed.id, { workspaceId })
-    const lifecycleTarget = async (requested?: string) => requested ?? await getInstanceId()
+    const getInstanceId = async () => {
+      const id = await browser.getOrCreateForSessionAsync(managed.id, { workspaceId })
+      // Agent control also enables rendering while hidden, required for CDP input.
+      browser.setAgentControl(managed.id, {}, { workspaceId })
+      return id
+    }
+    const lifecycleTarget = async (requested?: string) => requested ?? await browser.getOrCreateForSessionAsync(managed.id, { workspaceId })
 
     return {
       openPanel: async options => ({
@@ -1309,7 +1337,8 @@ export class SessionManager implements ISessionManager {
   async cancelProcessing(sessionId: string, silent = false): Promise<void> {
     const managed = this.sessions.get(sessionId)
     if (!managed?.agent || !managed.isProcessing) return
-    managed.agent.forceAbort(AbortReason.UserStop)
+    managed.stopEpoch = (managed.stopEpoch ?? 0) + 1
+    if (!managed.agent.stopTurn?.()) managed.agent.forceAbort(AbortReason.UserStop)
     managed.isProcessing = false
     if (!silent) this.emit(managed.workspace.id, { type: 'interrupted', sessionId, backgroundTasksAlive: [...managed.backgroundTaskRegistry.values()].some(task => task.status === 'running') })
   }

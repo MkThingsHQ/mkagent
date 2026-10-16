@@ -7,31 +7,29 @@ MkAgent derives its architecture, UI, and runtime from [Craft Agents OSS](https:
 | Item | Value |
 |---|---|
 | Repository | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.15.0` |
-| Commit | `20e98eed968b9663d80f9efd40c10d363ea0b781` |
+| Tag | `v0.15.1` |
+| Commit | `2e3ba53ff80b229a07e9d1884dc58f6733f22e1f` |
 
 ## Latest evaluated release
 
 | Item | Value |
 |---|---|
 | Evaluated on | `2026-10-16` |
-| Upstream tag | `v0.15.0` |
-| Upstream commit | `20e98eed968b9663d80f9efd40c10d363ea0b781` |
+| Upstream tag | `v0.15.1` |
+| Upstream commit | `2e3ba53ff80b229a07e9d1884dc58f6733f22e1f` |
 
-MkAgent 0.2.0 synchronizes the applicable v0.15.0 release from the previous v0.14.1 baseline (`332533f3096d12500012fe089c3f155e32af1c44`). No v0.15.1/v0.15.2 changes are included. The complete changed-path inventory is in [the review ledger](./sync/0.15.0-inventory.json); tests and verification boundaries are recorded in [the validation report](./sync/0.15.0-validation.md).
+MkAgent 0.2.1 synchronizes **only v0.15.0 → v0.15.1**. The previous baseline was `20e98eed968b9663d80f9efd40c10d363ea0b781`; v0.15.2/v0.15.3 are not included. All 129 upstream paths are classified in [the inventory](./sync/0.15.1-inventory.json), with evidence in [the validation report](./sync/0.15.1-validation.md).
 
-The new UI includes the navigator canvas and joined paper card, pinned sidebar footer, shared row grid, chat header actions, quiet work log and answer/footer, sunken code/diff wells, shell Run buttons, raised composer with mode/model/context chips, single-column settings/details, dialogs, notifications, motion preferences and contrast-solved themes. Compact WebUI retains touch targets, larger input text and keyboard-aware sizing. The Lite header/list omit configurable status/label and project controls rather than restoring those modules.
+Retained changes cover hidden-window clicks/keys/dropdowns and fresh screenshots, Linux off-screen capture, direct-click fallback, delayed security-challenge confirmation and foreground handoff, website sign-in popup deduplication, concise screenshot/network/console output, apostrophes in commands, browser password redaction, attachment limits advertised by the server, and shell-read prerequisites. The Browser/Skill prerequisite manager is connected to Pi's actual tool pipeline and reset on compaction. A stopped foreground reply reports cancellation; its independently owned background shell and child sessions keep running, and automatic completion follow-ups identify themselves as app-generated.
 
-Pi and its coordinated dependencies are pinned to 1.1.0. This includes the model catalog (Sonnet/Haiku 5.5, GPT-6.1 Sol), provider-aware utility models (Luna/Haiku/Flash), Cloudflare AI Gateway, Azure provider-id translation and endpoint hot updates, real tool failure results, and isolated main/utility resource loading. Pi's native Bash lacks Claude's background flag, so a permission-gated adapter runs the existing Pi Bash implementation with an owned abort controller and live output file. Stopping one task never scans global command lines. Its running/completed chips and output use the new upstream UI. Windows opaque-window fallback, paths with spaces, WebUI login styling, deep-link restoration and workspace slug routing are retained.
-
-Decision models/Guarded, Claude SDK and its source-tool fixes, Sources/MCP, Pages/Claude artifacts, Projects/task conductor, Automations/timezone and failure hooks, public sharing, labels/status editing and messaging remain excluded. Credential-prompt cancellation is part of the excluded Sources auth UI; local LLM OAuth/API-key setup remains covered by MkAgent's retained tests. Starter prompts use local files, web news and Skills instead of offering unavailable email/source setup.
+The existing v0.15.0 interface, MkAgent branding/configuration and coordinated Pi 1.1.0 dependencies remain. Sources/MCP resources/prompts, source token-refresh/auth fanout and non-default source API-key headers have no retained implementation. Projects memory append, conductor generation/dependency propagation, Pages, Automations, public sharing, messaging, labels/custom statuses, Claude SDK and Decision/Guarded remain excluded. Browser website login popup dedupe is retained independently of removed Sources authorization. Pi already handles PDFs as stored paths, so the Claude-only inline-PDF limit is inapplicable.
 
 ```bash
 # Fetch and check out only an independent disposable reference clone.
-git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0150
-git -C /tmp/craft-v0150 fetch origin refs/tags/v0.15.0
-git -C /tmp/craft-v0150 checkout --detach 20e98eed968b9663d80f9efd40c10d363ea0b781
-export CRAFT_AGENT_SOURCE=/tmp/craft-v0150
+git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0151
+git -C /tmp/craft-v0151 fetch origin refs/tags/v0.15.1
+git -C /tmp/craft-v0151 checkout --detach 2e3ba53ff80b229a07e9d1884dc58f6733f22e1f
+export CRAFT_AGENT_SOURCE=/tmp/craft-v0151
 ```
 
 When upstream publishes a new tag worth evaluating:

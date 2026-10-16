@@ -8,6 +8,18 @@ All notable changes to MkAgent are documented in this file. The format follows
 
 Add user-visible changes here before running `bun run release:prepare <version>`.
 
+## [0.2.1] - 2026-10-16
+
+### Improved
+
+- Synchronized applicable Craft v0.15.1 fixes while retaining MkAgent's Pi 1.1.0 and Lite product boundary.
+- Made clicks, keys, dropdowns and fresh screenshots reliable in hidden browser windows, including direct element click fallback and Linux capture positioning.
+- Confirmed real security challenges before bringing the browser forward, deduplicated website sign-in popups, and trimmed screenshot, console and network output.
+- Kept browser password entries out of completed tool inputs, stored transcripts and session exports; fixed commands containing apostrophes.
+- Preserved background commands and child sessions when stopping a reply, reported interrupted turns as cancelled, and identified automatic completion follow-ups clearly.
+- Counted shell reads of browser and Skill guides toward prerequisites, including cat, head and sed.
+- Checked attachment sizes against the connected server's limit before reading/sending, with file-specific limits and preserved drafts.
+
 ## [0.2.0] - 2026-10-16
 
 ### Added
@@ -89,6 +101,7 @@ Add user-visible changes here before running `bun run release:prepare <version>`
 - Local session search, flags, archives, import, export, and branching.
 
 [Unreleased]: https://github.com/MkThingsHQ/mkagent/releases
+[0.2.1]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.1
 [0.2.0]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.0
 [0.1.3]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.1.3
 [0.1.2]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.1.2
