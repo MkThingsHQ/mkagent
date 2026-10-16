@@ -9,7 +9,7 @@
  * Pi backend.
  */
 
-import type { AgentEvent as CraftAgentEvent, ContextUsageSnapshot } from '@mkagent/core/types';
+import type { AgentEvent as CraftAgentEvent, AgentEventUsage, ContextUsageSnapshot } from '@mkagent/core/types';
 import { contextAfterCompaction, contextFromPi } from '../../context-usage.ts';
 import type { PiContextUsagePayload } from './protocol.ts';
 import type {
@@ -355,6 +355,19 @@ export class PiEventAdapter extends BaseEventAdapter {
     return `${base}__${prefix}${this.subTurnCounter++}`;
   }
 
+  /** Known billing for completed API messages, also used when Stop closes the queue. */
+  getTurnUsage(): AgentEventUsage | undefined {
+    if (!this.lastUsage) return undefined;
+    return {
+      inputTokens: this.lastUsage.input + (this.lastUsage.cacheRead || 0),
+      outputTokens: this.turnOutputTokens,
+      cacheReadTokens: this.lastUsage.cacheRead,
+      cacheCreationTokens: this.lastUsage.cacheWrite,
+      costUsd: this.turnCostUsd,
+      contextWindow: this.contextWindow,
+    };
+  }
+
   protected onTurnStart(): void {
     this.toolNames.clear();
     this.hasStreamedDeltas = false;
@@ -462,22 +475,8 @@ export class PiEventAdapter extends BaseEventAdapter {
           // The retried run finished cleanly.
           this.retryState = 'none';
         }
-        if (this.lastUsage) {
-          const inputTokens = this.lastUsage.input + (this.lastUsage.cacheRead || 0);
-          yield {
-            type: 'complete',
-            usage: {
-              inputTokens,
-              outputTokens: this.turnOutputTokens,
-              cacheReadTokens: this.lastUsage.cacheRead,
-              cacheCreationTokens: this.lastUsage.cacheWrite,
-              costUsd: this.turnCostUsd,
-              contextWindow: this.contextWindow,
-            },
-          };
-        } else {
-          yield { type: 'complete' };
-        }
+        const usage = this.getTurnUsage();
+        yield usage ? { type: 'complete', usage } : { type: 'complete' };
         break;
       }
 

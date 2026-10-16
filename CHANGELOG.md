@@ -20,6 +20,7 @@ Add user-visible changes here before running `bun run release:prepare <version>`
 - Preserve Anthropic tool schemas with `additionalProperties: false` through Pi's network interceptor.
 - Allow overflowing session information panels to scroll on Desktop and mobile, with cumulative output tokens and estimated session cost.
 - Keep Pi forks at the selected reply even when the SDK message has no id.
+- Preserve known API usage when Stop ends a later streaming reply in the same turn.
 
 ### Improved
 

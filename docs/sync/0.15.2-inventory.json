@@ -380,6 +380,10 @@
     {
       "path": "packages/pi-agent-server/src/index.ts",
       "reason": "Actual Pi 1.1 SDK assistant messages can omit id. Generate an app correlation id before forwarding and persist the post-append leaf, so selected-message forks do not include later parent messages; actual fork runtime failed before fix and passes after."
+    },
+    {
+      "path": "packages/shared/src/agent/pi-agent.ts",
+      "reason": "Actual Stop regression lost a completed tool API usage when foreground queue closed before agent_end. Reuse adapter turn snapshot to attach known usage to terminal queue events or emit it once on early queue closure; never estimate unfinished-stream billing or stop independent background tasks."
     }
   ]
 }

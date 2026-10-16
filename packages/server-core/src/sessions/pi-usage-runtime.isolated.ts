@@ -12,11 +12,19 @@ it('counts real Pi API calls across turns, disk reload, fork and independent chi
   const workspace = { id: 'ws-usage', name: 'Usage', slug: 'usage', rootPath: workspaceRoot, createdAt: 1 }
   let calls = 0
   const requests: any[] = []
+  let signalStreaming: () => void = () => {}
+  const streaming = new Promise<void>(resolve => { signalStreaming = resolve })
   const endpoint = Bun.serve({ hostname: '127.0.0.1', port: 0, async fetch(request) {
     const body = await request.json() as any
     requests.push(body)
     calls++
-    const toolCall = calls <= 2
+    if (calls === 9) {
+      signalStreaming()
+      return new Response(new ReadableStream({ start(controller) {
+        controller.enqueue(new TextEncoder().encode('data: ' + JSON.stringify({ id: 'stopped', choices: [{ index: 0, delta: { role: 'assistant', content: 'Streaming' } }] }) + '\n\n'))
+      } }), { headers: { 'content-type': 'text/event-stream' } })
+    }
+    const toolCall = calls <= 2 || calls === 8
     const chunk = (delta: unknown, finish_reason: string | null = null) => ({ id: `api-${calls}`, choices: [{ index: 0, delta, finish_reason }] })
     const pieces = toolCall ? [
       chunk({ role: 'assistant' }),
@@ -92,6 +100,13 @@ it('counts real Pi API calls across turns, disk reload, fork and independent chi
     await manager.sendMessage(parent.id, 'Resume parent after restart')
     expect(loadSession(workspaceRoot, parent.id)?.tokenUsage.outputTokens).toBe(170)
     expect(loadSession(workspaceRoot, branch.id)?.tokenUsage.outputTokens).toBe(50)
+    const interrupted = manager.sendMessage(parent.id, 'Inspect once then stream until stopped')
+    await streaming
+    await manager.cancelProcessing(parent.id)
+    await interrupted
+    // The finished tool API's 80 output tokens must survive Stop; the in-flight
+    // ninth response has no final usage yet and cannot be invented.
+    expect(loadSession(workspaceRoot, parent.id)?.tokenUsage.outputTokens).toBe(250)
   } finally {
     manager.cleanup()
     endpoint.stop()

@@ -1535,7 +1535,7 @@
       "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
     },
     "packages/shared/src/agent/backend/pi/event-adapter.ts": {
-      "sha256": "4c53d742dc38152e2d38fe3c88847ec2502097514d579905e7a3f261994094ef",
+      "sha256": "df6a08d563fe114b74c9d898ac00e79f5a5e2964fc72ef67932d3ef4ae9b1a14",
       "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path; v0.15.2: Sum every assistant API completion output/cost for the app turn; final input/cache stay latest. Also reset stale lastUsage, deduplicate SDK ids, count billable partial retries, retain recovery queue and independent occupancy semantics."
     },
     "packages/shared/src/agent/backend/pi/protocol.ts": {
@@ -1651,8 +1651,8 @@
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/src/agent/pi-agent.ts": {
-      "sha256": "5e3ff1dc20c461cf4fa24eaa0d73b48d1ebd5bed83c212e7f7b1989071742f15",
-      "reason": "Pi-only subprocess client retains LLM OAuth and runtime configuration; adds background task event/cancellation transport without Claude SDK"
+      "sha256": "a2e402b89d3d19613f7930285998a14debe5f50007ebcdf692a3668dbd522d02",
+      "reason": "Pi-only subprocess client retains LLM OAuth and runtime configuration; adds background task event/cancellation transport without Claude SDK; v0.15.2: Actual Stop regression lost a completed tool API usage when foreground queue closed before agent_end. Reuse adapter turn snapshot to attach known usage to terminal queue events or emit it once on early queue closure; never estimate unfinished-stream billing or stop independent background tasks."
     },
     "packages/shared/src/agent/plan-types.ts": {
       "sha256": "529cc7377490361bef7e742729c31f9adffdadb5b77a8eb0d5eda3ccfa2d9aaf",
@@ -2169,7 +2169,7 @@
       "reason": "MkAgent-specific file required by branding, packaging, or the locked Lite boundary"
     },
     "CHANGELOG.md": {
-      "sha256": "95ad3018b285beef58dfcdf5ad2e1cd297f832127b7a4260ccd4e26fe057d4d7",
+      "sha256": "2b66cc7ac35aa647f0b87a88879a242f49d2617a5f1b377a9972b89bcf92c7b4",
       "reason": "MkAgent-specific release metadata required by the release workflow"
     },
     "README.zh.md": {
@@ -2209,7 +2209,7 @@
       "reason": "MkAgent 0.2.1 user-visible release notes for applicable Craft v0.15.1 fixes."
     },
     "apps/electron/resources/release-notes/0.2.2.md": {
-      "sha256": "38ef617cbaa641d36faa217d20b9fe8bb42560c283feadf9173939eea8526f89",
+      "sha256": "5149c51841fadcd0f670afa859b3cadeaf15dd04eaa3e2470402f3b87a3b7219",
       "reason": "MkAgent 0.2.2 user-visible release notes for applicable Craft v0.15.2 fixes."
     },
     "apps/electron/resources/tool-icons/mkagent.svg": {
@@ -2281,7 +2281,7 @@
       "reason": "Hermetic real config and populated SessionManager signatures verify native Azure and Cloudflare endpoint-only edits reach the live agent"
     },
     "packages/server-core/src/sessions/pi-usage-runtime.isolated.ts": {
-      "sha256": "7a530f1a5b1295175170d26c9ee6cd0dcad52e384c0596354243e84229c55df7",
+      "sha256": "db7965882bffecfa5972f97eb874e5598451d54372e60d94759b17925804c11f",
       "reason": "MkAgent regression for retained Pi/Lite functionality; reviewed as part of v0.15.2 sync."
     },
     "packages/server-core/src/sessions/retained-session-events.test.ts": {
