@@ -1,3 +1,4 @@
+import { validateChatStarters } from '../../utils/chat-starters'
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname } from 'path'
 import { RPC_CHANNELS } from '@mkagent/shared/protocol'
@@ -110,6 +111,7 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
 
     return {
       name: config?.name,
+      chatStarters: config?.chatStarters,
       model: config?.defaults?.model,
       permissionMode: config?.defaults?.permissionMode,
       cyclablePermissionModes: config?.defaults?.cyclablePermissionModes,
@@ -127,7 +129,7 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
       : value
 
     // Validate key is a known workspace setting
-    const validKeys = ['name', 'model', 'permissionMode', 'cyclablePermissionModes', 'thinkingLevel', 'workingDirectory', 'defaultLlmConnection']
+    const validKeys = ['chatStarters', 'name', 'model', 'permissionMode', 'cyclablePermissionModes', 'thinkingLevel', 'workingDirectory', 'defaultLlmConnection']
     if (!validKeys.includes(key)) {
       throw new Error(`Invalid workspace setting key: ${key}. Valid keys: ${validKeys.join(', ')}`)
     }
@@ -154,7 +156,9 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
     }
 
     // Handle 'name' specially - it's a top-level config property, not in defaults
-    if (key === 'name') {
+    if (key === 'chatStarters') {
+      config.chatStarters = validateChatStarters(normalizedValue)
+    } else if (key === 'name') {
       config.name = String(normalizedValue).trim()
     } else {
       // Update the setting in defaults

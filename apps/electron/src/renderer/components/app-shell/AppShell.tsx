@@ -38,7 +38,7 @@ import { SidebarPane } from "./SidebarPane"
 import { ShellResizeHandle } from "./ShellResizeHandle"
 import { useSession } from "@/hooks/useSession"
 import { ensureSessionMessagesLoadedAtom } from "@/atoms/sessions"
-import { AppShellProvider, type AppShellContextType } from "@/context/AppShellContext"
+import { AppShellProvider, WORKSPACE_SETTINGS_CHANGED_EVENT, type AppShellContextType } from "@/context/AppShellContext"
 import { EscapeInterruptProvider, useEscapeInterrupt } from "@/context/EscapeInterruptContext"
 import { useTheme } from "@/context/ThemeContext"
 import { getResizeGradientStyle } from "@/hooks/useResizeGradient"
@@ -321,19 +321,28 @@ function AppShellContent({
   // Enabled permission modes for Shift+Tab cycling (min 2 modes)
   const [enabledModes, setEnabledModes] = React.useState<PermissionMode[]>(['safe', 'ask', 'allow-all'])
 
-  // Load workspace settings for permission-mode cycling on workspace change
+  const [chatStarters, setChatStarters] = React.useState<Array<{ label: string; prompt: string }>>()
+  // Dispose stale workspace reads when switching workspace or refreshing settings.
+  const [workspaceSettingsVersion, refreshWorkspaceSettings] = React.useReducer(n => n + 1, 0)
   React.useEffect(() => {
+    let disposed = false
+    setChatStarters(undefined)
     if (!activeWorkspaceId) return
-    window.electronAPI.getWorkspaceSettings(activeWorkspaceId).then((settings) => {
-      if (settings) {
-        // Load cyclablePermissionModes from workspace settings
-        if (settings.cyclablePermissionModes && settings.cyclablePermissionModes.length >= 2) {
-          setEnabledModes(settings.cyclablePermissionModes)
-        }
-      }
-    }).catch((err) => {
-      console.error('[Chat] Failed to load workspace settings:', err)
-    })
+    window.electronAPI.getWorkspaceSettings(activeWorkspaceId).then(settings => {
+      if (disposed) return
+      const modes = settings?.cyclablePermissionModes
+      setEnabledModes(modes && modes.length >= 2 ? modes : ['safe', 'ask', 'allow-all'])
+      setChatStarters(settings?.chatStarters?.length ? settings.chatStarters : undefined)
+    }).catch(err => console.error('[Chat] Failed to load workspace settings:', err))
+    return () => { disposed = true }
+  }, [activeWorkspaceId, workspaceSettingsVersion])
+  React.useEffect(() => {
+    const handleChanged = (event: Event) => {
+      const workspaceId = (event as CustomEvent<{ workspaceId?: string }>).detail?.workspaceId
+      if (!workspaceId || workspaceId === activeWorkspaceId) refreshWorkspaceSettings()
+    }
+    window.addEventListener(WORKSPACE_SETTINGS_CHANGED_EVENT, handleChanged)
+    return () => window.removeEventListener(WORKSPACE_SETTINGS_CHANGED_EVENT, handleChanged)
   }, [activeWorkspaceId])
 
   // Reset UI state when workspace changes
@@ -737,6 +746,7 @@ function AppShellContent({
     ...contextValue,
     onDeleteSession: handleDeleteSession,
     skills,
+    chatStarters,
     activeSessionWorkingDirectory,
     enabledModes,
     rightSidebarButton: null,
@@ -745,7 +755,7 @@ function AppShellContent({
     isSearchModeActive: searchActive,
     chatDisplayRef,
     onChatMatchInfoChange: handleChatMatchInfoChange,
-  }), [contextValue, handleDeleteSession, skills, activeSessionWorkingDirectory, enabledModes, isAutoCompact, searchActive, searchQuery, handleChatMatchInfoChange])
+  }), [contextValue, handleDeleteSession, skills, chatStarters, activeSessionWorkingDirectory, enabledModes, isAutoCompact, searchActive, searchQuery, handleChatMatchInfoChange])
 
   // Persist sidebar visibility to localStorage
   React.useEffect(() => {

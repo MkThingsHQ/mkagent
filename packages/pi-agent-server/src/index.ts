@@ -1260,7 +1260,9 @@ function handleSessionEvent(event: AgentSessionEvent): void {
       // any subsequent SDK event is dispatched, so the follow-up
       // `pi_turn_anchor` event is delivered to the main process in the right
       // order (after this `message_end`, before the next event).
-      const sdkMessageId = (msg as { id?: string }).id;
+      // Pi 1.1 assistant messages may have no id. Supply an app correlation id
+      // so the persisted reply can still be mapped to the actual SDK leaf.
+      const sdkMessageId = (msg as { id?: string }).id ?? crypto.randomUUID();
       if (sdkMessageId) {
         forwardedEvent = {
           ...(event as Record<string, unknown>),

@@ -53,6 +53,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
     onInputChange,
     onAttachmentsChange,
     skills,
+    chatStarters,
     enabledModes,
     onRenameSession,
     onFlagSession,
@@ -450,6 +451,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
               onAttachmentsChange={handleAttachmentsChange}
 
               skills={skills}
+          chatStarters={chatStarters}
               workspaceId={activeWorkspaceId || undefined}
 
               workingDirectory={sessionMeta.workingDirectory}
@@ -523,6 +525,7 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
           onAttachmentsChange={handleAttachmentsChange}
 
           skills={skills}
+          chatStarters={chatStarters}
 
 
           workspaceId={activeWorkspaceId || undefined}

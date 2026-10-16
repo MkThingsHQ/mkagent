@@ -1,0 +1,385 @@
+{
+  "previousTag": "v0.15.1",
+  "previousCommit": "2e3ba53ff80b229a07e9d1884dc58f6733f22e1f",
+  "targetTag": "v0.15.2",
+  "targetCommit": "b879152d2a4e1232bcd4efb7d8c4568a24638f25",
+  "changedPaths": 74,
+  "files": [
+    {
+      "path": "apps/cli/package.json",
+      "classification": "RELEASE",
+      "reason": "Prepare MkAgent 0.2.2 for retained workspaces and lockfile; root/CLI adopt Bun type range ^1.4.2 and locked 1.4.2 (same upstream version). No upstream product version or removed workspaces restored."
+    },
+    {
+      "path": "apps/electron/package.json",
+      "classification": "RELEASE",
+      "reason": "Prepare MkAgent 0.2.2 for retained workspaces and lockfile; root/CLI adopt Bun type range ^1.4.2 and locked 1.4.2 (same upstream version). No upstream product version or removed workspaces restored."
+    },
+    {
+      "path": "apps/electron/resources/release-notes/0.15.2.md",
+      "classification": "RELEASE",
+      "reason": "Replace upstream claims with MkAgent 0.2.2 user-visible notes covering applicable Pi/Lite changes only."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+      "classification": "SYNC",
+      "reason": "Wire workspace settings through shell/context/chat rendering to actual composer submit with skillSlugs. Reload on saved settings; ignore stale workspace reads; source selection branches remain absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx",
+      "classification": "SYNC",
+      "reason": "Wire workspace settings through shell/context/chat rendering to actual composer submit with skillSlugs. Reload on saved settings; ignore stale workspace reads; source selection branches remain absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/SessionInfoPopover.tsx",
+      "classification": "SYNC",
+      "reason": "Import flex-1/min-h-0 container and overflow-y-auto scroll fix; verify oversized file listing in actual popover and mobile drawer. Keep the mobile drawer wrapper flex-constrained; show retained cumulative output/estimated SDK cost in the info panel for direct UI verification."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/NewChatSuggestions.tsx",
+      "classification": "SYNC",
+      "reason": "Adapt custom labels/prompts, maximum three, unique chip keys and qualified/unqualified Skill mentions. Preserve Lite automatic news/files/skills suggestions. Exclude only Sources ranking/enablement tests and paths; empty config restores automatic prompts."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/__tests__/new-chat-suggestions.test.ts",
+      "classification": "SYNC",
+      "reason": "Adapt custom labels/prompts, maximum three, unique chip keys and qualified/unqualified Skill mentions. Preserve Lite automatic news/files/skills suggestions. Exclude only Sources ranking/enablement tests and paths; empty config restores automatic prompts."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/new-chat-suggestions.ts",
+      "classification": "SYNC",
+      "reason": "Adapt custom labels/prompts, maximum three, unique chip keys and qualified/unqualified Skill mentions. Preserve Lite automatic news/files/skills suggestions. Exclude only Sources ranking/enablement tests and paths; empty config restores automatic prompts."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/settings/SettingsRow.tsx",
+      "classification": "SYNC",
+      "reason": "Reuse ReactNode description support for Skill badges in saved starters."
+    },
+    {
+      "path": "apps/electron/src/renderer/context/AppShellContext.tsx",
+      "classification": "SYNC",
+      "reason": "Wire workspace settings through shell/context/chat rendering to actual composer submit with skillSlugs. Reload on saved settings; ignore stale workspace reads; source selection branches remain absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/ChatPage.tsx",
+      "classification": "SYNC",
+      "reason": "Wire workspace settings through shell/context/chat rendering to actual composer submit with skillSlugs. Reload on saved settings; ignore stale workspace reads; source selection branches remain absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx",
+      "classification": "SYNC",
+      "reason": "Import production starter editor with RichTextInput/skill mention menu and badges, add/delete/save/error handling and settings refresh event. Cap additions at three and scope unmounts to workspace. Remove source mentions and Claude/Decision performance controls individually."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/ai-settings-loader.test.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/ai-settings-loader.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/mock-utils.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Developer playground removed from MkAgent; production starter editor/chips are imported and exercised directly instead."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/chat-starters.tsx",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Developer playground removed from MkAgent; production starter editor/chips are imported and exercised directly instead."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/index.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Developer playground removed from MkAgent; production starter editor/chips are imported and exercised directly instead."
+    },
+    {
+      "path": "apps/electron/src/shared/__tests__/ipc-channels.test.ts",
+      "classification": "ADAPTED_TEST",
+      "reason": "Only tests new Claude-only compact/model channels; do not add absent channels. Retained IPC contract is already covered by channel-map-parity.test.ts."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types."
+    },
+    {
+      "path": "apps/electron/src/transport/channel-map.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types."
+    },
+    {
+      "path": "apps/viewer/package.json",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Viewer/public sharing or external messaging workspace is absent from Lite; no release package is restored."
+    },
+    {
+      "path": "apps/webui/package.json",
+      "classification": "RELEASE",
+      "reason": "Prepare MkAgent 0.2.2 for retained workspaces and lockfile; root/CLI adopt Bun type range ^1.4.2 and locked 1.4.2 (same upstream version). No upstream product version or removed workspaces restored."
+    },
+    {
+      "path": "bun.lock",
+      "classification": "RELEASE",
+      "reason": "Prepare MkAgent 0.2.2 for retained workspaces and lockfile; root/CLI adopt Bun type range ^1.4.2 and locked 1.4.2 (same upstream version). No upstream product version or removed workspaces restored."
+    },
+    {
+      "path": "package.json",
+      "classification": "RELEASE",
+      "reason": "Prepare MkAgent 0.2.2 for retained workspaces and lockfile; root/CLI adopt Bun type range ^1.4.2 and locked 1.4.2 (same upstream version). No upstream product version or removed workspaces restored."
+    },
+    {
+      "path": "packages/core/CLAUDE.md",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only documents/adds runningTotals/lastRunningTotals for cumulative Claude SDK accounting. Pi completion is per-turn; no running-total state needed. Pi cumulative output/cost is implemented in SessionManager/addTurnUsage and verified across persistence/restart/fork."
+    },
+    {
+      "path": "packages/core/package.json",
+      "classification": "RELEASE",
+      "reason": "Prepare MkAgent 0.2.2 for retained workspaces and lockfile; root/CLI adopt Bun type range ^1.4.2 and locked 1.4.2 (same upstream version). No upstream product version or removed workspaces restored."
+    },
+    {
+      "path": "packages/core/src/types/message.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only documents/adds runningTotals/lastRunningTotals for cumulative Claude SDK accounting. Pi completion is per-turn; no running-total state needed. Pi cumulative output/cost is implemented in SessionManager/addTurnUsage and verified across persistence/restart/fork."
+    },
+    {
+      "path": "packages/messaging-gateway/package.json",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Viewer/public sharing or external messaging workspace is absent from Lite; no release package is restored."
+    },
+    {
+      "path": "packages/messaging-whatsapp-worker/package.json",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Viewer/public sharing or external messaging workspace is absent from Lite; no release package is restored."
+    },
+    {
+      "path": "packages/pi-agent-server/package.json",
+      "classification": "RELEASE",
+      "reason": "Prepare MkAgent 0.2.2 for retained workspaces and lockfile; root/CLI adopt Bun type range ^1.4.2 and locked 1.4.2 (same upstream version). No upstream product version or removed workspaces restored."
+    },
+    {
+      "path": "packages/server-core/package.json",
+      "classification": "RELEASE",
+      "reason": "Prepare MkAgent 0.2.2 for retained workspaces and lockfile; root/CLI adopt Bun type range ^1.4.2 and locked 1.4.2 (same upstream version). No upstream product version or removed workspaces restored."
+    },
+    {
+      "path": "packages/server-core/src/decisions/adaptive-thinking.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Decision/Guarded remain deferred. Uncertain-demand high thinking cap and subagent model rating/toggle/usage tags depend on the excluded decision client; no automatic Pi thinking/model policy is introduced."
+    },
+    {
+      "path": "packages/server-core/src/decisions/adaptive-thinking.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Decision/Guarded remain deferred. Uncertain-demand high thinking cap and subagent model rating/toggle/usage tags depend on the excluded decision client; no automatic Pi thinking/model policy is introduced."
+    },
+    {
+      "path": "packages/server-core/src/decisions/subagent-models.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Decision/Guarded remain deferred. Uncertain-demand high thinking cap and subagent model rating/toggle/usage tags depend on the excluded decision client; no automatic Pi thinking/model policy is introduced."
+    },
+    {
+      "path": "packages/server-core/src/decisions/subagent-models.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Decision/Guarded remain deferred. Uncertain-demand high thinking cap and subagent model rating/toggle/usage tags depend on the excluded decision client; no automatic Pi thinking/model policy is introduced."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/settings.ts",
+      "classification": "SYNC",
+      "reason": "Import chatStarters read/write hunks using existing workspace RPCs, top-level persisted config; validate array, maximum three and non-empty label/prompt. Omit only Claude compact-window/subagent-model RPCs."
+    },
+    {
+      "path": "packages/server-core/src/sessions/SessionManager.ts",
+      "classification": "SYNC",
+      "reason": "Adapt shared cumulative usage hunk to Lite manager (previously overwrote whole turn usage). Pi output/cost adds per turn; final input/cache remain latest call; context occupancy independent. Claude branchParent/startTotals, CLI autoCompactWindow and decision picker omitted individually. Pi branches already start with fresh billing; verified actual SDK fork, child model and restart."
+    },
+    {
+      "path": "packages/server-core/src/sessions/turn-usage.test.ts",
+      "classification": "SYNC",
+      "reason": "Adapt upstream nine cases (one Pi accumulation, eight Claude-running-total/branch-parent cases) to three real Lite SessionManager cases plus actual Pi SDK runtime tests covering multi-call/multi-turn/disk/fork/child/restart; excluded Claude accounting is absent."
+    },
+    {
+      "path": "packages/server-core/src/sessions/turn-usage.ts",
+      "classification": "SYNC",
+      "reason": "Adapt only applicable per-turn Pi accumulation; no Claude running-total or branch transcript cost scaffolding. Preserve independent SDK occupancy."
+    },
+    {
+      "path": "packages/server/package.json",
+      "classification": "RELEASE",
+      "reason": "Prepare MkAgent 0.2.2 for retained workspaces and lockfile; root/CLI adopt Bun type range ^1.4.2 and locked 1.4.2 (same upstream version). No upstream product version or removed workspaces restored."
+    },
+    {
+      "path": "packages/session-tools-core/package.json",
+      "classification": "RELEASE",
+      "reason": "Prepare MkAgent 0.2.2 for retained workspaces and lockfile; root/CLI adopt Bun type range ^1.4.2 and locked 1.4.2 (same upstream version). No upstream product version or removed workspaces restored."
+    },
+    {
+      "path": "packages/shared/CLAUDE.md",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Changed documentation describes Claude running totals, fork baseline, CLI compaction and model aliases. Retained Pi guidance/actual implementation is documented in the v0.15.2 validation report; excluded Claude runtime documentation is not restored."
+    },
+    {
+      "path": "packages/shared/package.json",
+      "classification": "RELEASE",
+      "reason": "Prepare MkAgent 0.2.2 for retained workspaces and lockfile; root/CLI adopt Bun type range ^1.4.2 and locked 1.4.2 (same upstream version). No upstream product version or removed workspaces restored."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/claude-event-adapter.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Claude SDK Agent/Task model aliases, built-in/custom .claude/agents model policy and running session totals have no Lite backend. Pi spawn_session preserves explicit request.model via nullish fallback and is covered by real child runtime; no Claude rank/picker module is restored."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/pi-event-adapter.test.ts",
+      "classification": "SYNC",
+      "reason": "Retain upstream multi-API billing regression and add duplicate-id, usage-free next-turn and partial retry cases; real Pi SDK/runtime complements mocked event coverage."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/subagent-model.test.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Claude SDK Agent/Task model aliases, built-in/custom .claude/agents model policy and running session totals have no Lite backend. Pi spawn_session preserves explicit request.model via nullish fallback and is covered by real child runtime; no Claude rank/picker module is restored."
+    },
+    {
+      "path": "packages/shared/src/agent/backend/claude/event-adapter.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Claude SDK Agent/Task model aliases, built-in/custom .claude/agents model policy and running session totals have no Lite backend. Pi spawn_session preserves explicit request.model via nullish fallback and is covered by real child runtime; no Claude rank/picker module is restored."
+    },
+    {
+      "path": "packages/shared/src/agent/backend/pi/event-adapter.ts",
+      "classification": "SYNC",
+      "reason": "Sum every assistant API completion output/cost for the app turn; final input/cache stay latest. Also reset stale lastUsage, deduplicate SDK ids, count billable partial retries, retain recovery queue and independent occupancy semantics."
+    },
+    {
+      "path": "packages/shared/src/agent/backend/types.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Reviewed every changed hunk: only Claude autoCompactWindow and Claude-only decision subagentModelPicker type/property/export. Retained Pi/BaseAgent contract does not consume either; omit these inert settings and exports."
+    },
+    {
+      "path": "packages/shared/src/agent/base-agent.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Reviewed every changed hunk: only Claude autoCompactWindow and Claude-only decision subagentModelPicker type/property/export. Retained Pi/BaseAgent contract does not consume either; omit these inert settings and exports."
+    },
+    {
+      "path": "packages/shared/src/agent/claude-agent.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Claude SDK Agent/Task model aliases, built-in/custom .claude/agents model policy and running session totals have no Lite backend. Pi spawn_session preserves explicit request.model via nullish fallback and is covered by real child runtime; no Claude rank/picker module is restored."
+    },
+    {
+      "path": "packages/shared/src/agent/core/subagent-model.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Claude SDK Agent/Task model aliases, built-in/custom .claude/agents model policy and running session totals have no Lite backend. Pi spawn_session preserves explicit request.model via nullish fallback and is covered by real child runtime; no Claude rank/picker module is restored."
+    },
+    {
+      "path": "packages/shared/src/agent/index.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Reviewed every changed hunk: only Claude autoCompactWindow and Claude-only decision subagentModelPicker type/property/export. Retained Pi/BaseAgent contract does not consume either; omit these inert settings and exports."
+    },
+    {
+      "path": "packages/shared/src/config/__tests__/auto-compact-window.test.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types."
+    },
+    {
+      "path": "packages/shared/src/config/storage.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types."
+    },
+    {
+      "path": "packages/shared/src/decisions/settings.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Decision/Guarded remain deferred. Uncertain-demand high thinking cap and subagent model rating/toggle/usage tags depend on the excluded decision client; no automatic Pi thinking/model policy is introduced."
+    },
+    {
+      "path": "packages/shared/src/decisions/usage.ts",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "Decision/Guarded remain deferred. Uncertain-demand high thinking cap and subagent model rating/toggle/usage tags depend on the excluded decision client; no automatic Pi thinking/model policy is introduced."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/de.json",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "MkAgent supports English and Simplified Chinese only; absent German/Spanish/Hungarian/Japanese/Polish locale files remain excluded, while retained locale starter strings are synchronized."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/en.json",
+      "classification": "SYNC",
+      "reason": "Import Chat Starters strings, adapting Skill-only guidance; retain English/Chinese parity and sort order. Omit new Claude/Decision settings strings."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/es.json",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "MkAgent supports English and Simplified Chinese only; absent German/Spanish/Hungarian/Japanese/Polish locale files remain excluded, while retained locale starter strings are synchronized."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/hu.json",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "MkAgent supports English and Simplified Chinese only; absent German/Spanish/Hungarian/Japanese/Polish locale files remain excluded, while retained locale starter strings are synchronized."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ja.json",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "MkAgent supports English and Simplified Chinese only; absent German/Spanish/Hungarian/Japanese/Polish locale files remain excluded, while retained locale starter strings are synchronized."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/pl.json",
+      "classification": "EXCLUDED_MODULE",
+      "reason": "MkAgent supports English and Simplified Chinese only; absent German/Spanish/Hungarian/Japanese/Polish locale files remain excluded, while retained locale starter strings are synchronized."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "classification": "SYNC",
+      "reason": "Import Chat Starters strings, adapting Skill-only guidance; retain English/Chinese parity and sort order. Omit new Claude/Decision settings strings."
+    },
+    {
+      "path": "packages/shared/src/prompts/__tests__/system.test.ts",
+      "classification": "SYNC",
+      "reason": "Adapt narrow-task, passed context, ranged reads and concise-result/file guidance to actual Pi spawn_session; omit Claude Explore agent type and Claude subagent Settings claims. Explicit request models already preserved and verified through spawn callback."
+    },
+    {
+      "path": "packages/shared/src/prompts/system.ts",
+      "classification": "SYNC",
+      "reason": "Adapt narrow-task, passed context, ranged reads and concise-result/file guidance to actual Pi spawn_session; omit Claude Explore agent type and Claude subagent Settings claims. Explicit request models already preserved and verified through spawn callback."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types."
+    },
+    {
+      "path": "packages/shared/src/protocol/dto.ts",
+      "classification": "SYNC",
+      "reason": "Add ChatStarter and chatStarters to workspace config and shared WorkspaceSettings RPC DTO; no Claude settings or Source types restored."
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types."
+    },
+    {
+      "path": "packages/shared/src/sessions/types.ts",
+      "classification": "EXCLUDED_HUNKS",
+      "reason": "Only documents/adds runningTotals/lastRunningTotals for cumulative Claude SDK accounting. Pi completion is per-turn; no running-total state needed. Pi cumulative output/cost is implemented in SessionManager/addTurnUsage and verified across persistence/restart/fork."
+    },
+    {
+      "path": "packages/shared/src/unified-network-interceptor.ts",
+      "classification": "SYNC",
+      "reason": "Keep additionalProperties:false when injecting declared intent/displayName into Anthropic tool schemas. Pi runtime resolver preloads this interceptor and anthropic-messages routes here even on custom endpoints. Actual installed-fetch regression verifies metadata and nested closure; real Pi Anthropic protocol smoke verifies SDK transport."
+    },
+    {
+      "path": "packages/shared/src/workspaces/types.ts",
+      "classification": "SYNC",
+      "reason": "Add ChatStarter and chatStarters to workspace config and shared WorkspaceSettings RPC DTO; no Claude settings or Source types restored."
+    },
+    {
+      "path": "packages/ui/package.json",
+      "classification": "RELEASE",
+      "reason": "Prepare MkAgent 0.2.2 for retained workspaces and lockfile; root/CLI adopt Bun type range ^1.4.2 and locked 1.4.2 (same upstream version). No upstream product version or removed workspaces restored."
+    }
+  ],
+  "additionalCorrections": [
+    {
+      "path": "packages/pi-agent-server/src/index.ts",
+      "reason": "Actual Pi 1.1 SDK assistant messages can omit id. Generate an app correlation id before forwarding and persist the post-append leaf, so selected-message forks do not include later parent messages; actual fork runtime failed before fix and passes after."
+    }
+  ]
+}

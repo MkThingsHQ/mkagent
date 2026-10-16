@@ -48,7 +48,58 @@ describe('PiEventAdapter', () => {
       expect(events).toHaveLength(1);
       expect(events[0]).toMatchObject({ type: 'complete' });
     });
+
+    it('should count the output and cost of every call in the turn, not only the last', () => {
+      const usage = (input: number, output: number, cost: number) =>
+        ({ input, output, cacheRead: 0, cacheWrite: 0, totalTokens: input + output, cost: { total: cost } });
+      const callOf = (u: ReturnType<typeof usage>, stopReason: string) => ({
+        type: 'message_end',
+        message: { role: 'assistant', stopReason, content: [{ type: 'text', text: 'x' }], usage: u },
+      });
+      const run = () => {
+        collect(adapter.adaptEvent(callOf(usage(1000, 300, 0.25), 'toolUse') as any));
+        collect(adapter.adaptEvent(callOf(usage(1500, 200, 0.5), 'stop') as any));
+        return collect(adapter.adaptEvent({ type: 'agent_end' } as any)).find(e => e.type === 'complete');
+      };
+
+      expect(run().usage).toMatchObject({ inputTokens: 1500, outputTokens: 500, costUsd: 0.75 });
+      // The next turn starts counting from zero
+      adapter.startTurn();
+      expect(run().usage).toMatchObject({ outputTokens: 500, costUsd: 0.75 });
+    });
   });
+
+  describe('turn billing boundaries', () => {
+    const message = (id: string, output: number, stopReason = 'stop') => ({ type: 'message_end', sdkMessageId: id, message: {
+      role: 'assistant', stopReason, content: [{ type: 'text', text: 'x' }],
+      usage: { input: 100, output, cacheRead: 20, cacheWrite: 0, totalTokens: 120 + output, cost: { total: output / 100 } },
+    } })
+    it('does not count a duplicate SDK message twice', () => {
+      collect(adapter.adaptEvent(message('same', 10) as any))
+      collect(adapter.adaptEvent(message('same', 10) as any))
+      expect(collect(adapter.adaptEvent({ type: 'agent_end' } as any))[0].usage).toMatchObject({ outputTokens: 10, costUsd: 0.1 })
+    })
+    it('does not reuse a previous turn usage when the next turn emits no API message', () => {
+      collect(adapter.adaptEvent(message('first', 10) as any))
+      collect(adapter.adaptEvent({ type: 'agent_end' } as any))
+      adapter.startTurn()
+      expect(collect(adapter.adaptEvent({ type: 'agent_end' } as any))).toEqual([{ type: 'complete' }])
+    })
+    it('counts tool calls and the recovered stream across retry agent starts', () => {
+      collect(adapter.adaptEvent(message('tool', 10, 'toolUse') as any))
+      const failed = message('partial', 5, 'error') as any
+      failed.message.errorMessage = '429 rate limit exceeded'
+      collect(adapter.adaptEvent(failed))
+      collect(adapter.adaptEvent({ type: 'agent_end', willRetry: true } as any))
+      collect(adapter.adaptEvent({ type: 'auto_retry_start', attempt: 1, maxAttempts: 3, delayMs: 1, errorMessage: '429' } as any))
+      collect(adapter.adaptEvent({ type: 'agent_start' } as any))
+      collect(adapter.adaptEvent(message('recovered', 20) as any))
+      collect(adapter.adaptEvent({ type: 'auto_retry_end', success: true, attempt: 1 } as any))
+      const complete = collect(adapter.adaptEvent({ type: 'agent_end' } as any)).find(e => e.type === 'complete')
+      expect(complete.usage).toMatchObject({ inputTokens: 120, outputTokens: 35 })
+      expect(complete.usage.costUsd).toBeCloseTo(0.35)
+    })
+  })
 
   // ============================================================
   // Turn lifecycle

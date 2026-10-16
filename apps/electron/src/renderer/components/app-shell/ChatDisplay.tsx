@@ -68,7 +68,7 @@ import { ProcessingIndicator } from "./chat-display/ProcessingIndicator"
 import { ScrollOnMount } from "./chat-display/ScrollOnMount"
 import { TurnFrame } from "./chat-display/TurnFrame"
 import { NewChatSuggestions } from "./chat-display/NewChatSuggestions"
-import { newChatSuggestionMessage, pickNewChatSuggestions, type NewChatSuggestion } from "./chat-display/new-chat-suggestions"
+import { newChatSuggestionMentions, newChatSuggestionMessage, pickCustomSuggestions, pickNewChatSuggestions, type NewChatSuggestion } from "./chat-display/new-chat-suggestions"
 import {
   CompactEmptyState,
   NewChatEmptyState,
@@ -186,6 +186,7 @@ interface ChatDisplayProps {
   // Skill selection (for @mentions)
   /** Available skills for @mention autocomplete */
   skills?: LoadedSkill[]
+  chatStarters?: Array<{ label: string; prompt: string }>
   /** Workspace ID for loading skill icons */
   workspaceId?: string
   // Working directory (per session)
@@ -285,6 +286,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   onAttachmentsChange,
   // Skills (for @mentions)
   skills,
+  chatStarters,
   workspaceId,
   // Working directory
   workingDirectory,
@@ -856,8 +858,11 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     onSendMessage(runCommandMessage(command))
   }, [onSendMessage])
 
-  // New-chat starter prompts (design spec §7.8), from the workspace's working sources
-  const newChatSuggestions = useMemo(() => pickNewChatSuggestions(), [])
+  // Workspace custom starters override the automatic Lite prompts.
+  const newChatSuggestions = useMemo(() => {
+    const custom = pickCustomSuggestions(chatStarters ?? [])
+    return custom.length ? custom : pickNewChatSuggestions()
+  }, [chatStarters])
 
   // A background task's full output, from its chip card
   const handleOpenTaskOutput = useCallback((task: BackgroundTask, output: BackgroundTaskOutput) => {
@@ -1126,12 +1131,13 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     }, 0)
   }, [session, isInputDisabled, disableSend, connectionUnavailable])
 
-  // A new-chat suggestion chip sends its prompt as if typed. A workspace source is mentioned as
-  // [source:slug] and enabled first, like an @-mention sent from the composer.
+  // Send starter prompts through the composer path, including supported Skill mentions.
   const canRunSuggestion = !!session && !isInputDisabled && !disableSend && !connectionUnavailable
-  const handleRunSuggestion = useCallback((suggestion: NewChatSuggestion) => {
-    if (canRunSuggestion) onSendMessage(newChatSuggestionMessage(suggestion, t))
-  }, [canRunSuggestion, onSendMessage, t])
+  const handleRunSuggestion = (suggestion: NewChatSuggestion) => {
+    if (!canRunSuggestion) return
+    const mentions = newChatSuggestionMentions(suggestion, (skills ?? []).map(s => s.slug))
+    handleSubmit(newChatSuggestionMessage(suggestion, t), undefined, mentions.length ? mentions : undefined)
+  }
 
   // Handle structured input responses (permissions and credentials)
   const handleStructuredResponse = (response: StructuredResponse) => {

@@ -722,11 +722,10 @@ const anthropicAdapter: ApiAdapter = {
       const updatedSchema = injectMetadataIntoToolSchema(tool.input_schema);
       tool.input_schema.properties = updatedSchema.properties;
       tool.input_schema.required = updatedSchema.required;
-      // External MCP servers may set additionalProperties: false which would
-      // cause the API to reject _intent/_displayName in tool inputs.
-      if ((tool.input_schema as Record<string, unknown>).additionalProperties === false) {
-        delete (tool.input_schema as Record<string, unknown>).additionalProperties;
-      }
+      // Anthropic requires additionalProperties: false on all object-type schemas.
+      // _intent and _displayName are declared in properties above, so they satisfy
+      // this constraint and must NOT be treated as additional/unknown fields.
+      (tool.input_schema as Record<string, unknown>).additionalProperties = false;
       modifiedCount++;
     }
 

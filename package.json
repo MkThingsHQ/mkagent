@@ -1,6 +1,6 @@
 {
   "name": "mkagent",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "license": "Apache-2.0",
   "description": "Local-first, Pi-powered AI agent workspace for Desktop, WebUI, and CLI",
   "type": "module",
@@ -91,7 +91,7 @@
     "@rollup/rollup-win32-arm64-msvc": "^4.55.1",
     "@sentry/vite-plugin": "^4.8.0",
     "@tailwindcss/vite": "^4.1.18",
-    "@types/bun": "latest",
+    "@types/bun": "^1.4.2",
     "@types/js-yaml": "^4.0.9",
     "@types/katex": "^0.16.8",
     "@types/linkify-it": "^5.0.0",

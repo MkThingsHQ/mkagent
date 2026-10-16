@@ -1,3 +1,4 @@
+import { addTurnUsage } from './turn-usage'
 import type { BackgroundTaskOutput, StopBackgroundTaskResult } from '@mkagent/shared/protocol'
 import { launchOutputFile, readBackgroundTaskOutput } from './background-task-output'
 import type { EventSink, RpcServer } from '@mkagent/server-core/transport'
@@ -895,7 +896,7 @@ export class SessionManager implements ISessionManager {
         break
       case 'complete':
         if (event.usage) {
-          managed.tokenUsage = { ...managed.tokenUsage, ...event.usage }
+          addTurnUsage(managed.tokenUsage, event.usage)
         }
         this.emit(managed.workspace.id, { type: 'complete', sessionId, tokenUsage: managed.tokenUsage, hasUnread: managed.hasUnread, backgroundTasksAlive: [...managed.backgroundTaskRegistry.values()].some(task => task.status === 'running') })
         break

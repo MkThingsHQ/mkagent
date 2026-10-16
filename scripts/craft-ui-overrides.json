@@ -90,7 +90,7 @@
       "reason": "v0.15 background task chips and supported permission modes; session file info moved to Lite chat header"
     },
     "apps/electron/src/renderer/components/app-shell/AppShell.tsx": {
-      "sha256": "d97559bda7b4380ef101acf7de09e7d64fce22995934273d59d30a6ceec7d4e1",
+      "sha256": "487e9031e922f44ea2bacb76a2f6efe7732cfe0c48ec0c7267991a904ac6637c",
       "reason": "v0.15 joined paper layout, navigator canvas, resize handle and pinned sidebar footer retain only sessions, Skills and local settings"
     },
     "apps/electron/src/renderer/components/app-shell/BatchSessionMenu.tsx": {
@@ -98,7 +98,7 @@
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx": {
-      "sha256": "a0e524be14772f732d29d0fc8e5dfc0f60fe610e033078a0e96c78529ed7635a",
+      "sha256": "70b13ee593d3c45974f23552d4690d239bbe5d3d2364042b7d74611264822b37",
       "reason": "v0.15 transcript, starter prompts, Shell Run/output overlays and composer with removed Sources/labels/auth request surfaces kept excluded"
     },
     "apps/electron/src/renderer/components/app-shell/CompactSessionMenu.tsx": {
@@ -174,15 +174,15 @@
       "reason": "Upstream task-chip lifecycle also recognizes Pi background Bash launch acknowledgements"
     },
     "apps/electron/src/renderer/components/app-shell/chat-display/NewChatSuggestions.tsx": {
-      "sha256": "4c9be8b47e8745bc1a7027a26663d805587e8926fcdd7e76511132e262a2b30e",
+      "sha256": "094a6d7c3187c700c5bcebfa0f72e471cbe3ae8593a3b92c608369c41f3e0ba0",
       "reason": "v0.15 starter-prompt chips limited to local files, news and Skills; unavailable Sources/mail setup removed"
     },
     "apps/electron/src/renderer/components/app-shell/chat-display/__tests__/new-chat-suggestions.test.ts": {
-      "sha256": "e11f72ebe090e1adb0b70fa817d5dab79f223c19ac300bb4669553356a53396e",
+      "sha256": "459403deeedafec1a6ed285084f92c87e025ea20afb95c616ed11e5c217de65f",
       "reason": "Tests three source-free Lite suggestions and localized label versus sent-prompt routing instead of removed Sources ranking"
     },
     "apps/electron/src/renderer/components/app-shell/chat-display/new-chat-suggestions.ts": {
-      "sha256": "d70afc2e14e1ae56b55bb286279024043d1f421c5221e507e8ae11881535d181",
+      "sha256": "cbc7f3977174800434b2d6c68309048510b157adbd3b1ed09914afc8bf7388e7",
       "reason": "Local files/news/Skills suggestions replace source-derived and email-setup prompts without restoring Sources"
     },
     "apps/electron/src/renderer/components/app-shell/chat-header/ChatHeader.tsx": {
@@ -330,7 +330,7 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/context/AppShellContext.tsx": {
-      "sha256": "fa68d811b44902e1ab2abd5d809ffdaf4c0905959b69ea3f7ecd29b23c6bc98d",
+      "sha256": "837ae24d8d864eddbb69128cff66a61d46f606e9490e6cd44ad9b914bcf35a50",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/context/SessionListContext.tsx": {
@@ -442,7 +442,7 @@
       "reason": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded"
     },
     "apps/electron/src/renderer/pages/ChatPage.tsx": {
-      "sha256": "35e14b094579144920bcb66d57687f0715dc51131a844aade1d99110bf87e449",
+      "sha256": "cf9c65ccaa94f34f309789a4efe5ffb09c1d6fa29eb2385445ce5f5ef4ec8d23",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/pages/SkillInfoPage.tsx": {
@@ -454,7 +454,7 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx": {
-      "sha256": "1c462bb4830e6d76f627f47d4f70c1252da0d887c77eca33f938715385731b77",
+      "sha256": "2f1b5d26b0c317d9c3ce29fafa5054df6e4658abfe91a33bc6cc10a7fc55ec80",
       "reason": "Single-column v0.15 settings and atomic parallel loading retain Pi connections, credential health and RTK; decision-model and Claude SDK settings excluded"
     },
     "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx": {
@@ -488,6 +488,18 @@
     "apps/electron/src/renderer/utils/session.ts": {
       "sha256": "7982f7e7d639b50e8f729249b016eab8a11a275b35677b027e93578fcfa9f4bf",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+    },
+    "apps/electron/src/renderer/pages/settings/ai-settings-loader.ts": {
+      "sha256": "059eeb9739d43435a5ec6e2f465a97eccf49ac016169d640cd981024a29916f1",
+      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types."
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/ai-settings-loader.test.ts": {
+      "sha256": "1e54c574ad85d47afd51af1412572b7e6e471fcf36a61e6b295502ea752ba869",
+      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types."
+    },
+    "apps/electron/src/renderer/components/app-shell/SessionInfoPopover.tsx": {
+      "sha256": "b5c6ca023a1b73b6cf7000b304cc30ec9ea7b04564ec3d3a3a8c2e0302d87b3c",
+      "reason": "Import flex-1/min-h-0 container and overflow-y-auto scroll fix; verify oversized file listing in actual popover and mobile drawer. Keep the mobile drawer wrapper flex-constrained; show retained cumulative output/estimated SDK cost in the info panel for direct UI verification."
     }
   }
 }

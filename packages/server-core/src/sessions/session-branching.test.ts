@@ -37,6 +37,7 @@ describe('SessionManager branching', () => {
           { id: 'assistant-1', role: 'assistant', content: 'answer', timestamp: 2 },
           { id: 'user-2', role: 'user', content: 'later', timestamp: 3 },
         ];
+        source.tokenUsage = { inputTokens: 1000, outputTokens: 800, totalTokens: 1800, contextTokens: 0, costUsd: 9 };
         await saveSession(source);
         await savePiTurnAnchor(getSessionPath(workspaceRoot, source.id), 'assistant-1', 'pi-entry-1');
 
@@ -64,6 +65,7 @@ describe('SessionManager branching', () => {
       expect(run.exitCode, run.stderr.toString()).toBe(0)
       const { branch, storedBranch, anchors } = JSON.parse(run.stdout.toString())
       expect(branch.messages.map((message: { id: string }) => message.id)).toEqual(['user-1', 'assistant-1'])
+      expect(storedBranch.tokenUsage).toMatchObject({ inputTokens: 0, outputTokens: 0, costUsd: 0 })
       expect(storedBranch.branchFromMessageId).toBe('assistant-1')
       expect(storedBranch.branchFromSdkSessionId).toBe('pi-session-parent')
       expect(storedBranch.branchFromSdkCwd).toBe('/tmp/pi-parent')

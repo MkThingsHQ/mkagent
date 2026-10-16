@@ -48,6 +48,7 @@ export interface AppShellContextType {
   hydrateDraftAttachments: (sessionId: string) => Promise<FileAttachment[]>
   /** All skills for this workspace - provided by AppShell component (for @mentions) */
   skills?: LoadedSkill[]
+  chatStarters?: Array<{ label: string; prompt: string }>
   /** Working directory of the active session — needed for project-level skill resolution */
   activeSessionWorkingDirectory?: string
   /** Enabled permission modes for Shift+Tab cycling */
@@ -134,6 +135,8 @@ export interface AppShellContextType {
   onChatMatchInfoChange?: (info: { sessionId: string | null; count: number; index: number; isHighlighting: boolean }) => void
 
 }
+
+export const WORKSPACE_SETTINGS_CHANGED_EVENT = 'mkagent:workspace-settings-changed'
 
 const AppShellContext = createContext<AppShellContextType | null>(null)
 

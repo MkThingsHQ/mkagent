@@ -1,8 +1,8 @@
-import { CalendarDays, CircleDot, FileText, FolderOpen, GitPullRequest, Lightbulb, ListTodo, Mail, MailPlus, MessageSquare, Newspaper, type LucideIcon } from 'lucide-react'
+import { CalendarDays, CircleDot, FileText, FolderOpen, GitPullRequest, Lightbulb, ListTodo, Mail, MailPlus, MessageSquare, Newspaper, Zap, type LucideIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { newChatSuggestionLabel, type NewChatSuggestion, type NewChatSuggestionKind } from './new-chat-suggestions'
 
-const KIND_ICONS: Record<NewChatSuggestionKind, LucideIcon> = { news: Newspaper, files: FolderOpen, skills: Lightbulb }
+const KIND_ICONS: Record<NewChatSuggestionKind, LucideIcon> = { news: Newspaper, files: FolderOpen, skills: Lightbulb, custom: Zap }
 
 /** Starter prompt chips under the new-chat question; a click sends the prompt. */
 export function NewChatSuggestions({ suggestions, onSelect }: {
@@ -13,12 +13,12 @@ export function NewChatSuggestions({ suggestions, onSelect }: {
   if (suggestions.length === 0) return null
   return (
     <div role="group" aria-label={t('chat.suggestions.label')} className="flex max-w-xl flex-wrap justify-center gap-2">
-      {suggestions.map((suggestion) => {
+      {suggestions.map((suggestion, index) => {
         const Icon = KIND_ICONS[suggestion.kind]
         const label = newChatSuggestionLabel(suggestion, (key, options) => t(key, options))
         return (
           <button
-            key={suggestion.kind}
+            key={`${suggestion.kind}:${index}`}
             type="button"
             onClick={() => onSelect(suggestion)}
             title={label}

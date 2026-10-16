@@ -17,7 +17,11 @@ import type { ThinkingLevel } from '../agent/thinking-levels.ts';
 /**
  * Workspace configuration (stored in config.json)
  */
+export interface ChatStarter { label: string; prompt: string }
+
 export interface WorkspaceConfig {
+  /** At most three custom new-chat prompts; empty uses automatic suggestions. */
+  chatStarters?: ChatStarter[];
   id: string;
   name: string;
   slug: string; // Folder name (URL-safe)
