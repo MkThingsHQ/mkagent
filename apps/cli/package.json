@@ -1,6 +1,6 @@
 {
   "name": "@mkagent/cli",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "license": "Apache-2.0",
   "description": "Terminal client for MkAgent server",
   "type": "module",
@@ -24,6 +24,6 @@
   "devDependencies": {
     "typescript": "^5.8.2",
     "@types/node": "^22.0.0",
-    "@types/bun": "latest"
+    "@types/bun": "^1.4.2"
   }
 }

@@ -20,10 +20,10 @@ jobs:
         run: |
           git fetch https://github.com/craft-ai-agents/craft-agents-oss.git main:refs/remotes/upstream/main
           {
-            echo "Pinned baseline: 2e3ba53ff80b229a07e9d1884dc58f6733f22e1f"
+            echo "Pinned baseline: b879152d2a4e1232bcd4efb7d8c4568a24638f25"
             echo "Current upstream: $(git rev-parse refs/remotes/upstream/main)"
             echo
-            git diff --stat 2e3ba53ff80b229a07e9d1884dc58f6733f22e1f..refs/remotes/upstream/main
+            git diff --stat b879152d2a4e1232bcd4efb7d8c4568a24638f25..refs/remotes/upstream/main
           } > upstream-drift.txt
       - uses: actions/github-script@v7
         with:

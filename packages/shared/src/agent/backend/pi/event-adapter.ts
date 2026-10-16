@@ -9,7 +9,7 @@
  * Pi backend.
  */
 
-import type { AgentEvent as CraftAgentEvent, ContextUsageSnapshot } from '@mkagent/core/types';
+import type { AgentEvent as CraftAgentEvent, AgentEventUsage, ContextUsageSnapshot } from '@mkagent/core/types';
 import { contextAfterCompaction, contextFromPi } from '../../context-usage.ts';
 import type { PiContextUsagePayload } from './protocol.ts';
 import type {
@@ -120,6 +120,10 @@ export class PiEventAdapter extends BaseEventAdapter {
 
   // Track last usage for emitting with complete event
   private lastUsage: { input: number; output: number; cacheRead: number; cacheWrite: number; totalTokens: number; cost: { total: number } } | undefined;
+  // Output and cost of every assistant message in the turn (lastUsage holds only the final call)
+  private turnOutputTokens = 0;
+  private turnCostUsd = 0;
+  private countedUsageMessages = new Set<string>();
 
   // ============================================================
   // Overflow-recovery state machine
@@ -351,12 +355,29 @@ export class PiEventAdapter extends BaseEventAdapter {
     return `${base}__${prefix}${this.subTurnCounter++}`;
   }
 
+  /** Known billing for completed API messages, also used when Stop closes the queue. */
+  getTurnUsage(): AgentEventUsage | undefined {
+    if (!this.lastUsage) return undefined;
+    return {
+      inputTokens: this.lastUsage.input + (this.lastUsage.cacheRead || 0),
+      outputTokens: this.turnOutputTokens,
+      cacheReadTokens: this.lastUsage.cacheRead,
+      cacheCreationTokens: this.lastUsage.cacheWrite,
+      costUsd: this.turnCostUsd,
+      contextWindow: this.contextWindow,
+    };
+  }
+
   protected onTurnStart(): void {
     this.toolNames.clear();
     this.hasStreamedDeltas = false;
     this.hasEmittedFinalText = false;
     this.subTurnCounter = 0;
     this.messageSubTurnId = null;
+    this.turnOutputTokens = 0;
+    this.turnCostUsd = 0;
+    this.lastUsage = undefined;
+    this.countedUsageMessages.clear();
     // A new Craft turn can only start once the previous queue completed (or
     // was force-aborted), so any recovery state left here is stale.
     this.resetRecoveryState();
@@ -454,22 +475,8 @@ export class PiEventAdapter extends BaseEventAdapter {
           // The retried run finished cleanly.
           this.retryState = 'none';
         }
-        if (this.lastUsage) {
-          const inputTokens = this.lastUsage.input + (this.lastUsage.cacheRead || 0);
-          yield {
-            type: 'complete',
-            usage: {
-              inputTokens,
-              outputTokens: this.lastUsage.output,
-              cacheReadTokens: this.lastUsage.cacheRead,
-              cacheCreationTokens: this.lastUsage.cacheWrite,
-              costUsd: this.lastUsage.cost.total,
-              contextWindow: this.contextWindow,
-            },
-          };
-        } else {
-          yield { type: 'complete' };
-        }
+        const usage = this.getTurnUsage();
+        yield usage ? { type: 'complete', usage } : { type: 'complete' };
         break;
       }
 
@@ -527,6 +534,16 @@ export class PiEventAdapter extends BaseEventAdapter {
         // event to the assistant message created here.
         const sdkMessageId = (event as { sdkMessageId?: string }).sdkMessageId ?? msg?.id;
         if (msg?.role !== 'assistant') break;
+
+        // Billing belongs to each completed API message, including a partial failed stream.
+        // Retry/overflow agent_start events stay in the same app turn. Count a forwarded
+        // SDK message at most once; a new app turn clears both counters and lastUsage.
+        if (msg.usage && typeof msg.usage.input === 'number' && (!sdkMessageId || !this.countedUsageMessages.has(sdkMessageId))) {
+          if (sdkMessageId) this.countedUsageMessages.add(sdkMessageId);
+          this.lastUsage = msg.usage;
+          this.turnOutputTokens += msg.usage.output || 0;
+          this.turnCostUsd += msg.usage.cost?.total || 0;
+        }
 
         // Surface API errors — Pi SDK sets stopReason: 'error' and errorMessage on failures
         if (msg.stopReason === 'error' && msg.errorMessage) {
@@ -602,17 +619,8 @@ export class PiEventAdapter extends BaseEventAdapter {
           );
         }
 
-        // Emit usage_update if the assistant message includes token usage
         if (msg.usage && typeof msg.usage.input === 'number') {
-          this.lastUsage = msg.usage;
-          const inputTokens = msg.usage.input + (msg.usage.cacheRead || 0);
-          yield {
-            type: 'usage_update',
-            usage: {
-              inputTokens,
-              contextWindow: this.contextWindow,
-            },
-          };
+          yield { type: 'usage_update', usage: { inputTokens: msg.usage.input + (msg.usage.cacheRead || 0), contextWindow: this.contextWindow } };
         }
         break;
       }

@@ -225,7 +225,7 @@ export interface PlanStep { id: string; description: string; tools?: string[]; s
 export interface Plan { id: string; title: string; summary?: string; steps: PlanStep[]; questions?: string[]; state?: 'creating' | 'refining' | 'ready' | 'executing' | 'completed' | 'cancelled'; createdAt?: number; updatedAt?: number }
 export interface GitBashStatus { found: boolean; path: string | null; platform: 'win32' | 'darwin' | 'linux' }
 export interface UpdateInfo { available: boolean; currentVersion: string; latestVersion: string | null; downloadState: 'idle' | 'downloading' | 'ready' | 'installing' | 'error'; downloadProgress: number; error?: string }
-export interface WorkspaceSettings { name?: string; model?: string; permissionMode?: PermissionMode; cyclablePermissionModes?: PermissionMode[]; thinkingLevel?: ThinkingLevel; workingDirectory?: string; defaultLlmConnection?: string }
+export interface WorkspaceSettings { chatStarters?: import('../workspaces/types').ChatStarter[]; name?: string; model?: string; permissionMode?: PermissionMode; cyclablePermissionModes?: PermissionMode[]; thinkingLevel?: ThinkingLevel; workingDirectory?: string; defaultLlmConnection?: string }
 export type WindowCloseRequestSource = 'keyboard-shortcut' | 'window-button' | 'unknown';
 export interface WindowCloseRequest { source: WindowCloseRequestSource }
 export interface BrowserInstanceInfo {

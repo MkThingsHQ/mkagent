@@ -8,6 +8,25 @@ All notable changes to MkAgent are documented in this file. The format follows
 
 Add user-visible changes here before running `bun run release:prepare <version>`.
 
+## [0.2.2] - 2026-10-16
+
+### Added
+
+- Configurable Chat Starters in Settings → AI: up to three workspace prompts with separate labels, Skill mentions and automatic fallback when cleared.
+
+### Fixed
+
+- Count every Pi API call in a turn, accumulate billing across turns and restarts, and keep branch/child-session billing independent of the parent.
+- Preserve Anthropic tool schemas with `additionalProperties: false` through Pi's network interceptor.
+- Allow overflowing session information panels to scroll on Desktop and mobile, with cumulative output tokens and estimated session cost.
+- Keep Pi forks at the selected reply even when the SDK message has no id.
+- Preserve known API usage when Stop ends a later streaming reply in the same turn.
+
+### Improved
+
+- Keep child-session tasks narrow with passed context, ranged reads and short results or output files.
+- Synchronize only applicable Craft v0.15.1 → v0.15.2 changes while preserving the Pi 1.1.0 and Lite product boundary.
+
 ## [0.2.1] - 2026-10-16
 
 ### Improved
@@ -101,6 +120,7 @@ Add user-visible changes here before running `bun run release:prepare <version>`
 - Local session search, flags, archives, import, export, and branching.
 
 [Unreleased]: https://github.com/MkThingsHQ/mkagent/releases
+[0.2.2]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.2
 [0.2.1]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.1
 [0.2.0]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.0
 [0.1.3]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.1.3

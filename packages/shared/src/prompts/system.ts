@@ -802,16 +802,25 @@ Use the \`call_llm\` tool to invoke a secondary LLM for focused subtasks. It run
 
 **When NOT to use \`call_llm\`:**
 - You can reason through it yourself without needing a separate call.
-- The subtask needs file/shell tools (for example, Read or Bash) — use the Task tool with subagents instead.
+- The subtask needs file/shell tools (for example, Read or Bash) — use \`spawn_session\` for an independent child session instead.
 - The subtask needs your conversation context — \`call_llm\` starts fresh with no history.
 - Simple one-liner responses that don't need isolation.
 
-**\`call_llm\` vs Task (subagents):**
+**\`call_llm\` vs \`spawn_session\` (child sessions):**
 - \`call_llm\` = single completion, no tools, cheap, parallel. Best for *processing* content you already have.
-- Task = full agent with tools, multi-turn, expensive, sequential. Best for *exploring* and finding things.
+- \`spawn_session\` = independent agent with tools and multiple turns. Best for *exploring* and finding things.
 
 **Quick reference:** Read \`${DOC_REFS.llmTool}\` for full parameter docs, output formats, and examples.
 ${browserToolsSection}
+## Child sessions (spawn_session)
+
+Each API call re-sends the child session's context. Keep independent tasks small:
+- Give one narrow question with a clear stopping point per child session.
+- Pass required file paths, excerpts and findings in its prompt so it does not rediscover them.
+- Locate files with \`rg\`, then read ranges with \`sed -n\` or the Read tool's \`offset\`/\`limit\`; avoid whole large files.
+- Ask for a short result with \`file:line\` references, or a file in the session data folder and its path for longer results.
+- Set a child model only when needed. An explicitly requested model is preserved.
+
 ## Session Self-Management
 
 Use \`get_session_info\` for the current session, \`list_sessions\` for filtered session discovery, \`list_background_tasks\` for background work status, and \`send_agent_message\` for cross-session coordination. Report delivery and queue acknowledgements exactly as returned.

@@ -1,4 +1,5 @@
 import { AnimatedCollapsibleContent } from '@mkagent/ui'
+import { settingsUI } from '@/components/settings/SettingsUIConstants'
 import { loadAiSettings } from './ai-settings-loader'
 import { Skeleton } from '@/components/ui/skeleton'
 import { SettingsPage } from '@/components/settings'
@@ -14,14 +15,14 @@ import { RtkUpdateDialog, type RtkStatusInfo } from '@/components/RtkUpdateDialo
  * Follows the Appearance settings pattern: app-level defaults + workspace overrides.
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef, useId } from 'react'
 import { useTranslation } from 'react-i18next'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Button } from '@/components/ui/button'
+import { Button, IconButton } from '@/components/ui/button'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { routes } from '@/lib/navigate'
-import { X, MoreHorizontal, Pencil, Trash2, Star, ChevronDown, ChevronRight, CheckCircle2, AlertTriangle, RefreshCcw, Settings2, MessageSquareMore, Zap, Clock, Check } from 'lucide-react'
+import { X, MoreHorizontal, Pencil, Trash2, Star, ChevronDown, ChevronRight, CheckCircle2, AlertTriangle, RefreshCcw, Settings2, MessageSquareMore, Zap, Clock, Check, Plus } from 'lucide-react'
 import type { CredentialHealthStatus, CredentialHealthIssue } from '../../../shared/types'
 import { Spinner, FullscreenOverlayBase } from '@mkagent/ui'
 import { useSetAtom } from 'jotai'
@@ -50,12 +51,18 @@ import {
   SettingsRow,
   SettingsMenuSelectRow,
   SettingsToggle,
+  SettingsInput,
 } from '@/components/settings'
 import { useOnboarding } from '@/hooks/useOnboarding'
 import { useWorkspaceIcon } from '@/hooks/useWorkspaceIcon'
 import { OnboardingWizard, type ApiSetupMethod } from '@/components/onboarding'
 import { RenameDialog } from '@/components/ui/rename-dialog'
-import { useAppShellContext } from '@/context/AppShellContext'
+import { useAppShellContext, WORKSPACE_SETTINGS_CHANGED_EVENT } from '@/context/AppShellContext'
+import { RichTextInput, type RichTextInputHandle } from '@/components/ui/rich-text-input'
+import { InlineMentionMenu, useInlineMention, type MentionItem } from '@/components/ui/mention-menu'
+import { MentionBadge } from '@/components/ui/mention-badge'
+import { findMentionMatches } from '@/lib/mentions'
+import type { LoadedSkill } from '../../../shared/types'
 import { getModelShortName, type ModelDefinition } from '@config/models'
 import { getModelsForProviderType, resolveMidStreamBehavior, type CustomEndpointApi, type MidStreamBehavior } from '@config/llm-connections'
 import { toast } from 'sonner'
@@ -578,6 +585,219 @@ function getApiKeyMethodForConnection(conn: LlmConnectionWithStatus): ApiSetupMe
 }
 
 // ============================================
+// Chat Starters Section (per-workspace)
+// ============================================
+
+interface ChatStartersSectionProps {
+  workspaceId: string
+  onSettingsChange: () => void
+}
+
+/** A starter prompt with its skill mentions drawn as badges, as in the composer. */
+function MentionText({ text, skills, workspaceId }: {
+  text: string
+  skills: LoadedSkill[]
+  workspaceId?: string
+}) {
+  const matches = findMentionMatches(text, skills.map(s => s.slug))
+  if (matches.length === 0) return <>{text}</>
+
+  const parts: React.ReactNode[] = []
+  let lastIndex = 0
+  for (const match of matches) {
+    if (match.startIndex > lastIndex) parts.push(text.slice(lastIndex, match.startIndex))
+    const skill = match.type === 'skill' ? skills.find(s => s.slug === match.id) : undefined
+    const label = skill?.metadata.name ?? match.id.split('/').pop() ?? match.id
+    parts.push(
+      <MentionBadge
+        key={match.startIndex}
+        type={match.type}
+        label={label}
+        skill={skill}
+        workspaceId={workspaceId}
+        className="h-5 mx-0.5 align-middle"
+      />
+    )
+    lastIndex = match.startIndex + match.fullMatch.length
+  }
+  if (lastIndex < text.length) parts.push(text.slice(lastIndex))
+  return <>{parts}</>
+}
+
+function ChatStartersSection({ workspaceId, onSettingsChange }: ChatStartersSectionProps) {
+  const { t } = useTranslation()
+  const { skills = [], workspaces } = useAppShellContext()
+  // Skill mentions are qualified by the workspace slug, as the composer writes them
+  const workspaceSlug = workspaces.find(w => w.id === workspaceId)?.slug ?? workspaceId
+  const [starters, setStarters] = useState<Array<{ label: string; prompt: string }>>([])
+  const [labelDraft, setLabelDraft] = useState('')
+  const [promptDraft, setPromptDraft] = useState('')
+  const [saving, setSaving] = useState(false)
+  const promptInputRef = useRef<RichTextInputHandle>(null)
+  const promptLabelId = useId()
+
+  useEffect(() => {
+    if (!window.electronAPI) return
+    let disposed = false
+    window.electronAPI.getWorkspaceSettings(workspaceId).then(ws => {
+      if (!disposed) setStarters(ws?.chatStarters ?? [])
+    }).catch(console.error)
+    return () => { disposed = true }
+  }, [workspaceId])
+
+  const saveStarters = useCallback(async (next: Array<{ label: string; prompt: string }>) => {
+    if (!window.electronAPI) return false
+    setSaving(true)
+    try {
+      await window.electronAPI.updateWorkspaceSetting(workspaceId, 'chatStarters', next)
+      setStarters(next)
+      onSettingsChange()
+      window.dispatchEvent(new CustomEvent(WORKSPACE_SETTINGS_CHANGED_EVENT, { detail: { workspaceId } }))
+      return true
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Unknown error'
+      toast.error(t("toast.failedToSaveSetting", { setting: 'chat starters' }), { description: msg })
+      return false
+    } finally {
+      setSaving(false)
+    }
+  }, [workspaceId, onSettingsChange, t])
+
+  // No basePath: starters belong to the workspace, so file mentions (relative to a session's folder) are not offered
+  const inlineMention = useInlineMention({
+    inputRef: promptInputRef,
+    skills,
+    onSelect: () => {},
+    workspaceId: workspaceSlug,
+  })
+
+  const handleMentionSelect = useCallback((item: MentionItem) => {
+    const { value, cursorPosition } = inlineMention.handleSelect(item)
+    setPromptDraft(value)
+    // Restore focus and caret once the badge has rendered
+    setTimeout(() => {
+      promptInputRef.current?.focus()
+      promptInputRef.current?.setSelectionRange(cursorPosition, cursorPosition)
+    }, 0)
+  }, [inlineMention])
+
+  const canAdd = starters.length < 3 && labelDraft.trim().length > 0 && promptDraft.trim().length > 0
+
+  const handleAdd = useCallback(async () => {
+    const label = labelDraft.trim()
+    const prompt = promptDraft.trim()
+    if (!label || !prompt || starters.length >= 3 || saving) return
+    if (await saveStarters([...starters, { label, prompt }])) {
+      setLabelDraft('')
+      setPromptDraft('')
+    }
+  }, [labelDraft, promptDraft, starters, saveStarters, saving])
+
+  const handlePromptKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.nativeEvent.isComposing) return
+    if (inlineMention.isOpen) {
+      // The open menu handles navigation and selection keys itself
+      const hasItems = inlineMention.sections.some(s => s.items.length > 0) || inlineMention.isSearching
+      if (hasItems && (e.key === 'Enter' || e.key === 'Tab' || e.key === 'ArrowUp' || e.key === 'ArrowDown')) return
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        inlineMention.close()
+        return
+      }
+    }
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      if (canAdd && !saving) void handleAdd()
+    }
+  }, [inlineMention, canAdd, saving, handleAdd])
+
+  const handleDelete = useCallback((index: number) => {
+    void saveStarters(starters.filter((_, i) => i !== index))
+  }, [starters, saveStarters])
+
+  return (
+    <SettingsSection
+      title={t("settings.ai.chatStarters.title", "Chat Starters")}
+      description={t("settings.ai.chatStarters.desc", "Custom starter prompts shown on the new chat screen. Add up to 3.")}
+    >
+      <SettingsCard>
+        {starters.length === 0 && (
+          <div className="px-3.5 py-3 text-label text-tertiary">
+            {t("settings.ai.chatStarters.empty", "No custom starters — auto-generated prompts will be shown.")}
+          </div>
+        )}
+        {starters.map((starter, i) => (
+          <SettingsRow
+            key={`${i}:${starter.label}`}
+            label={starter.label}
+            description={<MentionText text={starter.prompt} skills={skills} workspaceId={workspaceSlug} />}
+          >
+            <IconButton
+              size="sm"
+              aria-label={t("common.delete")}
+              icon={<Trash2 className="size-3.5" />}
+              tooltip
+              onClick={() => handleDelete(i)}
+              disabled={saving}
+            />
+          </SettingsRow>
+        ))}
+        <div className="border-t border-hairline px-3.5 py-3 flex flex-col gap-3">
+          <SettingsInput
+            label={t("settings.ai.chatStarters.label", "Label")}
+            placeholder={t("settings.ai.chatStarters.labelPlaceholder", "e.g. Summarize my day")}
+            value={labelDraft}
+            onChange={setLabelDraft}
+          />
+          <div className="space-y-2">
+            <div id={promptLabelId} className={settingsUI.label}>
+              {t("settings.ai.chatStarters.prompt", "Prompt")}
+            </div>
+            <div className="field-surface rounded-md">
+              <RichTextInput
+                ref={promptInputRef}
+                aria-labelledby={promptLabelId}
+                value={promptDraft}
+                onChange={setPromptDraft}
+                onInput={(value, cursor) => inlineMention.handleInputChange(value, cursor)}
+                onKeyDown={handlePromptKeyDown}
+                placeholder={t("settings.ai.chatStarters.promptPlaceholder")}
+                skills={skills}
+
+                workspaceId={workspaceSlug}
+                className="px-2.5 py-2 text-label"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end">
+            <Button
+              size="sm"
+              variant="secondary"
+              onClick={() => void handleAdd()}
+              disabled={!canAdd || saving}
+            >
+              <Plus className="size-3.5 mr-1" />
+              {t("settings.ai.chatStarters.add", "Add Starter")}
+            </Button>
+          </div>
+        </div>
+        <InlineMentionMenu
+          open={inlineMention.isOpen}
+          onOpenChange={(open) => !open && inlineMention.close()}
+          sections={inlineMention.sections}
+          onSelect={handleMentionSelect}
+          filter={inlineMention.filter}
+          position={inlineMention.position}
+          workspaceId={workspaceId}
+          maxWidth={280}
+          isSearching={inlineMention.isSearching}
+        />
+      </SettingsCard>
+    </SettingsSection>
+  )
+}
+
+// ============================================
 // Main Component
 // ============================================
 
@@ -1058,6 +1278,10 @@ export default function AiSettingsPage() {
                   </button>
                 </div>
               </SettingsSection>
+
+              {activeWorkspaceId && (
+                <ChatStartersSection key={activeWorkspaceId} workspaceId={activeWorkspaceId} onSettingsChange={handleWorkspaceSettingsChange} />
+              )}
 
               {/* Performance */}
               <SettingsSection title={t("settings.ai.performance")} description={t("settings.ai.performanceDesc")}>

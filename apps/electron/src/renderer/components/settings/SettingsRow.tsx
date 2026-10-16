@@ -13,7 +13,7 @@ export interface SettingsRowProps {
   /** Row label (can be string or JSX for custom rendering) */
   label: React.ReactNode
   /** Optional description below label */
-  description?: string
+  description?: React.ReactNode
   /** Content on the right side */
   children?: React.ReactNode
   /** Click handler for the entire row */

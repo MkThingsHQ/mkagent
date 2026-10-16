@@ -23,6 +23,15 @@ describe('MkAgent system prompt', () => {
     expect(prompt).not.toContain('Automations')
   })
 
+  it('keeps child-session prompts narrow using retained Pi tools', () => {
+    const prompt = getSystemPrompt('', undefined, '/tmp/workspace')
+    expect(prompt).toContain('one narrow question')
+    expect(prompt).toContain('offset')
+    expect(prompt).toContain('file:line')
+    expect(prompt).toContain('explicitly requested model is preserved')
+    expect(prompt).not.toContain('## Subagents (Agent tool)')
+  })
+
   it('keeps the Craft mini-agent configuration workflow', () => {
     const prompt = getMiniAgentSystemPrompt('/tmp/workspace')
     expect(prompt).toContain('skills/{slug}/SKILL.md')

@@ -7,29 +7,29 @@ MkAgent derives its architecture, UI, and runtime from [Craft Agents OSS](https:
 | Item | Value |
 |---|---|
 | Repository | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.15.1` |
-| Commit | `2e3ba53ff80b229a07e9d1884dc58f6733f22e1f` |
+| Tag | `v0.15.2` |
+| Commit | `b879152d2a4e1232bcd4efb7d8c4568a24638f25` |
 
 ## Latest evaluated release
 
 | Item | Value |
 |---|---|
 | Evaluated on | `2026-10-16` |
-| Upstream tag | `v0.15.1` |
-| Upstream commit | `2e3ba53ff80b229a07e9d1884dc58f6733f22e1f` |
+| Upstream tag | `v0.15.2` |
+| Upstream commit | `b879152d2a4e1232bcd4efb7d8c4568a24638f25` |
 
-MkAgent 0.2.1 synchronizes **only v0.15.0 → v0.15.1**. The previous baseline was `20e98eed968b9663d80f9efd40c10d363ea0b781`; v0.15.2/v0.15.3 are not included. All 129 upstream paths are classified in [the inventory](./sync/0.15.1-inventory.json), with evidence in [the validation report](./sync/0.15.1-validation.md).
+MkAgent 0.2.2 synchronizes **only v0.15.1 → v0.15.2** from `2e3ba53ff80b229a07e9d1884dc58f6733f22e1f`; v0.15.3 is not included. All 74 changed paths are classified in [the inventory](./sync/0.15.2-inventory.json), including excluded hunks inside retained files. See [validation](./sync/0.15.2-validation.md) for evidence and boundaries.
 
-Retained changes cover hidden-window clicks/keys/dropdowns and fresh screenshots, Linux off-screen capture, direct-click fallback, delayed security-challenge confirmation and foreground handoff, website sign-in popup deduplication, concise screenshot/network/console output, apostrophes in commands, browser password redaction, attachment limits advertised by the server, and shell-read prerequisites. The Browser/Skill prerequisite manager is connected to Pi's actual tool pipeline and reset on compaction. A stopped foreground reply reports cancellation; its independently owned background shell and child sessions keep running, and automatic completion follow-ups identify themselves as app-generated.
+Settings → AI now stores up to three workspace Chat Starters with separate labels and prompts, Skill mentions, live refresh and automatic suggestions after clearing. Pi sums all API message output/cost within each app turn, and SessionManager accumulates across turns and restarts while keeping current context occupancy separate. Pi forks and independent children start with fresh billing; explicit child models are preserved. The Anthropic tool-schema closure fix applies to Pi's actual preloaded interceptor. Session info content scrolls, and spawn_session guidance asks for narrow tasks, supplied context, ranged reads and concise results.
 
-The existing v0.15.0 interface, MkAgent branding/configuration and coordinated Pi 1.1.0 dependencies remain. Sources/MCP resources/prompts, source token-refresh/auth fanout and non-default source API-key headers have no retained implementation. Projects memory append, conductor generation/dependency propagation, Pages, Automations, public sharing, messaging, labels/custom statuses, Claude SDK and Decision/Guarded remain excluded. Browser website login popup dedupe is retained independently of removed Sources authorization. Pi already handles PDFs as stored paths, so the Claude-only inline-PDF limit is inapplicable.
+MkAgent branding/configuration, Pi 1.1.0 and previous browser/Stop/attachment/prerequisite fixes remain. Claude CLI compaction windows, Agent/Task model aliases and running-total state have no Pi consumer and are omitted individually from shared files. Decision/Guarded remain deferred. Sources/MCP, Pages, Projects/conductor, Automations, sharing, labels/custom statuses and messaging remain outside Lite. Supported UI locales remain English and Simplified Chinese; no unavailable controls or empty backend modules are added.
 
 ```bash
 # Fetch and check out only an independent disposable reference clone.
-git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0151
-git -C /tmp/craft-v0151 fetch origin refs/tags/v0.15.1
-git -C /tmp/craft-v0151 checkout --detach 2e3ba53ff80b229a07e9d1884dc58f6733f22e1f
-export CRAFT_AGENT_SOURCE=/tmp/craft-v0151
+git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0152
+git -C /tmp/craft-v0152 fetch origin refs/tags/v0.15.2
+git -C /tmp/craft-v0152 checkout --detach b879152d2a4e1232bcd4efb7d8c4568a24638f25
+export CRAFT_AGENT_SOURCE=/tmp/craft-v0152
 ```
 
 When upstream publishes a new tag worth evaluating:

@@ -1720,6 +1720,7 @@ export class PiAgent extends BaseAgent {
     this.eventQueue.reset();
     this.currentUserMessage = message;
     this.adapter.startTurn();
+    let completionReported = false;
 
     // Refresh session-scoped tool callbacks.
     // IMPORTANT: merge (don't replace) so SessionManager-provided browserPaneFns
@@ -1879,7 +1880,20 @@ export class PiAgent extends BaseAgent {
       });
 
       for await (const event of this.eventQueue.drain()) {
-        yield event;
+        if (event.type === 'complete') {
+          if (completionReported) continue;
+          completionReported = true;
+          const usage = event.usage ?? this.adapter.getTurnUsage();
+          yield usage ? { ...event, usage } : event;
+        } else {
+          yield event;
+        }
+      }
+      // Stop closes the foreground queue before agent_end. Preserve the API
+      // messages already billed, without inventing usage for an unfinished stream.
+      if (!completionReported) {
+        const usage = this.adapter.getTurnUsage();
+        if (usage) yield { type: 'complete', usage };
       }
     } catch (error) {
       if (compactMatch) yield { type: 'compaction_failed' };

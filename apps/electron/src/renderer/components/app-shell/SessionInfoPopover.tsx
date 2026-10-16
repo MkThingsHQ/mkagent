@@ -74,7 +74,7 @@ export function SessionInfoPopover({
           <DrawerHeader className="border-b border-subtle px-4 py-3">
             <DrawerTitle>{t('chat.sessionInfo')}</DrawerTitle>
           </DrawerHeader>
-          <div className="flex-1 min-h-0 overflow-hidden">
+          <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
             <SessionInfoPopoverContent sessionId={sessionId} sessionFolderPath={sessionFolderPath} />
           </div>
         </DrawerContent>
@@ -143,7 +143,7 @@ function SessionInfoPopoverContent({ sessionId, sessionFolderPath }: { sessionId
   }, [onRenameSession, sessionId])
 
   return (
-    <div className="h-full min-h-0 flex flex-col">
+    <div className="flex-1 min-h-0 flex flex-col">
       {/* 16px insets, the same edge as the Session Files header and rows below */}
       <div className="shrink-0 px-4 py-3 border-b border-subtle">
         <label htmlFor={`session-info-title-${sessionId}`} className="text-label-sm font-medium text-secondary block mb-1.5 select-none">
@@ -155,8 +155,20 @@ function SessionInfoPopoverContent({ sessionId, sessionFolderPath }: { sessionId
           onChange={handleNameChange}
           placeholder={t("chat.titlePlaceholder")}
         />
+        {session?.tokenUsage && (session.tokenUsage.outputTokens > 0 || session.tokenUsage.costUsd > 0) && (
+          <dl className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-label-sm">
+            <div>
+              <dt className="text-tertiary">{t('chat.sessionOutputTokens')}</dt>
+              <dd className="text-secondary tabular-nums">{session.tokenUsage.outputTokens.toLocaleString()}</dd>
+            </div>
+            <div>
+              <dt className="text-tertiary">{t('chat.sessionCost')}</dt>
+              <dd className="text-secondary tabular-nums">${session.tokenUsage.costUsd.toFixed(4)}</dd>
+            </div>
+          </dl>
+        )}
       </div>
-      <div className="flex-1 min-h-0 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto">
         <SessionFilesSection
           sessionId={sessionId}
           sessionFolderPath={sessionFolderPath}
