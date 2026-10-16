@@ -24,7 +24,10 @@ export const RPC_CHANNELS = {
     GET_MESSAGES: 'sessions:getMessages',
     SEND_MESSAGE: 'sessions:sendMessage',
     CANCEL: 'sessions:cancel',
+    // Legacy name of STOP_BACKGROUND_TASK for shells (older clients); same handler.
     KILL_SHELL: 'sessions:killShell',
+    GET_BACKGROUND_TASK_OUTPUT: 'sessions:getBackgroundTaskOutput',
+    STOP_BACKGROUND_TASK: 'sessions:stopBackgroundTask',
     RESPOND_TO_PERMISSION: 'sessions:respondToPermission',
     COMMAND: 'sessions:command',
     GET_PENDING_PLAN_EXECUTION: 'sessions:getPendingPlanExecution',

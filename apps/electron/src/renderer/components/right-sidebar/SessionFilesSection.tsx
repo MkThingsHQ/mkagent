@@ -576,12 +576,12 @@ export function SessionFilesSection({ sessionId, className, sessionFolderPath, h
       {/* Header - matches sidebar styling with select-none, extra top padding for visual balance */}
       {!hideHeader && (
         <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0 select-none">
-          <span className="text-xs font-medium text-muted-foreground">{t("chat.sessionFiles")}</span>
+          <span className="text-label-sm font-medium text-secondary">{t("chat.sessionFiles")}</span>
           {sessionFolderPath && (
             <button
               type="button"
               onClick={() => window.electronAPI.showInFolder(sessionFolderPath)}
-              className="text-xs text-foreground/50 hover:text-foreground/80 hover:underline underline-offset-2 transition-colors"
+              className="text-label-sm text-tertiary hover:text-secondary hover:underline underline-offset-2 transition-colors duration-micro ease-out-subtle hover:duration-instant"
             >
               {t("chat.viewInFileManager", { fileManager: fileManagerName })}
             </button>

@@ -24,6 +24,9 @@ function isTestFile(file: string): boolean {
 }
 
 const deletedFeaturePatterns: Array<{ pattern: RegExp; reason: string }> = [
+  { pattern: /^apps\/electron\/src\/renderer\/components\/app-shell\/(?:__tests__\/fit-labels|chat-header\/__tests__\/label-strip-layout)\.test\.ts$/, reason: 'v0.15 label-chip fitting tests exercise excluded user labels; Lite header and session actions remain retained' },
+  { pattern: /^apps\/electron\/src\/renderer\/components\/ui\/__tests__\/source-connection-status\.test\.ts$/, reason: 'Source connection status UI is excluded with Sources/MCP' },
+  { pattern: /^packages\/shared\/src\/agent\/__tests__\/text-completion-options\.test\.ts$/, reason: 'Tests Claude Agent SDK utility-call options; Pi utility sessions use an explicit empty tool allowlist and isolated resource-loader tests' },
   { pattern: /^packages\/(?:shared|server-core)\/src\/decisions\//, reason: 'Decision model explicitly deferred for the v0.14.1 Lite sync' },
   { pattern: /^packages\/(?:shared|server-core)\/src\/pages\//, reason: 'Pages and its source/action bridge are outside Lite' },
   { pattern: /^apps\/electron\/src\/(?:main\/__tests__\/page-thumbnail-host|shared\/(?:__tests__\/page-bridge|__tests__\/route-parser-pages))/, reason: 'Pages UI and thumbnail runtime removed' },
@@ -77,6 +80,7 @@ const replacements: Record<string, string> = {
 }
 
 const intentionalCaseReductions: Record<string, { upstream: number; retained: number; reason: string }> = {
+  'apps/electron/src/renderer/components/app-shell/chat-display/__tests__/new-chat-suggestions.test.ts': { upstream: 6, retained: 2, reason: 'Source-specific recommendation ranking and email setup omitted with Sources; three local news/files/skills prompts and label/message translation routing covered' },
   'packages/shared/src/agent/__tests__/tool-matching.test.ts': { upstream: 62, retained: 61, reason: 'Sources MCP matching excluded; Lite tool matching retained' },
   'packages/session-tools-core/src/tool-defs-filtering.test.ts': { upstream: 8, retained: 7, reason: 'Decide tool excluded; retained tool visibility filtering covered' },
   'packages/server-core/src/sessions/pi-retry-streaming.test.ts': { upstream: 4, retained: 2, reason: 'Lite forwards unbatched deltas and has no upstream delta-flush timers; discard and recovered persistence covered' },
@@ -103,7 +107,7 @@ const intentionalCaseReductions: Record<string, { upstream: number; retained: nu
   'packages/shared/src/agent/backend/__tests__/runtime-resolver.test.ts': { upstream: 10, retained: 8, reason: 'Claude native binary resolution was removed' },
   'packages/shared/src/agent/core/__tests__/pre-tool-use-checks.isolated.ts': { upstream: 80, retained: 18, reason: 'Sources API, Pages and Guarded cases excluded; precise permissions additionally covered in pi-permission-sync and permission-remember' },
   'packages/shared/src/agent/core/__tests__/prerequisite-manager.isolated.ts': { upstream: 33, retained: 13, reason: 'Source guide prerequisites were removed; Browser and Skill prerequisites remain covered' },
-  'packages/shared/src/config/__tests__/llm-connections.test.ts': { upstream: 70, retained: 14, reason: 'Direct Claude and Copilot catalogs excluded; Pi 0.87 models covered by shared models and mini-model tests' },
+  'packages/shared/src/config/__tests__/llm-connections.test.ts': { upstream: 76, retained: 20, reason: 'Direct Claude and Copilot catalogs excluded; Pi 0.87 models covered by shared models and mini-model tests' },
   'packages/shared/src/config/__tests__/midstream-behavior.test.ts': { upstream: 11, retained: 10, reason: 'Direct Anthropic queue behavior was removed' },
   'packages/shared/src/config/__tests__/model-supports-images.test.ts': { upstream: 8, retained: 7, reason: 'Direct Anthropic catalog behavior was removed' },
   'packages/shared/src/i18n/__tests__/locale-registry.test.ts': { upstream: 15, retained: 11, reason: 'Lite intentionally ships only English and Simplified Chinese' },

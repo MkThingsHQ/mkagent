@@ -1,28 +1,9 @@
 import * as React from 'react'
 import { ChevronRight } from 'lucide-react'
-import { motion, AnimatePresence } from 'motion/react'
+import { motion } from 'motion/react'
 import { cn } from '../../lib/utils'
-
-/**
- * Simple animated collapsible content wrapper.
- */
-function AnimatedCollapsibleContent({ isOpen, children }: { isOpen: boolean; children: React.ReactNode }) {
-  return (
-    <AnimatePresence initial={false}>
-      {isOpen && (
-        <motion.div
-          initial={{ height: 0, opacity: 0 }}
-          animate={{ height: 'auto', opacity: 1 }}
-          exit={{ height: 0, opacity: 0 }}
-          transition={{ duration: 0.2, ease: 'easeInOut' }}
-          className="overflow-hidden"
-        >
-          {children}
-        </motion.div>
-      )}
-    </AnimatePresence>
-  )
-}
+import { SPRING } from '../../motion/presets'
+import { AnimatedCollapsibleContent } from '../ui/AnimatedCollapsibleContent'
 
 interface CollapsibleSectionProps {
   sectionId: string
@@ -75,15 +56,15 @@ export function CollapsibleSection({
         <motion.div
           initial={false}
           animate={{ rotate: isExpanded ? 90 : 0 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+          transition={SPRING.snap}
           className={cn(
-            'absolute -left-4 top-[5px] select-none transition-opacity',
+            'absolute -left-4 top-[5px] select-none transition-opacity duration-micro ease-out-subtle',
             !hasContent && 'opacity-0',
             hasContent && isCollapsed && 'opacity-100',
-            hasContent && isExpanded && 'opacity-0 group-hover:opacity-100'
+            hasContent && isExpanded && 'opacity-0 group-hover:opacity-100 group-hover:duration-instant'
           )}
         >
-          <ChevronRight className="h-3 w-3 text-muted-foreground" />
+          <ChevronRight className="size-3 text-tertiary" />
         </motion.div>
 
         {/* Heading content */}
@@ -92,7 +73,7 @@ export function CollapsibleSection({
 
       {/* Collapsible content */}
       {hasContent && (
-        <AnimatedCollapsibleContent isOpen={isExpanded}>
+        <AnimatedCollapsibleContent isOpen={isExpanded} className="overflow-hidden">
           <div className="collapsible-section-content">
             {content}
           </div>

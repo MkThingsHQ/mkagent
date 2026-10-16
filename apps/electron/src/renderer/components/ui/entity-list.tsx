@@ -78,10 +78,19 @@ export interface EntityListProps<T> {
 // Section Header
 // ============================================================================
 
+/** Space above every group but the first: a header sits closer to its own rows than to the group above. */
+const GROUP_GAP = 'mt-2'
+
+/**
+ * Group header (spec §7.2): 12px medium tertiary, sticky over the rows it heads. The label is centered
+ * in its 32px box because the box can show: the hover fill, the sticky band over scrolled rows, the
+ * frost on scenic themes. The space that ties a header to its own rows sits outside the box, as the
+ * gap between groups (GROUP_GAP).
+ */
 function SectionHeader({ label }: { label: string }) {
   return (
-    <div className="px-4 py-2">
-      <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+    <div data-slot="list-group-header" className="sticky top-0 z-sticky flex h-8 items-center px-gutter bg-paper">
+      <span className="text-label-sm font-medium text-tertiary truncate">
         {label}
       </span>
     </div>
@@ -109,18 +118,24 @@ function CollapsibleGroupHeader({
       <ContextMenuTrigger asChild>
         <button
           onClick={onToggle}
-          className="w-full py-2 px-4 flex items-center gap-1.5 cursor-pointer group/header relative"
+          aria-expanded={!isCollapsed}
+          data-slot="list-group-header"
+          // z-sticky: the header covers the full row width while rows (and their project stripes) scroll under it
+          className="sticky top-0 z-sticky w-full h-8 px-gutter flex items-center gap-1 cursor-pointer group/header bg-paper -outline-offset-2"
         >
-          <div className="absolute inset-y-0.5 left-2 right-2 rounded-[6px] group-hover/header:bg-foreground/2 transition-colors pointer-events-none" />
+          <div className="absolute inset-0 transition-[background-color] duration-micro ease-out-subtle group-hover/header:bg-fill-hover group-hover/header:duration-instant pointer-events-none" />
+          {/* The label starts on the panel gutter, like the panel title and the row glyphs; the
+              disclosure chevron trails it (pointing down while expanded, right while collapsed). */}
+          <span className="relative text-label-sm font-medium text-tertiary truncate">
+            {label}{isCollapsed && <span className="tabular-nums"> · {itemCount}</span>}
+          </span>
           <ChevronRight
+            aria-hidden="true"
             className={cn(
-              "h-3 w-3 text-muted-foreground/60 transition-transform relative",
+              "relative size-3 shrink-0 text-tertiary transition-transform duration-(--spring-snap-dur) ease-(--spring-snap)",
               !isCollapsed && "rotate-90"
             )}
           />
-          <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground relative">
-            {label}{isCollapsed && <> · <span className="text-muted-foreground/50">{itemCount}</span></>}
-          </span>
         </button>
       </ContextMenuTrigger>
       <StyledContextMenuContent>
@@ -187,11 +202,11 @@ export function EntityList<T>({
         >
           <div className="pt-1">
             {hasGroups
-              ? groups!.map((group) => {
+              ? groups!.map((group, groupIndex) => {
                   const isCollapsed = group.collapsible && collapsedGroups?.has(group.key)
 
                   return (
-                    <div key={group.key}>
+                    <div key={group.key} className={groupIndex > 0 ? GROUP_GAP : undefined}>
                       {group.collapsible && onToggleCollapse ? (
                         <CollapsibleGroupHeader
                           label={group.label}

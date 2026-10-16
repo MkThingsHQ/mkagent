@@ -15,6 +15,12 @@ import type { createEntitySelection } from '@/hooks/useEntitySelection'
 export interface EntityPanelItem {
   icon?: React.ReactNode
   title: React.ReactNode
+  /** Meta at the end of the title line (type, date) — tertiary, hidden while the actions button shows */
+  titleTrailing?: React.ReactNode
+  /** Second line: description, or a state in its status color */
+  subtitle?: React.ReactNode
+  /** Neutral chips at the end of the second line */
+  subtitleTrailing?: React.ReactNode
   badges?: React.ReactNode
   trailing?: React.ReactNode
   menu?: React.ReactNode
@@ -76,18 +82,20 @@ export function EntityPanel<T>({
       containerProps={mergedContainerProps}
       className={className}
       emptyState={emptyState}
-      renderItem={(item, index, isFirst) => {
+      renderItem={(item, index) => {
         const mapped = mapItem(item)
         const rowProps = interactions.getRowProps(item, index)
         return (
           <EntityRow
             icon={mapped.icon}
             title={mapped.title}
+            titleTrailing={mapped.titleTrailing}
+            subtitle={mapped.subtitle}
+            subtitleTrailing={mapped.subtitleTrailing}
             badges={mapped.badges}
             trailing={mapped.trailing}
             isSelected={selectedId === getId(item)}
             isInMultiSelect={rowProps.isInMultiSelect}
-            showSeparator={!isFirst}
             onMouseDown={(e) => {
               rowProps.onMouseDown(e)
               if (!e.metaKey && !e.ctrlKey && !e.shiftKey && e.button !== 2) {

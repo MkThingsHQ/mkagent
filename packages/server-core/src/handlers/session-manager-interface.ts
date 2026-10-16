@@ -1,3 +1,4 @@
+import type { BackgroundTaskOutput, StopBackgroundTaskResult } from '@mkagent/shared/protocol'
 import type {
   ActiveSessionInfo,
   AnnotationV1,
@@ -72,6 +73,8 @@ export interface ISessionManager {
   ): Promise<void>
   cancelProcessing(sessionId: string, silent?: boolean): Promise<void>
   killShell(sessionId: string, shellId: string): Promise<{ success: boolean; error?: string }>
+  getBackgroundTaskOutput(sessionId: string, taskId: string, kind?: 'agent' | 'shell' | 'workflow'): Promise<BackgroundTaskOutput | null>
+  stopBackgroundTask(sessionId: string, taskId: string): Promise<StopBackgroundTaskResult>
   getSessionFinalText(sessionId: string): string | undefined
   onSessionComplete(
     listener: (event: import('../sessions/SessionManager').SessionCompletionEvent) => void,

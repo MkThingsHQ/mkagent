@@ -1,9 +1,9 @@
 /**
  * Info_Table
  *
- * Clean definition list style key-value display.
+ * Key/value card body (mockup `.kv`): a 140px label column (110px in a compact panel) in
+ * secondary text, values in primary text, full-width hairlines between rows.
  * Use for Connection info, metadata display, etc.
- * No card wrapper - integrates cleanly with page.
  */
 
 import * as React from 'react'
@@ -13,7 +13,7 @@ export interface Info_TableProps {
   children: React.ReactNode
   /** Optional footer content (e.g., error alert) */
   footer?: React.ReactNode
-  /** Label column width in pixels (default: 120) */
+  /** Label column width in pixels (default: 140) */
   labelWidth?: number
   className?: string
 }
@@ -31,13 +31,13 @@ export interface Info_TableRowProps {
 function Info_TableRoot({
   children,
   footer,
-  labelWidth = 120,
+  labelWidth = 140,
   className,
 }: Info_TableProps) {
   return (
-    <div className={cn('py-2', className)}>
+    <div className={className}>
       <dl
-        className="divide-y divide-border/30"
+        className="divide-y divide-separator"
         style={{ '--label-width': `${labelWidth}px` } as React.CSSProperties}
       >
         {children}
@@ -51,14 +51,11 @@ function Info_TableRow({ label, value, children, className }: Info_TableRowProps
   const content = children ?? value
 
   return (
-    <div className={cn('flex py-2.5 px-4 text-sm', className)}>
-      <dt
-        className="text-muted-foreground shrink-0"
-        style={{ width: 'var(--label-width)' }}
-      >
+    <div className={cn('flex gap-3 px-3.5 py-2.5 text-label', className)}>
+      <dt className="w-[var(--label-width)] shrink-0 text-secondary @max-mobile/panel:w-[min(var(--label-width),110px)]">
         {label}
       </dt>
-      <dd className="flex-1 min-w-0">{content}</dd>
+      <dd className="min-w-0 flex-1 text-foreground">{content}</dd>
     </div>
   )
 }

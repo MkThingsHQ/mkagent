@@ -4,6 +4,7 @@ import { cn } from "@/lib/utils"
 
 const Tabs = TabsPrimitive.Root
 
+/** Segmented control: neutral well, the selected item is raised (floating + elev-1). */
 function TabsList({
   className,
   ...props
@@ -12,7 +13,7 @@ function TabsList({
     <TabsPrimitive.List
       data-slot="tabs-list"
       className={cn(
-        "inline-flex h-9 items-center justify-center rounded-lg bg-muted p-1 text-muted-foreground",
+        "inline-flex h-control items-center justify-center gap-0.5 rounded-md bg-fill-hover p-0.5 text-secondary",
         className
       )}
       {...props}
@@ -28,7 +29,7 @@ function TabsTrigger({
     <TabsPrimitive.Trigger
       data-slot="tabs-trigger"
       className={cn(
-        "inline-flex items-center justify-center whitespace-nowrap rounded-md px-3 py-1 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow",
+        "motion-press inline-flex h-control-sm items-center justify-center gap-1.5 whitespace-nowrap rounded-sm px-2.5 text-label-sm font-medium text-secondary hover:text-foreground disabled:pointer-events-none disabled:text-disabled data-[state=active]:bg-floating data-[state=active]:text-foreground data-[state=active]:shadow-elev-1 [&_svg]:size-3.5 [&_svg]:shrink-0",
         className
       )}
       {...props}
@@ -43,10 +44,7 @@ function TabsContent({
   return (
     <TabsPrimitive.Content
       data-slot="tabs-content"
-      className={cn(
-        "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:ring-offset-1",
-        className
-      )}
+      className={cn("mt-2 outline-none", className)}
       {...props}
     />
   )

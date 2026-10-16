@@ -9,8 +9,8 @@ export const PANEL_EDGE_INSET = 6
 /** Corner radius for panel edges touching the window boundary (macOS native corners → larger) */
 export const RADIUS_EDGE = isMac ? 14 : 8
 
-/** Corner radius for interior corners between panels */
-export const RADIUS_INNER = 10
+/** Corner radius for card corners that don't touch the window edge (= --radius-lg, spec §7.1) */
+export const RADIUS_INNER = 12
 
 /** Minimum width for any content panel */
 export const PANEL_MIN_WIDTH = 440

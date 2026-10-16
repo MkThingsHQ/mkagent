@@ -300,6 +300,23 @@ export class PiAgent extends BaseAgent {
 
   // Cached session tool context (lazy-created on first session tool call)
   private _sessionToolContext: SessionToolContext | null = null;
+  private pendingBackgroundStops = new Map<string, { resolve: (stopped: boolean) => void; reject: (error: Error) => void; timer: ReturnType<typeof setTimeout> }>();
+
+  private backgroundStopTimeoutMs = 10_000;
+
+  async stopBackgroundTask(taskId: string): Promise<boolean> {
+    if (!this.subprocess) throw new Error('Background task transport unavailable');
+    const id = crypto.randomUUID();
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.pendingBackgroundStops.delete(id);
+        reject(new Error('Background task stop timed out'));
+      }, this.backgroundStopTimeoutMs);
+      this.pendingBackgroundStops.set(id, { resolve, reject, timer });
+      this.send({ type: 'stop_background_task', id, taskId });
+    });
+  }
+
   private backgroundEventSink: ((event: AgentEvent) => void) | null = null;
 
   // RPC request counter for unique IDs
@@ -705,6 +722,17 @@ export class PiAgent extends BaseAgent {
         this.subprocessReadyResolve?.();
         break;
 
+      case 'background_task_event': {
+        const event = msg.event as AgentEvent;
+        if (!this._isProcessing && this.backgroundEventSink) this.backgroundEventSink(event);
+        else this.eventQueue.enqueue(event);
+        break;
+      }
+      case 'stop_background_task_result': {
+        const pending = this.pendingBackgroundStops.get(msg.id as string);
+        if (pending) { clearTimeout(pending.timer); this.pendingBackgroundStops.delete(msg.id as string); pending.resolve(msg.stopped === true); }
+        break;
+      }
       case 'event':
         // Pi SDK event -- forward through PiEventAdapter
         this.handleSubprocessEvent(msg.event as Record<string, unknown>);
@@ -935,6 +963,8 @@ export class PiAgent extends BaseAgent {
     // but since we're receiving plain JSON, we cast through unknown.
     for (const agentEvent of this.adapter.adaptEvent(adaptedEvent as any)) {
       if (!this._isProcessing && this.backgroundEventSink && (
+        agentEvent.type === 'shell_backgrounded' ||
+        agentEvent.type === 'task_activity' ||
         agentEvent.type === 'task_backgrounded' ||
         agentEvent.type === 'task_progress' ||
         agentEvent.type === 'task_completed' ||
@@ -1335,6 +1365,8 @@ export class PiAgent extends BaseAgent {
   }
 
   private rejectAllPendingEphemeral(error: Error): void {
+    for (const pending of this.pendingBackgroundStops.values()) { clearTimeout(pending.timer); pending.reject(error); }
+    this.pendingBackgroundStops.clear();
     this.rejectPendingEphemeralMap(this.pendingMiniCompletions, error);
     this.rejectPendingEphemeralMap(this.pendingLlmQueries, error);
   }

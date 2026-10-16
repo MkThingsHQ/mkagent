@@ -140,6 +140,6 @@ describe('Pi runtime settings', () => {
     const source = readFileSync(join(import.meta.dir, 'index.ts'), 'utf8');
     expect(source).toContain('process.env.MKAGENT_GIT_BASH_PATH');
     expect(source).toContain('settingsManager.applyOverrides({ shellPath })');
-    expect(source).toContain('sessionOptions.settingsManager = settingsManager');
+    expect(source).toMatch(/const sessionOptions: CreateAgentSessionOptions = \{[\s\S]*?\n    settingsManager,/);
   });
 });

@@ -228,7 +228,7 @@ function createComponents(
         <a
           href={safeHref}
           onClick={handleClick}
-          className="text-accent hover:underline cursor-pointer"
+          className="cursor-pointer text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-current"
         >
           {children}
         </a>
@@ -365,7 +365,7 @@ function createComponents(
               type="checkbox"
               checked={checked}
               readOnly
-              className="mr-2 rounded border-muted-foreground align-middle"
+              className="mr-2 rounded border-control align-middle"
             />
           )
         }
@@ -374,23 +374,23 @@ function createComponents(
       // Clean tables
       table: ({ children }) => (
         <div className="my-3 overflow-x-auto">
-          <table className="min-w-full text-sm">{children}</table>
+          <table className="min-w-full text-label-lg">{children}</table>
         </div>
       ),
       thead: ({ children }) => <thead className="border-b">{children}</thead>,
       th: ({ children }) => (
-        <th className="text-left py-2 px-3 font-semibold text-muted-foreground">{children}</th>
+        <th className="text-left py-2 px-3 font-semibold text-secondary">{children}</th>
       ),
       td: ({ children }) => (
-        <td className="py-2 px-3 border-b border-border/50">{children}</td>
+        <td className="py-2 px-3 border-b border-subtle">{children}</td>
       ),
-      // Headings - H1/H2 same size, differentiated by weight
-      h1: ({ children }) => <h1 className="font-sans text-[16px] font-bold mt-5 mb-3">{children}</h1>,
-      h2: ({ children }) => <h2 className="font-sans text-[16px] font-semibold mt-4 mb-3">{children}</h2>,
-      h3: ({ children }) => <h3 className="font-sans text-[15px] font-semibold mt-4 mb-2">{children}</h3>,
+      // Headings - 16/24 (spec §7.4), differentiated by weight and spacing
+      h1: ({ children }) => <h1 className="font-sans text-copy-lg leading-6 font-bold mt-5 mb-3">{children}</h1>,
+      h2: ({ children }) => <h2 className="font-sans text-copy-lg leading-6 font-semibold mt-4 mb-2">{children}</h2>,
+      h3: ({ children }) => <h3 className="font-sans text-copy-lg leading-6 font-semibold mt-4 mb-1.5">{children}</h3>,
       // Blockquotes
       blockquote: ({ children }) => (
-        <blockquote className="border-l-2 border-muted-foreground/30 pl-3 my-2 text-muted-foreground italic">
+        <blockquote className="border-l-2 border-strong pl-3 my-2 text-secondary italic">
           {children}
         </blockquote>
       ),
@@ -497,33 +497,33 @@ function createComponents(
         <table className="min-w-full divide-y divide-border">{children}</table>
       </div>
     ),
-    thead: ({ children }) => <thead className="bg-muted/50">{children}</thead>,
+    thead: ({ children }) => <thead className="bg-fill-hover">{children}</thead>,
     tbody: ({ children }) => <tbody className="divide-y divide-border">{children}</tbody>,
     th: ({ children }) => (
-      <th className="text-left py-3 px-4 font-semibold text-sm">{children}</th>
+      <th className="text-left py-3 px-4 font-semibold text-label-lg">{children}</th>
     ),
     td: ({ children }) => (
-      <td className="py-3 px-4 text-sm">{children}</td>
+      <td className="py-3 px-4 text-label-lg">{children}</td>
     ),
     tr: ({ children }) => (
-      <tr className="hover:bg-muted/30 transition-colors">{children}</tr>
+      <tr className="transition-colors duration-micro ease-out-subtle hover:bg-fill-hover hover:duration-instant">{children}</tr>
     ),
     // Rich headings - H1/H2 same size, differentiated by weight
     h1: ({ children }) => (
-      <h1 className="font-sans text-[16px] font-bold mt-7 mb-4">{children}</h1>
+      <h1 className="font-sans text-copy-lg leading-6 font-bold mt-7 mb-4">{children}</h1>
     ),
     h2: ({ children }) => (
-      <h2 className="font-sans text-[16px] font-semibold mt-6 mb-3">{children}</h2>
+      <h2 className="font-sans text-copy-lg leading-6 font-semibold mt-6 mb-3">{children}</h2>
     ),
     h3: ({ children }) => (
-      <h3 className="font-sans text-[15px] font-semibold mt-5 mb-3">{children}</h3>
+      <h3 className="font-sans text-copy leading-6 font-semibold mt-5 mb-3">{children}</h3>
     ),
     h4: ({ children }) => (
-      <h4 className="text-[14px] font-semibold mt-3 mb-1">{children}</h4>
+      <h4 className="text-label-lg font-semibold mt-3 mb-1">{children}</h4>
     ),
     // Styled blockquotes
     blockquote: ({ children }) => (
-      <blockquote className="border-l-4 border-foreground/30 bg-muted/30 pl-4 pr-3 py-2 my-3 rounded-r-md">
+      <blockquote className="border-l-4 border-strong bg-fill-hover pl-4 pr-3 py-2 my-3 rounded-r-md">
         {children}
       </blockquote>
     ),
@@ -535,7 +535,7 @@ function createComponents(
             type="checkbox"
             checked={checked}
             readOnly
-            className="mr-2 rounded border-muted-foreground"
+            className="mr-2 rounded border-control"
           />
         )
       }
@@ -546,7 +546,7 @@ function createComponents(
     // Strong/emphasis
     strong: ({ children }) => <strong className="font-semibold">{children}</strong>,
     em: ({ children }) => <em className="italic">{children}</em>,
-    del: ({ children }) => <del className="line-through text-muted-foreground">{children}</del>,
+    del: ({ children }) => <del className="line-through text-tertiary">{children}</del>,
     // Handle unknown <markdown> tags that may come through rehype-raw
     // Type assertion needed because 'markdown' is not a standard HTML element
     markdown: ({ children }: { children: React.ReactNode }) => <>{children}</>,

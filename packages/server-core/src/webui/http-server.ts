@@ -300,14 +300,17 @@ export function createWebuiHandler(options: WebuiHandlerOptions): WebuiHandler {
       })
     }
 
-    // Return the default workspace ID so the webui can include it in the WS handshake
+    // Return the default workspace ID so the webui can include it in the WS handshake.
+    // A deep link names its workspace by slug (`?ws=`, as the app writes it); that one wins when it exists.
     if (path === '/api/config/workspaces' && req.method === 'GET') {
       const configSession = await validateSession(req.headers.get('cookie'), secret)
       if (!configSession) {
         return Response.json({ error: 'Unauthorized' }, { status: 401 })
       }
-      const { getActiveWorkspace } = await import('@mkagent/shared/config/storage')
-      const active = getActiveWorkspace()
+      const { getActiveWorkspace, getWorkspaces } = await import('@mkagent/shared/config/storage')
+      const linkedSlug = url.searchParams.get('ws')
+      const linked = linkedSlug ? getWorkspaces().find(w => w.slug === linkedSlug) : undefined
+      const active = linked ?? getActiveWorkspace()
       return Response.json({
         defaultWorkspaceId: active?.id ?? null,
       })

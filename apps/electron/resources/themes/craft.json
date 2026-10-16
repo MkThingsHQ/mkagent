@@ -1,0 +1,25 @@
+{
+  "name": "Craft",
+  "description": "The Craft Docs palette with Craft blue",
+  "author": "Craft Agent",
+  "license": "MIT",
+  "supportedModes": ["light", "dark"],
+  "shikiTheme": {
+    "light": "github-light",
+    "dark": "github-dark"
+  },
+  "background": "#fcfdfe",
+  "foreground": "#1a1c1e",
+  "accent": "#2e6de9",
+  "info": "#d98a1c",
+  "success": "#2f9e5b",
+  "destructive": "#e5484d",
+  "dark": {
+    "background": "#1e1e1e",
+    "foreground": "#ecedee",
+    "accent": "#71b2ff",
+    "info": "#f0b450",
+    "success": "#4cc38a",
+    "destructive": "#ff6369"
+  }
+}

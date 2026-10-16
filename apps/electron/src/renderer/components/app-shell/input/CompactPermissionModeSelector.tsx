@@ -10,51 +10,10 @@ import {
   DrawerClose,
 } from '@/components/ui/drawer'
 import { cn } from '@/lib/utils'
-import {
-  PERMISSION_MODE_CONFIG,
-  PERMISSION_MODE_ORDER,
-  type PermissionMode,
-} from '@mkagent/shared/agent/modes'
-
-// ============================================================================
-// Mode Icon (same SVG pattern as ActiveOptionBadges.PermissionModeIcon)
-// ============================================================================
-
-function ModeIcon({ mode, className }: { mode: PermissionMode; className?: string }) {
-  const config = PERMISSION_MODE_CONFIG[mode]
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-    >
-      <path d={config.svgPath} />
-    </svg>
-  )
-}
-
-// ============================================================================
-// Trigger chip styling per mode (matches desktop PermissionModeDropdown)
-// ============================================================================
-
-const MODE_STYLES: Record<PermissionMode, { className: string; shadowVar: string }> = {
-  safe: {
-    className: 'bg-foreground/5 text-foreground/60',
-    shadowVar: 'var(--foreground-rgb)',
-  },
-  ask: {
-    className: 'bg-info/10 text-info',
-    shadowVar: 'var(--info-rgb)',
-  },
-  'allow-all': {
-    className: 'bg-accent/5 text-accent',
-    shadowVar: 'var(--accent-rgb)',
-  },
-}
+import type { PermissionMode } from '@mkagent/shared/agent/modes'
+import { useAvailablePermissionModes } from '@/hooks/useAvailablePermissionModes'
+import { PermissionModeIcon as ModeIcon } from '@/components/ui/slash-command-menu'
+import { MODE_CHIP_TONE, MODE_ICON_TONE, knownMode } from './composer-styles'
 
 // Localized labels for each mode (PERMISSION_MODE_CONFIG carries English-only
 // displayName/shortName/description — render via these keys instead).
@@ -92,22 +51,30 @@ export function CompactPermissionModeSelector({
     setOpen(false)
   }, [onPermissionModeChange])
 
-  const style = MODE_STYLES[optimisticMode]
+  // A mode this build does not know (newer server) renders as Ask instead of crashing the input
+  const shownMode: PermissionMode = knownMode(optimisticMode)
+  // Guarded is listed only while its decision-model feature is on (or it is the current mode)
+  const modes = useAvailablePermissionModes(optimisticMode)
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerTrigger asChild>
         <button
           type="button"
-          aria-label={`${t('mode.permissionMode')}: ${t(MODE_LABEL_KEYS[optimisticMode].name)}`}
+          aria-label={`${t('mode.permissionMode')}: ${t(MODE_LABEL_KEYS[shownMode].name)}`}
+          data-mode={shownMode}
           className={cn(
-            "h-7 pl-2 pr-2.5 text-xs font-medium rounded-[6px] flex items-center gap-1.5 shadow-tinted outline-none select-none shrink-0",
-            style.className,
+            "input-toolbar-btn motion-press state-overlay flex h-control shrink-0 items-center justify-center gap-1.5 rounded-full px-2.5 text-label font-medium select-none",
+            "@min-[24rem]/panel:pr-3",
+            MODE_CHIP_TONE[shownMode],
           )}
-          style={{ '--shadow-color': style.shadowVar } as React.CSSProperties}
         >
-          <ModeIcon mode={optimisticMode} className="h-3.5 w-3.5" />
-          <span>{t(MODE_LABEL_KEYS[optimisticMode].short)}</span>
+          <ModeIcon mode={shownMode} className="size-3.5 shrink-0" />
+          {/* Narrow phones keep the tinted icon only (the card sits on the 16px gutter, so a 420px
+              screen gives it 388px; 24rem is the narrowest card the named chip fits) so
+              attach · sources · folder · mode · model · Send fit on one row; the mode name stays
+              in the aria-label and the drawer. */}
+          <span className="sr-only @min-[24rem]/panel:not-sr-only">{t(MODE_LABEL_KEYS[shownMode].short)}</span>
         </button>
       </DrawerTrigger>
 
@@ -116,28 +83,29 @@ export function CompactPermissionModeSelector({
           <DrawerTitle>{t('mode.permissionMode')}</DrawerTitle>
         </DrawerHeader>
 
-        <div className="px-4 pb-6 flex flex-col gap-1">
-          {PERMISSION_MODE_ORDER.map((mode) => {
+        {/* Rows sit on the title's 16px edge: 8px container inset + 8px row padding */}
+        <div className="px-2 pb-6 flex flex-col gap-1">
+          {modes.map((mode) => {
             const isSelected = mode === optimisticMode
             return (
               <DrawerClose asChild key={mode}>
                 <button
                   type="button"
                   className={cn(
-                    "flex items-center gap-3 w-full px-3 py-3 rounded-lg text-left transition-colors",
-                    isSelected ? "bg-foreground/5" : "hover:bg-foreground/5",
+                    "flex min-h-row-touch w-full shrink-0 items-center gap-3 rounded-md px-2 py-2.5 text-left transition-colors hover:duration-instant",
+                    isSelected ? "bg-fill-selected" : "hover:bg-fill-hover active:bg-fill-pressed",
                   )}
                   onClick={() => handleSelect(mode)}
                 >
-                  <span className={cn("shrink-0", PERMISSION_MODE_CONFIG[mode].colorClass.text)}>
-                    <ModeIcon mode={mode} className="h-5 w-5" />
+                  <span className={cn("shrink-0", MODE_ICON_TONE[knownMode(mode)])}>
+                    <ModeIcon mode={mode} className="size-5" />
                   </span>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium">{t(MODE_LABEL_KEYS[mode].name)}</div>
-                    <div className="text-xs text-muted-foreground">{t(MODE_LABEL_KEYS[mode].desc)}</div>
+                    <div className="text-copy font-medium">{t(MODE_LABEL_KEYS[mode].name)}</div>
+                    <div className="text-label text-tertiary">{t(MODE_LABEL_KEYS[mode].desc)}</div>
                   </div>
                   {isSelected && (
-                    <Check className="h-4 w-4 shrink-0 text-foreground/60" />
+                    <Check className="size-4 shrink-0 text-secondary" />
                   )}
                 </button>
               </DrawerClose>

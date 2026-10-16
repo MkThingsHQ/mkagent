@@ -54,21 +54,22 @@ export function SettingsRow({
       data-layout="settings-row"
       className={cn(
         'w-full flex items-center justify-between text-left',
-        inCard ? 'px-4 py-3.5' : 'py-3',
-        onClick && 'hover:bg-muted/70 transition-colors cursor-pointer',
+        inCard ? settingsUI.row : settingsUI.rowBare,
+        onClick && 'cursor-pointer -outline-offset-2 transition-colors duration-micro ease-out-subtle hover:bg-fill-hover hover:duration-instant active:bg-fill-pressed',
         className
       )}
     >
       <div className="flex-1 min-w-0">
         <div className={settingsUI.label}>{label}</div>
         {description && (
-          <div className={cn(settingsUI.description, settingsUI.labelDescriptionGap, 'truncate')}>
+          // Descriptions wrap (long paths break anywhere) instead of truncating
+          <div className={cn(settingsUI.description, settingsUI.labelDescriptionGap, '[overflow-wrap:anywhere]')}>
             {description}
           </div>
         )}
       </div>
       {(children || action) && (
-        <div data-layout="settings-control" className="flex items-center gap-3 ml-4 shrink-0">
+        <div data-layout="settings-control" className="flex items-center gap-2 shrink-0">
           {children}
           {action}
         </div>

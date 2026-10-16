@@ -351,20 +351,27 @@ describe('groupActivitiesByParent', () => {
       expect((result[0] as ActivityGroup).children.length).toBe(0)
     })
 
-    it('shows children with missing parents as orphan activities at root level', () => {
+    it('groups rows of a subagent launched in an earlier turn into one continued group, not interleaved', () => {
       resetCounters()
 
-      // Child references non-existent parent (parent Task doesn't exist)
-      const orphanChild = createChildActivity('non-existent-parent', { toolName: 'Read' })
-      const result = groupActivitiesByParent([orphanChild])
+      // A background agent from an earlier turn keeps working while this turn runs its own tools
+      const own1 = createActivity({ toolName: 'Bash', timestamp: 1000 })
+      const sub1 = createChildActivity('earlier-agent', { toolName: 'Read', timestamp: 1100 })
+      const own2 = createActivity({ toolName: 'Edit', timestamp: 1200 })
+      const sub2 = createChildActivity('earlier-agent', { toolName: 'Grep', timestamp: 1300, status: 'running' })
+      const result = groupActivitiesByParent([own1, sub1, own2, sub2])
 
-      // Orphaned children (with parentId pointing to non-existent Task) should
-      // appear as standalone activities at root level, not be silently dropped.
-      // This provides better visibility into edge cases where parent arrives late
-      // or doesn't exist.
-      expect(result.length).toBe(1)
-      expect(isActivityGroup(result[0]!)).toBe(false)
-      expect((result[0] as ActivityItem).toolName).toBe('Read')
+      expect(result.length).toBe(3)
+      expect((result[0] as ActivityItem).id).toBe(own1.id)
+      const group = result[1] as ActivityGroup
+      expect(isActivityGroup(group)).toBe(true)
+      expect(group.continued).toBe(true)
+      expect(group.parent.toolUseId).toBe('earlier-agent')
+      expect(group.parent.status).toBe('running')
+      expect(group.children.map(c => c.id)).toEqual([sub1.id, sub2.id])
+      // The group's rail is the only indent
+      expect(group.children.every(c => c.depth === 0)).toBe(true)
+      expect((result[2] as ActivityItem).id).toBe(own2.id)
     })
 
     it('handles malformed TaskOutput JSON gracefully', () => {
@@ -448,17 +455,18 @@ describe('groupActivitiesByParent', () => {
       const activities = [outerTask, innerTask, innerChild, outerChild]
       const result = groupActivitiesByParent(activities)
 
-      // Outer Task should be grouped with innerTask + outerChild as its children.
-      // innerChild belongs to innerTask (depth 2), but groupActivitiesByParent
-      // only groups by direct parentId, so innerChild is a child of innerTask.
+      // The outer group holds every descendant, the inner subagent's rows too (they used to vanish),
+      // with depth relative to the group: the inner Task and outerChild at 0, innerChild at 1.
       expect(result.length).toBe(1)
       expect(isActivityGroup(result[0]!)).toBe(true)
 
       const outerGroup = result[0] as ActivityGroup
       expect(outerGroup.parent.id).toBe(outerTask.id)
-      // outerTask's direct children: innerTask and outerChild
-      // innerChild has parentId = innerTask.toolUseId, not outerTask.toolUseId
-      expect(outerGroup.children.length).toBe(2)
+      expect(outerGroup.children.map(c => [c.id, c.depth])).toEqual([
+        [innerTask.id, 0],
+        [innerChild.id, 1],
+        [outerChild.id, 0],
+      ])
     })
 
     it('mixed top-level and nested tools group into correct turns', () => {

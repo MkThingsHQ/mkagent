@@ -14,8 +14,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PanelHeader } from '@/components/app-shell/PanelHeader'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { Button } from '@/components/ui/button'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { routes } from '@/lib/navigate'
@@ -24,6 +22,7 @@ import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { NetworkProxySettings } from '../../../shared/types'
 
 import {
+  SettingsPage,
   SettingsSection,
   SettingsCard,
   SettingsCardFooter,
@@ -200,165 +199,149 @@ export default function AppSettingsPage() {
   }, [savedProxyForm])
 
   return (
-    <div className="h-full flex flex-col">
-      <PanelHeader title={t("settings.app.title")} actions={<HeaderMenu route={routes.view.settings('app')} helpFeature="app-settings" />} />
-      <div className="flex-1 min-h-0 mask-fade-y">
-        <ScrollArea className="h-full">
-          <div className="px-5 py-7 max-w-3xl mx-auto">
-            <div className="space-y-8">
-              {/* Notifications */}
-              <SettingsSection title={t("settings.notifications.title")}>
-                <SettingsCard>
-                  <SettingsToggle
-                    label={t("settings.notifications.desktopNotifications")}
-                    description={t("settings.notifications.desktopNotificationsDesc")}
-                    checked={notificationsEnabled}
-                    onCheckedChange={handleNotificationsEnabledChange}
-                  />
-                </SettingsCard>
-              </SettingsSection>
+    <SettingsPage
+      title={t("settings.app.title")}
+      description={t("settings.app.description")}
+      actions={<HeaderMenu route={routes.view.settings('app')} helpFeature="app-settings" />}
+    >
+      {/* Notifications · Power · Tools: one card. Each toggle names itself, so three one-row cards
+          under three headings only added boxes (HIG Simplicity: group by layout, not containers). */}
+      <SettingsCard>
+        <SettingsToggle
+          label={t("settings.notifications.desktopNotifications")}
+          description={t("settings.notifications.desktopNotificationsDesc")}
+          checked={notificationsEnabled}
+          onCheckedChange={handleNotificationsEnabledChange}
+        />
+        <SettingsToggle
+          label={t("settings.power.keepScreenAwake")}
+          description={t("settings.power.keepScreenAwakeDesc")}
+          checked={keepAwakeEnabled}
+          onCheckedChange={handleKeepAwakeEnabledChange}
+        />
+        <SettingsToggle
+          label={t("settings.tools.builtInBrowser")}
+          description={t("settings.tools.builtInBrowserDesc")}
+          checked={browserToolEnabled}
+          onCheckedChange={handleBrowserToolEnabledChange}
+        />
+      </SettingsCard>
 
-              {/* Power */}
-              <SettingsSection title={t("settings.power.title")}>
-                <SettingsCard>
-                  <SettingsToggle
-                    label={t("settings.power.keepScreenAwake")}
-                    description={t("settings.power.keepScreenAwakeDesc")}
-                    checked={keepAwakeEnabled}
-                    onCheckedChange={handleKeepAwakeEnabledChange}
-                  />
-                </SettingsCard>
-              </SettingsSection>
+      {/* Network */}
+      <SettingsSection title={t("settings.network.title")}>
+        <SettingsCard>
+          <SettingsToggle
+            label={t("settings.network.httpProxy")}
+            description={t("settings.network.httpProxyDesc")}
+            checked={proxyForm.enabled}
+            onCheckedChange={(enabled) => setProxyForm(prev => ({ ...prev, enabled }))}
+          />
+          {proxyForm.enabled && (
+            <>
+              <SettingsInput
+                label={t("settings.network.httpProxyLabel")}
+                value={proxyForm.httpProxy}
+                onChange={(value) => setProxyForm(prev => ({ ...prev, httpProxy: value }))}
+                placeholder={t("settings.network.proxyPlaceholder")}
+                inCard
+              />
+              <SettingsInput
+                label={t("settings.network.httpsProxyLabel")}
+                value={proxyForm.httpsProxy}
+                onChange={(value) => setProxyForm(prev => ({ ...prev, httpsProxy: value }))}
+                placeholder={t("settings.network.proxyPlaceholder")}
+                inCard
+              />
+              <SettingsInput
+                label={t("settings.network.bypassRules")}
+                value={proxyForm.noProxy}
+                onChange={(value) => setProxyForm(prev => ({ ...prev, noProxy: value }))}
+                placeholder={t("settings.network.bypassPlaceholder")}
+                inCard
+              />
+            </>
+          )}
+          {(isProxyDirty || proxyError) && (
+            <SettingsCardFooter>
+              {proxyError && (
+                <span className="mr-auto text-label-sm text-destructive">{proxyError === 'proxyErrorProtocol' ? t("settings.network.proxyErrorProtocol") : proxyError === 'proxyErrorFormat' ? t("settings.network.proxyErrorFormat") : proxyError}</span>
+              )}
+              <Button
+                variant="ghost"
+                size="md"
+                onClick={handleResetProxy}
+                disabled={!isProxyDirty || isSavingProxy}
+              >
+                {t("common.reset")}
+              </Button>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={handleSaveProxy}
+                disabled={!isProxyDirty || isSavingProxy}
+              >
+                {isSavingProxy ? (
+                  <>
+                    <Spinner />
+                    {t("common.saving")}
+                  </>
+                ) : (
+                  t("common.save")
+                )}
+              </Button>
+            </SettingsCardFooter>
+          )}
+        </SettingsCard>
+      </SettingsSection>
 
-              {/* Tools */}
-              <SettingsSection title={t("settings.tools.title")}>
-                <SettingsCard>
-                  <SettingsToggle
-                    label={t("settings.tools.builtInBrowser")}
-                    description={t("settings.tools.builtInBrowserDesc")}
-                    checked={browserToolEnabled}
-                    onCheckedChange={handleBrowserToolEnabledChange}
-                  />
-                </SettingsCard>
-              </SettingsSection>
-
-              {/* Network */}
-              <SettingsSection title={t("settings.network.title")}>
-                <SettingsCard>
-                  <SettingsToggle
-                    label={t("settings.network.httpProxy")}
-                    description={t("settings.network.httpProxyDesc")}
-                    checked={proxyForm.enabled}
-                    onCheckedChange={(enabled) => setProxyForm(prev => ({ ...prev, enabled }))}
-                  />
-                  {proxyForm.enabled && (
-                    <>
-                      <SettingsInput
-                        label={t("settings.network.httpProxyLabel")}
-                        value={proxyForm.httpProxy}
-                        onChange={(value) => setProxyForm(prev => ({ ...prev, httpProxy: value }))}
-                        placeholder={t("settings.network.proxyPlaceholder")}
-                        inCard
-                      />
-                      <SettingsInput
-                        label={t("settings.network.httpsProxyLabel")}
-                        value={proxyForm.httpsProxy}
-                        onChange={(value) => setProxyForm(prev => ({ ...prev, httpsProxy: value }))}
-                        placeholder={t("settings.network.proxyPlaceholder")}
-                        inCard
-                      />
-                      <SettingsInput
-                        label={t("settings.network.bypassRules")}
-                        value={proxyForm.noProxy}
-                        onChange={(value) => setProxyForm(prev => ({ ...prev, noProxy: value }))}
-                        placeholder={t("settings.network.bypassPlaceholder")}
-                        inCard
-                      />
-                    </>
-                  )}
-                  {(isProxyDirty || proxyError) && (
-                    <SettingsCardFooter>
-                      {proxyError && (
-                        <span className="text-destructive text-sm mr-auto">{proxyError === 'proxyErrorProtocol' ? t("settings.network.proxyErrorProtocol") : proxyError === 'proxyErrorFormat' ? t("settings.network.proxyErrorFormat") : proxyError}</span>
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleResetProxy}
-                        disabled={!isProxyDirty || isSavingProxy}
-                      >
-                        {t("common.reset")}
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={handleSaveProxy}
-                        disabled={!isProxyDirty || isSavingProxy}
-                      >
-                        {isSavingProxy ? (
-                          <>
-                            <Spinner className="mr-1.5" />
-                            {t("common.saving")}
-                          </>
-                        ) : (
-                          t("common.save")
-                        )}
-                      </Button>
-                    </SettingsCardFooter>
-                  )}
-                </SettingsCard>
-              </SettingsSection>
-
-              {/* About */}
-              <SettingsSection title={t("settings.about.title")}>
-                <SettingsCard>
-                  <SettingsRow label={t("settings.about.version")}>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">
-                        {updateChecker.updateInfo?.currentVersion ?? t("common.loading")}
-                      </span>
-                      {isElectron && updateChecker.isDownloading && updateChecker.updateInfo?.latestVersion && (
-                        <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                          <Spinner className="w-3 h-3" />
-                          <span>{t("settings.about.downloading", { version: updateChecker.updateInfo.latestVersion, percent: updateChecker.downloadProgress })}</span>
-                        </div>
-                      )}
-                    </div>
-                  </SettingsRow>
-                  {isElectron && (
-                    <SettingsRow label={t("settings.about.checkForUpdates")}>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={handleCheckForUpdates}
-                        disabled={isCheckingForUpdates}
-                      >
-                        {isCheckingForUpdates ? (
-                          <>
-                            <Spinner className="mr-1.5" />
-                            {t("common.checking")}
-                          </>
-                        ) : (
-                          t("settings.about.checkNow")
-                        )}
-                      </Button>
-                    </SettingsRow>
-                  )}
-                  {isElectron && updateChecker.isReadyToInstall && updateChecker.updateInfo?.latestVersion && (
-                    <SettingsRow label={t("settings.about.updateReady")}>
-                      <Button
-                        size="sm"
-                        onClick={updateChecker.installUpdate}
-                      >
-                        {t("settings.about.restartToUpdate", { version: updateChecker.updateInfo.latestVersion })}
-                      </Button>
-                    </SettingsRow>
-                  )}
-                </SettingsCard>
-              </SettingsSection>
+      {/* About */}
+      <SettingsSection title={t("settings.about.title")}>
+        <SettingsCard>
+          <SettingsRow label={t("settings.about.version")}>
+            <div className="flex items-center gap-2">
+              <span className="text-label text-secondary tabular-nums">
+                {updateChecker.updateInfo?.currentVersion ?? t("common.loading")}
+              </span>
+              {isElectron && updateChecker.isDownloading && updateChecker.updateInfo?.latestVersion && (
+                <div className="flex items-center gap-2 text-label-sm text-tertiary">
+                  <Spinner />
+                  <span>{t("settings.about.downloading", { version: updateChecker.updateInfo.latestVersion, percent: updateChecker.downloadProgress })}</span>
+                </div>
+              )}
             </div>
-          </div>
-        </ScrollArea>
-      </div>
-    </div>
+          </SettingsRow>
+          {isElectron && (
+            <SettingsRow label={t("settings.about.checkForUpdates")}>
+              <Button
+                variant="secondary"
+                size="md"
+                onClick={handleCheckForUpdates}
+                disabled={isCheckingForUpdates}
+              >
+                {isCheckingForUpdates ? (
+                  <>
+                    <Spinner />
+                    {t("common.checking")}
+                  </>
+                ) : (
+                  t("settings.about.checkNow")
+                )}
+              </Button>
+            </SettingsRow>
+          )}
+          {isElectron && updateChecker.isReadyToInstall && updateChecker.updateInfo?.latestVersion && (
+            <SettingsRow label={t("settings.about.updateReady")}>
+              <Button
+                variant="primary"
+                size="md"
+                onClick={updateChecker.installUpdate}
+              >
+                {t("settings.about.restartToUpdate", { version: updateChecker.updateInfo.latestVersion })}
+              </Button>
+            </SettingsRow>
+          )}
+        </SettingsCard>
+      </SettingsSection>
+    </SettingsPage>
   )
 }

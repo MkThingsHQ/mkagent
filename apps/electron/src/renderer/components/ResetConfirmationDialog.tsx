@@ -62,7 +62,7 @@ export function ResetConfirmationDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-destructive">
-            <AlertTriangle className="h-5 w-5" />
+            <AlertTriangle className="size-5" />
             {t("dialog.reset.title")}
           </DialogTitle>
           <DialogDescription className="text-left pt-2">
@@ -70,21 +70,21 @@ export function ResetConfirmationDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1 pl-2">
+        <ul className="list-disc list-inside text-label text-secondary space-y-1 pl-2">
           <li>{t("dialog.reset.workspaces")}</li>
           <li>{t("dialog.reset.credentials")}</li>
           <li>{t("dialog.reset.preferences")}</li>
         </ul>
 
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-md p-3 text-sm">
-          <strong className="text-amber-600 dark:text-amber-400">{t("dialog.reset.backupWarning")}</strong>
-          <p className="text-muted-foreground mt-1">
+        <div className="bg-info-tint rounded-md p-3 text-label">
+          <strong className="text-info">{t("dialog.reset.backupWarning")}</strong>
+          <p className="text-secondary mt-1">
             {t("dialog.reset.cannotUndo")}
           </p>
         </div>
 
         <div className="space-y-2 pt-2">
-          <label className="text-sm font-medium">
+          <label className="text-label font-medium">
             {t("dialog.reset.confirmSolve", { a: problem.a, b: problem.b })}
           </label>
           <Input
@@ -103,12 +103,12 @@ export function ResetConfirmationDialog({
           />
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
-          <Button variant="outline" onClick={handleCancel}>
+        <DialogFooter>
+          <Button variant="ghost" onClick={handleCancel}>
             {t("common.cancel")}
           </Button>
           <Button
-            variant="destructive"
+            variant="danger-solid"
             disabled={!isCorrect}
             onClick={handleConfirm}
           >

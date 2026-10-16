@@ -30,10 +30,17 @@
 import * as React from 'react'
 import { FileText, Maximize2 } from 'lucide-react'
 import { Document, Page, pdfjs } from 'react-pdf'
-import { cn } from '../../lib/utils'
 import { CodeBlock } from './CodeBlock'
 import { PDFPreviewOverlay } from '../overlay/PDFPreviewOverlay'
-import { ItemNavigator } from '../overlay/ItemNavigator'
+import {
+  PreviewBlockAction,
+  PreviewBlockError,
+  PreviewBlockFade,
+  PreviewBlockFrame,
+  PreviewBlockHeader,
+  PreviewBlockLoading,
+  PreviewItemNavigator,
+} from './PreviewBlockChrome'
 import { usePlatform } from '../../context/PlatformContext'
 import { useTranslation } from 'react-i18next'
 import 'react-pdf/dist/Page/AnnotationLayer.css'
@@ -157,8 +164,6 @@ export function MarkdownPdfBlock({ code, className, onCreateRegionAnnotation: _o
     return onReadFileBinary(path)
   }, [contentCache, onReadFileBinary])
 
-  const hasMultiple = items.length > 1
-
   // Invalid spec → fall back to code block
   if (!spec || items.length === 0) {
     return <CodeBlock code={code} language="json" mode="full" className={className} />
@@ -168,46 +173,34 @@ export function MarkdownPdfBlock({ code, className, onCreateRegionAnnotation: _o
 
   return (
     <PdfBlockErrorBoundary fallback={fallback}>
-      <div className={cn('relative group rounded-[8px] overflow-hidden border bg-muted/10', className)}>
-        {/* Header */}
-        <div className="px-3 py-2 bg-muted/50 border-b flex items-center gap-2">
-          <FileText className="w-3.5 h-3.5 text-muted-foreground/50" />
-          <span className="text-[12px] text-muted-foreground font-medium flex-1">
-            {spec.title || t('preview.pdfPreview')}
-          </span>
-          <div className="flex items-center gap-1">
-            <ItemNavigator items={items} activeIndex={activeIndex} onSelect={setActiveIndex} />
-            <button
-              onClick={() => setIsFullscreen(true)}
-              className={cn(
-                "p-1 rounded-[6px] transition-all select-none",
-                "bg-background shadow-minimal",
-                "text-muted-foreground/50 hover:text-foreground",
-                "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100",
-                hasMultiple ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-              )}
-              title={t('common.viewFullscreen')}
-            >
-              <Maximize2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
+      <PreviewBlockFrame className={className}>
+        {/* Header: title · item navigator · fullscreen */}
+        <PreviewBlockHeader icon={<FileText />} title={spec.title || t('preview.pdfPreview')}>
+          <PreviewItemNavigator items={items} activeIndex={activeIndex} onSelect={setActiveIndex} />
+          <PreviewBlockAction
+            aria-label={t('common.viewFullscreen')}
+            icon={<Maximize2 />}
+            onClick={() => setIsFullscreen(true)}
+          />
+        </PreviewBlockHeader>
 
-        {/* Content area: fixed height prevents layout shift on item switch */}
+        {/* Content area: fixed height prevents layout shift on item switch. The page (white, as
+            pdf.js paints it) sits on the well like a sheet in a document viewer. */}
         <div className="relative h-[400px] overflow-hidden">
           {/* Active Document (only one mounted at a time) */}
           {activeFileObj && (
-            <div className="flex items-start justify-center bg-white p-4">
+            <div className="flex items-start justify-center p-4">
               <Document
                 file={activeFileObj}
-                loading={<div className="py-8 text-center text-muted-foreground text-[13px]">{t('common.rendering')}</div>}
-                error={<div className="py-6 text-center text-destructive/70 text-[13px]">{t('preview.failedToRenderPdf')}</div>}
+                loading={<PreviewBlockLoading>{t('common.rendering')}</PreviewBlockLoading>}
+                error={<PreviewBlockError>{t('preview.failedToRenderPdf')}</PreviewBlockError>}
               >
                 <Page
                   pageNumber={1}
                   renderTextLayer={false}
                   renderAnnotationLayer={false}
                   width={500}
+                  className="shadow-elev-1"
                 />
               </Document>
             </div>
@@ -215,26 +208,18 @@ export function MarkdownPdfBlock({ code, className, onCreateRegionAnnotation: _o
 
           {/* Loading state for uncached active item */}
           {!activePdfData && loading && (
-            <div className="py-8 text-center text-muted-foreground text-[13px]">{t('common.loading')}</div>
+            <PreviewBlockLoading className="h-full">{t('common.loading')}</PreviewBlockLoading>
           )}
 
           {/* Error state for uncached active item */}
           {!activePdfData && !loading && error && (
-            <div className="py-6 text-center text-destructive/70 text-[13px]">{error}</div>
+            <PreviewBlockError>{error}</PreviewBlockError>
           )}
 
-          {/* Bottom fade gradient */}
-          {activePdfData && (
-            <div
-              className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
-              style={{
-                background: 'linear-gradient(to bottom, transparent, var(--muted))',
-                zIndex: 'var(--z-local, 10)',
-              }}
-            />
-          )}
+          {/* Bottom fade: the page dissolves into the well */}
+          {activePdfData && <PreviewBlockFade />}
         </div>
-      </div>
+      </PreviewBlockFrame>
 
       {/* Fullscreen overlay — passes items for multi-item navigation */}
       <PDFPreviewOverlay

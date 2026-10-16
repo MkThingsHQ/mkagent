@@ -3,15 +3,33 @@
  *
  * Text input with label for settings pages.
  * Supports password type with show/hide toggle.
+ * Fields use the Input primitive's sunken well (field-surface): hairline, focus-ring tint,
+ * destructive ring when invalid.
  */
 
 import * as React from 'react'
+import { useTranslation } from 'react-i18next'
 import { Eye, EyeOff } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
+
+/** Eye button inside a password field (pointer-only, like before: tabIndex -1). */
+function RevealButton({ revealed, onToggle }: { revealed: boolean; onToggle: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-label={revealed ? t('common.hide') : t('common.show')}
+      className="absolute right-1.5 top-1/2 inline-grid size-6 -translate-y-1/2 place-items-center rounded-sm text-tertiary transition-colors duration-micro ease-out-subtle hover:text-secondary hover:duration-instant"
+      tabIndex={-1}
+    >
+      {revealed ? <EyeOff className="size-4" aria-hidden /> : <Eye className="size-4" aria-hidden />}
+    </button>
+  )
+}
 
 export interface SettingsInputProps {
   /** Input label */
@@ -77,7 +95,7 @@ export function SettingsInput({
     <div
       className={cn(
         'space-y-2',
-        inCard && 'px-4 py-3.5',
+        inCard && settingsUI.cardPadding,
         className
       )}
     >
@@ -91,11 +109,8 @@ export function SettingsInput({
           )}
         </div>
       )}
-      <div className="flex gap-2">
-        <div className={cn(
-          'relative flex-1 rounded-md shadow-minimal has-[:focus-visible]:bg-background',
-          error && 'ring-1 ring-destructive'
-        )}>
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 min-w-0">
           <Input
             id={id}
             type={inputType}
@@ -105,29 +120,16 @@ export function SettingsInput({
             disabled={disabled}
             onBlur={onBlur}
             onKeyDown={onKeyDown}
-            className={cn(
-              'bg-muted/50 border-0 shadow-none focus-visible:ring-0 focus-visible:outline-none focus-visible:bg-transparent',
-              isPassword && 'pr-10'
-            )}
+            aria-invalid={error ? true : undefined}
+            className={cn(isPassword && 'pr-9')}
           />
           {isPassword && (
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-              tabIndex={-1}
-            >
-              {showPassword ? (
-                <EyeOff className="size-4" />
-              ) : (
-                <Eye className="size-4" />
-              )}
-            </button>
+            <RevealButton revealed={showPassword} onToggle={() => setShowPassword(!showPassword)} />
           )}
         </div>
         {action}
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-label-sm text-destructive">{error}</p>}
     </div>
   )
 }
@@ -179,7 +181,7 @@ export function SettingsInputRow({
       data-layout="settings-row"
       className={cn(
         'flex items-center justify-between',
-        inCard ? 'px-4 py-3.5' : 'py-3',
+        inCard ? settingsUI.row : settingsUI.rowBare,
         className
       )}
     >
@@ -190,12 +192,10 @@ export function SettingsInputRow({
         {description && (
           <p className={cn(settingsUI.description, settingsUI.labelDescriptionGap)}>{description}</p>
         )}
-        {error && <p className={cn('text-sm text-destructive', settingsUI.labelDescriptionGap)}>{error}</p>}
+        {error && <p className={cn('text-label-sm text-destructive', settingsUI.labelDescriptionGap)}>{error}</p>}
       </div>
-      <div data-layout="settings-control" className={cn(
-        'ml-4 shrink-0 rounded-md shadow-minimal has-[:focus-visible]:bg-background',
-        error && 'ring-1 ring-destructive'
-      )}>
+      {/* `w-[200px]` is a hook for the @container panel stacking rule in index.css */}
+      <div data-layout="settings-control" className="shrink-0">
         <Input
           id={id}
           type={type}
@@ -203,7 +203,8 @@ export function SettingsInputRow({
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           disabled={disabled}
-          className="w-[200px] bg-muted/50 border-0 shadow-none focus-visible:ring-0 focus-visible:outline-none focus-visible:bg-transparent"
+          aria-invalid={error ? true : undefined}
+          className="w-[200px]"
         />
       </div>
     </div>
@@ -257,7 +258,7 @@ export function SettingsSecretInput({
     <div
       className={cn(
         'space-y-2',
-        inCard && 'px-4 py-3.5',
+        inCard && settingsUI.cardPadding,
         className
       )}
     >
@@ -271,10 +272,7 @@ export function SettingsSecretInput({
           )}
         </div>
       )}
-      <div className={cn(
-        'relative rounded-md shadow-minimal bg-muted/50 has-[:focus-visible]:bg-background',
-        error && 'ring-1 ring-destructive'
-      )}>
+      <div className="relative">
         <Input
           id={id}
           type={showValue ? 'text' : 'password'}
@@ -283,22 +281,12 @@ export function SettingsSecretInput({
           placeholder={placeholder}
           disabled={disabled}
           onBlur={onBlur}
-          className="pr-10 bg-transparent border-0 shadow-none focus-visible:ring-0 focus-visible:outline-none"
+          aria-invalid={error ? true : undefined}
+          className="pr-9"
         />
-        <button
-          type="button"
-          onClick={() => setShowValue(!showValue)}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-          tabIndex={-1}
-        >
-          {showValue ? (
-            <EyeOff className="size-4" />
-          ) : (
-            <Eye className="size-4" />
-          )}
-        </button>
+        <RevealButton revealed={showValue} onToggle={() => setShowValue(!showValue)} />
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-label-sm text-destructive">{error}</p>}
     </div>
   )
 }

@@ -3,23 +3,26 @@
   "description": "Clean purple-tinted neutral theme",
   "author": "MkAgent",
   "license": "MIT",
-  "supportedModes": ["light", "dark"],
+  "supportedModes": [
+    "light",
+    "dark"
+  ],
   "shikiTheme": {
     "light": "github-light",
     "dark": "github-dark"
   },
-  "background": "#faf9fb",
-  "foreground": "#1a1625",
-  "accent": "#8b5cf6",
-  "info": "#d97706",
-  "success": "#16a34a",
-  "destructive": "#dc2626",
+  "background": "#fcfdfe",
+  "foreground": "#1a1c1e",
+  "accent": "oklch(0.52 0.19 292)",
+  "info": "oklch(0.76 0.15 72)",
+  "success": "oklch(0.62 0.15 150)",
+  "destructive": "oklch(0.58 0.21 27)",
   "dark": {
-    "background": "#1e1d21",
-    "foreground": "#f5f5f7",
-    "accent": "#a78bfa",
-    "info": "#fbbf24",
-    "success": "#22c55e",
-    "destructive": "#ef4444"
+    "background": "oklch(0.165 0.004 265)",
+    "foreground": "oklch(0.945 0.003 265)",
+    "accent": "oklch(0.70 0.15 292)",
+    "info": "oklch(0.80 0.14 75)",
+    "success": "oklch(0.74 0.15 150)",
+    "destructive": "oklch(0.70 0.18 25)"
   }
 }

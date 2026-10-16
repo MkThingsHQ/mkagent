@@ -6,9 +6,10 @@
  */
 
 import * as React from 'react'
-import { motion, AnimatePresence } from 'motion/react'
+import { AnimatedCollapsibleContent } from '@mkagent/ui'
 import { cn } from '@/lib/utils'
 import { settingsUI } from './SettingsUIConstants'
+import { SettingsCardDivider } from './SettingsCard'
 
 // ============================================
 // Context
@@ -23,6 +24,22 @@ const RadioGroupContext = React.createContext<RadioGroupContextValue | null>(nul
 
 function useRadioGroupContext() {
   return React.useContext(RadioGroupContext)
+}
+
+/** Radio dot: --border-control ring when off (≥ 3:1), accent fill with an on-accent dot when on. */
+function RadioIndicator({ selected, className }: { selected: boolean; className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        'grid size-4 shrink-0 place-items-center rounded-full',
+        selected ? 'bg-accent-solid' : 'inset-ring-[1.5px] inset-ring-[var(--border-control)]',
+        className
+      )}
+    >
+      {selected && <span className="size-1.5 rounded-full bg-on-accent" />}
+    </span>
+  )
 }
 
 // ============================================
@@ -67,13 +84,13 @@ export function SettingsRadioGroup<T extends string = string>({
       <div
         role="radiogroup"
         className={cn(
-          'rounded-xl bg-background shadow-minimal overflow-hidden',
+          'rounded-lg bg-raised shadow-elev-1 overflow-hidden',
           className
         )}
       >
         {childArray.map((child, index) => (
           <React.Fragment key={index}>
-            {index > 0 && <div className="h-px bg-border/50 mx-4" />}
+            {index > 0 && <SettingsCardDivider />}
             {child}
           </React.Fragment>
         ))}
@@ -147,9 +164,9 @@ export function SettingsRadioCard({
   return (
     <div
       className={cn(
-        'overflow-hidden transition-colors',
-        needsCardStyling && 'rounded-xl shadow-minimal bg-background',
-        !disabled && 'hover:bg-foreground-3',
+        'overflow-hidden transition-colors duration-micro ease-out-subtle',
+        needsCardStyling && 'rounded-lg bg-raised shadow-elev-1',
+        !disabled && 'hover:bg-fill-hover hover:duration-instant',
         disabled && 'opacity-50 cursor-not-allowed',
         className
       )}
@@ -162,24 +179,12 @@ export function SettingsRadioCard({
         disabled={disabled}
         onClick={() => !disabled && handleClick?.()}
         className={cn(
-          'w-full px-4 py-3.5 text-left flex items-start gap-3',
+          'w-full px-3.5 py-3 text-left flex items-start gap-3 -outline-offset-2',
           !disabled && 'cursor-pointer'
         )}
       >
         {/* Radio circle */}
-        <div
-          className={cn(
-            'w-4 h-4 rounded-full border-[1.5px] mt-[3px] shrink-0',
-            'grid place-items-center transition-colors',
-            isSelected
-              ? 'border-foreground bg-foreground'
-              : 'border-muted-foreground/40'
-          )}
-        >
-          {isSelected && (
-            <div className="w-2 h-2 rounded-full bg-background" />
-          )}
-        </div>
+        <RadioIndicator selected={isSelected} className="mt-px" />
 
         {/* Content */}
         <div className="flex-1 min-w-0">
@@ -198,22 +203,12 @@ export function SettingsRadioCard({
         {icon && <div className="shrink-0 ml-2">{icon}</div>}
       </button>
 
-      {/* Expanded content */}
-      <AnimatePresence initial={false}>
-        {isSelected && expandedContent && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ type: 'spring', stiffness: 500, damping: 40 }}
-            className="overflow-hidden"
-          >
-            <div className="px-4 pb-4 pt-0">
-              <div className="pl-[30px]">{expandedContent}</div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Expanded content: swaps in once and fades with a 4px drop (no height animation) */}
+      <AnimatedCollapsibleContent isOpen={isSelected && !!expandedContent}>
+        <div className="px-3.5 pb-3.5 pt-0">
+          <div className="pl-7">{expandedContent}</div>
+        </div>
+      </AnimatedCollapsibleContent>
     </div>
   )
 }
@@ -264,33 +259,21 @@ export function SettingsRadioOption({
       disabled={disabled}
       onClick={() => !disabled && onValueChange(value)}
       className={cn(
-        'w-full px-4 py-3 text-left flex items-center gap-3',
-        'hover:bg-muted/50 transition-colors',
+        'w-full min-h-11 px-3.5 py-2.5 text-left flex items-center gap-3 -outline-offset-2',
+        'transition-colors duration-micro ease-out-subtle hover:bg-fill-hover hover:duration-instant',
         disabled && 'opacity-50 cursor-not-allowed',
         !disabled && 'cursor-pointer',
         className
       )}
     >
       {/* Radio circle */}
-      <div
-        className={cn(
-          'w-4 h-4 rounded-full border-[1.5px] shrink-0',
-          'grid place-items-center transition-colors',
-          isSelected
-            ? 'border-foreground bg-foreground'
-            : 'border-muted-foreground/40'
-        )}
-      >
-        {isSelected && (
-          <div className="w-2 h-2 rounded-full bg-background" />
-        )}
-      </div>
+      <RadioIndicator selected={isSelected} />
 
       {/* Label */}
       <div className="flex-1 min-w-0 flex items-center">
-        <span className="text-sm">{label}</span>
+        <span className="text-label">{label}</span>
         {description && (
-          <span className="text-sm text-muted-foreground ml-1.5">
+          <span className="text-label text-tertiary ml-1.5">
             · {description}
           </span>
         )}

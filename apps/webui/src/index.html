@@ -2,8 +2,17 @@
 <html lang="en" class="light">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>MkAgent</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content">
+  <script>
+    // Apply the saved light/dark mode before first paint: the canvas is opaque, so waiting for
+    // ThemeContext would flash the light canvas in dark mode. ThemeContext takes over after mount.
+    try {
+      var mode = (JSON.parse(localStorage.getItem('craft-theme') || 'null') || {}).mode
+      var dark = mode === 'dark' || (mode !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
+      if (dark) document.documentElement.classList.replace('light', 'dark')
+    } catch (e) {}
+  </script>
   <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
   <link rel="icon" type="image/x-icon" href="./favicon.ico" />
   <link rel="apple-touch-icon" href="./apple-touch-icon.png" />

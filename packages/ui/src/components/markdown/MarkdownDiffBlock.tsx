@@ -17,9 +17,11 @@
 import * as React from 'react'
 import { PatchDiff, type PatchDiffProps } from '@pierre/diffs/react'
 import { DIFFS_TAG_NAME } from '@pierre/diffs'
+import { FileDiff } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { CodeBlock } from './CodeBlock'
 import { ensureUnifiedDiffFormat } from './diff-normalize'
+import { countDiffRows, summarizePatch } from './diff-summary'
 import { registerMkAgentShikiThemes } from '../code-viewer/registerShikiThemes'
 
 // ── Custom element + theme registration (same as ShikiDiffViewer) ──────────
@@ -80,6 +82,37 @@ class DiffErrorBoundary extends React.Component<
   }
 }
 
+// ── Theme bridge ──────────────────────────────────────────────────────────
+// @pierre/diffs renders in a shadow root but reads these override variables, which inherit
+// through it. Rows tint from the solved diff roles on the code area only (the line-number
+// gutter stays neutral), word highlights use the stronger diff-word roles, the +/− sign
+// column takes the success/destructive text roles, numbers stay tertiary (spec §7.4).
+const DIFF_THEME_VARS = {
+  '--diffs-font-family': 'var(--font-mono)',
+  '--diffs-header-font-family': 'var(--font-sans)',
+  '--diffs-font-size': 'var(--fs-mono)',
+  '--diffs-line-height': '20px',
+  '--diffs-addition-color-override': 'var(--success-text)',
+  '--diffs-deletion-color-override': 'var(--destructive-text)',
+  '--diffs-bg-addition-override': 'var(--diff-add)',
+  '--diffs-bg-deletion-override': 'var(--diff-del)',
+  '--diffs-bg-addition-hover-override': 'var(--diff-add)',
+  '--diffs-bg-deletion-hover-override': 'var(--diff-del)',
+  '--diffs-bg-addition-number-override': 'transparent',
+  '--diffs-bg-deletion-number-override': 'transparent',
+  '--diffs-bg-addition-emphasis-override': 'var(--diff-add-word)',
+  '--diffs-bg-deletion-emphasis-override': 'var(--diff-del-word)',
+  '--diffs-bg-hover-override': 'var(--fill-hover)',
+  '--diffs-bg-separator-override': 'var(--fill-hover)',
+  '--diffs-fg-number-override': 'var(--text-tertiary)',
+  '--diffs-fg-number-addition-override': 'var(--text-tertiary)',
+  '--diffs-fg-number-deletion-override': 'var(--text-tertiary)',
+} as React.CSSProperties
+
+/** PatchDiff line height (--diffs-line-height) and the vertical padding around its rows. */
+const DIFF_ROW_PX = 20
+const DIFF_PADDING_PX = 18
+
 // ── Main component ────────────────────────────────────────────────────────
 
 export interface MarkdownDiffBlockProps {
@@ -92,11 +125,11 @@ export function MarkdownDiffBlock({ code, className }: MarkdownDiffBlockProps) {
   const dark = isDarkMode()
   const themeName = dark ? 'mkagent-dark' : 'mkagent-light'
 
-  // Build the same options used in ShikiDiffViewer for visual consistency
+  // Same renderer options as ShikiDiffViewer, with classic +/− indicators (sign column)
   const options: PatchDiffProps<undefined>['options'] = React.useMemo(() => ({
     theme: themeName,
     diffStyle: 'unified' as const,
-    diffIndicators: 'bars' as const,
+    diffIndicators: 'classic' as const,
     disableBackground: false,
     lineDiffType: 'word' as const,
     overflow: 'scroll' as const,
@@ -105,23 +138,36 @@ export function MarkdownDiffBlock({ code, className }: MarkdownDiffBlockProps) {
   }), [themeName, dark])
 
   const patch = React.useMemo(() => ensureUnifiedDiffFormat(code), [code])
+  const summary = React.useMemo(() => summarizePatch(code), [code])
+  // PatchDiff paints asynchronously; reserve its height up front so the transcript doesn't
+  // shift when the rows appear (answers are no longer capped in a 540px scroller).
+  const reservedHeight = React.useMemo(() => countDiffRows(patch) * DIFF_ROW_PX + DIFF_PADDING_PX, [patch])
 
   const fallback = <CodeBlock code={code} language="diff" mode="full" className={className} />
 
   return (
     <DiffErrorBoundary fallback={fallback}>
       <div
-        className={cn(
-          'relative rounded-[8px] overflow-hidden border bg-muted/30',
-          className,
-        )}
-        style={{
-          fontFamily: '"JetBrains Mono", monospace',
-          fontSize: 13,
-          lineHeight: 1.6,
-        }}
+        className={cn('relative overflow-hidden rounded-md border border-subtle bg-sunken', className)}
+        style={DIFF_THEME_VARS}
       >
-        <PatchDiff patch={patch} options={options} />
+        {/* 32px header: path truncates at the start so the file name survives; stats never wrap */}
+        <div className="flex h-8 items-center gap-2 border-b border-subtle px-3 text-label-sm text-tertiary">
+          <FileDiff aria-hidden className="size-3.5 shrink-0" />
+          <span title={summary.path ?? undefined} className="min-w-0 truncate text-left font-mono text-secondary [direction:rtl]">
+            <bdi>{summary.path ?? 'diff'}</bdi>
+          </span>
+          {(summary.additions > 0 || summary.deletions > 0) && (
+            <span className="shrink-0 whitespace-nowrap font-mono tabular-nums">
+              {summary.additions > 0 && <span className="text-success">+{summary.additions}</span>}
+              {summary.additions > 0 && summary.deletions > 0 && ' '}
+              {summary.deletions > 0 && <span className="text-destructive">−{summary.deletions}</span>}
+            </span>
+          )}
+        </div>
+        <div className="py-1" style={{ minHeight: reservedHeight }}>
+          <PatchDiff patch={patch} options={options} />
+        </div>
       </div>
     </DiffErrorBoundary>
   )

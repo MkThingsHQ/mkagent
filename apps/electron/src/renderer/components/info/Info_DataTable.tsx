@@ -97,7 +97,7 @@ export function Info_DataTable<TData, TValue>({
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Spinner className="text-muted-foreground" />
+        <Spinner className="text-tertiary" />
       </div>
     )
   }
@@ -105,7 +105,7 @@ export function Info_DataTable<TData, TValue>({
   // Error state
   if (error) {
     return (
-      <div className="px-4 py-6 text-sm text-muted-foreground">
+      <div className="px-3.5 py-6 text-label text-tertiary">
         {error === 'Source requires authentication' ? (
           <span>{t('sourceInfo.authenticateToViewData')}</span>
         ) : (
@@ -137,8 +137,10 @@ export function Info_DataTable<TData, TValue>({
       )}
 
       {/* Inner wrapper handles horizontal overflow independently so the table
-          can scroll horizontally without dragging the floating action along. */}
-      <div className="overflow-x-auto">
+          can scroll horizontally without dragging the floating action along.
+          Column content pads 6px (cell) + 10px (content); the first column trims its cell to 4px so
+          the first column lands on the card inset (14px), like Info_Table rows and settings rows. */}
+      <div className="overflow-x-auto [&_th:first-child]:pl-1 [&_td:first-child]:pl-1">
         <DataTable
           columns={columns}
           data={data}
@@ -157,4 +159,9 @@ export function Info_DataTable<TData, TValue>({
 
 // Re-export SortableHeader for convenience
 export { SortableHeader } from '@/components/ui/data-table'
+
+/** Column header text: quiet 12px tertiary (plain and sortable headers read the same). */
+export const INFO_TABLE_HEADER_CLASS = 'text-label-sm font-medium text-tertiary'
+/** Extra classes for SortableHeader buttons so they match plain headers */
+export const INFO_TABLE_SORTABLE_HEADER_CLASS = 'text-label-sm text-tertiary hover:text-foreground'
 export type { ColumnDef } from '@tanstack/react-table'

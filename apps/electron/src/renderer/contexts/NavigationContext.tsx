@@ -893,19 +893,22 @@ export function NavigationProvider({
   // WORKSPACE SWITCH
   // =========================================================================
 
-  const previousWorkspaceSlugRef = useRef<string | null>(null)
+  const previousWorkspaceIdRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (!workspaceId || !workspaceSlug || !isSessionsReady) return
 
-    if (previousWorkspaceSlugRef.current === null) {
+    if (previousWorkspaceIdRef.current === null) {
       // First mount — initial route restoration handles it
-      previousWorkspaceSlugRef.current = workspaceSlug
+      previousWorkspaceIdRef.current = workspaceId
       return
     }
 
-    if (previousWorkspaceSlugRef.current === workspaceSlug) return
-    previousWorkspaceSlugRef.current = workspaceSlug
+    // A switch is a new workspace ID. The slug alone can change without one: App falls back to the ID
+    // until the workspace list has loaded, and reading that as a switch replaced cold-load deep links
+    // (?route=…) with the workspace's stored URL.
+    if (previousWorkspaceIdRef.current === workspaceId) return
+    previousWorkspaceIdRef.current = workspaceId
 
     // Suppress pushState during reconciliation
     suppressPushRef.current = true
@@ -1130,9 +1133,16 @@ export function NavigationProvider({
     // selection decision (board skip, last/first fallback) so it lives in one
     // place; this effect just applies it when the session list loads after
     // navigation (workspace switch, lazy session load, etc.).
+    // Decide on the store's focused route, not this render's `navigationState`:
+    // an earlier effect in the same commit (initial restore from the URL,
+    // workspace switch) may already have replaced it, and the stale value
+    // auto-selected the first session over a cold-load ?route=…/session/<id>.
+    const liveRoute = store.get(focusedPanelRouteAtom)
+    const liveState = liveRoute ? parseRouteToNavigationState(liveRoute) : null
+    if (!liveState || !isSessionsNavigation(liveState) || liveState.details) return
     if (!isSessionsNavigation(navigationState) || navigationState.details) return
 
-    const resolved = resolveAutoSelection(navigationState)
+    const resolved = resolveAutoSelection(liveState)
     if (isSessionsNavigation(resolved) && resolved.details) {
       navigateToSession(resolved.details.sessionId)
     }

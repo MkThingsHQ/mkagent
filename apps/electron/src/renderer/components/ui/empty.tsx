@@ -34,7 +34,7 @@ const emptyMediaVariants = cva(
     variants: {
       variant: {
         default: "bg-transparent",
-        icon: "text-muted-foreground flex shrink-0 items-center justify-center [&_svg:not([class*='size-'])]:size-10 [&_svg]:stroke-[1.5]",
+        icon: "text-tertiary flex shrink-0 items-center justify-center [&_svg:not([class*='size-'])]:size-10 [&_svg]:stroke-[1.5]",
       },
     },
     defaultVariants: {
@@ -62,7 +62,7 @@ function EmptyTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="empty-title"
-      className={cn("text-sm font-medium tracking-tight", className)}
+      className={cn("text-label-lg font-medium text-foreground", className)}
       {...props}
     />
   )
@@ -73,7 +73,7 @@ function EmptyDescription({ className, ...props }: React.ComponentProps<"p">) {
     <div
       data-slot="empty-description"
       className={cn(
-        "text-muted-foreground [&>a:hover]:text-primary text-xs/snug [&>a]:underline [&>a]:underline-offset-4",
+        "text-label text-secondary [&>a]:text-accent [&>a]:underline [&>a]:underline-offset-4",
         className
       )}
       {...props}
@@ -86,7 +86,7 @@ function EmptyContent({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="empty-content"
       className={cn(
-        "flex w-full max-w-sm min-w-0 flex-row items-center justify-center gap-3 mt-3 text-sm",
+        "flex w-full max-w-sm min-w-0 flex-row items-center justify-center gap-2 mt-3 text-label",
         className
       )}
       {...props}

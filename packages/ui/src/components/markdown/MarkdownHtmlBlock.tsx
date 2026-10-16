@@ -33,7 +33,14 @@ import { Globe, Maximize2 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { CodeBlock } from './CodeBlock'
 import { HTMLPreviewOverlay } from '../overlay/HTMLPreviewOverlay'
-import { ItemNavigator } from '../overlay/ItemNavigator'
+import {
+  PreviewBlockAction,
+  PreviewBlockError,
+  PreviewBlockFrame,
+  PreviewBlockHeader,
+  PreviewBlockLoading,
+  PreviewItemNavigator,
+} from './PreviewBlockChrome'
 import { usePlatform } from '../../context/PlatformContext'
 import { useTranslation } from 'react-i18next'
 
@@ -159,9 +166,6 @@ export function MarkdownHtmlBlock({ code, className }: MarkdownHtmlBlockProps) {
     return result
   }, [contentCache])
 
-  const hasCachedContent = Object.keys(contentCache).length > 0
-  const hasMultiple = items.length > 1
-
   // Stable onLoadContent callback for the overlay
   const handleLoadContent = React.useCallback(async (src: string) => {
     if (contentCache[src]) return contentCache[src]
@@ -180,34 +184,24 @@ export function MarkdownHtmlBlock({ code, className }: MarkdownHtmlBlockProps) {
 
   return (
     <HtmlBlockErrorBoundary fallback={fallback}>
-      <div className={cn('relative group rounded-[8px] overflow-hidden border bg-muted/10', className)}>
-        {/* Header */}
-        <div className="px-3 py-2 bg-muted/50 border-b flex items-center gap-2">
-          <Globe className="w-3.5 h-3.5 text-muted-foreground/50" />
-          <span className="text-[12px] text-muted-foreground font-medium flex-1">
-            {spec.title || t('preview.htmlPreview')}
-          </span>
-          <div className="flex items-center gap-1">
-            <ItemNavigator items={items} activeIndex={activeIndex} onSelect={setActiveIndex} />
-            <button
-              onClick={() => setIsFullscreen(true)}
-              className={cn(
-                "p-1 rounded-[6px] transition-all select-none",
-                "bg-background shadow-minimal",
-                "text-muted-foreground/50 hover:text-foreground",
-                "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100",
-                hasMultiple ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-              )}
-              title={t('common.viewFullscreen')}
-            >
-              <Maximize2 className="w-3.5 h-3.5" />
-            </button>
-          </div>
-        </div>
+      <PreviewBlockFrame className={className}>
+        {/* Header: title · item navigator · fullscreen */}
+        <PreviewBlockHeader icon={<Globe />} title={spec.title || t('preview.htmlPreview')}>
+          <PreviewItemNavigator items={items} activeIndex={activeIndex} onSelect={setActiveIndex} />
+          <PreviewBlockAction
+            aria-label={t('common.viewFullscreen')}
+            icon={<Maximize2 />}
+            onClick={() => setIsFullscreen(true)}
+          />
+        </PreviewBlockHeader>
 
-        {/* Content area: hidden iframes for cached items + loading/error for uncached active */}
-        <div className="relative max-h-[400px] overflow-hidden">
-          {/* Render all cached items as hidden iframes — prevents flash on tab switch */}
+        {/* Content area: hidden iframes for cached items + loading/error for uncached active.
+            Until the active page arrives the area keeps the iframe's 400px, so the transcript
+            doesn't shift when it loads. No bottom fade: the page scrolls inside its frame, and a
+            fade into the dark well smears across a light page in dark mode. */}
+        <div className={cn('relative max-h-[400px] overflow-hidden', !activeHtml && !error && onReadFile && 'h-[400px]')}>
+          {/* Render all cached items as hidden iframes — prevents flash on tab switch.
+              The page canvas: paper (a light-scheme document gets the browser's opaque white). */}
           {items.map((item, i) => {
             const processed = processedCache[item.src]
             if (!processed) return null
@@ -217,7 +211,7 @@ export function MarkdownHtmlBlock({ code, className }: MarkdownHtmlBlockProps) {
                 sandbox="allow-same-origin allow-top-navigation-by-user-activation"
                 srcDoc={processed}
                 title={item.label || spec.title || t('preview.htmlPreview')}
-                className="w-full border-0 bg-white"
+                className="w-full border-0 bg-paper"
                 style={{
                   height: '400px',
                   display: i === activeIndex ? 'block' : 'none',
@@ -228,25 +222,15 @@ export function MarkdownHtmlBlock({ code, className }: MarkdownHtmlBlockProps) {
 
           {/* Loading state for uncached active item */}
           {!activeHtml && loading && (
-            <div className="py-8 text-center text-muted-foreground text-[13px]">{t('common.loading')}</div>
+            <PreviewBlockLoading className="h-full">{t('common.loading')}</PreviewBlockLoading>
           )}
 
           {/* Error state for uncached active item */}
           {!activeHtml && !loading && error && (
-            <div className="py-6 text-center text-destructive/70 text-[13px]">{error}</div>
-          )}
-
-          {/* Bottom fade gradient */}
-          {hasCachedContent && (
-            <div
-              className="absolute bottom-0 left-0 right-0 h-8 pointer-events-none"
-              style={{
-                background: 'linear-gradient(to bottom, transparent, var(--muted))',
-              }}
-            />
+            <PreviewBlockError>{error}</PreviewBlockError>
           )}
         </div>
-      </div>
+      </PreviewBlockFrame>
 
       {/* Fullscreen overlay — passes items for multi-item navigation */}
       <HTMLPreviewOverlay

@@ -7,6 +7,13 @@ import * as React from 'react'
 import { cn } from '@/lib/utils'
 import { SkillAvatar } from '@/components/ui/skill-avatar'
 import type { LoadedSkill } from '../../../shared/types'
+import {
+  INLINE_MENU_ITEM,
+  INLINE_MENU_ITEM_SELECTED,
+  INLINE_MENU_LIST,
+  INLINE_MENU_ORIGIN,
+  INLINE_MENU_SURFACE,
+} from './inline-menu-styles'
 
 // ============================================================================
 // Types
@@ -27,10 +34,10 @@ export interface InlineSkillMentionProps {
 // Shared Styles (matching slash-command-menu)
 // ============================================================================
 
-const MENU_CONTAINER_STYLE = 'min-w-[240px] overflow-hidden rounded-[8px] bg-background text-foreground shadow-modal-small'
-const MENU_LIST_STYLE = 'max-h-[240px] overflow-y-auto p-1'
-const MENU_ITEM_STYLE = 'flex cursor-pointer select-none items-center gap-3 rounded-[6px] px-3 py-2 text-[13px]'
-const MENU_ITEM_SELECTED = 'bg-foreground/5'
+const MENU_CONTAINER_STYLE = cn(INLINE_MENU_SURFACE, INLINE_MENU_ORIGIN, 'min-w-[240px]')
+const MENU_LIST_STYLE = cn(INLINE_MENU_LIST, 'max-h-[240px]')
+const MENU_ITEM_STYLE = cn(INLINE_MENU_ITEM, 'gap-3 py-1.5')
+const MENU_ITEM_SELECTED = INLINE_MENU_ITEM_SELECTED
 
 // ============================================================================
 // Filter skills utility
@@ -152,7 +159,7 @@ export function InlineSkillMention({
               <div className="flex-1 min-w-0">
                 <div className="font-medium truncate">{skill.metadata.name}</div>
                 {skill.metadata.description && (
-                  <div className="text-[11px] text-foreground/50 truncate">
+                  <div className="text-label-sm text-tertiary truncate">
                     {skill.metadata.description}
                   </div>
                 )}

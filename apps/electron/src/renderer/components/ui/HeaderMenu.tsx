@@ -49,7 +49,7 @@ export function HeaderMenu({ route, children, helpFeature }: HeaderMenuProps) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <HeaderIconButton icon={<MoreHorizontal className="h-4 w-4" />} />
+        <HeaderIconButton icon={<MoreHorizontal className="h-4 w-4" />} aria-label={t('common.more')} />
       </DropdownMenuTrigger>
       <StyledDropdownMenuContent align="end">
         {children}

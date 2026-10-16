@@ -10,10 +10,10 @@ import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { TFunction } from 'i18next'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Maximize2 } from 'lucide-react'
-import { Info_DataTable, SortableHeader } from './Info_DataTable'
+import { Info_DataTable, SortableHeader, INFO_TABLE_HEADER_CLASS, INFO_TABLE_SORTABLE_HEADER_CLASS } from './Info_DataTable'
 import { Info_Badge } from './Info_Badge'
 import { Info_StatusBadge } from './Info_StatusBadge'
+import { Info_FullscreenButton } from './Info_FullscreenButton'
 import { Tooltip, TooltipTrigger, TooltipContent } from '@mkagent/ui'
 import { DataTableOverlay } from '@mkagent/ui'
 import { cn } from '@/lib/utils'
@@ -64,8 +64,8 @@ function PatternBadge({ pattern }: { pattern: string }) {
   }
 
   const badge = (
-    <button type="button" onClick={handleClick} className="text-left">
-      <Info_Badge color="muted" className="font-mono select-none">
+    <button type="button" onClick={handleClick} className="-my-0.5 rounded-xs py-0.5 text-left">
+      <Info_Badge color="muted" className="font-mono font-normal select-none">
         <span className="block overflow-hidden whitespace-nowrap text-ellipsis max-w-[240px]">
           {pattern}
         </span>
@@ -91,7 +91,7 @@ function getColumnsWithType(t: TFunction): ColumnDef<PermissionRow>[] {
   return [
     {
       accessorKey: 'access',
-      header: ({ column }) => <SortableHeader column={column} title={t("table.access")} />,
+      header: ({ column }) => <SortableHeader column={column} title={t("table.access")} className={INFO_TABLE_SORTABLE_HEADER_CLASS} />,
       cell: ({ row }) => (
         <div className="p-1.5 pl-2.5">
           <Info_StatusBadge status={row.original.access} className="whitespace-nowrap" />
@@ -101,10 +101,10 @@ function getColumnsWithType(t: TFunction): ColumnDef<PermissionRow>[] {
     },
     {
       accessorKey: 'type',
-      header: ({ column }) => <SortableHeader column={column} title={t("common.type")} />,
+      header: ({ column }) => <SortableHeader column={column} title={t("common.type")} className={INFO_TABLE_SORTABLE_HEADER_CLASS} />,
       cell: ({ row }) => (
         <div className="p-1.5 pl-2.5">
-          <Info_Badge color="muted" className="capitalize whitespace-nowrap">
+          <Info_Badge color="default" className="capitalize whitespace-nowrap">
             {row.original.type}
           </Info_Badge>
         </div>
@@ -113,7 +113,7 @@ function getColumnsWithType(t: TFunction): ColumnDef<PermissionRow>[] {
     },
     {
       accessorKey: 'pattern',
-      header: ({ column }) => <SortableHeader column={column} title={t("table.pattern")} />,
+      header: ({ column }) => <SortableHeader column={column} title={t("table.pattern")} className={INFO_TABLE_SORTABLE_HEADER_CLASS} />,
       cell: ({ row }) => (
         <div className="p-1.5 pl-2.5">
           <PatternBadge pattern={row.original.pattern} />
@@ -124,10 +124,10 @@ function getColumnsWithType(t: TFunction): ColumnDef<PermissionRow>[] {
     {
       id: 'comment',
       accessorKey: 'comment',
-      header: () => <span className="p-1.5 pl-2.5">{t("table.comment")}</span>,
+      header: () => <span className={cn("p-1.5 pl-2.5", INFO_TABLE_HEADER_CLASS)}>{t("table.comment")}</span>,
       cell: ({ row }) => (
         <div className="p-1.5 pl-2.5 min-w-0">
-          <span className="truncate block">
+          <span className="truncate block text-label text-secondary">
             {row.original.comment || '—'}
           </span>
         </div>
@@ -141,7 +141,7 @@ function getColumnsWithoutType(t: TFunction): ColumnDef<PermissionRow>[] {
   return [
     {
       accessorKey: 'access',
-      header: ({ column }) => <SortableHeader column={column} title={t("table.access")} />,
+      header: ({ column }) => <SortableHeader column={column} title={t("table.access")} className={INFO_TABLE_SORTABLE_HEADER_CLASS} />,
       cell: ({ row }) => (
         <div className="p-1.5 pl-2.5">
           <Info_StatusBadge status={row.original.access} className="whitespace-nowrap" />
@@ -151,7 +151,7 @@ function getColumnsWithoutType(t: TFunction): ColumnDef<PermissionRow>[] {
     },
     {
       accessorKey: 'pattern',
-      header: ({ column }) => <SortableHeader column={column} title={t("table.pattern")} />,
+      header: ({ column }) => <SortableHeader column={column} title={t("table.pattern")} className={INFO_TABLE_SORTABLE_HEADER_CLASS} />,
       cell: ({ row }) => (
         <div className="p-1.5 pl-2.5">
           <PatternBadge pattern={row.original.pattern} />
@@ -162,10 +162,10 @@ function getColumnsWithoutType(t: TFunction): ColumnDef<PermissionRow>[] {
     {
       id: 'comment',
       accessorKey: 'comment',
-      header: () => <span className="p-1.5 pl-2.5">{t("table.comment")}</span>,
+      header: () => <span className={cn("p-1.5 pl-2.5", INFO_TABLE_HEADER_CLASS)}>{t("table.comment")}</span>,
       cell: ({ row }) => (
         <div className="p-1.5 pl-2.5 min-w-0">
-          <span className="truncate block">
+          <span className="truncate block text-label text-secondary">
             {row.original.comment || '—'}
           </span>
         </div>
@@ -193,19 +193,7 @@ export function PermissionsDataTable({
 
   // Fullscreen button for toolbar - shown on hover
   const fullscreenButton = fullscreen ? (
-    <button
-      onClick={() => setIsFullscreen(true)}
-      className={cn(
-        'p-1 rounded-[6px] transition-all',
-        'opacity-0 group-hover:opacity-100',
-        'bg-background/80 backdrop-blur-sm shadow-minimal',
-        'text-muted-foreground/50 hover:text-foreground',
-        'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100'
-      )}
-      title={t("table.viewFullscreen")}
-    >
-      <Maximize2 className="w-3.5 h-3.5" />
-    </button>
+    <Info_FullscreenButton onClick={() => setIsFullscreen(true)} />
   ) : undefined
 
   return (

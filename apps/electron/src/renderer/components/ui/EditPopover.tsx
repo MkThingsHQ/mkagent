@@ -21,6 +21,7 @@ import type { ContentBadge, Session, CreateSessionOptions } from '../../../share
 import { useActiveWorkspace, useAppShellContext, useSession, usePendingPermission } from '@/context/AppShellContext'
 import { useEscapeInterrupt } from '@/context/EscapeInterruptContext'
 import { ChatDisplay } from '../app-shell/ChatDisplay'
+import { TWEEN } from '@mkagent/ui/motion'
 
 /** Rotating placeholder keys for compact mode input - short, action-oriented */
 const COMPACT_PLACEHOLDER_KEYS = [
@@ -699,7 +700,7 @@ export function EditPopover({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.5, ease: 'easeInOut' }}
+            transition={TWEEN.base}
             className="fixed inset-0 bg-black/5 z-40"
           />
         )}
@@ -797,8 +798,10 @@ export const EditButton = React.forwardRef<
       ref={ref}
       variant="ghost"
       size="sm"
-      // Merge our base styles with any className from asChild props
-      className={cn("h-8 px-3 rounded-[6px] bg-background shadow-minimal text-foreground/70 hover:text-foreground", className)}
+      // A quiet text action in a section header, not a second box next to the section's card. Its
+      // 8px padding bleeds past the column edge so the word ends on the card's right edge.
+      // Merges any className from asChild props.
+      className={cn("-mr-2 text-secondary hover:text-foreground", className)}
       {...props}
     >
       {t("common.edit")}

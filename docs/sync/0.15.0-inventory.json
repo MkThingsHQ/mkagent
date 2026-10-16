@@ -1,0 +1,3002 @@
+{
+  "previousBaseline": "332533f3096d12500012fe089c3f155e32af1c44",
+  "targetTag": "v0.15.0",
+  "targetCommit": "20e98eed968b9663d80f9efd40c10d363ea0b781",
+  "evaluatedOn": "2026-10-16",
+  "changedPaths": [
+    {
+      "status": "M",
+      "path": "apps/cli/package.json",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft CLI reduced to retained commands and the Pi-only MkAgent runtime"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/eslint.config.mjs",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/package.json",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/resources/docs/automations.md",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Documentation covers an excluded Craft full-product feature"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/resources/docs/labels.md",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Documentation covers an excluded Craft full-product feature"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/resources/docs/pages.md",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages UI and runtime excluded from Lite"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/resources/release-notes/0.15.0.md",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Upstream release notes replaced by the MkAgent 0.2.0 release notes and scoped sync documentation"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/resources/themes/craft.json",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/resources/themes/default.json",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft packaged resource adapted to MkAgent branding or the retained Lite asset set"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/resources/themes/paper.json",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/resources/themes/solarized.json",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/main/window-manager.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft Electron runtime adapted for the retained Lite runtime and removed product channels"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/preload/bootstrap.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft preload retains desktop-owned Claude and ChatGPT OAuth browser flows while removed product APIs stay absent"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/App.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/atoms/label-value-edit.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "User labels and configurable workflow statuses are excluded; retained chat header has Lite session actions"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/atoms/sessions.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/KeyboardShortcutsDialog.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ResetConfirmationDialog.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/RtkUpdateDialog.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "MkAgent-branded RTK compatibility dialog"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ServerDirectoryBrowser.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/apisetup/ApiKeyInput.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-menu/DesktopAppMenu.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/ActiveOptionBadges.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "v0.15 background task chips and supported permission modes; session file info moved to Lite chat header"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/ActiveTasksBar.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/AppShell.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "v0.15 joined paper layout, navigator canvas, resize handle and pinned sidebar footer retain only sessions, Skills and local settings"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/AttachmentPreview.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/BackgroundFinishedChip.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/BackgroundTaskChip.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "v0.15 transcript, starter prompts, Shell Run/output overlays and composer with removed Sources/labels/auth request surfaces kept excluded"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/CompactPanelTransition.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/CompactSessionListFilter.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/CompactSessionMenu.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/CompactWorkspaceSwitcher.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/DetailEmptyState.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/FabNewChat.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/LeftSidebar.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/MainContentPanel.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/PanelHeader.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/PanelSlot.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/PanelStackContainer.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/ProjectMultiSelectFilter.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/ProjectsListPanel.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/SendResourceToWorkspaceDialog.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/SendToWorkspaceDialog.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/SessionBadges.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/SessionFilterMenu.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Upstream filter menu depends on removed labels, configurable statuses and projects; Lite search and flag/archive navigation retained"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/SessionInfoPopover.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/SessionItem.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "v0.15 row grid, run-state subtitles, unread weight and semantic search badges retain Lite actions without configurable statuses/labels/projects"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/SessionList.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/SessionMenu.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/SessionMenuParts.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/SessionProjectColorWrapper.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/SessionSearchHeader.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/SessionStatusIcon.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/ShellResizeHandle.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/SidebarPane.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/SkillsListPanel.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/SourcesListPanel.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "D",
+      "path": "apps/electron/src/renderer/components/app-shell/TaskActionMenu.tsx",
+      "classification": "UPSTREAM_DELETION",
+      "reason": "Removed upstream component; no longer retained by MkAgent"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/TopBar.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/WorkspaceSwitcher.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/WorkspaceTargetList.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Cross-server workspace transfer UI is excluded; retained local workspace switcher receives applicable styles"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/__tests__/fit-labels.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "User labels and configurable workflow statuses are excluded; retained chat header has Lite session actions"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/background-task-chip-state.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Upstream task-chip lifecycle also recognizes Pi background Bash launch acknowledgements"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/ErrorMessage.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/MessageBubble.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/NewChatSuggestions.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "v0.15 starter-prompt chips limited to local files, news and Skills; unavailable Sources/mail setup removed"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/ProcessingIndicator.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/ScrollOnMount.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/TranscriptStates.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/TurnFrame.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/__tests__/new-chat-suggestions.test.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Tests three source-free Lite suggestions and localized label versus sent-prompt routing instead of removed Sources ranking"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/__tests__/strip-repeated-title.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/new-chat-suggestions.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Local files/news/Skills suggestions replace source-derived and email-setup prompts without restoring Sources"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/strip-repeated-title.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/ChatHeader.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "v0.15 chat header composes retained rename, archive, flag, file info and mobile actions without labels/statuses/Pages/public sharing"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/ChatHeaderLabels.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "User labels and configurable workflow statuses are excluded; retained chat header has Lite session actions"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/ChatHeaderStatusButton.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "User labels and configurable workflow statuses are excluded; retained chat header has Lite session actions"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/ChatShareMenu.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Viewer/public sharing is excluded from Lite"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/__tests__/label-strip-layout.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "User labels and configurable workflow statuses are excluded; retained chat header has Lite session actions"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/label-strip-layout.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "User labels and configurable workflow statuses are excluded; retained chat header has Lite session actions"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/fit-labels.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "User labels and configurable workflow statuses are excluded; retained chat header has Lite session actions"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/input/ChatInputZone.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/input/CompactModelSelector.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/input/CompactPermissionModeSelector.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Retain Lite permission modes and precise approvals; Guarded and decision configuration deferred"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/input/ComposerHintLine.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/input/ComposerModeChip.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/input/ComposerModelMenu.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/input/ComposerSourcesChip.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Sources/MCP selection and connection-status product UI are excluded"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/input/ContextUsageChip.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/input/FollowUpChips.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/input/FreeFormInputContextBadge.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/input/ImageSupportWarningBanner.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/input/InputContainer.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/input/InputErrorBoundary.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/input/SendButton.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/input/ToolbarStatusSlot.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/input/WorkingDirectorySelector.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/input/action-hotkey.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/input/composer-styles.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "v0.15 semantic composer materials expose Explore, Ask and Execute only; Guarded remains deferred"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/input/structured/AdminApprovalRequest.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted for complete MkAgent localization coverage"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/input/structured/CredentialRequest.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/input/structured/DecisionCard.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/input/structured/PermissionRequest.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted for complete MkAgent localization coverage"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/input/structured/decision-tone.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Presentational v0.15 prompt tone uses retained permission/admin input types; decision-model risk inference remains excluded"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/BoardListToggle.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/KanbanBoard.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/KanbanBoardContainer.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/KanbanColumn.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/ModelChip.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/NewTaskComposer.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/StatusBadge.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/SubtaskProgress.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/SubtaskRow.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/TaskChatPreview.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/TaskEditor.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/TaskTile.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/__tests__/board-collision.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Project task-conductor board is excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/__tests__/node-state-pill.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/board-collision.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Project task-conductor board is excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/node-state-pill.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/app-shell/panel-constants.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/automations/ActionTypeIcon.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Automations and scheduler product functionality is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/automations/AutomationActionPreview.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Automations and scheduler product functionality is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/automations/AutomationActionRow.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Automations and scheduler product functionality is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/automations/AutomationAvatar.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Automations and scheduler product functionality is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/automations/AutomationCard.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Automations and scheduler product functionality is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/automations/AutomationEventTimeline.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Automations and scheduler product functionality is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/automations/AutomationInfoPage.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Automations and scheduler product functionality is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/automations/AutomationTestPanel.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Automations and scheduler product functionality is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/automations/AutomationsListPanel.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Automations and scheduler product functionality is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/automations/BatchAutomationMenu.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Automations and scheduler product functionality is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/automations/CronBuilder.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Automations and scheduler product functionality is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/automations/__tests__/types.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Automations and scheduler product functionality is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/automations/types.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Automations and scheduler product functionality is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/automations/utils.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Automations and scheduler product functionality is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/chat/AuthRequestCard.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/info/AutoRulesDataTable.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/info/Info_Alert.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/info/Info_Badge.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/info/Info_DataTable.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/info/Info_FullscreenButton.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/info/Info_GroupedList.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/info/Info_HeaderMenu.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/info/Info_Markdown.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/info/Info_Page.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/info/Info_Section.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/info/Info_StatePill.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/info/Info_StatusBadge.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/info/Info_Table.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/info/Info_TechnicalDetails.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/info/LabelsDataTable.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/info/PermissionsDataTable.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/info/ToolsDataTable.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/info/index.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/messaging/LarkConnectDialog.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/messaging/PairingCodeDialog.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/messaging/TelegramConnectDialog.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/messaging/TelegramSupergroupPairingDialog.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/messaging/WhatsAppConnectDialog.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/onboarding/APISetupStep.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/onboarding/CompletionStep.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft onboarding uses the MkAgent app icon while retaining the upstream layout"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/onboarding/CredentialsStep.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/onboarding/GitBashWarning.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/onboarding/LocalModelStep.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/onboarding/OnboardingWizard.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/onboarding/ProviderMark.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/onboarding/ProviderSelectStep.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/onboarding/ReauthScreen.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft reauthentication screen removes an unused Craft icon import and stale product comment"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/onboarding/primitives.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/pages/DeletePageDialog.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages UI and runtime excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/pages/PageFrame.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages UI and runtime excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/pages/PageGrantRequestDialog.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages UI and runtime excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/pages/PageGrantsDialog.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages UI and runtime excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/pages/PageSourceAuthBanner.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages UI and runtime excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/pages/PageTile.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages UI and runtime excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/pages/PageView.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages UI and runtime excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/pages/PagesHome.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages UI and runtime excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/pages/SharePageDialog.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages UI and runtime excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/pages/page-visuals.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages UI and runtime excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/projects/CreateProjectDialog.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Projects, Kanban, and task-conductor product functionality is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/right-sidebar/SessionFilesSection.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/settings/SearchableModelInput.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/settings/SettingsCard.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/settings/SettingsEditRow.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/settings/SettingsInput.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/settings/SettingsMenuSelect.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/settings/SettingsPage.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/settings/SettingsRadioGroup.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/settings/SettingsRow.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/settings/SettingsSection.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/settings/SettingsSegmentedControl.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/settings/SettingsSelect.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/settings/SettingsTextarea.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/settings/SettingsToggle.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/settings/SettingsUIConstants.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/settings/ThemeGrid.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/settings/index.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/CompactWorkingDirectorySelector.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/EditPopover.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/HeaderIconButton.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/HeaderMenu.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/PanelHeaderCenterButton.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/TopBarButton.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/ui/__tests__/source-connection-status.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Sources/MCP selection and connection-status product UI are excluded"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/ui/__tests__/workspace-avatar-color.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/avatar.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/button.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "v0.15 semantic buttons import the tooltip subpath so primitive-only consumers do not evaluate PDF and rich-preview modules"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/collapsible.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/color-picker.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/command.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/context-menu.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/dialog.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/dropdown-menu.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/empty.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/entity-list-empty.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/entity-list-label-badge.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/entity-list.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/entity-panel.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/entity-row.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/ui/hotkey-keycaps.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/inline-color-picker-row.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/ui/inline-menu-styles.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/input.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/kbd.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/label-menu.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/label-value-popover.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/mention-badge.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/mention-menu.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/metadata-badge.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/popover.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/rename-dialog.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/rich-text-input.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft rich-text input retains the xagent-proven DOM and IME placeholder visibility fix"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/scroll-area.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/select.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/session-status-menu.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/ui/skeleton.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/skill-mention-menu.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/slash-command-menu.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted for complete MkAgent localization coverage"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/sonner.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/source-avatar.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Sources and MCP product integration is excluded from MkAgent Lite"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/ui/source-connection-status.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Sources/MCP selection and connection-status product UI are excluded"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/source-status-indicator.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Sources and MCP product integration is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/styled-context-menu.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/switch.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/tabs.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/textarea.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/components/ui/workspace-avatar-color.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/components/ui/workspace-avatar.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/context/AppShellContext.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/context/ThemeContext.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft theme context corrected to hydrate host-managed auxiliary windows from the saved app preference on startup"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/contexts/NavigationContext.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/event-processor/processor.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft v0.13.3 retry lifecycle is adapted to the retained MkAgent renderer state and protocol"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/event-processor/types.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft v0.13.3 retry lifecycle is adapted to the retained MkAgent renderer state and protocol"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/hooks/useBackgroundTasks.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/hooks/useContainerWidth.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/hooks/useDelayedLoading.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "D",
+      "path": "apps/electron/src/renderer/hooks/useDynamicStack.ts",
+      "classification": "UPSTREAM_DELETION",
+      "reason": "Removed upstream component; no longer retained by MkAgent"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/hooks/useListReorderFlip.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/hooks/useResizeGradient.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/hooks/useTheme.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/index.css",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/index.html",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/lib/__tests__/run-command-message.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/lib/provider-icons.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/lib/run-command-message.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/lib/utils.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/ChatPage.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/ProjectInfoPage.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/ShortcutsPage.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/SkillInfoPage.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/SourceInfoPage.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Single-column v0.15 settings and atomic parallel loading retain Pi connections, credential health and RTK; decision-model and Claude SDK settings excluded"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/settings/AppSettingsPage.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/settings/InputSettingsPage.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/settings/LabelsSettingsPage.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/settings/MessagingSettingsPage.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/settings/PermissionsSettingsPage.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/settings/PreferencesPage.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/settings/ServerSettingsPage.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/settings/SettingsNavigator.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/settings/ShortcutsPage.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/pages/settings/WorkspaceSettingsPage.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft renderer adapted only for excluded product surfaces, Pi-only wiring, or MkAgent branding"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/pages/settings/__tests__/ai-settings-loader.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/pages/settings/ai-settings-loader.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground.html",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground/ComponentPreview.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground/PlaygroundApp.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground/PlaygroundAppShellProvider.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/playground/PlaygroundPreviewProviders.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Full-product component playground is excluded; production primitives and applicable design guardrail tests retained"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground/Sidebar.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground/demos/mobile-webui/ChatDisplayMobilePreview.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground/mock-utils.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/playground/registry/chat-header.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Full-product component playground is excluded; production primitives and applicable design guardrail tests retained"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground/registry/chat.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground/registry/custom-shadows.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground/registry/edit-popover.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground/registry/entity-lists.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground/registry/index.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground/registry/label-badges.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground/registry/markdown.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "A",
+      "path": "apps/electron/src/renderer/playground/registry/primitives.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Full-product component playground is excluded; production primitives and applicable design guardrail tests retained"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground/registry/toasts.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground/registry/turn-card.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/renderer/playground/registry/types.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Renderer dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/shared/__tests__/ipc-channels.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Electron dependency serves only an excluded Craft full-product surface"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/shared/types.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/transport/__tests__/channel-map-parity.test.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
+    },
+    {
+      "status": "M",
+      "path": "apps/electron/src/transport/channel-map.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft Electron runtime adapted for the retained Lite runtime and removed product channels"
+    },
+    {
+      "status": "M",
+      "path": "apps/viewer/package.json",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Viewer, public sharing, and session MCP product surfaces are excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/viewer/src/App.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Viewer, public sharing, and session MCP product surfaces are excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/viewer/src/index.css",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Viewer, public sharing, and session MCP product surfaces are excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/viewer/src/main.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Viewer, public sharing, and session MCP product surfaces are excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "apps/webui/package.json",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft WebUI adapted to the retained authenticated headless transport"
+    },
+    {
+      "status": "M",
+      "path": "apps/webui/src/App.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/webui/src/adapter/web-api.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft WebUI adapter retains Claude code login and explicitly limits new ChatGPT localhost login to Desktop"
+    },
+    {
+      "status": "M",
+      "path": "apps/webui/src/index.css",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft WebUI adapted to the retained authenticated headless transport"
+    },
+    {
+      "status": "M",
+      "path": "apps/webui/src/index.html",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft WebUI adapted to the retained authenticated headless transport"
+    },
+    {
+      "status": "A",
+      "path": "apps/webui/src/login.css",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "apps/webui/src/login.html",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft WebUI adapted to the retained authenticated headless transport"
+    },
+    {
+      "status": "M",
+      "path": "apps/webui/vite.config.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft WebUI adapted to the retained authenticated headless transport"
+    },
+    {
+      "status": "M",
+      "path": "bun.lock",
+      "classification": "LITE_ADAPTATION",
+      "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
+    },
+    {
+      "status": "M",
+      "path": "package.json",
+      "classification": "LITE_ADAPTATION",
+      "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
+    },
+    {
+      "status": "M",
+      "path": "packages/core/package.json",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
+    },
+    {
+      "status": "M",
+      "path": "packages/core/src/types/index.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
+    },
+    {
+      "status": "M",
+      "path": "packages/core/src/types/message.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
+    },
+    {
+      "status": "M",
+      "path": "packages/core/src/types/page.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded"
+    },
+    {
+      "status": "M",
+      "path": "packages/messaging-gateway/package.json",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "External Messaging product package is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "packages/messaging-whatsapp-worker/package.json",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "External Messaging product package is excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "packages/pi-agent-server/package.json",
+      "classification": "LITE_ADAPTATION",
+      "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
+    },
+    {
+      "status": "A",
+      "path": "packages/pi-agent-server/src/agent-dir.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/pi-agent-server/src/agent-dir.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/pi-agent-server/src/index.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Pi 1.1 tool allowlists, isolated resources, proper tool failures and provider endpoints plus MkAgent permission-gated owned background Bash bridge"
+    },
+    {
+      "status": "M",
+      "path": "packages/pi-agent-server/src/model-resolution.test.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
+    },
+    {
+      "status": "M",
+      "path": "packages/pi-agent-server/src/model-resolution.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft Pi subprocess adapted to the retained provider and session-tool contract"
+    },
+    {
+      "status": "M",
+      "path": "packages/pi-agent-server/src/pick-mini-model.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/pi-agent-server/src/pick-mini-model.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/pi-agent-server/src/provider-endpoint-env.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/pi-agent-server/src/provider-endpoint-env.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/pi-agent-server/src/session-settings.test.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Preserve MkAgent isolated Pi retry policy and streaming regression coverage"
+    },
+    {
+      "status": "M",
+      "path": "packages/pi-agent-server/src/session-settings.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Preserve MkAgent isolated Pi retry policy and streaming regression coverage"
+    },
+    {
+      "status": "M",
+      "path": "packages/pi-agent-server/src/system-prompt-override.test.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Retains extension-isolation regressions and references the MkAgent-named settings manager"
+    },
+    {
+      "status": "M",
+      "path": "packages/pi-agent-server/src/system-prompt-override.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/pi-agent-server/src/tools/search/create-search-tool.test.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft v0.13.3 Pi 0.85.1 runtime behavior is retained with MkAgent OAuth and Lite tool seams"
+    },
+    {
+      "status": "M",
+      "path": "packages/pi-agent-server/src/tools/search/create-search-tool.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/pi-agent-server/src/tools/web-fetch.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft v0.13.3 Pi 0.85.1 runtime behavior is retained with MkAgent OAuth and Lite tool seams"
+    },
+    {
+      "status": "M",
+      "path": "packages/server-core/package.json",
+      "classification": "LITE_ADAPTATION",
+      "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
+    },
+    {
+      "status": "M",
+      "path": "packages/server-core/src/decisions/semantic-labels.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync"
+    },
+    {
+      "status": "M",
+      "path": "packages/server-core/src/decisions/semantic-labels.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Decision model and Guarded runtime explicitly deferred for the v0.14.1 Lite sync"
+    },
+    {
+      "status": "M",
+      "path": "packages/server-core/src/domain/connection-setup-logic.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
+    },
+    {
+      "status": "M",
+      "path": "packages/server-core/src/handlers/rpc/pages.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages UI and runtime excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "packages/server-core/src/handlers/rpc/sessions.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
+    },
+    {
+      "status": "M",
+      "path": "packages/server-core/src/handlers/rpc/tasks.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Server implementation or test serves only an excluded Craft full-product feature"
+    },
+    {
+      "status": "M",
+      "path": "packages/server-core/src/handlers/rpc/workspace.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft theme preference broadcast also notifies the local host so auxiliary browser windows remain synchronized"
+    },
+    {
+      "status": "M",
+      "path": "packages/server-core/src/handlers/session-manager-interface.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
+    },
+    {
+      "status": "A",
+      "path": "packages/server-core/src/runtime/inherited-app-env.test.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Upstream cross-checkout environment hygiene tests use the MkAgent runtime environment namespace"
+    },
+    {
+      "status": "A",
+      "path": "packages/server-core/src/runtime/inherited-app-env.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Upstream cross-checkout runtime environment hygiene adapted to MKAGENT_* paths"
+    },
+    {
+      "status": "M",
+      "path": "packages/server-core/src/runtime/platform-headless.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
+    },
+    {
+      "status": "M",
+      "path": "packages/server-core/src/sessions/SessionManager.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Compact Lite session lifecycle retains permissions, queueing and child sessions; v0.15 task output/owned stopping APIs replace global command matching"
+    },
+    {
+      "status": "A",
+      "path": "packages/server-core/src/sessions/background-task-output.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/server-core/src/sessions/background-task-output.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/server-core/src/sessions/background-task-stop.test.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Retains all upstream stop/output lifecycle cases against the compact MkAgent event sink"
+    },
+    {
+      "status": "M",
+      "path": "packages/server-core/src/webui/http-server.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
+    },
+    {
+      "status": "M",
+      "path": "packages/server/package.json",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior"
+    },
+    {
+      "status": "M",
+      "path": "packages/session-tools-core/package.json",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft session tool module reduced to retained Lite tools and safety boundaries"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/CLAUDE.md",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/package.json",
+      "classification": "LITE_ADAPTATION",
+      "reason": "MkAgent workspace metadata pins the retained Pi 0.85.1 runtime without importing excluded Craft workspaces"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/agent/__tests__/claude-background-message-routing.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/agent/__tests__/claude-event-adapter-tasks.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Direct Claude SDK and Copilot providers excluded; Pi provider runtime retained"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/agent/__tests__/claude-event-adapter.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/agent/__tests__/claude-thinking-config.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/agent/__tests__/prompt-builder-context-split.test.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
+    },
+    {
+      "status": "A",
+      "path": "packages/shared/src/agent/__tests__/text-completion-options.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Claude Agent SDK tool-less utility query options are excluded; Pi utility isolation is retained and tested separately"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/agent/backend/claude/event-adapter.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/agent/backend/claude/task-notification.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/agent/backend/types.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/agent/claude-agent.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Subscription, OAuth, and direct Claude backend functionality is excluded from the Pi-only product"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/agent/options.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Shared implementation or test serves only an excluded backend or product feature"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Selective Craft v0.13.3 retained-feature synchronization for the MkAgent Lite boundary"
+    },
+    {
+      "status": "A",
+      "path": "packages/shared/src/config/__tests__/theme-roles.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/shared/src/config/cloudflare-gateway.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/config/llm-connections.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Pi-only connection catalog and ordered utility models include v0.15 Luna/Haiku/Flash preferences and Cloudflare defaults without Claude SDK provider types"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/config/llm-validation.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/config/models-pi.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/config/models.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft v0.13.3 Pi model catalog and default ranking are adapted to the Pi-only MkAgent connection model"
+    },
+    {
+      "status": "A",
+      "path": "packages/shared/src/config/pi-provider-ids.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/shared/src/config/theme-roles.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/config/theme.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/config/validators.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Retained Lite validators plus complete v0.15 theme schemas and unsupported-color warnings; excluded module validators remain absent"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/i18n/locales/de.json",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Shared implementation or test serves only an excluded backend or product feature"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/i18n/locales/en.json",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft locale is reduced to product-neutral subscription and reauthentication copy"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/i18n/locales/es.json",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Shared implementation or test serves only an excluded backend or product feature"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/i18n/locales/hu.json",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Shared implementation or test serves only an excluded backend or product feature"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/i18n/locales/ja.json",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Shared implementation or test serves only an excluded backend or product feature"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/i18n/locales/pl.json",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Shared implementation or test serves only an excluded backend or product feature"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft locale is reduced to product-neutral subscription and reauthentication copy"
+    },
+    {
+      "status": "A",
+      "path": "packages/shared/src/labels/__tests__/canonical.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "User labels and configurable workflow statuses are excluded; retained chat header has Lite session actions"
+    },
+    {
+      "status": "A",
+      "path": "packages/shared/src/labels/__tests__/chips.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "User labels and configurable workflow statuses are excluded; retained chat header has Lite session actions"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/labels/__tests__/values.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/labels/auto/evaluator.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/labels/auto/evaluator.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/labels/auto/index.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/labels/auto/semantic-rules-config.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/labels/auto/validation.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite"
+    },
+    {
+      "status": "A",
+      "path": "packages/shared/src/labels/canonical.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "User labels and configurable workflow statuses are excluded; retained chat header has Lite session actions"
+    },
+    {
+      "status": "A",
+      "path": "packages/shared/src/labels/chips.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "User labels and configurable workflow statuses are excluded; retained chat header has Lite session actions"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/labels/index.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/labels/types.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/labels/values.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Labels, custom statuses, views, and their color model are excluded from MkAgent Lite"
+    },
+    {
+      "status": "A",
+      "path": "packages/shared/src/pages/claude-artifact.test.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages and Claude artifact publication are excluded from Lite"
+    },
+    {
+      "status": "A",
+      "path": "packages/shared/src/pages/claude-artifact.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages and Claude artifact publication are excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/pages/index.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages UI and runtime excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/pages/storage.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages UI and runtime excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/pages/types.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages UI and runtime excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/pages/validation.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Pages UI and runtime excluded from Lite"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/protocol/channels.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/protocol/dto.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft v0.13.3 retry, failed-text discard, and bounded query contracts are adapted to the MkAgent Pi-only agent path"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/protocol/events.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/protocol/routing.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/src/validation/url-validator.ts",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Shared implementation or test serves only an excluded backend or product feature"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/tests/models-pi.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/shared/tests/models.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/eslint-rules/__tests__/design-guardrails.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/eslint-rules/no-motion-antipatterns.cjs",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/eslint-rules/no-raw-palette-colors.cjs",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/eslint.config.mjs",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft shared UI package reduced to components used by retained interfaces"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/package.json",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft shared UI package reduced to components used by retained interfaces"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/annotations/annotation-style-tokens.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/chat/AcceptPlanDropdown.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/chat/CompactAcceptPlanDrawer.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/chat/InlineExecution.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/chat/SessionViewer.tsx",
+      "classification": "EXCLUDED_PRODUCT",
+      "reason": "Shared UI component serves only the excluded Viewer surface"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/chat/SystemMessage.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/chat/TurnCard.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/chat/TurnCardActionsMenu.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/chat/UserMessageBubble.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/chat/__tests__/turn-utils-grouping.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/chat/turn-utils.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft shared UI package reduced to components used by retained interfaces"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/chat/turn/ActivityGroupRow.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/chat/turn/ActivityIcons.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/chat/turn/ActivityRow.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/chat/turn/ResponseFooter.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/chat/turn/ThinkingRow.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/chat/turn/TodoList.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/chat/turn/TurnIconButton.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/chat/turn/WorkLog.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/chat/turn/tool-display.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "v0.15 work-log tool rendering retains native and Skill categories while excluded external Source metadata is absent"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/chat/turn/turn-classes.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/chat/turn/use-row-reveal.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/chat/turn/work-log-summary.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/markdown/CodeBlock.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/markdown/CollapsibleSection.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/markdown/ImageCardStack.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/markdown/Markdown.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/markdown/MarkdownDatatableBlock.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft shared UI adapted for complete MkAgent localization coverage"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/markdown/MarkdownDiffBlock.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft shared UI package reduced to components used by retained interfaces"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/markdown/MarkdownDocBlock.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/markdown/MarkdownHtmlBlock.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft shared UI package reduced to components used by retained interfaces"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/markdown/MarkdownImageBlock.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/markdown/MarkdownJsonBlock.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft shared UI package reduced to components used by retained interfaces"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/markdown/MarkdownMermaidBlock.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/markdown/MarkdownPdfBlock.tsx",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft shared UI package reduced to components used by retained interfaces"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/markdown/MarkdownSpreadsheetBlock.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/markdown/PreviewBlockChrome.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/markdown/RunCommandContext.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/markdown/TableExportDropdown.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/markdown/__tests__/diff-summary.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/markdown/__tests__/shell-command.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/markdown/diff-summary.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/markdown/index.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/markdown/shell-command.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/overlay/FullscreenOverlayBaseHeader.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/overlay/MultiDiffPreviewOverlay.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/overlay/OverlayErrorBanner.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/overlay/ZoomControls.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/tooltip.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/components/ui/AnimatedCollapsibleContent.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/ui/BrowserControls.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/ui/BrowserShader.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/ui/SimpleDropdown.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/ui/StyledDropdown.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/ui/drawer.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/components/ui/index.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/index.ts",
+      "classification": "LITE_ADAPTATION",
+      "reason": "Craft shared UI package reduced to components used by retained interfaces"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/lib/__tests__/utils.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/lib/layout.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/lib/utils.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/motion/FlipOnChange.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/motion/MotionPreference.tsx",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/motion/__tests__/flip.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/motion/__tests__/presets.test.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/motion/flip.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/motion/index.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/motion/presets.ts",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/styles/base.css",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "M",
+      "path": "packages/ui/src/styles/index.css",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    },
+    {
+      "status": "A",
+      "path": "packages/ui/src/styles/tokens.css",
+      "classification": "NORMALIZED_REUSE",
+      "reason": "Pinned v0.15.0 source reused after package, configuration namespace and brand normalization"
+    }
+  ]
+}

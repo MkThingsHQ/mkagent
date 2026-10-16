@@ -9,6 +9,7 @@ import {
   wrap,
 } from 'motion/react'
 import { cn } from '../../lib/utils'
+import { SPRING, TWEEN } from '../../motion/presets'
 
 export interface ImageCardStackItem {
   src: string
@@ -144,21 +145,14 @@ function StackImage({
     const distance = Math.abs(x.get())
     const speed = Math.abs(x.getVelocity())
 
+    // Release after a drag: the gesture spring keeps the flick's velocity (spec §6.2)
     if (distance > minDistance || speed > minSpeed) {
       setNextImage()
-      animate(x, 0, {
-        type: 'spring',
-        stiffness: 600,
-        damping: 50,
-      })
+      animate(x, 0, SPRING.gesture)
       return
     }
 
-    animate(x, 0, {
-      type: 'spring',
-      stiffness: 300,
-      damping: 50,
-    })
+    animate(x, 0, SPRING.gesture)
   }
 
   const depthProgress = totalImages > 1 ? stackPosition / (totalImages - 1) : 0
@@ -175,8 +169,8 @@ function StackImage({
     <motion.li
       className={cn(
         'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
-        'overflow-hidden rounded-[10px] bg-background will-change-transform',
-        'shadow-[1px_3px_8px_rgba(0,0,0,0.28)]'
+        'overflow-hidden rounded-lg bg-raised will-change-transform',
+        'shadow-elev-2'
       )}
       style={{
         width: 'auto',
@@ -188,14 +182,13 @@ function StackImage({
         rotate,
         x,
       }}
-      initial={{ opacity: 0, scale: 0.3, y: 24 - stackLift }}
+      // Cards rise into place from a small offset (96% of their scale, 8px below) — never from far
+      // away or zero scale; reduced motion keeps only the fade (MotionConfig). Spatial moves ride
+      // the base spring, opacity a tween.
+      initial={{ opacity: 0, scale: scale * 0.96, y: y + 8 }}
       animate={{ opacity, scale, y }}
       whileTap={isTopCard ? { scale: 0.98 } : {}}
-      transition={{
-        type: 'spring',
-        stiffness: 600,
-        damping: 30,
-      }}
+      transition={{ ...SPRING.base, opacity: TWEEN.fast }}
       drag={isTopCard ? 'x' : false}
       onDragStart={() => {
         lastDragAtRef.current = Date.now()

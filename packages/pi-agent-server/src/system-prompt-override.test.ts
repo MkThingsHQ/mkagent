@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it } from 'bun:test';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { SettingsManager, type ExtensionAPI, type InlineExtension } from '@earendil-works/pi-coding-agent';
+import { resolveCraftAgentDir } from './agent-dir.ts';
+import { createMkAgentSettingsManager } from './session-settings.ts';
 import {
   CRAFT_SYSTEM_PROMPT_EXTENSION_NAME,
   createCraftResourceLoader,
@@ -92,5 +94,49 @@ describe('createCraftResourceLoader', () => {
     const { extensions, errors } = loader.getExtensions();
     expect(errors).toEqual([]);
     expect(extensions.some(ext => ext.path === `<inline:${CRAFT_SYSTEM_PROMPT_EXTENSION_NAME}>`)).toBe(true);
+  });
+
+  /** A working directory whose `.pi/extensions` would leave a marker file when loaded. */
+  function repoWithProjectExtension(): { cwd: string; marker: string } {
+    const cwd = mkdtempSync(join(tmpdir(), 'craft-pi-repo-'));
+    dirs.push(cwd);
+    const marker = join(cwd, 'extension-ran');
+    mkdirSync(join(cwd, '.pi', 'extensions'), { recursive: true });
+    writeFileSync(
+      join(cwd, '.pi', 'extensions', 'repo-extension.ts'),
+      `import { writeFileSync } from 'node:fs';\n` +
+        `export default function repoExtension() { writeFileSync(${JSON.stringify(marker)}, 'ran'); }\n`,
+    );
+    return { cwd, marker };
+  }
+
+  it('loads nothing but the override for Craft sessions (no project, global or built-in extensions)', async () => {
+    const { cwd, marker } = repoWithProjectExtension();
+    const sessionPath = mkdtempSync(join(tmpdir(), 'craft-pi-session-'));
+    dirs.push(sessionPath);
+    for (const purpose of ['main', 'ephemeral'] as const) {
+      const loader = await createCraftResourceLoader({
+        cwd,
+        agentDir: resolveCraftAgentDir({ sessionPath }),
+        settingsManager: createMkAgentSettingsManager(purpose),
+        systemPromptOverride: createSystemPromptOverride(),
+      });
+      const { extensions, errors } = loader.getExtensions();
+      expect(errors).toEqual([]);
+      expect(extensions.map(ext => ext.path)).toEqual([`<inline:${CRAFT_SYSTEM_PROMPT_EXTENSION_NAME}>`]);
+    }
+    expect(existsSync(marker)).toBe(false);
+  });
+
+  it('control: a trusted project (the SDK default) would run the repository extension', async () => {
+    const { cwd, marker } = repoWithProjectExtension();
+    const loader = await createCraftResourceLoader({
+      cwd,
+      agentDir: join(cwd, '.pi-agent'),
+      settingsManager: SettingsManager.inMemory(),
+      systemPromptOverride: createSystemPromptOverride(),
+    });
+    expect(loader.getExtensions().extensions.some(ext => ext.path.endsWith('repo-extension.ts'))).toBe(true);
+    expect(existsSync(marker)).toBe(true);
   });
 });

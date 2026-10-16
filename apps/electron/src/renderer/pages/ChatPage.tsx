@@ -8,13 +8,10 @@
 import * as React from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAtomValue, useSetAtom } from 'jotai'
-import { AlertCircle, Info } from 'lucide-react'
+import { AlertCircle } from 'lucide-react'
 import { ChatDisplay, type ChatDisplayHandle } from '@/components/app-shell/ChatDisplay'
 import { PanelHeader } from '@/components/app-shell/PanelHeader'
-import { SessionMenu } from '@/components/app-shell/SessionMenu'
-import { CompactSessionMenu } from '@/components/app-shell/CompactSessionMenu'
-import { SessionInfoPopover } from '@/components/app-shell/SessionInfoPopover'
-import { RenameDialog } from '@/components/ui/rename-dialog'
+import { ChatHeader } from '@/components/app-shell/chat-header/ChatHeader'
 import { toast } from 'sonner'
 import { PanelHeaderCenterButton } from '@/components/ui/PanelHeaderCenterButton'
 import { useAppShellContext, usePendingPermission, useSessionOptionsFor, useSession as useSessionData } from '@/context/AppShellContext'
@@ -397,140 +394,8 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   // Get display title for header - use getSessionTitle for consistent fallback logic with SessionList
   // Priority: name > first user message > preview > "New chat"
   const displayTitle = session ? getSessionTitle(session) : (sessionMeta ? getSessionTitle(sessionMeta) : t('chat.session'))
-  const isFlagged = session?.isFlagged || sessionMeta?.isFlagged || false
-  const isArchived = session?.isArchived || sessionMeta?.isArchived || false
-  // Preserve Craft title-regeneration feedback.
+  // Use isAsyncOperationOngoing for shimmer effect (sharing, updating share, revoking, title regeneration)
   const isAsyncOperationOngoing = session?.isAsyncOperationOngoing || sessionMeta?.isAsyncOperationOngoing || false
-
-  // Rename dialog state
-  const [renameDialogOpen, setRenameDialogOpen] = React.useState(false)
-  const [renameName, setRenameName] = React.useState('')
-
-  // Session action handlers
-  const handleRename = React.useCallback(() => {
-    setRenameName(displayTitle)
-    setRenameDialogOpen(true)
-  }, [displayTitle])
-
-  const handleRenameSubmit = React.useCallback(() => {
-    if (renameName.trim() && renameName.trim() !== displayTitle) {
-      onRenameSession(sessionId, renameName.trim())
-    }
-    setRenameDialogOpen(false)
-  }, [sessionId, renameName, displayTitle, onRenameSession])
-
-  const handleFlag = React.useCallback(() => {
-    onFlagSession(sessionId)
-  }, [sessionId, onFlagSession])
-
-  const handleUnflag = React.useCallback(() => {
-    onUnflagSession(sessionId)
-  }, [sessionId, onUnflagSession])
-
-  const handleArchive = React.useCallback(() => {
-    onArchiveSession(sessionId)
-  }, [sessionId, onArchiveSession])
-
-  const handleUnarchive = React.useCallback(() => {
-    onUnarchiveSession(sessionId)
-  }, [sessionId, onUnarchiveSession])
-
-  const handleMarkUnread = React.useCallback(() => {
-    onMarkSessionUnread(sessionId)
-  }, [sessionId, onMarkSessionUnread])
-
-  const handleDelete = React.useCallback(async () => {
-    await onDeleteSession(sessionId)
-  }, [sessionId, onDeleteSession])
-
-  const handleOpenInNewWindow = React.useCallback(async () => {
-    const route = routes.view.allSessions(sessionId)
-    const separator = route.includes('?') ? '&' : '?'
-    const url = `mkagent://${route}${separator}window=focused`
-    try {
-      await window.electronAPI?.openUrl(url)
-    } catch (error) {
-      console.error('[ChatPage] openUrl failed:', error)
-    }
-  }, [sessionId])
-
-  const compactInfoButton = React.useMemo(() => {
-    if (!isCompactMode || !sessionMeta) return undefined
-
-    return (
-      <SessionInfoPopover
-        sessionId={sessionId}
-        sessionFolderPath={session?.sessionFolderPath}
-        presentation="drawer"
-        trigger={(
-          <PanelHeaderCenterButton
-            icon={<Info className="h-4 w-4" />}
-            aria-label={t("chat.sessionInfo")}
-          />
-        )}
-      />
-    )
-  }, [isCompactMode, sessionId, session?.sessionFolderPath, sessionMeta])
-
-  const headerActions = compactInfoButton
-
-  // Build title menu content for chat sessions using shared SessionMenu.
-  // Desktop uses Radix DropdownMenu via PanelHeader; compact mode uses a
-  // vaul Drawer (CompactSessionMenu) so submenus aren't clipped by the
-  // panel container query on narrow viewports.
-  const titleMenu = React.useMemo(() => (sessionMeta && !isCompactMode) ? (
-    <SessionMenu
-      item={sessionMeta}
-      onRename={handleRename}
-      onFlag={handleFlag}
-      onUnflag={handleUnflag}
-      onArchive={handleArchive}
-      onUnarchive={handleUnarchive}
-      onMarkUnread={handleMarkUnread}
-      onOpenInNewWindow={handleOpenInNewWindow}
-      onDelete={handleDelete}
-    />
-  ) : null, [
-    sessionMeta,
-    isCompactMode,
-    handleRename,
-    handleFlag,
-    handleUnflag,
-    handleArchive,
-    handleUnarchive,
-    handleMarkUnread,
-    handleOpenInNewWindow,
-    handleDelete,
-  ])
-
-  const compactTitleMenu = React.useMemo(() => (sessionMeta && isCompactMode) ? (
-    <CompactSessionMenu
-      title={displayTitle}
-      isRegeneratingTitle={isAsyncOperationOngoing}
-      item={sessionMeta}
-      onRename={handleRename}
-      onFlag={handleFlag}
-      onUnflag={handleUnflag}
-      onArchive={handleArchive}
-      onUnarchive={handleUnarchive}
-      onMarkUnread={handleMarkUnread}
-      onOpenInNewWindow={handleOpenInNewWindow}
-      onDelete={handleDelete}
-    />
-  ) : null, [
-    sessionMeta,
-    isCompactMode,
-    displayTitle,
-    isAsyncOperationOngoing,
-    handleRename,
-    handleFlag,
-    handleUnflag,
-    handleArchive,
-    handleUnarchive,
-    handleMarkUnread,
-    handleOpenInNewWindow,
-    handleDelete,
-  ])
 
   // Handle missing session - loading or deleted
   if (!session) {
@@ -550,57 +415,58 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
       }
 
       return (
-        <>
-          <div className="h-full flex flex-col">
-            <PanelHeader  title={displayTitle} titleMenu={titleMenu} compactTitleMenu={compactTitleMenu} leadingAction={leadingAction} actions={headerActions} rightSidebarButton={rightSidebarButton} isRegeneratingTitle={isAsyncOperationOngoing} />
-            <div className="flex-1 flex flex-col min-h-0">
-              <ChatDisplay
-                ref={chatDisplayRef}
-                session={skeletonSession}
-                onSendMessage={() => {}}
-                onOpenFile={handleOpenFile}
-                onOpenUrl={handleOpenUrl}
-                currentModel={effectiveModel}
-                onModelChange={handleModelChange}
-                onConnectionChange={handleConnectionChange}
-                pendingPermission={undefined}
-                onRespondToPermission={onRespondToPermission}
-                thinkingLevel={sessionOpts.thinkingLevel}
-                onThinkingLevelChange={(level) => setOption('thinkingLevel', level)}
-                permissionMode={sessionOpts.permissionMode}
-                onPermissionModeChange={setPermissionMode}
-                enabledModes={enabledModes}
-                inputValue={inputValue}
-                onInputChange={handleInputChange}
-                attachmentsValue={attachmentsValue}
-                onAttachmentsChange={handleAttachmentsChange}
-                skills={skills}
-                          workspaceId={activeWorkspaceId || undefined}
-                workingDirectory={sessionMeta.workingDirectory}
-                onWorkingDirectoryChange={handleWorkingDirectoryChange}
-                messagesLoading={messageLoadState.messagesLoading || (messagesRetrying && !messageLoadState.messagesReady)}
-                messagesLoadError={messageLoadState.error}
-                messagesRetrying={messagesRetrying}
-                onRetryMessagesLoad={handleRetryMessagesLoad}
-                searchQuery={sessionListSearchQuery}
-                isSearchModeActive={isSearchModeActive}
-                onMatchInfoChange={onChatMatchInfoChange}
-                connectionUnavailable={connectionUnavailable}
-                compactMode={!!isCompactMode}
-                enableCompactModelPicker={!!isCompactMode}
-              />
-            </div>
-          </div>
-          <RenameDialog
-            open={renameDialogOpen}
-            onOpenChange={setRenameDialogOpen}
-            title={t('chat.renameSession')}
-            value={renameName}
-            onValueChange={setRenameName}
-            onSubmit={handleRenameSubmit}
-            placeholder={t('chat.enterSessionName')}
+        <div className="h-full flex flex-col">
+          <ChatHeader
+            sessionId={sessionId}
+            item={sessionMeta}
+            title={displayTitle}
+            isRegeneratingTitle={isAsyncOperationOngoing}
+
+            workingDirectory={sessionMeta.workingDirectory}
           />
-        </>
+          <div className="flex-1 flex flex-col min-h-0">
+            <ChatDisplay
+              ref={chatDisplayRef}
+              session={skeletonSession}
+              onSendMessage={() => {}}
+              onOpenFile={handleOpenFile}
+              onOpenUrl={handleOpenUrl}
+              currentModel={effectiveModel}
+              onModelChange={handleModelChange}
+              onConnectionChange={handleConnectionChange}
+              pendingPermission={undefined}
+              onRespondToPermission={onRespondToPermission}
+
+
+              thinkingLevel={sessionOpts.thinkingLevel}
+              onThinkingLevelChange={(level) => setOption('thinkingLevel', level)}
+              permissionMode={sessionOpts.permissionMode}
+
+              onPermissionModeChange={setPermissionMode}
+              enabledModes={enabledModes}
+              inputValue={inputValue}
+              onInputChange={handleInputChange}
+              attachmentsValue={attachmentsValue}
+              onAttachmentsChange={handleAttachmentsChange}
+
+              skills={skills}
+              workspaceId={activeWorkspaceId || undefined}
+
+              workingDirectory={sessionMeta.workingDirectory}
+              onWorkingDirectoryChange={handleWorkingDirectoryChange}
+              messagesLoading={messageLoadState.messagesLoading || (messagesRetrying && !messageLoadState.messagesReady)}
+              messagesLoadError={messageLoadState.error}
+              messagesRetrying={messagesRetrying}
+              onRetryMessagesLoad={handleRetryMessagesLoad}
+              searchQuery={sessionListSearchQuery}
+              isSearchModeActive={isSearchModeActive}
+              onMatchInfoChange={onChatMatchInfoChange}
+              connectionUnavailable={connectionUnavailable}
+              compactMode={!!isCompactMode}
+              enableCompactModelPicker={!!isCompactMode}
+            />
+          </div>
+        </div>
       )
     }
 
@@ -617,62 +483,66 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
   }
 
   return (
-    <>
-      <div className="h-full flex flex-col">
-        <PanelHeader  title={displayTitle} titleMenu={titleMenu} compactTitleMenu={compactTitleMenu} leadingAction={leadingAction} actions={headerActions} rightSidebarButton={rightSidebarButton} isRegeneratingTitle={isAsyncOperationOngoing} />
-        <div className="flex-1 flex flex-col min-h-0">
-          <ChatDisplay
-            ref={chatDisplayRef}
-            session={session}
-            onSendMessage={(message, attachments, skillSlugs) => {
-              if (session) {
-                onSendMessage(session.id, message, attachments, skillSlugs)
-              }
-            }}
-            onOpenFile={handleOpenFile}
-            onOpenUrl={handleOpenUrl}
-            currentModel={effectiveModel}
-            onModelChange={handleModelChange}
-            onConnectionChange={handleConnectionChange}
-            pendingPermission={pendingPermission}
-            onRespondToPermission={onRespondToPermission}
-            thinkingLevel={sessionOpts.thinkingLevel}
-            onThinkingLevelChange={(level) => setOption('thinkingLevel', level)}
-            permissionMode={sessionOpts.permissionMode}
-            onPermissionModeChange={setPermissionMode}
-            enabledModes={enabledModes}
-            inputValue={inputValue}
-            onInputChange={handleInputChange}
-            attachmentsValue={attachmentsValue}
-            onAttachmentsChange={handleAttachmentsChange}
-            skills={skills}
-                  workspaceId={activeWorkspaceId || undefined}
-            workingDirectory={workingDirectory}
-            onWorkingDirectoryChange={handleWorkingDirectoryChange}
-            sessionFolderPath={session?.sessionFolderPath}
-            messagesLoading={messageLoadState.messagesLoading || (messagesRetrying && !messageLoadState.messagesReady)}
-            messagesLoadError={messageLoadState.error}
-            messagesRetrying={messagesRetrying}
-            onRetryMessagesLoad={handleRetryMessagesLoad}
-            searchQuery={sessionListSearchQuery}
-            isSearchModeActive={isSearchModeActive}
-            onMatchInfoChange={onChatMatchInfoChange}
-            connectionUnavailable={connectionUnavailable}
-            compactMode={!!isCompactMode}
-            enableCompactModelPicker={!!isCompactMode}
-          />
-        </div>
-      </div>
-      <RenameDialog
-        open={renameDialogOpen}
-        onOpenChange={setRenameDialogOpen}
-        title={t('chat.renameSession')}
-        value={renameName}
-        onValueChange={setRenameName}
-        onSubmit={handleRenameSubmit}
-        placeholder={t('chat.enterSessionName')}
+    <div className="h-full flex flex-col">
+      <ChatHeader
+        sessionId={sessionId}
+        item={sessionMeta}
+        title={displayTitle}
+        isRegeneratingTitle={isAsyncOperationOngoing}
+
+        workingDirectory={workingDirectory}
+        sessionFolderPath={session?.sessionFolderPath}
       />
-    </>
+      <div className="flex-1 flex flex-col min-h-0">
+        <ChatDisplay
+          ref={chatDisplayRef}
+          session={session}
+          onSendMessage={(message, attachments, skillSlugs) => {
+            if (session) {
+              onSendMessage(session.id, message, attachments, skillSlugs)
+            }
+          }}
+          onOpenFile={handleOpenFile}
+          onOpenUrl={handleOpenUrl}
+          currentModel={effectiveModel}
+          onModelChange={handleModelChange}
+          onConnectionChange={handleConnectionChange}
+          pendingPermission={pendingPermission}
+          onRespondToPermission={onRespondToPermission}
+
+
+          thinkingLevel={sessionOpts.thinkingLevel}
+          onThinkingLevelChange={(level) => setOption('thinkingLevel', level)}
+          permissionMode={sessionOpts.permissionMode}
+
+          onPermissionModeChange={setPermissionMode}
+          enabledModes={enabledModes}
+          inputValue={inputValue}
+          onInputChange={handleInputChange}
+          attachmentsValue={attachmentsValue}
+          onAttachmentsChange={handleAttachmentsChange}
+
+          skills={skills}
+
+
+          workspaceId={activeWorkspaceId || undefined}
+
+          workingDirectory={workingDirectory}
+          onWorkingDirectoryChange={handleWorkingDirectoryChange}
+          sessionFolderPath={session?.sessionFolderPath}
+          messagesLoading={messageLoadState.messagesLoading || (messagesRetrying && !messageLoadState.messagesReady)}
+          messagesLoadError={messageLoadState.error}
+          messagesRetrying={messagesRetrying}
+          onRetryMessagesLoad={handleRetryMessagesLoad}
+          searchQuery={sessionListSearchQuery}
+          isSearchModeActive={isSearchModeActive}
+          onMatchInfoChange={onChatMatchInfoChange}
+          connectionUnavailable={connectionUnavailable}
+          compactMode={!!isCompactMode}
+          enableCompactModelPicker={!!isCompactMode}
+        />
+      </div>
+    </div>
   )
 })
 

@@ -23,7 +23,7 @@ export function getAnnotationRectVisual(rect: { pendingFollowUp?: boolean; sentF
     className: cn('absolute', isPendingFollowUp ? 'shadow-tinted' : undefined),
     style: {
       opacity: rect.sentFollowUp ? 0.58 : 1,
-      ['--shadow-color' as string]: 'var(--info-rgb)',
+      ['--shadow-color' as string]: 'var(--info)',
       ['--shadow-border-opacity' as string]: isPendingFollowUp ? '0.14' : '0.08',
       ['--shadow-blur-opacity' as string]: isPendingFollowUp ? '0.10' : '0.05',
     },
@@ -50,7 +50,7 @@ export function getAnnotationChipVisual(chip: { pendingFollowUp?: boolean; sentF
       color: sent
         ? 'var(--foreground)'
         : 'rgba(15, 23, 42, 0.95)',
-      ['--shadow-color' as string]: 'var(--info-rgb)',
+      ['--shadow-color' as string]: 'var(--info)',
       ['--shadow-border-opacity' as string]: pending ? '0.14' : '0.05',
       ['--shadow-blur-opacity' as string]: pending ? '0.10' : '0.03',
     },

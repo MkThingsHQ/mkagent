@@ -1,3 +1,5 @@
+import type { BackgroundTaskOutput, StopBackgroundTaskResult } from '@mkagent/shared/protocol'
+import { launchOutputFile, readBackgroundTaskOutput } from './background-task-output'
 import type { EventSink, RpcServer } from '@mkagent/server-core/transport'
 import { RPC_CHANNELS, generateMessageId } from '@mkagent/shared/protocol'
 import type {
@@ -195,6 +197,7 @@ interface RunningBackgroundTask {
   toolUseId?: string
   intent?: string
   startTime: number
+  stopRequestedAt?: number
   lastProgressAt?: number
   elapsedSeconds?: number
   status: BackgroundTaskStatus
@@ -212,7 +215,7 @@ interface ManagedSession extends SessionConfig {
   isProcessing: boolean
   agent: AgentBackend | null
   messageQueue: QueuedMessage[]
-  backgroundShellCommands: Map<string, string>
+  backgroundTaskOutputs: Map<string, { outputFile?: string }>
   backgroundTaskRegistry: Map<string, RunningBackgroundTask>
   backendRuntimeSignature?: string
   backendRestartSignature?: string
@@ -278,7 +281,7 @@ export function createManagedSession(
     isProcessing: false,
     agent: null,
     messageQueue: [],
-    backgroundShellCommands: new Map(),
+    backgroundTaskOutputs: new Map(),
     backgroundTaskRegistry: new Map(),
   }
 }
@@ -382,7 +385,7 @@ export class SessionManager implements ISessionManager {
   private toStored(managed: ManagedSession): StoredSession {
     const { workspace: _workspace, agent: _agent, messageQueue: _queue,
       messagesLoaded: _loaded, isProcessing: _processing,
-      backgroundShellCommands: _backgroundShellCommands,
+      backgroundTaskOutputs: _backgroundTaskOutputs,
       backgroundTaskRegistry: _backgroundTaskRegistry,
       runtimeRefreshPromise: _refresh, backendRuntimeSignature: _runtimeSignature,
       backendRestartSignature: _restartSignature, currentStatus: _status,
@@ -747,7 +750,7 @@ export class SessionManager implements ISessionManager {
         timestamp: this.nextTimestamp(),
       }
       managed.messages.push(storedError)
-      this.emit(managed.workspace.id, { type: 'error', sessionId: managed.id, error: errorMessage })
+      this.emit(managed.workspace.id, { type: 'error', sessionId: managed.id, error: errorMessage, backgroundTasksAlive: [...managed.backgroundTaskRegistry.values()].some(task => task.status === 'running') })
       runtimeHooks.captureException(error, { errorSource: 'session-turn', sessionId: managed.id })
     } finally {
       managed.isProcessing = false
@@ -800,6 +803,13 @@ export class SessionManager implements ISessionManager {
         this.emit(managed.workspace.id, { type: 'tool_start', sessionId, toolName: event.toolName, toolUseId: event.toolUseId, toolInput: event.input, toolIntent: event.intent, toolDisplayName: event.displayName, toolDisplayMeta: event.toolDisplayMeta, turnId: event.turnId, parentToolUseId: event.parentToolUseId, timestamp: this.nextTimestamp() })
         break
       case 'tool_result':
+        // Compact transcripts do not persist tool messages; retain a running shell's output
+        // path from its launch acknowledgement before the result leaves this process.
+        for (const task of managed.backgroundTaskRegistry.values()) {
+          if (task.toolUseId !== event.toolUseId) continue
+          const outputFile = launchOutputFile(event.result, task.taskId)
+          if (outputFile) managed.backgroundTaskOutputs.set(task.taskId, { outputFile })
+        }
         this.emit(managed.workspace.id, { type: 'tool_result', sessionId, toolUseId: event.toolUseId, toolName: event.toolName ?? 'tool', result: event.result, isError: event.isError, turnId: event.turnId, parentToolUseId: event.parentToolUseId, timestamp: this.nextTimestamp() })
         break
       case 'status':
@@ -826,6 +836,7 @@ export class SessionManager implements ISessionManager {
           type: 'error',
           sessionId,
           error: event.message,
+          backgroundTasksAlive: [...managed.backgroundTaskRegistry.values()].some(task => task.status === 'running'),
           timestamp: message.timestamp,
         })
         isTurnError = true
@@ -863,7 +874,7 @@ export class SessionManager implements ISessionManager {
         if (event.usage) {
           managed.tokenUsage = { ...managed.tokenUsage, ...event.usage }
         }
-        this.emit(managed.workspace.id, { type: 'complete', sessionId, tokenUsage: managed.tokenUsage, hasUnread: managed.hasUnread })
+        this.emit(managed.workspace.id, { type: 'complete', sessionId, tokenUsage: managed.tokenUsage, hasUnread: managed.hasUnread, backgroundTasksAlive: [...managed.backgroundTaskRegistry.values()].some(task => task.status === 'running') })
         break
       case 'context_usage':
         managed.tokenUsage.contextUsage = event.contextUsage
@@ -894,9 +905,14 @@ export class SessionManager implements ISessionManager {
         this.emit(managed.workspace.id, { ...event, sessionId })
         break
       case 'shell_backgrounded':
-        if (event.command) managed.backgroundShellCommands.set(event.shellId, event.command)
+        managed.backgroundTaskRegistry.set(event.shellId, { taskId: event.shellId, toolUseId: event.toolUseId, intent: event.intent, startTime: Date.now(), status: 'running', turnId: event.turnId })
         this.emit(managed.workspace.id, { type: 'shell_backgrounded', sessionId, toolUseId: event.toolUseId, shellId: event.shellId, intent: event.intent, command: event.command, turnId: event.turnId })
         break
+      case 'task_activity': {
+        const task = managed.backgroundTaskRegistry.get(event.taskId)
+        if (task) { task.lastProgressAt = Date.now(); this.emit(managed.workspace.id, { ...event, sessionId }) }
+        break
+      }
       case 'task_progress':
         for (const task of managed.backgroundTaskRegistry.values()) {
           if (task.toolUseId === event.toolUseId) {
@@ -910,6 +926,7 @@ export class SessionManager implements ISessionManager {
       case 'task_completed': {
         const task = managed.backgroundTaskRegistry.get(event.taskId)
           ?? [...managed.backgroundTaskRegistry.values()].find(item => item.workflowId === event.taskId)
+        managed.backgroundTaskOutputs.set(event.taskId, { outputFile: event.outputFile })
         const wasAlreadyTerminal = task ? task.status !== 'running' : false
         if (task) {
           task.status = event.status
@@ -923,7 +940,7 @@ export class SessionManager implements ISessionManager {
           })
         }
         this.emit(managed.workspace.id, { type: 'task_completed', sessionId, taskId: event.taskId, status: event.status, outputFile: event.outputFile, summary: event.summary, turnId: event.turnId })
-        if (!managed.isProcessing && !wasAlreadyTerminal) {
+        if (!managed.isProcessing && !wasAlreadyTerminal && !(event.status === 'stopped' && task?.stopRequestedAt)) {
           const label = task?.intent ? `"${task.intent}"` : `task ${event.taskId}`
           const nudge = event.status === 'completed'
             ? [
@@ -1294,42 +1311,72 @@ export class SessionManager implements ISessionManager {
     if (!managed?.agent || !managed.isProcessing) return
     managed.agent.forceAbort(AbortReason.UserStop)
     managed.isProcessing = false
-    if (!silent) this.emit(managed.workspace.id, { type: 'interrupted', sessionId })
+    if (!silent) this.emit(managed.workspace.id, { type: 'interrupted', sessionId, backgroundTasksAlive: [...managed.backgroundTaskRegistry.values()].some(task => task.status === 'running') })
   }
 
-  async killShell(sessionId: string, shellId: string): Promise<{ success: boolean; error?: string }> {
+  async killShell(sessionId: string, shellId: string): Promise<StopBackgroundTaskResult> {
+    return this.stopBackgroundTask(sessionId, shellId)
+  }
+
+  async stopBackgroundTask(sessionId: string, taskId: string): Promise<StopBackgroundTaskResult> {
     const managed = this.sessions.get(sessionId)
     if (!managed) return { success: false, error: 'Session not found' }
-
-    const command = managed.backgroundShellCommands.get(shellId)
-    if (command) {
-      try {
-        const { execFile } = await import('node:child_process')
-        const pattern = command.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-        const stdout = await new Promise<string>((resolve, reject) => {
-          execFile('pgrep', ['-f', pattern], { encoding: 'utf8' }, (error, result) => {
-            if (error) reject(error)
-            else resolve(result)
-          })
-        }).catch(() => '')
-
-        for (const value of stdout.split('\n')) {
-          const pid = Number(value.trim())
-          if (!Number.isInteger(pid) || pid <= 0 || pid === process.pid) continue
-          try {
-            process.kill(pid, 'SIGTERM')
-          } catch {
-            // The process may have exited between discovery and termination.
-          }
-        }
-      } finally {
-        managed.backgroundShellCommands.delete(shellId)
+    const entry = managed.backgroundTaskRegistry.get(taskId)
+    // Nothing alive to stop: record it, so status queries agree with the chip
+    const notRunning = (): StopBackgroundTaskResult => {
+      if (entry?.status === 'running') {
+        entry.status = 'stopped'
+        entry.completedAt = Date.now()
       }
+      return { success: false, error: 'not-running' }
     }
-
-    this.emit(managed.workspace.id, { type: 'shell_killed', sessionId, shellId })
-    return { success: true }
+    if (entry && entry.status !== 'running') return { success: false, error: 'not-running' }
+    const stop = managed.agent?.stopBackgroundTask
+    if (!stop) return notRunning()
+    if (entry) entry.stopRequestedAt = Date.now()
+    try {
+      const stopped = await stop.call(managed.agent, taskId)
+      log.info(`[bg-lifecycle] stop requested`, { sessionId, taskId, delivered: stopped })
+      return stopped ? { success: true } : notRunning()
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      // The CLI no longer knows the task (it finished, or died with an earlier subprocess), or the
+      // query is gone: the task is not running — not a failure to report.
+      if (/no task found|is not running|query closed|not running/i.test(message)) return notRunning()
+      if (entry) entry.stopRequestedAt = undefined
+      log.warn(`[bg-lifecycle] stop failed for task ${taskId}:`, error)
+      return { success: false, error: 'failed' }
+    }
   }
+
+  /**
+   * What a background task of the session has written so far, digested for the chip's card: a
+   * shell's output tail, or an agent's latest message and recent steps. The file is the one the SDK
+   * reported on completion, else the `<taskId>.output` named in the launching tool call's result
+   * (see launchOutputFile). Null when there is nothing to read yet.
+   */
+  async getBackgroundTaskOutput(sessionId: string, taskId: string, kind?: 'agent' | 'shell' | 'workflow'): Promise<BackgroundTaskOutput | null> {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) return null
+    const path = this.backgroundTaskOutputFile(managed, taskId)
+    if (!path) return null
+    try {
+      return await readBackgroundTaskOutput(path, kind)
+    } catch (error) {
+      log.debug(`[bg-lifecycle] no readable output for task ${taskId} (${path}):`, error)
+      return null
+    }
+  }
+
+  private backgroundTaskOutputFile(managed: ManagedSession, taskId: string): string | undefined {
+    const reported = managed.backgroundTaskOutputs.get(taskId)?.outputFile
+    if (reported) return reported
+    const toolUseId = managed.backgroundTaskRegistry.get(taskId)?.toolUseId
+    if (!toolUseId) return undefined
+    const launch = managed.messages.find(message => message.toolUseId === toolUseId && message.toolResult)
+    return launch?.toolResult ? launchOutputFile(launch.toolResult, taskId) : undefined
+  }
+
 
   listBackgroundTasks(sessionId: string) {
     const managed = this.sessions.get(sessionId)

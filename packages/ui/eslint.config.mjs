@@ -9,6 +9,8 @@ import tsParser from '@typescript-eslint/parser'
 import noHardcodedZIndex from './eslint-rules/no-hardcoded-z-index.cjs'
 import noFloatingZTokensInIsland from './eslint-rules/no-floating-z-tokens-in-island.cjs'
 import noNonstandardShadows from './eslint-rules/no-nonstandard-shadows.cjs'
+import noMotionAntipatterns from './eslint-rules/no-motion-antipatterns.cjs'
+import noRawPaletteColors from './eslint-rules/no-raw-palette-colors.cjs'
 
 export default [
   // Ignore patterns
@@ -38,6 +40,8 @@ export default [
           'no-hardcoded-z-index': noHardcodedZIndex,
           'no-floating-z-tokens-in-island': noFloatingZTokensInIsland,
           'no-nonstandard-shadows': noNonstandardShadows,
+          'no-motion-antipatterns': noMotionAntipatterns,
+          'no-raw-palette-colors': noRawPaletteColors,
         },
       },
     },
@@ -63,6 +67,10 @@ export default [
         allowedClasses: [
           'shadow-none',
           'shadow-xs',
+          'shadow-elev-0',
+          'shadow-elev-1',
+          'shadow-elev-2',
+          'shadow-elev-3',
           'shadow-minimal',
           'shadow-tinted',
           'shadow-thin',
@@ -70,11 +78,16 @@ export default [
           'shadow-strong',
           'shadow-panel-focused',
           'shadow-modal-small',
+          'shadow-dragging',
           'shadow-bottom-border',
           'shadow-bottom-border-thin',
         ],
         allowInlineNone: true,
       }],
+
+      // Design-system guardrails (implementation plan A0): warn until the class codemod (A3–B9) lands
+      'mkagent-styles/no-motion-antipatterns': 'warn',
+      'mkagent-styles/no-raw-palette-colors': 'warn',
     },
   },
 

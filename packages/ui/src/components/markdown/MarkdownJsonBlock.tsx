@@ -20,9 +20,10 @@ import { githubLightTheme } from '@uiw/react-json-view/githubLight'
 import { Copy, Check } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { CodeBlock } from './CodeBlock'
+import { TurnIconButton } from '../chat/turn/TurnIconButton'
 
 // ── Themes (same as JSONPreviewOverlay) ────────────────────────────────────
-// Transparent background so the container's bg-muted/30 shows through,
+// Transparent background so the container's sunken well shows through,
 // and CSS variable font so it matches the app's monospace font.
 
 const craftAgentDarkTheme = {
@@ -153,25 +154,20 @@ export function MarkdownJsonBlock({ code, className }: MarkdownJsonBlockProps) {
 
   return (
     <JsonErrorBoundary fallback={fallback}>
-      <div className={cn('relative group rounded-[8px] overflow-hidden border bg-muted/30', className)}>
-        {/* Header — matches CodeBlock full mode (label + copy on hover) */}
-        <div className="flex items-center justify-between px-3 py-1.5 bg-muted/50 border-b text-xs">
-          <span className="text-muted-foreground font-medium uppercase tracking-wide">json</span>
-          <button
-            onClick={handleCopy}
-            className="opacity-0 group-hover:opacity-50 hover:!opacity-100 transition-opacity text-muted-foreground hover:text-foreground"
+      <div className={cn('relative overflow-hidden rounded-md border border-subtle bg-sunken', className)}>
+        {/* Header — matches the CodeBlock well (32px, language · Copy) */}
+        <div className="flex h-8 items-center gap-2 border-b border-subtle pl-3 pr-1 text-label-sm text-tertiary">
+          <span className="min-w-0 truncate font-mono text-secondary">json</span>
+          <span className="flex-1" />
+          <TurnIconButton
             aria-label={t('common.copyJson')}
-          >
-            {copied ? (
-              <Check className="w-3.5 h-3.5 text-success" />
-            ) : (
-              <Copy className="w-3.5 h-3.5" />
-            )}
-          </button>
+            icon={copied ? <Check className="size-3.5 text-success" /> : <Copy />}
+            onClick={handleCopy}
+          />
         </div>
 
         {/* Interactive tree viewer */}
-        <div className="p-3 overflow-x-auto text-sm">
+        <div className="overflow-x-auto px-3 py-2 text-mono-ui">
           <JsonView
             value={parsed}
             style={jsonTheme}
@@ -186,13 +182,13 @@ export function MarkdownJsonBlock({ code, className }: MarkdownJsonBlockProps) {
                 const isCopied = (props as Record<string, unknown>)['data-copied']
                 return isCopied ? (
                   <Check
-                    className="ml-1.5 inline-flex cursor-pointer text-green-500"
+                    className="ml-1.5 inline-flex cursor-pointer text-success"
                     size={10}
                     onClick={props.onClick}
                   />
                 ) : (
                   <Copy
-                    className="ml-1.5 inline-flex cursor-pointer text-muted-foreground hover:text-foreground"
+                    className="ml-1.5 inline-flex cursor-pointer text-tertiary hover:text-foreground"
                     size={10}
                     onClick={props.onClick}
                   />

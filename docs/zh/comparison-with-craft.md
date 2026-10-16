@@ -1,5 +1,7 @@
 # MkAgent vs Craft Agents 当前差异对比
 
+当前同步：MkAgent 0.2.0 采用适配后的 [Craft v0.15.0 基线](upstream-sync.md)。下方规模和安装包测量为历史快照；本版本以[逐路径清单](../sync/0.15.0-inventory.json)及[验证报告](../sync/0.15.0-validation.md)为准。
+
 > 快照刷新时间：**2026-09-01**。
 > 对比基线：基于 `242306a` 的 MkAgent 同步工作区，以及上游 tag [`craft-ai-agents/craft-agents-oss` `v0.12.1` / `d7592c481216`](https://github.com/craft-ai-agents/craft-agents-oss)。数字是仓库快照，不是实时发布指标；安装包大小仍采用上一次实测构件。
 > 数据来源：两个仓库当前 on-disk 的工作区与既有的构建产物（非本轮新抓的网络数据）；重跑前请用记录中的 commit 重新 checkout 两个仓库。

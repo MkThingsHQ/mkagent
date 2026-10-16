@@ -6,6 +6,7 @@
  * opens with context pre-filled for fast execution.
  */
 
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { EditPopover, type EditContext } from '@/components/ui/EditPopover'
 import { SettingsRow } from './SettingsRow'
@@ -36,6 +37,7 @@ export function SettingsEditRow({
   inCard = true,
   className,
 }: SettingsEditRowProps) {
+  const { t } = useTranslation()
   return (
     <SettingsRow
       label={label}
@@ -45,8 +47,8 @@ export function SettingsEditRow({
       action={
         <EditPopover
           trigger={
-            <Button variant="ghost" size="sm" className="h-7 px-2.5 rounded-[6px] bg-background shadow-minimal">
-              Edit
+            <Button variant="secondary" size="md">
+              {t('common.edit')}
             </Button>
           }
           example={editExample}

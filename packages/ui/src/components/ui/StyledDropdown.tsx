@@ -1,10 +1,9 @@
 /**
  * StyledDropdown - Shared styled dropdown components
  *
- * Pre-styled Radix dropdown wrappers matching the app's vibrancy style:
- * - popover-styled background with blur
- * - Consistent item spacing and subtle hover states (foreground/[0.03])
- * - Icon sizing standardization (3.5 × 3.5)
+ * Pre-styled Radix dropdown wrappers on the floating material (design spec §7.10):
+ * - popover-styled: --surface-floating, radius 12, elev-2; motion-popover enter/exit
+ * - 30px rows, 13px labels, fill-hover highlight, 16px secondary-colored icons
  *
  * Wraps raw @radix-ui/react-dropdown-menu primitives with the full class set
  * (shadcn base layer + styled additions) so consumers get the correct look
@@ -112,17 +111,10 @@ export const StyledDropdownMenuContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        // shadcn base layer
-        'popover-styled overflow-x-hidden overflow-y-auto p-1 z-dropdown',
+        'popover-styled motion-popover overflow-x-hidden overflow-y-auto p-1 z-dropdown',
         'max-h-(--radix-dropdown-menu-content-available-height)',
         'origin-(--radix-dropdown-menu-content-transform-origin)',
-        'data-[state=open]:animate-in data-[state=closed]:animate-out',
-        'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
-        'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
-        'data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2',
-        'data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2',
-        // styled additions
-        'w-fit font-sans whitespace-nowrap text-xs flex flex-col gap-0.5',
+        'w-fit font-sans whitespace-nowrap flex flex-col',
         minWidth,
         className,
       )}
@@ -146,14 +138,11 @@ export const StyledDropdownMenuItem = React.forwardRef<
   <DropdownMenuPrimitive.Item
     ref={ref}
     className={cn(
-      // shadcn base layer
-      'relative flex cursor-default items-center gap-2 px-2 py-1.5 text-sm outline-hidden select-none',
-      '[&_svg]:pointer-events-none [&_svg]:shrink-0',
-      'data-[disabled]:pointer-events-none data-[disabled]:opacity-50',
-      // styled additions
-      'pr-4 rounded-[4px] hover:bg-foreground/[0.03] focus:bg-foreground/[0.03]',
-      '[&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0',
-      variant === 'destructive' && 'text-destructive focus:text-destructive hover:text-destructive [&_svg]:!text-destructive',
+      'relative flex min-h-row-menu cursor-default items-center gap-2 rounded-md px-2 pr-3 text-label outline-hidden select-none',
+      'hover:bg-fill-hover focus:bg-fill-hover',
+      'data-[disabled]:pointer-events-none data-[disabled]:text-disabled',
+      "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&>svg:not([class*='text-'])]:text-secondary",
+      variant === 'destructive' && 'text-destructive hover:bg-destructive-tint focus:bg-destructive-tint [&_svg]:!text-destructive',
       className,
     )}
     {...props}
@@ -169,7 +158,7 @@ export const StyledDropdownMenuSeparator = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Separator
     ref={ref}
-    className={cn('bg-foreground/10 -mx-1 my-1 h-px', className)}
+    className={cn('bg-separator -mx-1 my-1 h-px', className)}
     {...props}
   />
 ))
@@ -184,16 +173,15 @@ export const StyledDropdownMenuSubTrigger = React.forwardRef<
   <DropdownMenuPrimitive.SubTrigger
     ref={ref}
     className={cn(
-      'relative flex cursor-default items-center gap-2 px-2 py-1.5 text-sm outline-hidden select-none',
-      '[&_svg]:pointer-events-none [&_svg]:shrink-0',
-      'pr-1.5 rounded-[4px] hover:bg-foreground/10 focus:bg-foreground/10 data-[state=open]:bg-foreground/10',
-      '[&>svg]:h-3.5 [&>svg]:w-3.5 [&>svg]:shrink-0',
+      'relative flex min-h-row-menu cursor-default items-center gap-2 rounded-md px-2 pr-1.5 text-label outline-hidden select-none',
+      'hover:bg-fill-hover focus:bg-fill-hover data-[state=open]:bg-fill-hover',
+      "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 [&>svg:not([class*='text-'])]:text-secondary",
       className,
     )}
     {...props}
   >
     {children}
-    <ChevronRightIcon className="ml-auto size-4" />
+    <ChevronRightIcon className="ml-auto size-4 text-tertiary" />
   </DropdownMenuPrimitive.SubTrigger>
 ))
 StyledDropdownMenuSubTrigger.displayName = 'StyledDropdownMenuSubTrigger'
@@ -214,11 +202,9 @@ export const StyledDropdownMenuSubContent = React.forwardRef<
       ref={ref}
       sideOffset={sideOffset}
       className={cn(
-        'popover-styled w-fit font-sans whitespace-nowrap text-xs flex flex-col gap-0.5 z-dropdown overflow-x-hidden overflow-y-auto p-1',
+        'popover-styled motion-popover w-fit font-sans whitespace-nowrap flex flex-col z-dropdown overflow-x-hidden overflow-y-auto p-1',
         'max-h-(--radix-dropdown-menu-content-available-height)',
-        'data-[state=open]:animate-in data-[state=closed]:animate-out',
-        'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
-        'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
+        'origin-(--radix-dropdown-menu-content-transform-origin)',
         minWidth,
         className,
       )}
@@ -236,7 +222,7 @@ export function DropdownMenuShortcut({
 }: React.ComponentProps<'span'>) {
   return (
     <span
-      className={cn('text-muted-foreground ml-auto text-xs tracking-widest', className)}
+      className={cn('ml-auto pl-4 text-label-sm text-tertiary', className)}
       {...props}
     />
   )

@@ -7,10 +7,9 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { cn } from '@/lib/utils'
 import { LANGUAGES, type LanguageCode } from '@mkagent/shared/i18n'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PanelHeader } from '@/components/app-shell/PanelHeader'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
 import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopover'
 import { useTheme } from '@/context/ThemeContext'
@@ -21,6 +20,7 @@ import type { DetailsPageMeta } from '@/lib/navigation-registry'
 import type { ToolIconMapping } from '../../../shared/types'
 
 import {
+  SettingsPage,
   SettingsSection,
   SettingsCard,
   SettingsRow,
@@ -28,6 +28,7 @@ import {
   SettingsMenuSelect,
   SettingsToggle,
 } from '@/components/settings'
+import { ThemeGrid, type ThemeGridOption } from '@/components/settings/ThemeGrid'
 import { useAtom } from 'jotai'
 import * as storage from '@/lib/local-storage'
 import { useWorkspaceIcons } from '@/hooks/useWorkspaceIcon'
@@ -35,9 +36,15 @@ import { WorkspaceAvatar } from '@/components/ui/workspace-avatar'
 import { ColorPicker } from '@/components/ui/color-picker'
 import { workspaceAvatarColorsAtom } from '@/atoms/workspace-avatar-colors'
 import { showBackgroundFinishedChipAtom } from '@/atoms/background-finished'
-import { Info_DataTable, SortableHeader } from '@/components/info/Info_DataTable'
+import { Info_DataTable, SortableHeader, INFO_TABLE_HEADER_CLASS, INFO_TABLE_SORTABLE_HEADER_CLASS } from '@/components/info/Info_DataTable'
 import { Info_Badge } from '@/components/info/Info_Badge'
 import type { PresetTheme } from '@config/theme'
+
+/**
+ * Preset tiles the theme grid reserves while presets load: the bundled presets on the first visit,
+ * then the last count seen — so the grid keeps its rows and nothing below it shifts.
+ */
+let lastPresetTileCount = 16
 
 export const meta: DetailsPageMeta = {
   navigator: 'settings',
@@ -55,7 +62,7 @@ export const meta: DetailsPageMeta = {
 const getToolIconColumns = (t: (key: string) => string): ColumnDef<ToolIconMapping>[] => [
   {
     accessorKey: 'iconDataUrl',
-    header: () => <span className="p-1.5 pl-2.5">{t("settings.appearance.iconHeader")}</span>,
+    header: () => <span className={cn("p-1.5 pl-2.5", INFO_TABLE_HEADER_CLASS)}>{t("settings.appearance.iconHeader")}</span>,
     cell: ({ row }) => (
       <div className="p-1.5 pl-2.5">
         <img
@@ -70,9 +77,9 @@ const getToolIconColumns = (t: (key: string) => string): ColumnDef<ToolIconMappi
   },
   {
     accessorKey: 'displayName',
-    header: ({ column }) => <SortableHeader column={column} title={t("settings.appearance.toolHeader")} />,
+    header: ({ column }) => <SortableHeader column={column} title={t("settings.appearance.toolHeader")} className={INFO_TABLE_SORTABLE_HEADER_CLASS} />,
     cell: ({ row }) => (
-      <div className="p-1.5 pl-2.5 font-medium">
+      <div className="p-1.5 pl-2.5 text-label font-medium text-foreground">
         {row.original.displayName}
       </div>
     ),
@@ -80,11 +87,11 @@ const getToolIconColumns = (t: (key: string) => string): ColumnDef<ToolIconMappi
   },
   {
     accessorKey: 'commands',
-    header: () => <span className="p-1.5 pl-2.5">{t("settings.appearance.commandsHeader")}</span>,
+    header: () => <span className={cn("p-1.5 pl-2.5", INFO_TABLE_HEADER_CLASS)}>{t("settings.appearance.commandsHeader")}</span>,
     cell: ({ row }) => (
       <div className="p-1.5 pl-2.5 flex flex-wrap gap-1">
         {row.original.commands.map(cmd => (
-          <Info_Badge key={cmd} color="muted" className="font-mono">
+          <Info_Badge key={cmd} color="muted" className="font-mono font-normal">
             {cmd}
           </Info_Badge>
         ))}
@@ -106,14 +113,18 @@ export default function AppearanceSettingsPage() {
   const {
     mode,
     setMode,
+    resolvedMode,
     colorTheme,
     setColorTheme,
     font,
     setFont,
+    motion,
+    setMotion,
     activeWorkspaceId,
     setWorkspaceColorTheme,
     themeLoadError,
     themeResolvedFrom,
+    appThemeOverrides,
   } = useTheme()
   const { workspaces } = useAppShellContext()
 
@@ -122,6 +133,7 @@ export default function AppearanceSettingsPage() {
 
   // Preset themes for the color theme dropdown
   const [presetThemes, setPresetThemes] = useState<PresetTheme[]>([])
+  const [presetsLoaded, setPresetsLoaded] = useState(false)
 
   // Per-workspace theme overrides (workspaceId -> themeId or undefined)
   const [workspaceThemes, setWorkspaceThemes] = useState<Record<string, string | undefined>>({})
@@ -175,14 +187,18 @@ export default function AppearanceSettingsPage() {
     const loadThemes = async () => {
       if (!window.electronAPI) {
         setPresetThemes([])
+        setPresetsLoaded(true)
         return
       }
       try {
         const themes = await window.electronAPI.loadPresetThemes()
         setPresetThemes(themes)
+        lastPresetTileCount = themes.filter(p => p.id !== 'default').length
       } catch (error) {
         console.error('Failed to load preset themes:', error)
         setPresetThemes([])
+      } finally {
+        setPresetsLoaded(true)
       }
     }
     loadThemes()
@@ -244,15 +260,12 @@ export default function AppearanceSettingsPage() {
     [activeWorkspaceId, setWorkspaceColorTheme]
   )
 
-  // Theme options for dropdowns
-  const themeOptions = useMemo(() => [
-    { value: 'default', label: t("settings.appearance.useDefault") },
+  // Theme grid tiles: the built-in default plus every preset (same values as the old dropdown)
+  const themeGridOptions = useMemo<ThemeGridOption[]>(() => [
+    { value: 'default', label: t("common.default") },
     ...presetThemes
-      .filter(t => t.id !== 'default')
-      .map(t => ({
-        value: t.id,
-        label: t.theme.name || t.id,
-      })),
+      .filter(p => p.id !== 'default')
+      .map(p => ({ value: p.id, label: p.theme.name || p.id, theme: p.theme })),
   ], [presetThemes, t])
 
   // Get current app default theme label for display (null when using 'default' to avoid redundant "Use Default (Default)")
@@ -263,189 +276,196 @@ export default function AppearanceSettingsPage() {
   }, [colorTheme, presetThemes])
 
   return (
-    <div className="h-full flex flex-col">
-      <PanelHeader
-        title={t("settings.appearance.title")}
-        actions={<HeaderMenu route={routes.view.settings('appearance')} helpFeature="themes" />}
-      />
-      <div className="flex-1 min-h-0 mask-fade-y">
-        <ScrollArea className="h-full">
-          <div className="px-5 py-7 max-w-3xl mx-auto">
-            <div className="space-y-8">
+    <SettingsPage
+      title={t("settings.appearance.title")}
+      description={t("settings.appearance.description")}
+      actions={<HeaderMenu route={routes.view.settings('appearance')} helpFeature="themes" />}
+    >
+      {/* Mode */}
+      <SettingsSection title={t("settings.appearance.mode")}>
+        <SettingsSegmentedControl
+          value={mode}
+          onValueChange={setMode}
+          aria-label={t("settings.appearance.mode")}
+          options={[
+            { value: 'light', label: t("settings.appearance.light"), icon: <Sun /> },
+            { value: 'dark', label: t("settings.appearance.dark"), icon: <Moon /> },
+            { value: 'system', label: t("settings.appearance.system"), icon: <Monitor /> },
+          ]}
+        />
+      </SettingsSection>
 
-              {/* Default Theme */}
-              <SettingsSection title={t("settings.appearance.defaultTheme")}>
-                <SettingsCard>
-                  <SettingsRow label={t("settings.appearance.mode")}>
-                    <SettingsSegmentedControl
-                      value={mode}
-                      onValueChange={setMode}
-                      options={[
-                        { value: 'system', label: t("settings.appearance.system"), icon: <Monitor className="w-4 h-4" /> },
-                        { value: 'light', label: t("settings.appearance.light"), icon: <Sun className="w-4 h-4" /> },
-                        { value: 'dark', label: t("settings.appearance.dark"), icon: <Moon className="w-4 h-4" /> },
-                      ]}
-                    />
-                  </SettingsRow>
-                  <SettingsRow label={t("settings.appearance.colorTheme")}>
-                    <SettingsMenuSelect
-                      value={colorTheme}
-                      onValueChange={setColorTheme}
-                      options={themeOptions}
-                    />
-                  </SettingsRow>
-                  <SettingsRow label={t("settings.appearance.font")}>
-                    <SettingsSegmentedControl
-                      value={font}
-                      onValueChange={setFont}
-                      options={[
-                        { value: 'inter', label: t("settings.appearance.fontInter") },
-                        { value: 'system', label: t("settings.appearance.fontSystem") },
-                      ]}
-                    />
-                  </SettingsRow>
-                  <SettingsRow label={t("settings.appearance.language")}>
-                    <SettingsMenuSelect
-                      value={(i18n.resolvedLanguage ?? i18n.language) as LanguageCode}
-                      onValueChange={(value) => {
-                        console.info('[i18n] Appearance dropdown change', {
-                          from: i18n.resolvedLanguage ?? null,
-                          to: value,
-                        })
-                        i18n.changeLanguage(value)
-                        window.electronAPI?.changeLanguage?.(value)
-                      }}
-                      options={Object.entries(LANGUAGES).map(([code, config]) => ({
-                        value: code,
-                        label: config.nativeName,
-                      }))}
-                    />
-                  </SettingsRow>
-                </SettingsCard>
-                {themeLoadError && (
-                  <p className="mt-2 text-xs text-info">
-                    {t("settings.appearance.themeWarning")} {themeLoadError} ({themeResolvedFrom === 'fallback' ? t("settings.appearance.usingBundledFallback") : t("settings.appearance.usingDefaultTheme")})
-                  </p>
-                )}
-              </SettingsSection>
+      {/* Color theme: tiles with live swatches in the active mode */}
+      <SettingsSection title={t("settings.appearance.colorTheme")}>
+        <ThemeGrid
+          value={colorTheme}
+          onValueChange={setColorTheme}
+          options={themeGridOptions}
+          mode={resolvedMode}
+          overrides={appThemeOverrides}
+          darkOnlyLabel={t("settings.appearance.dark")}
+          aria-label={t("settings.appearance.colorTheme")}
+          placeholderCount={presetsLoaded ? 0 : lastPresetTileCount}
+        />
+        {themeLoadError && (
+          <p className="text-label-sm text-info">
+            {t("settings.appearance.themeWarning")} {themeLoadError} ({themeResolvedFrom === 'fallback' ? t("settings.appearance.usingBundledFallback") : t("settings.appearance.usingDefaultTheme")})
+          </p>
+        )}
+      </SettingsSection>
 
-              {/* Workspace Themes */}
-              {workspaces.length > 0 && (
-                <SettingsSection
-                  title={t("settings.appearance.workspaceThemes")}
-                  description={t("settings.appearance.workspaceThemesDesc")}
+      {/* Workspace Themes */}
+      {workspaces.length > 0 && (
+        <SettingsSection
+          title={t("settings.appearance.workspaceThemes")}
+          description={t("settings.appearance.workspaceThemesDesc")}
+        >
+          <SettingsCard>
+            {workspaces.map((workspace) => {
+              const wsTheme = workspaceThemes[workspace.id]
+              const hasCustomTheme = wsTheme !== undefined
+              return (
+                <SettingsRow
+                  key={workspace.id}
+                  label={
+                    <div className="flex items-center gap-2">
+                      <ColorPicker
+                        value={workspaceAvatarColors[workspace.id] || ''}
+                        onChange={(hex) => setWorkspaceAvatarColor(workspace.id, hex)}
+                        onClear={() => clearWorkspaceAvatarColor(workspace.id)}
+                        clearLabel={t("settings.appearance.workspaceAvatarReset")}
+                        presets={[]}
+                        ariaLabel={t("settings.appearance.workspaceAvatarColor")}
+                        trigger={
+                          <button
+                            type="button"
+                            className="-m-1 inline-grid shrink-0 cursor-pointer place-items-center rounded-sm p-1 transition-colors duration-micro ease-out-subtle hover:bg-fill-hover hover:duration-instant"
+                            aria-label={t("settings.appearance.workspaceAvatarColor")}
+                          >
+                            <WorkspaceAvatar
+                              workspaceId={workspace.id}
+                              workspaceName={workspace.name}
+                              src={workspaceIconMap.get(workspace.id)}
+                              className="size-4 rounded-xs"
+                            />
+                          </button>
+                        }
+                      />
+                      <span>{workspace.name}</span>
+                    </div>
+                  }
                 >
-                  <SettingsCard>
-                    {workspaces.map((workspace) => {
-                      const wsTheme = workspaceThemes[workspace.id]
-                      const hasCustomTheme = wsTheme !== undefined
-                      return (
-                        <SettingsRow
-                          key={workspace.id}
-                          label={
-                            <div className="flex items-center gap-2">
-                              <ColorPicker
-                                value={workspaceAvatarColors[workspace.id] || ''}
-                                onChange={(hex) => setWorkspaceAvatarColor(workspace.id, hex)}
-                                onClear={() => clearWorkspaceAvatarColor(workspace.id)}
-                                clearLabel={t("settings.appearance.workspaceAvatarReset")}
-                                ariaLabel={t("settings.appearance.workspaceAvatarColor")}
-                                trigger={
-                                  <button
-                                    type="button"
-                                    className="cursor-pointer rounded hover:ring-2 hover:ring-foreground/20 transition-shadow"
-                                    aria-label={t("settings.appearance.workspaceAvatarColor")}
-                                  >
-                                    <WorkspaceAvatar
-                                      workspaceId={workspace.id}
-                                      workspaceName={workspace.name}
-                                      src={workspaceIconMap.get(workspace.id)}
-                                      className="w-4 h-4 rounded"
-                                    />
-                                  </button>
-                                }
-                              />
-                              <span>{workspace.name}</span>
-                            </div>
-                          }
-                        >
-                          <SettingsMenuSelect
-                            value={hasCustomTheme ? wsTheme : 'default'}
-                            onValueChange={(value) => handleWorkspaceThemeChange(workspace.id, value)}
-                            options={[
-                              { value: 'default', label: appDefaultLabel ? t("settings.appearance.useDefaultWithTheme", { theme: appDefaultLabel }) : t("settings.appearance.useDefault") },
-                              ...presetThemes
-                                .filter(t => t.id !== 'default')
-                                .map(t => ({
-                                  value: t.id,
-                                  label: t.theme.name || t.id,
-                                })),
-                            ]}
-                          />
-                        </SettingsRow>
-                      )
-                    })}
-                  </SettingsCard>
-                </SettingsSection>
-              )}
-
-              {/* Interface */}
-              <SettingsSection title={t("settings.appearance.interface")}>
-                <SettingsCard>
-                  <SettingsToggle
-                    label={t("settings.appearance.connectionIcons")}
-                    description={t("settings.appearance.connectionIconsDesc")}
-                    checked={showConnectionIcons}
-                    onCheckedChange={handleConnectionIconsChange}
+                  <SettingsMenuSelect
+                    value={hasCustomTheme ? wsTheme : 'default'}
+                    onValueChange={(value) => handleWorkspaceThemeChange(workspace.id, value)}
+                    options={[
+                      { value: 'default', label: appDefaultLabel ? t("settings.appearance.useDefaultWithTheme", { theme: appDefaultLabel }) : t("settings.appearance.useDefault") },
+                      ...presetThemes
+                        .filter(t => t.id !== 'default')
+                        .map(t => ({
+                          value: t.id,
+                          label: t.theme.name || t.id,
+                        })),
+                    ]}
                   />
-                  <SettingsToggle
-                    label={t("settings.appearance.richToolDescriptions")}
-                    description={t("settings.appearance.richToolDescriptionsDesc")}
-                    checked={richToolDescriptions}
-                    onCheckedChange={handleRichToolDescriptionsChange}
-                  />
-                  <SettingsToggle
-                    label={t("settings.appearance.backgroundFinishedChip")}
-                    description={t("settings.appearance.backgroundFinishedChipDesc")}
-                    checked={showBackgroundFinishedChip}
-                    onCheckedChange={setShowBackgroundFinishedChip}
-                  />
-                </SettingsCard>
-              </SettingsSection>
+                </SettingsRow>
+              )
+            })}
+          </SettingsCard>
+        </SettingsSection>
+      )}
 
+      {/* Interface */}
+      <SettingsSection title={t("settings.appearance.interface")}>
+        <SettingsCard>
+          <SettingsRow label={t("settings.appearance.font")}>
+            <SettingsSegmentedControl
+              value={font}
+              onValueChange={setFont}
+              aria-label={t("settings.appearance.font")}
+              options={[
+                { value: 'system', label: t("settings.appearance.fontSystem") },
+                { value: 'inter', label: t("settings.appearance.fontInter") },
+              ]}
+            />
+          </SettingsRow>
+          <SettingsRow label={t("settings.appearance.motion")} description={t("settings.appearance.motionDesc")}>
+            <SettingsSegmentedControl
+              value={motion}
+              onValueChange={setMotion}
+              aria-label={t("settings.appearance.motion")}
+              options={[
+                { value: 'system', label: t("settings.appearance.system") },
+                { value: 'reduced', label: t("settings.appearance.motionReduced") },
+                { value: 'full', label: t("settings.appearance.motionFull") },
+              ]}
+            />
+          </SettingsRow>
+          <SettingsRow label={t("settings.appearance.language")}>
+            <SettingsMenuSelect
+              value={(i18n.resolvedLanguage ?? i18n.language) as LanguageCode}
+              onValueChange={(value) => {
+                console.info('[i18n] Appearance dropdown change', {
+                  from: i18n.resolvedLanguage ?? null,
+                  to: value,
+                })
+                i18n.changeLanguage(value)
+                window.electronAPI?.changeLanguage?.(value)
+              }}
+              options={Object.entries(LANGUAGES).map(([code, config]) => ({
+                value: code,
+                label: config.nativeName,
+              }))}
+            />
+          </SettingsRow>
+          <SettingsToggle
+            label={t("settings.appearance.connectionIcons")}
+            description={t("settings.appearance.connectionIconsDesc")}
+            checked={showConnectionIcons}
+            onCheckedChange={handleConnectionIconsChange}
+          />
+          <SettingsToggle
+            label={t("settings.appearance.richToolDescriptions")}
+            description={t("settings.appearance.richToolDescriptionsDesc")}
+            checked={richToolDescriptions}
+            onCheckedChange={handleRichToolDescriptionsChange}
+          />
+          <SettingsToggle
+            label={t("settings.appearance.backgroundFinishedChip")}
+            description={t("settings.appearance.backgroundFinishedChipDesc")}
+            checked={showBackgroundFinishedChip}
+            onCheckedChange={setShowBackgroundFinishedChip}
+          />
+        </SettingsCard>
+      </SettingsSection>
 
-              {/* Tool Icons — shows the command → icon mapping used in turn cards */}
-              <SettingsSection
-                title={t("settings.appearance.toolIcons")}
-                description={t("settings.appearance.toolIconsDesc")}
-                action={
-                  toolIconsJsonPath ? (
-                    <EditPopover
-                      trigger={<EditButton />}
-                      {...getEditConfig('edit-tool-icons', toolIconsJsonPath)}
-                      secondaryAction={{
-                        label: t("settings.appearance.editFile"),
-                        filePath: toolIconsJsonPath,
-                      }}
-                    />
-                  ) : undefined
-                }
-              >
-                <SettingsCard>
-                  <Info_DataTable
-                    columns={toolIconColumns}
-                    data={toolIcons}
-                    searchable={{ placeholder: t("settings.appearance.searchTools") }}
-                    maxHeight={480}
-                    emptyContent={t("settings.appearance.noToolIcons")}
-                  />
-                </SettingsCard>
-              </SettingsSection>
-
-            </div>
-          </div>
-        </ScrollArea>
-      </div>
-    </div>
+      {/* Tool Icons — shows the command → icon mapping used in turn cards */}
+      <SettingsSection
+        title={t("settings.appearance.toolIcons")}
+        description={t("settings.appearance.toolIconsDesc")}
+        action={
+          toolIconsJsonPath ? (
+            <EditPopover
+              trigger={<EditButton />}
+              {...getEditConfig('edit-tool-icons', toolIconsJsonPath)}
+              secondaryAction={{
+                label: t("settings.appearance.editFile"),
+                filePath: toolIconsJsonPath,
+              }}
+            />
+          ) : undefined
+        }
+      >
+        <SettingsCard>
+          <Info_DataTable
+            columns={toolIconColumns}
+            data={toolIcons}
+            searchable={{ placeholder: t("settings.appearance.searchTools") }}
+            maxHeight={480}
+            emptyContent={t("settings.appearance.noToolIcons")}
+          />
+        </SettingsCard>
+      </SettingsSection>
+    </SettingsPage>
   )
 }

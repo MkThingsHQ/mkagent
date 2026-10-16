@@ -96,14 +96,14 @@ export function CompactSessionMenu({
             type="button"
             className={cn(
               'flex items-center gap-1 min-w-0 rounded-[6px] px-1.5 py-1',
-              'hover:bg-foreground/5 active:bg-foreground/10',
+              'hover:bg-fill-hover active:bg-fill-pressed',
             )}
           >
-            <span className={cn('truncate text-sm font-medium', isRegeneratingTitle && 'animate-shimmer-text')}>
+            <span className={cn('truncate text-label font-medium', isRegeneratingTitle && 'animate-shimmer-text')}>
               {title}
             </span>
             {badge}
-            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-foreground/50" />
+            <ChevronDown className="h-3.5 w-3.5 shrink-0 text-tertiary" />
           </button>
         </DrawerTrigger>
       )
@@ -118,13 +118,13 @@ export function CompactSessionMenu({
       type="button"
       onClick={closeAfter(action)}
       className={cn(
-        'flex items-center gap-3 w-full px-3 py-3 rounded-[10px] text-left transition-colors',
-        'hover:bg-foreground/5 active:bg-foreground/10',
+        'flex items-center gap-3 w-full px-3 min-h-row-touch py-2 rounded-md text-left transition-colors',
+        'hover:bg-fill-hover active:bg-fill-pressed',
         destructive && 'text-destructive hover:bg-destructive/10',
       )}
     >
       <span className="shrink-0 inline-flex items-center justify-center h-5 w-5">{icon}</span>
-      <span className="flex-1 min-w-0 text-sm truncate">{label}</span>
+      <span className="flex-1 min-w-0 text-label truncate">{label}</span>
     </button>
   )
 

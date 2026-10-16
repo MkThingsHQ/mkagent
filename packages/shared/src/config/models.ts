@@ -22,7 +22,9 @@ const BEDROCK_TO_BARE: Record<string, string> = {
   'us.anthropic.claude-opus-4-7': 'claude-opus-4-7',
   // Compatibility alias for an earlier incorrect 4.7 mapping.
   'us.anthropic.claude-opus-4-7-v1': 'claude-opus-4-7',
+  'us.anthropic.claude-sonnet-5-5': 'claude-sonnet-5-5',
   'us.anthropic.claude-sonnet-5': 'claude-sonnet-5',
+  'us.anthropic.claude-haiku-5-5': 'claude-haiku-5-5',
   'us.anthropic.claude-sonnet-4-6': 'claude-sonnet-4-6',
   'us.anthropic.claude-haiku-4-5-20251001-v1:0': 'claude-haiku-4-5-20251001',
   'us.anthropic.claude-opus-4-6-v1': 'claude-opus-4-6',
@@ -36,7 +38,9 @@ const BEDROCK_TO_BARE: Record<string, string> = {
   'eu.anthropic.claude-fable-5': 'claude-fable-5',
   'eu.anthropic.claude-opus-4-7': 'claude-opus-4-7',
   'eu.anthropic.claude-opus-4-7-v1': 'claude-opus-4-7',
+  'eu.anthropic.claude-sonnet-5-5': 'claude-sonnet-5-5',
   'eu.anthropic.claude-sonnet-5': 'claude-sonnet-5',
+  'eu.anthropic.claude-haiku-5-5': 'claude-haiku-5-5',
   'eu.anthropic.claude-sonnet-4-6': 'claude-sonnet-4-6',
   'eu.anthropic.claude-haiku-4-5-20251001-v1:0': 'claude-haiku-4-5-20251001',
   'eu.anthropic.claude-opus-4-6-v1': 'claude-opus-4-6',
@@ -50,7 +54,9 @@ const BEDROCK_TO_BARE: Record<string, string> = {
   'global.anthropic.claude-fable-5': 'claude-fable-5',
   'global.anthropic.claude-opus-4-7': 'claude-opus-4-7',
   'global.anthropic.claude-opus-4-7-v1': 'claude-opus-4-7',
+  'global.anthropic.claude-sonnet-5-5': 'claude-sonnet-5-5',
   'global.anthropic.claude-sonnet-5': 'claude-sonnet-5',
+  'global.anthropic.claude-haiku-5-5': 'claude-haiku-5-5',
   'global.anthropic.claude-sonnet-4-6': 'claude-sonnet-4-6',
   'global.anthropic.claude-haiku-4-5-20251001-v1:0': 'claude-haiku-4-5-20251001',
   'global.anthropic.claude-opus-4-6-v1': 'claude-opus-4-6',
@@ -62,7 +68,9 @@ const BEDROCK_TO_BARE: Record<string, string> = {
   'anthropic.claude-fable-5': 'claude-fable-5',
   'anthropic.claude-opus-4-7': 'claude-opus-4-7',
   'anthropic.claude-opus-4-7-v1': 'claude-opus-4-7',
+  'anthropic.claude-sonnet-5-5': 'claude-sonnet-5-5',
   'anthropic.claude-sonnet-5': 'claude-sonnet-5',
+  'anthropic.claude-haiku-5-5': 'claude-haiku-5-5',
   'anthropic.claude-sonnet-4-6': 'claude-sonnet-4-6',
   'anthropic.claude-haiku-4-5-20251001-v1:0': 'claude-haiku-4-5-20251001',
   'anthropic.claude-opus-4-6-v1': 'claude-opus-4-6',
@@ -131,7 +139,7 @@ export interface ModelDefinition {
   supportsImages?: boolean;
   /**
    * Adaptive thinking is always on and the Messages API rejects
-   * `thinking: { type: 'disabled' }` (Fable/Mythos, Opus 5.5). Thinking depth is
+   * `thinking: { type: 'disabled' }` (Fable/Mythos, the 5.5 family). Thinking depth is
    * steered with `effort` only; see isAdaptiveThinkingAlwaysOnModel().
    */
   thinkingAlwaysOn?: boolean;
@@ -207,10 +215,22 @@ export const MODEL_REGISTRY: ModelDefinition[] = [
     contextWindow: 200_000,
   },
   {
+    id: 'claude-sonnet-5-5',
+    name: 'Sonnet 5.5',
+    // First 'Sonnet' entry: findModelIdByShortName('Sonnet') resolves to it.
+    shortName: 'Sonnet',
+    description: 'Best combination of speed and intelligence',
+    descriptionKey: 'model.sonnetDesc',
+    provider: 'anthropic',
+    contextWindow: 1_000_000,
+    // The 5.5 family is adaptive-only (Pi catalog: no `off` level, forced adaptive).
+    thinkingAlwaysOn: true,
+  },
+  {
     id: 'claude-sonnet-5',
     name: 'Sonnet 5',
     shortName: 'Sonnet',
-    description: 'Best combination of speed and intelligence',
+    description: 'Previous Sonnet generation',
     descriptionKey: 'model.sonnetDesc',
     provider: 'anthropic',
     contextWindow: 1_000_000,
@@ -225,10 +245,21 @@ export const MODEL_REGISTRY: ModelDefinition[] = [
     contextWindow: 200_000,
   },
   {
+    id: 'claude-haiku-5-5',
+    name: 'Haiku 5.5',
+    // First 'Haiku' entry: getDefaultSummarizationModel() resolves to it.
+    shortName: 'Haiku',
+    description: 'Fastest for quick answers',
+    descriptionKey: 'model.haikuDesc',
+    provider: 'anthropic',
+    contextWindow: 1_000_000,
+    thinkingAlwaysOn: true,
+  },
+  {
     id: 'claude-haiku-4-5-20251001',
     name: 'Haiku 4.5',
     shortName: 'Haiku',
-    description: 'Fastest for quick answers',
+    description: 'Previous Haiku generation',
     descriptionKey: 'model.haikuDesc',
     provider: 'anthropic',
     contextWindow: 200_000,
@@ -410,7 +441,7 @@ export function isClaudeModel(modelId: string): boolean {
 
 /**
  * Models where adaptive thinking is ALWAYS ON and `thinking: { type: 'disabled' }`
- * is rejected by the Messages API (Claude Fable 5 / 5.1, Mythos, Opus 5.5).
+ * is rejected by the Messages API (Claude Fable 5 / 5.1, Mythos, the 5.5 family).
  * Callers must use adaptive thinking + the `effort` parameter to control depth on
  * these models — there is no way to turn thinking off. Opus 5 and earlier,
  * Sonnet and Haiku still accept `disabled`.
@@ -418,7 +449,7 @@ export function isClaudeModel(modelId: string): boolean {
  * Source of truth is the registry flag `thinkingAlwaysOn`, resolved for bare,
  * pi/-prefixed and Bedrock-native id forms (mapped or region-prefixed). A pattern
  * fallback covers ids that are not registered: the Fable/Mythos family (e.g.
- * limited-availability Mythos snapshots) and any other Opus 5.5 variant, such as
+ * limited-availability Mythos snapshots) and any other Opus/Sonnet/Haiku 5.5 variant, such as
  * a dated snapshot listed by /v1/models or a provider-prefixed id — the whole 5.5
  * family rejects `disabled`, so erring towards adaptive + low is always safe.
  */
@@ -427,7 +458,7 @@ export function isAdaptiveThinkingAlwaysOnModel(modelId: string): boolean {
   const known = getModelById(bare)
     ?? MODEL_REGISTRY.find(m => m.thinkingAlwaysOn && bare.endsWith(`.${m.id}`));
   if (known?.thinkingAlwaysOn !== undefined) return known.thinkingAlwaysOn;
-  return /claude-(fable|mythos)|claude-opus-5-5\b/i.test(modelId);
+  return /claude-(fable|mythos)|claude-(opus|sonnet|haiku)-5-5\b/i.test(modelId);
 }
 
 

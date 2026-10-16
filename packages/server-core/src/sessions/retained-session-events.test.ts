@@ -158,41 +158,18 @@ describe('retained session event behavior', () => {
     })
   })
 
-  it('terminates a registered background shell and emits its removal event', async () => {
+  it('stops a registered shell through its owning backend without matching global commands', async () => {
     const sessionId = 'kill-shell'
     const shellId = 'shell-1'
-    const marker = `mkagent-kill-shell-${crypto.randomUUID()}`
-    const child = Bun.spawn([
-      process.execPath,
-      '--eval',
-      'setTimeout(() => {}, 30_000)',
-      marker,
-    ], { stdout: 'ignore', stderr: 'ignore' })
-
-    try {
-      buildSession(sessionId, [
-        {
-          type: 'shell_backgrounded',
-          toolUseId: 'tool-shell',
-          shellId,
-          command: marker,
-        },
-        { type: 'complete' },
-      ])
-      const emitted: Array<Record<string, unknown>> = []
-      manager.setEventSink((_channel, _target, event) => emitted.push(event))
-      await manager.sendMessage(sessionId, 'Start a background shell')
-
-      expect(await manager.killShell(sessionId, shellId)).toEqual({ success: true })
-      const exited = await Promise.race([
-        child.exited.then(() => true),
-        new Promise<false>(resolve => setTimeout(() => resolve(false), 2_000)),
-      ])
-      expect(exited).toBe(true)
-      expect(emitted).toContainEqual({ type: 'shell_killed', sessionId, shellId })
-    } finally {
-      child.kill()
-      await child.exited
-    }
+    const managed = buildSession(sessionId, [
+      { type: 'shell_backgrounded', toolUseId: 'tool-shell', shellId, command: 'sleep 30' },
+      { type: 'complete' },
+    ])
+    const stopped: string[] = []
+    managed.agent!.stopBackgroundTask = async taskId => { stopped.push(taskId); return true }
+    await manager.sendMessage(sessionId, 'Start a background shell')
+    expect(await manager.killShell(sessionId, shellId)).toEqual({ success: true })
+    expect(stopped).toEqual([shellId])
+    expect(await manager.killShell('unknown-session', shellId)).toEqual({ success: false, error: 'Session not found' })
   })
 })

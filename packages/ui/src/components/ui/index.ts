@@ -3,6 +3,7 @@
  */
 
 export { Spinner, type SpinnerProps, LoadingIndicator, type LoadingIndicatorProps } from './LoadingIndicator'
+export { AnimatedCollapsibleContent } from './AnimatedCollapsibleContent'
 export {
   SimpleDropdown,
   SimpleDropdownItem,

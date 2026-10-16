@@ -90,10 +90,14 @@ export default function App() {
       let workspaceId = params.get('workspace') ?? undefined
 
       // If no workspace in URL, fetch the default from the server
-      // so we can include it in the WebSocket handshake
+      // so we can include it in the WebSocket handshake. A deep link carries its
+      // workspace as a slug (?ws=, written by the app's URL sync); the server
+      // resolves it and falls back to the active workspace.
       if (!workspaceId) {
         try {
-          const wsRes = await fetch('/api/config/workspaces', { credentials: 'same-origin' })
+          const linkedSlug = params.get('ws')
+          const query = linkedSlug ? `?ws=${encodeURIComponent(linkedSlug)}` : ''
+          const wsRes = await fetch(`/api/config/workspaces${query}`, { credentials: 'same-origin' })
           if (wsRes.ok) {
             const { defaultWorkspaceId } = await wsRes.json() as { defaultWorkspaceId?: string }
             if (defaultWorkspaceId) workspaceId = defaultWorkspaceId

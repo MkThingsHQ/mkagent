@@ -1,11 +1,11 @@
 import * as React from 'react'
 import { renderMermaidSVG } from 'beautiful-mermaid'
-import { Maximize2 } from 'lucide-react'
-import { cn } from '../../lib/utils'
+import { Maximize2, Workflow } from 'lucide-react'
 import { CodeBlock } from './CodeBlock'
 import { MermaidPreviewOverlay } from '../overlay/MermaidPreviewOverlay'
 import { normalizeMermaidSource } from './mermaid-source'
 import { useScrollFade } from './useScrollFade'
+import { PreviewBlockAction, PreviewBlockFrame, PreviewBlockHeader } from './PreviewBlockChrome'
 import { useTranslation } from 'react-i18next'
 
 // ============================================================================
@@ -183,29 +183,22 @@ export function MarkdownMermaidBlock({ code, className, showExpandButton = true,
 
   return (
     <>
-      {/* Wrapper with group class so the expand button shows on hover */}
-      <div className={cn('relative group', className)} style={minHeightStyle}>
-        {/* Expand button — matches code block expand button style (TurnCard pattern).
-            Hidden when showExpandButton is false (first block in message, where
-            TurnCard's own fullscreen button occupies the same top-right position). */}
-        {showExpandButton && (
-          <button
-            onClick={() => setIsFullscreen(true)}
-            className={cn(
-              "absolute top-2 right-2 p-1 rounded-[6px] transition-all z-10 select-none",
-              "opacity-0 group-hover:opacity-100",
-              "bg-background shadow-minimal",
-              "text-muted-foreground/50 hover:text-foreground",
-              "focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100"
-            )}
-            title={t('common.viewFullscreen')}
-          >
-            <Maximize2 className="w-3.5 h-3.5" />
-          </button>
-        )}
+      {/* The diagram in a well: header (title · fullscreen) over the diagram area */}
+      <PreviewBlockFrame className={className}>
+        {/* The expand button is omitted when showExpandButton is false (editor node views) */}
+        <PreviewBlockHeader icon={<Workflow />} title={t('overlay.mermaidDiagram')}>
+          {showExpandButton && (
+            <PreviewBlockAction
+              aria-label={t('common.viewFullscreen')}
+              icon={<Maximize2 />}
+              onClick={() => setIsFullscreen(true)}
+            />
+          )}
+        </PreviewBlockHeader>
 
         {/* Scroll container with fade mask for overflow indication.
-            CSS mask gradient fades the edges when content is scrollable. */}
+            CSS mask gradient fades the edges when content is scrollable.
+            No padding of its own: the rendered SVG carries a 40px canvas margin. */}
         <div
           ref={scrollRef}
           style={{
@@ -229,8 +222,9 @@ export function MarkdownMermaidBlock({ code, className, showExpandButton = true,
             }}
             onClick={tapToOpen ? () => setIsFullscreen(true) : undefined}
             role={tapToOpen ? 'button' : undefined}
-            aria-label={tapToOpen ? 'Open Mermaid diagram fullscreen' : undefined}
+            aria-label={tapToOpen ? t('preview.openMermaidFullscreen') : undefined}
             tabIndex={tapToOpen ? 0 : undefined}
+            className="focus-visible:-outline-offset-2"
             onKeyDown={tapToOpen ? (e) => {
               if (e.key === 'Enter' || e.key === ' ') {
                 e.preventDefault()
@@ -249,7 +243,7 @@ export function MarkdownMermaidBlock({ code, className, showExpandButton = true,
             />
           </div>
         </div>
-      </div>
+      </PreviewBlockFrame>
 
       {/* Fullscreen overlay with zoom/pan */}
       <MermaidPreviewOverlay

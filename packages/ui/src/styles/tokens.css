@@ -1,0 +1,491 @@
+/* =============================================================================
+   Craft Agents design tokens — the single source of truth.
+
+   Imported by every app stylesheet after `@import "tailwindcss"`:
+     packages/ui/src/styles/index.css  (viewer, marketing)
+     apps/electron/src/renderer/index.css  (electron, webui)
+
+   Layers
+   1. Theme input    — the 6-color contract (background, foreground, accent, info, success,
+                       destructive). Components never use these for text.
+   2. Derived roles  — surfaces, text tiers, status/accent text + solids, focus ring, control
+                       border. Static here for the default theme (no first-paint flash); every
+                       other theme gets solved values injected by themeToCSS → deriveThemeRoles
+                       (packages/shared/src/config/theme-roles.ts), so all themes keep WCAG AA.
+                       theme-roles.test.ts fails if these values drift from the solver.
+   3. Alpha roles    — fills, borders, tints as color-mix() of the live base colors.
+   4. Static scales  — type, radii, sizes, elevation, motion, z-index.
+   5. Legacy aliases — pre-redesign names mapped onto roles until the class codemod lands.
+   Tailwind sees all of it through the @theme blocks at the end.
+   ============================================================================= */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  color-scheme: light;
+
+  /* 1 ── theme input (default theme "Craft Agents", light) */
+  --background: #fcfdfe;
+  --foreground: #1a1c1e;
+  --accent: oklch(0.52 0.19 292);
+  --info: oklch(0.76 0.15 72);
+  --success: oklch(0.62 0.15 150);
+  --destructive: oklch(0.58 0.21 27);
+
+  /* 2 ── derived roles (solver output for the default theme) */
+  --surface-navigator: #f2f3f4;     /* canvas: top bar, sidebar, window background */
+  --surface-paper: #fcfdfe;         /* content: list + transcript card, detail panes */
+  --surface-raised: #fcfdfe;        /* cards on paper: composer, settings groups */
+  --surface-sunken: #f4f5f6;        /* wells: code, tool output, inputs */
+  --surface-floating: #fcfdfe;      /* menus, popovers, palette, toasts, dialogs */
+  --scrim: color-mix(in oklab, #1a1c1e 22%, transparent);
+  --fg-base: #1a1c1e;
+  --text: #1a1c1e;                  /* ≥ 4.5:1 on every surface and state fill */
+  --text-secondary: #424446;        /* target 7:1 worst case */
+  --text-tertiary: #5d5f60;         /* ≥ 4.6:1 worst case: timestamps, hints, placeholders */
+  --text-disabled: #a3a4a6;         /* disabled controls only (WCAG-exempt) */
+  --border-control: #8a8c8d;        /* ≥ 3:1: switch-off track, checkbox, radio */
+  --accent-solid: #6f49ca;          /* primary buttons, selected segmented item */
+  --on-accent: #ffffff;
+  --accent-text: #6942c3;           /* links, accent labels */
+  --focus-ring: #6f49ca;            /* ≥ 3:1 against every surface */
+  --accent-raw: #6f49ca;
+  --info-raw: #eb9f2c;
+  --info-text: #865600;
+  --info-solid: #a46a00;
+  --on-info: #ffffff;
+  --success-raw: #2e9e52;
+  --success-text: #006f30;
+  --success-solid: #05893e;
+  --on-success: #ffffff;
+  --destructive-raw: #db2c2b;
+  --destructive-text: #bc0013;
+  --destructive-solid: #db2c2b;
+  --on-destructive: #ffffff;
+  --diff-text: #1a1c1e;
+  --surface-input: var(--surface-sunken); /* themes may override via their `input` key */
+
+  /* 3 ── alpha roles */
+  --fill-hover: color-mix(in srgb, var(--fg-base) 4.5%, transparent);
+  --fill-pressed: color-mix(in srgb, var(--fg-base) 7.5%, transparent);
+  --fill-selected: color-mix(in srgb, var(--fg-base) 7%, transparent);
+  --fill-bubble: color-mix(in srgb, var(--fg-base) 5.5%, transparent);
+  --border-subtle: color-mix(in srgb, var(--fg-base) 7%, transparent);
+  --border: color-mix(in srgb, var(--fg-base) 10%, transparent);
+  --border-strong: color-mix(in srgb, var(--fg-base) 16%, transparent);
+  --accent-tint: color-mix(in srgb, var(--accent-raw) 10%, transparent);
+  --accent-tint-strong: color-mix(in srgb, var(--accent-raw) 20%, transparent);
+  --info-tint: color-mix(in srgb, var(--info-raw) 10%, transparent);
+  --success-tint: color-mix(in srgb, var(--success-raw) 10%, transparent);
+  --destructive-tint: color-mix(in srgb, var(--destructive-raw) 10%, transparent);
+  --info-border: color-mix(in srgb, var(--info-raw) 32%, transparent);
+  --success-border: color-mix(in srgb, var(--success-raw) 32%, transparent);
+  --destructive-border: color-mix(in srgb, var(--destructive-raw) 32%, transparent);
+  --diff-add: color-mix(in srgb, var(--success-raw) 12%, transparent);
+  --diff-add-word: color-mix(in srgb, var(--success-raw) 26%, transparent);
+  --diff-del: color-mix(in srgb, var(--destructive-raw) 12%, transparent);
+  --diff-del-word: color-mix(in srgb, var(--destructive-raw) 26%, transparent);
+  --selection: color-mix(in srgb, var(--accent-raw) 24%, transparent);
+
+  /* 4a ── type: Label roles for UI, Copy roles for reading; whole pixels on a 16px root */
+  --fs-caption: 11px;  --lh-caption: 14px;   /* keycaps, badge counts */
+  --fs-label-sm: 12px; --lh-label-sm: 16px;  /* timestamps, chips, section headers */
+  --fs-label: 13px;    --lh-label: 18px;     /* rows, menus, buttons, tool lines */
+  --fs-label-lg: 14px; --lh-label-lg: 20px;  /* panel and dialog titles, palette input */
+  --fs-copy: 15px;     --lh-copy: 24px;      /* answers, user bubbles, descriptions */
+  --fs-copy-lg: 16px;  --lh-copy-lg: 26px;   /* Pages, compact copy, touch inputs (≥16px: no iOS zoom) */
+  --fs-title: 20px;    --lh-title: 28px;     /* settings and source titles */
+  --fs-display: 30px;  --lh-display: 36px;   /* serif display moments only */
+  --fs-mono: 12px;     --lh-mono: 18px;
+  --tracking-copy: -0.011em;  /* not --tracking-tight: that is Tailwind's tracking-tight (-0.025em) */
+  --tracking-title: -0.015em;
+  --tracking-display: -0.02em;
+  --font-default: var(--font-sans);
+
+  /* 4b ── sizes (radii live in @theme below) */
+  --h-control-sm: 24px; --h-control: 28px; --h-control-lg: 32px; --h-control-xl: 40px;
+  --row-sidebar: 28px; --row-menu: 30px; --row-list: 36px; --row-list-2: 54px; --row-touch: 44px;
+  /* Layout grid: every panel has ONE content edge. Titles, row glyphs, group chevrons and sidebar
+     sections sit on the gutter. Hover/selection fills and icon-button boxes bleed past it, so the
+     content lines up. A list has exactly two edges: glyphs at the gutter, text at gutter + 16 + 10. */
+  --gutter: 16px;     /* content edge inside panels, compact pages and the compact transcript */
+  --row-inset: 8px;   /* row fills sit this far inside the panel edge (they bleed 8px past the gutter) */
+  --card-pad: 14px;   /* inner inset of cards, tables and the composer (containers align with text) */
+
+  /* 4c ── elevation: ring + layered soft shadows (dark mode leans on rings) */
+  --elev-0: 0 0 0 1px var(--border);
+  --elev-1: 0 0 0 1px var(--border), 0 1px 2px rgb(0 0 0 / 0.04), 0 2px 8px -2px rgb(0 0 0 / 0.06);
+  --elev-2: 0 0 0 1px var(--border), 0 1px 1px rgb(0 0 0 / 0.03), 0 4px 8px -4px rgb(0 0 0 / 0.08), 0 16px 32px -8px rgb(0 0 0 / 0.14);
+  --elev-3: 0 0 0 1px var(--border), 0 2px 4px rgb(0 0 0 / 0.04), 0 12px 24px -6px rgb(0 0 0 / 0.12), 0 32px 64px -12px rgb(0 0 0 / 0.22);
+  --focus-shadow: 0 0 0 2px var(--surface-paper), 0 0 0 4px var(--focus-ring);
+
+  /* 4d ── motion: durations by size/distance; exits ≈ 0.66× entrances (TS mirror: packages/ui/src/motion) */
+  --dur-instant: 0ms;  /* keyboard and high-frequency: ⌘K, J/K, session switch, hover-in, theme swap */
+  --dur-micro: 100ms;  /* color, press, hover-out, menu exit */
+  --dur-fast: 150ms;   /* menus, popovers, tooltips, block insert */
+  --dur-base: 200ms;   /* dialogs, expand in place, toasts */
+  --dur-slow: 300ms;   /* panels, shared elements — the UI maximum */
+  --dur-exit: 100ms;
+  /* Springs as CSS linear() curves (settle to 0.1%); generated from the motion presets (motion/presets.ts). */
+  --spring-snap: linear(0, 0.0165, 0.0581, 0.1155, 0.1818, 0.2522, 0.3231, 0.3922, 0.458, 0.5194, 0.5759, 0.6275, 0.674, 0.7157, 0.7528, 0.7857, 0.8146, 0.84, 0.8622, 0.8815, 0.8983, 0.9129, 0.9255, 0.9363, 0.9456, 0.9537, 0.9606, 0.9664, 0.9715, 0.9758, 0.9795, 0.9826, 0.9853, 0.9875, 0.9895, 0.9911, 0.9925, 0.9936, 0.9946, 0.9955, 0.9962, 0.9968, 0.9973, 0.9977, 0.9981, 0.9984, 0.9986, 0.9989, 1);
+  --spring-snap-dur: 266ms;
+  --spring-base: linear(0, 0.0163, 0.0575, 0.1144, 0.1803, 0.2502, 0.3208, 0.3896, 0.4552, 0.5165, 0.573, 0.6245, 0.6711, 0.7129, 0.7501, 0.7831, 0.8122, 0.8378, 0.8601, 0.8796, 0.8966, 0.9113, 0.924, 0.935, 0.9445, 0.9526, 0.9596, 0.9656, 0.9708, 0.9752, 0.9789, 0.9821, 0.9848, 0.9871, 0.9891, 0.9908, 0.9922, 0.9934, 0.9944, 0.9953, 0.996, 0.9967, 0.9972, 0.9976, 0.998, 0.9983, 0.9986, 0.9988, 1);
+  --spring-base-dur: 388ms;
+  --spring-panel: linear(0, 0.0163, 0.0576, 0.1145, 0.1804, 0.2504, 0.3209, 0.3898, 0.4553, 0.5167, 0.5732, 0.6247, 0.6713, 0.7131, 0.7503, 0.7833, 0.8124, 0.8379, 0.8603, 0.8798, 0.8967, 0.9114, 0.9241, 0.9351, 0.9446, 0.9527, 0.9597, 0.9657, 0.9708, 0.9752, 0.9789, 0.9821, 0.9849, 0.9872, 0.9891, 0.9908, 0.9922, 0.9934, 0.9945, 0.9953, 0.9961, 0.9967, 0.9972, 0.9976, 0.998, 0.9983, 0.9986, 0.9988, 1);
+  --spring-panel-dur: 494ms;
+  --motion-scale: 1;   /* 0 under reduced motion: multiplies every translate/scale distance */
+  --stagger: 25ms;
+
+  /* 4e ── stacking (use z-* utilities, never literals) */
+  --z-base: 0;
+  --z-local: 10;
+  --z-sticky: 20;
+  --z-scrollbar: 30;  /* a scroll area's scrollbar, above the sticky headers scrolling under it */
+  --z-titlebar: 40;
+  --z-panel: 50;
+  --z-dropdown: 100;
+  --z-tooltip: 150;
+  --z-modal: 200;
+  --z-toast: 250;
+  --z-overlay: 300;
+  --z-fullscreen: 350;
+  --z-floating-backdrop: 390;
+  --z-floating-menu: 400;
+  --z-island-overlay: 390;
+  --z-island: 400;
+  --z-island-popover: 410;
+  --z-splash: 600;
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* 1 ── theme input (default theme, dark) */
+  --background: oklch(0.165 0.004 265);
+  --foreground: oklch(0.945 0.003 265);
+  --accent: oklch(0.70 0.15 292);
+  --info: oklch(0.80 0.14 75);
+  --success: oklch(0.74 0.15 150);
+  --destructive: oklch(0.70 0.18 25);
+
+  /* 2 ── derived roles */
+  --surface-navigator: #0d0e10;
+  --surface-paper: #151618;
+  --surface-raised: #1a1b1d;
+  --surface-sunken: #111214;
+  --surface-floating: #1f2022;
+  --scrim: rgb(0 0 0 / 0.55);
+  --fg-base: #ecedef;
+  --text: #ecedef;
+  --text-secondary: #c3c4c6;
+  --text-tertiary: #9e9fa1;
+  --text-disabled: #545557;
+  --border-control: #6a6b6d;
+  --accent-solid: #7e66ca;
+  --on-accent: #ffffff;
+  --accent-text: #b29fff;
+  --focus-ring: #a18bf3;
+  --accent-raw: #a18bf3;
+  --info-raw: #f2af48;
+  --info-text: #f2af48;
+  --info-solid: #f2af48;
+  --on-info: #0d0e10;
+  --success-raw: #5ac576;
+  --success-text: #5ac576;
+  --success-solid: #05893e;
+  --on-success: #ffffff;
+  --destructive-raw: #fa6863;
+  --destructive-text: #ff877f;
+  --destructive-solid: #d24342;
+  --on-destructive: #ffffff;
+  --diff-text: #ecedef;
+
+  /* 3 ── alpha roles */
+  --fill-hover: color-mix(in srgb, var(--fg-base) 6%, transparent);
+  --fill-pressed: color-mix(in srgb, var(--fg-base) 10%, transparent);
+  --fill-selected: color-mix(in srgb, var(--fg-base) 9%, transparent);
+  --fill-bubble: color-mix(in srgb, var(--fg-base) 7%, transparent);
+  --border-subtle: color-mix(in srgb, var(--fg-base) 7%, transparent);
+  --border: color-mix(in srgb, var(--fg-base) 10%, transparent);
+  --border-strong: color-mix(in srgb, var(--fg-base) 16%, transparent);
+  --accent-tint: color-mix(in srgb, var(--accent-raw) 14%, transparent);
+  --accent-tint-strong: color-mix(in srgb, var(--accent-raw) 26%, transparent);
+  --info-tint: color-mix(in srgb, var(--info-raw) 14%, transparent);
+  --success-tint: color-mix(in srgb, var(--success-raw) 14%, transparent);
+  --destructive-tint: color-mix(in srgb, var(--destructive-raw) 14%, transparent);
+  --info-border: color-mix(in srgb, var(--info-raw) 32%, transparent);
+  --success-border: color-mix(in srgb, var(--success-raw) 32%, transparent);
+  --destructive-border: color-mix(in srgb, var(--destructive-raw) 32%, transparent);
+  --diff-add: color-mix(in srgb, var(--success-raw) 15%, transparent);
+  --diff-add-word: color-mix(in srgb, var(--success-raw) 30%, transparent);
+  --diff-del: color-mix(in srgb, var(--destructive-raw) 15%, transparent);
+  --diff-del-word: color-mix(in srgb, var(--destructive-raw) 30%, transparent);
+  --selection: color-mix(in srgb, var(--accent-raw) 40%, transparent);
+
+  /* 4c ── elevation */
+  --elev-0: 0 0 0 1px var(--border);
+  --elev-1: 0 0 0 1px var(--border), 0 1px 2px rgb(0 0 0 / 0.3);
+  --elev-2: 0 0 0 1px var(--border-strong), inset 0 1px 0 color-mix(in srgb, var(--fg-base) 5%, transparent), 0 2px 6px rgb(0 0 0 / 0.3), 0 12px 32px -6px rgb(0 0 0 / 0.5);
+  --elev-3: 0 0 0 1px var(--border-strong), inset 0 1px 0 color-mix(in srgb, var(--fg-base) 6%, transparent), 0 4px 12px rgb(0 0 0 / 0.35), 0 32px 72px -12px rgb(0 0 0 / 0.65);
+}
+
+/* 5 ── legacy aliases. Declared on `.dark` too so a nested `.dark` scope re-resolves them. */
+:root,
+.dark {
+  --muted-foreground: var(--text-tertiary);
+  --secondary: var(--fill-hover);
+  --secondary-foreground: var(--text);
+  --muted: var(--fill-hover);
+  --card: var(--surface-raised);
+  --card-foreground: var(--text);
+  --popover: var(--surface-floating);
+  --popover-foreground: var(--text);
+  --input: var(--border);
+  --ring: var(--focus-ring);
+  --user-message-bubble: var(--fill-bubble);
+  --user-message-bubble-dimmed: color-mix(in srgb, var(--fg-base) 3%, transparent);
+  --background-elevated: color-mix(in oklab, var(--foreground) 1.5%, var(--background));
+  --foreground-dimmed: color-mix(in oklab, var(--foreground) 80%, var(--background));
+  --md-bullets: var(--text-tertiary);
+  --md-counters: var(--text-tertiary);
+  --shadow-minimal: var(--elev-1);
+  --shadow-minimal-flat: var(--elev-0);
+  --shadow-modal-small: var(--elev-2);
+  --shadow-dragging: var(--elev-3);
+  /* solid foreground → background mixes (separators, Explore mode) */
+  --foreground-1\.5: color-mix(in oklab, var(--foreground) 1.5%, var(--background));
+  --foreground-2: color-mix(in oklab, var(--foreground) 2%, var(--background));
+  --foreground-3: color-mix(in oklab, var(--foreground) 3%, var(--background));
+  --foreground-5: color-mix(in oklab, var(--foreground) 5%, var(--background));
+  --foreground-10: color-mix(in oklab, var(--foreground) 10%, var(--background));
+  --foreground-20: color-mix(in oklab, var(--foreground) 20%, var(--background));
+  --foreground-30: color-mix(in oklab, var(--foreground) 30%, var(--background));
+  --foreground-40: color-mix(in oklab, var(--foreground) 40%, var(--background));
+  --foreground-50: color-mix(in oklab, var(--foreground) 50%, var(--background));
+  --foreground-60: color-mix(in oklab, var(--foreground) 60%, var(--background));
+  --foreground-70: color-mix(in oklab, var(--foreground) 70%, var(--background));
+  --foreground-80: color-mix(in oklab, var(--foreground) 80%, var(--background));
+  --foreground-90: color-mix(in oklab, var(--foreground) 90%, var(--background));
+  --foreground-95: color-mix(in oklab, var(--foreground) 95%, var(--background));
+}
+
+/* Reduced motion = opacity-first, not zero: distances collapse, crossfades stay ≤ 150ms.
+   `data-motion` is the in-app preference (System / Reduced / Full, see MotionPreference). */
+@media (prefers-reduced-motion: reduce) {
+  :root:not([data-motion="full"]) {
+    --motion-scale: 0;
+    --dur-base: 150ms;
+    --dur-slow: 150ms;
+  }
+}
+:root[data-motion="reduced"] {
+  --motion-scale: 0;
+  --dur-base: 150ms;
+  --dur-slow: 150ms;
+}
+
+/* =============================================================================
+   TAILWIND THEME
+   `text-*` colors resolve --text-color-* before --color-*, so text utilities get the solved
+   text roles while bg-/border- utilities keep the raw theme colors for fills and tints.
+   ============================================================================= */
+
+@theme static {
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-serif: ui-serif, "New York", "Source Serif 4", "Iowan Old Style", Charter, Georgia, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* radii: concentric — child = parent − padding */
+  --radius-xs: 4px;    /* keycaps, tags */
+  --radius-sm: 6px;    /* rows, small buttons */
+  --radius-md: 8px;    /* buttons, inputs, menu items */
+  --radius-lg: 12px;   /* cards, panels, menus */
+  --radius-xl: 16px;   /* composer, dialogs, palette, bubbles */
+  --radius-2xl: 20px;
+
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);           /* entering, responding */
+  --ease-out-subtle: cubic-bezier(0.25, 0.46, 0.45, 0.94); /* menus, hover-out */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);        /* on-screen moves */
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);              /* off-screen exits */
+  --default-transition-duration: var(--dur-micro);
+  --default-transition-timing-function: var(--ease-out-subtle);
+}
+
+@theme inline {
+  /* theme input — fills, borders and tints (bg-accent/10, border-foreground/15) */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-info: var(--info);
+  --color-success: var(--success);
+  --color-destructive: var(--destructive);
+
+  /* text roles */
+  --text-color-foreground: var(--text);
+  --text-color-secondary: var(--text-secondary);
+  --text-color-tertiary: var(--text-tertiary);
+  --text-color-disabled: var(--text-disabled);
+  --text-color-accent: var(--accent-text);
+  --text-color-info: var(--info-text);
+  --text-color-success: var(--success-text);
+  --text-color-destructive: var(--destructive-text);
+  --text-color-diff: var(--diff-text);
+  /* shadcn's text-primary (brand-colored links) gets the solved accent text, never the button fill */
+  --text-color-primary: var(--accent-text);
+  --color-on-accent: var(--on-accent);
+  --color-on-info: var(--on-info);
+  --color-on-success: var(--on-success);
+  --color-on-destructive: var(--on-destructive);
+
+  /* surfaces and fills */
+  --color-navigator: var(--surface-navigator);
+  --color-paper: var(--surface-paper);
+  --color-raised: var(--surface-raised);
+  --color-sunken: var(--surface-sunken);
+  --color-floating: var(--surface-floating);
+  --color-input-surface: var(--surface-input);
+  --color-scrim: var(--scrim);
+  --color-fill-hover: var(--fill-hover);
+  --color-fill-pressed: var(--fill-pressed);
+  --color-fill-selected: var(--fill-selected);
+  --color-fill-bubble: var(--fill-bubble);
+  --color-accent-solid: var(--accent-solid);
+  --color-info-solid: var(--info-solid);
+  --color-success-solid: var(--success-solid);
+  --color-destructive-solid: var(--destructive-solid);
+  --color-accent-tint: var(--accent-tint);
+  --color-accent-tint-strong: var(--accent-tint-strong);
+  --color-info-tint: var(--info-tint);
+  --color-success-tint: var(--success-tint);
+  --color-destructive-tint: var(--destructive-tint);
+  --color-diff-add: var(--diff-add);
+  --color-diff-add-word: var(--diff-add-word);
+  --color-diff-del: var(--diff-del);
+  --color-diff-del-word: var(--diff-del-word);
+
+  /* borders and focus (bg-separator for 1px divider elements) */
+  --color-separator: var(--border-subtle);
+  --border-color-subtle: var(--border-subtle);
+  --border-color-default: var(--border);
+  --border-color-strong: var(--border-strong);
+  --border-color-control: var(--border-control);
+  --color-focus: var(--focus-ring);
+
+  /* legacy (shadcn + pre-redesign) */
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--accent-solid);
+  --color-primary-foreground: var(--on-accent);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-destructive-foreground: var(--on-destructive);
+  --color-md-bullets: var(--md-bullets);
+  --color-md-counters: var(--md-counters);
+  --color-user-message-bubble: var(--user-message-bubble);
+  --color-sidebar-hover: var(--fill-hover);
+  --color-foreground-1\.5: var(--foreground-1\.5);
+  --color-foreground-2: var(--foreground-2);
+  --color-foreground-3: var(--foreground-3);
+  --color-foreground-5: var(--foreground-5);
+  --color-foreground-10: var(--foreground-10);
+  --color-foreground-20: var(--foreground-20);
+  --color-foreground-30: var(--foreground-30);
+  --color-foreground-40: var(--foreground-40);
+  --color-foreground-50: var(--foreground-50);
+  --color-foreground-60: var(--foreground-60);
+  --color-foreground-70: var(--foreground-70);
+  --color-foreground-80: var(--foreground-80);
+  --color-foreground-90: var(--foreground-90);
+  --color-foreground-95: var(--foreground-95);
+
+  /* type roles: text-caption … text-display, text-mono-ui */
+  --text-caption: var(--fs-caption);
+  --text-caption--line-height: var(--lh-caption);
+  --text-caption--font-weight: 500;
+  --text-label-sm: var(--fs-label-sm);
+  --text-label-sm--line-height: var(--lh-label-sm);
+  --text-label: var(--fs-label);
+  --text-label--line-height: var(--lh-label);
+  --text-label-lg: var(--fs-label-lg);
+  --text-label-lg--line-height: var(--lh-label-lg);
+  --text-label-lg--letter-spacing: var(--tracking-copy);
+  --text-copy: var(--fs-copy);
+  --text-copy--line-height: var(--lh-copy);
+  --text-copy--letter-spacing: var(--tracking-copy);
+  --text-copy-lg: var(--fs-copy-lg);
+  --text-copy-lg--line-height: var(--lh-copy-lg);
+  --text-copy-lg--letter-spacing: var(--tracking-copy);
+  --text-title: var(--fs-title);
+  --text-title--line-height: var(--lh-title);
+  --text-title--letter-spacing: var(--tracking-title);
+  --text-title--font-weight: 600;
+  --text-display: var(--fs-display);
+  --text-display--line-height: var(--lh-display);
+  --text-display--letter-spacing: var(--tracking-display);
+  --text-mono-ui: var(--fs-mono);
+  --text-mono-ui--line-height: var(--lh-mono);
+
+  /* control and row sizes: h-control, min-h-row-menu, size-control-sm … */
+  --spacing-control-sm: var(--h-control-sm);
+  --spacing-control: var(--h-control);
+  --spacing-control-lg: var(--h-control-lg);
+  --spacing-control-xl: var(--h-control-xl);
+  --spacing-row-sidebar: var(--row-sidebar);
+  --spacing-row-menu: var(--row-menu);
+  --spacing-row-list: var(--row-list);
+  --spacing-row-list-2: var(--row-list-2);
+  --spacing-row-touch: var(--row-touch);
+  /* layout grid: px-gutter, pl-gutter, mx-row-inset, px-card-pad … */
+  --spacing-gutter: var(--gutter);
+  --spacing-row-inset: var(--row-inset);
+  --spacing-card-pad: var(--card-pad);
+
+  /* elevation; Tailwind's named shadows map onto the same scale */
+  --shadow-elev-0: var(--elev-0);
+  --shadow-elev-1: var(--elev-1);
+  --shadow-elev-2: var(--elev-2);
+  --shadow-elev-3: var(--elev-3);
+  --shadow-2xs: var(--elev-0);
+  --shadow-xs: var(--elev-0);
+  --shadow-sm: var(--elev-1);
+  --shadow: var(--elev-1);
+  --shadow-md: var(--elev-1);
+  --shadow-lg: var(--elev-2);
+  --shadow-xl: var(--elev-2);
+  --shadow-2xl: var(--elev-3);
+
+  /* motion: duration-micro … duration-slow (ease-* utilities come from @theme static) */
+  --transition-duration-instant: var(--dur-instant);
+  --transition-duration-micro: var(--dur-micro);
+  --transition-duration-fast: var(--dur-fast);
+  --transition-duration-base: var(--dur-base);
+  --transition-duration-slow: var(--dur-slow);
+  --transition-duration-exit: var(--dur-exit);
+
+  /* stacking */
+  --z-index-base: var(--z-base);
+  --z-index-local: var(--z-local);
+  --z-index-sticky: var(--z-sticky);
+  --z-index-scrollbar: var(--z-scrollbar);
+  --z-index-titlebar: var(--z-titlebar);
+  --z-index-panel: var(--z-panel);
+  --z-index-dropdown: var(--z-dropdown);
+  --z-index-tooltip: var(--z-tooltip);
+  --z-index-modal: var(--z-modal);
+  --z-index-toast: var(--z-toast);
+  --z-index-overlay: var(--z-overlay);
+  --z-index-fullscreen: var(--z-fullscreen);
+  --z-index-floating-backdrop: var(--z-floating-backdrop);
+  --z-index-floating-menu: var(--z-floating-menu);
+  --z-index-island-overlay: var(--z-island-overlay);
+  --z-index-island: var(--z-island);
+  --z-index-island-popover: var(--z-island-popover);
+  --z-index-splash: var(--z-splash);
+}

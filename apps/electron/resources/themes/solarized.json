@@ -10,14 +10,14 @@
     "dark": "solarized-dark"
   },
   "background": "#fdf6e3",
-  "foreground": "#657b83",
+  "foreground": "#586e75",
   "accent": "#268bd2",
   "info": "#b58900",
   "success": "#859900",
   "destructive": "#dc322f",
   "dark": {
     "background": "#002b36",
-    "foreground": "#839496",
+    "foreground": "#93a1a1",
     "accent": "#268bd2",
     "info": "#b58900",
     "success": "#859900",

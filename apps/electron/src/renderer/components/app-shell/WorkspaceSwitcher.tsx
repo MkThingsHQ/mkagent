@@ -108,15 +108,15 @@ export function WorkspaceSwitcher({
             <button
               type="button"
               data-workspace-switcher="topbar"
-              className="header-icon-btn titlebar-no-drag ml-1 flex-1 min-w-0 flex items-center justify-start gap-0.5 h-[30px] px-3 rounded-[8px] border border-foreground/6 text-[13px] text-foreground/50 hover:bg-foreground/5 hover:text-foreground transition-colors cursor-pointer data-[state=open]:bg-foreground/5 data-[state=open]:text-foreground"
+              className="titlebar-no-drag ml-1 min-w-0 max-w-full flex items-center justify-start gap-2 h-control pl-1 pr-1.5 rounded-md text-label font-medium text-foreground hover:bg-fill-hover data-[state=open]:bg-fill-hover transition-[background-color] duration-micro ease-out-subtle hover:duration-instant cursor-pointer"
               aria-label={t('workspace.selectWorkspace')}
             >
               <WorkspaceAvatar
                 workspaceId={selectedWorkspace?.id}
                 workspaceName={selectedWorkspace?.name}
                 src={selectedWorkspace ? workspaceIconMap.get(selectedWorkspace.id) : undefined}
-                className="h-4 w-4 mr-1.5 rounded-full ring-1 ring-border/50"
-                fallbackClassName="rounded-full"
+                className="size-5 rounded-sm shadow-elev-0"
+                fallbackClassName="rounded-sm"
               />
               <span className="truncate min-w-0 flex-1 text-left">{selectedWorkspace?.name || 'Workspace'}</span>
               <ChevronDown data-slot="chevron" className="h-3 w-3 opacity-60 shrink-0" />

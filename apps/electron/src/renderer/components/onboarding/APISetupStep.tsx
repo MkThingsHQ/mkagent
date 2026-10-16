@@ -52,7 +52,7 @@ export function APISetupStep({ selectedMethod, onSelect, onContinue, onBack }: A
           <Key className="size-4" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-sm">{option.name}</div>
+          <div className="font-medium text-label">{option.name}</div>
           <p className="mt-1 text-xs text-muted-foreground">{option.description}</p>
         </div>
         <div className={cn(

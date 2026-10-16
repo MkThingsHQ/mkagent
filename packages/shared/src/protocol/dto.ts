@@ -89,10 +89,10 @@ export type SessionEvent =
   | { type: 'text_complete'; sessionId: string; text: string; isIntermediate?: boolean; turnId?: string; parentToolUseId?: string; timestamp?: number; messageId?: string }
   | { type: 'tool_start'; sessionId: string; toolName: string; toolUseId: string; toolInput: Record<string, unknown>; toolIntent?: string; toolDisplayName?: string; toolDisplayMeta?: ToolDisplayMeta; turnId?: string; parentToolUseId?: string; timestamp?: number }
   | { type: 'tool_result'; sessionId: string; toolUseId: string; toolName: string; result: string; turnId?: string; parentToolUseId?: string; isError?: boolean; timestamp?: number }
-  | { type: 'error'; sessionId: string; error: string; timestamp?: number }
+  | { type: 'error'; sessionId: string; error: string; timestamp?: number; backgroundTasksAlive?: boolean }
   | { type: 'typed_error'; sessionId: string; error: TypedError; timestamp?: number }
   | { type: 'complete'; sessionId: string; tokenUsage?: Session['tokenUsage']; hasUnread?: boolean; backgroundTasksAlive?: boolean }
-  | { type: 'interrupted'; sessionId: string; message?: Message; queuedMessages?: string[] }
+  | { type: 'interrupted'; sessionId: string; message?: Message; queuedMessages?: string[]; backgroundTasksAlive?: boolean }
   | { type: 'status'; sessionId: string; message: string; statusType?: 'compacting' }
   | { type: 'info'; sessionId: string; message: string; statusType?: 'compaction_complete'; level?: 'info' | 'warning' | 'error' | 'success'; timestamp?: number }
   | { type: 'title_generated'; sessionId: string; title: string }
@@ -107,7 +107,8 @@ export type SessionEvent =
   | { type: 'workflow_agent_completed'; sessionId: string; workflowId: string; agentId: string; turnId?: string }
   | { type: 'shell_backgrounded'; sessionId: string; toolUseId: string; shellId: string; intent?: string; command?: string; turnId?: string }
   | { type: 'task_progress'; sessionId: string; toolUseId: string; elapsedSeconds: number; turnId?: string }
-  | { type: 'task_completed'; sessionId: string; taskId: string; status: 'completed' | 'failed' | 'stopped'; outputFile?: string; summary?: string; turnId?: string }
+  | { type: 'task_activity'; sessionId: string; taskId: string; toolUseId?: string; summary?: string; lastToolName?: string; toolUses?: number; turnId?: string }
+  | { type: 'task_completed'; sessionId: string; taskId: string; status: 'completed' | 'failed' | 'stopped'; outputFile?: string; summary?: string; turnId?: string; toolUseId?: string; launchedHere?: boolean }
   | { type: 'shell_killed'; sessionId: string; shellId: string }
   | { type: 'user_message'; sessionId: string; message: Message; status: 'accepted' | 'queued' | 'processing'; optimisticMessageId?: string }
   | { type: 'session_flagged'; sessionId: string }
@@ -253,3 +254,29 @@ export interface DeepLinkNavigation {
 }
 
 export type StoredSessionAttachment = StoredAttachment;
+
+export interface BackgroundTaskStep {
+  /** Tool name as the agent called it (`Bash`, `Read`, `mcp__linear__list_issues`) */
+  tool: string
+  /** What the call worked on: a file name, command, pattern, URL or description */
+  label?: string
+}
+
+/** A background task's output, digested for the task chip's card (see server-core background-task-output.ts). */
+export type BackgroundTaskOutput =
+  | { kind: 'text'; text: string; truncated: boolean }
+  | {
+      kind: 'agent'
+      /** The agent's latest message: its progress note while it runs, its answer once done */
+      message: string | null
+      /** Its most recent tool calls, oldest first */
+      steps: BackgroundTaskStep[]
+      truncated: boolean
+    }
+
+export interface StopBackgroundTaskResult {
+  /** True when the stop request reached a live task; the stopped status arrives as a task_completed event */
+  success: boolean
+  /** Why nothing was stopped (e.g. the task ended with the turn that ran it) */
+  error?: string
+}

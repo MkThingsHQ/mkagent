@@ -3,6 +3,9 @@
  *
  * Horizontal button group for selecting between options.
  * Ideal for theme selection, font selection, etc.
+ *
+ * Same material as the Tabs primitive (mockup `.seg`): a neutral well with the selected
+ * item raised. It keeps radio semantics (role=radiogroup) — selection happens on click.
  */
 
 import * as React from 'react'
@@ -28,6 +31,8 @@ export interface SettingsSegmentedControlProps<T extends string = string> {
   size?: 'sm' | 'md'
   /** Additional className */
   className?: string
+  /** Accessible name for the group */
+  'aria-label'?: string
 }
 
 /**
@@ -50,11 +55,16 @@ export function SettingsSegmentedControl<T extends string = string>({
   options,
   size = 'md',
   className,
+  'aria-label': ariaLabel,
 }: SettingsSegmentedControlProps<T>) {
   return (
     <div
       role="radiogroup"
-      className={cn('inline-flex gap-1', className)}
+      aria-label={ariaLabel}
+      className={cn(
+        'inline-flex max-w-full items-center gap-0.5 rounded-md bg-fill-hover p-0.5',
+        className
+      )}
     >
       {options.map((option) => {
         const isSelected = option.value === value
@@ -67,30 +77,20 @@ export function SettingsSegmentedControl<T extends string = string>({
             aria-checked={isSelected}
             onClick={() => onValueChange(option.value)}
             className={cn(
-              'flex items-center gap-1.5 rounded-lg transition-all',
-              size === 'sm' ? 'px-2 py-1 text-xs' : 'px-3 py-1.5 text-sm',
+              'motion-press inline-flex h-control-sm in-data-compact:h-9 min-w-0 items-center justify-center gap-1.5 whitespace-nowrap rounded-sm font-medium',
+              'text-label-sm [&_svg]:size-3.5 [&_svg]:shrink-0',
+              size === 'sm' ? 'px-2' : 'px-2.5',
               isSelected
-                ? 'bg-background shadow-minimal'
-                : 'bg-transparent hover:bg-foreground/5'
+                ? 'bg-floating text-foreground shadow-elev-1'
+                : 'text-secondary hover:text-foreground'
             )}
           >
             {option.icon && (
-              <span
-                className={cn(
-                  'w-4 h-4',
-                  isSelected ? 'text-foreground' : 'text-muted-foreground'
-                )}
-              >
+              <span className="inline-flex shrink-0" aria-hidden>
                 {option.icon}
               </span>
             )}
-            <span
-              className={cn(
-                isSelected ? 'text-foreground' : 'text-muted-foreground'
-              )}
-            >
-              {option.label}
-            </span>
+            <span className="truncate">{option.label}</span>
           </button>
         )
       })}
@@ -147,27 +147,25 @@ export function SettingsSegmentedControlCard<T extends string = string>({
             aria-checked={isSelected}
             onClick={() => onValueChange(option.value)}
             className={cn(
-              'flex items-center gap-2 px-3 py-2.5 rounded-xl transition-colors text-left',
-              isSelected ? 'bg-muted' : 'bg-muted/50 hover:bg-muted/70'
+              'motion-press flex items-center gap-2 rounded-lg px-3 py-2.5 text-left',
+              isSelected
+                ? 'bg-fill-selected inset-ring-2 inset-ring-accent-solid'
+                : 'inset-ring inset-ring-border hover:bg-fill-hover'
             )}
           >
-            {/* Radio indicator */}
-            <div
+            {/* Radio indicator: --border-control off ring (≥ 3:1), accent when on */}
+            <span
+              aria-hidden
               className={cn(
-                'w-[16px] h-[16px] rounded-full border-2 shrink-0',
-                'flex items-center justify-center transition-colors',
-                isSelected
-                  ? 'border-foreground bg-foreground'
-                  : 'border-muted-foreground/40'
+                'grid size-4 shrink-0 place-items-center rounded-full',
+                isSelected ? 'bg-accent-solid' : 'inset-ring-[1.5px] inset-ring-[var(--border-control)]'
               )}
             >
-              {isSelected && (
-                <div className="w-[6px] h-[6px] rounded-full bg-background" />
-              )}
-            </div>
+              {isSelected && <span className="size-1.5 rounded-full bg-on-accent" />}
+            </span>
 
             {/* Label */}
-            <span className="text-sm">{option.label}</span>
+            <span className="text-label">{option.label}</span>
 
             {/* Icon on right */}
             {option.icon && (

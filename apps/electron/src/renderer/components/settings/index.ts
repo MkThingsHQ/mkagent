@@ -16,6 +16,14 @@
 
 // Structure
 export {
+  SettingsPage,
+  SettingsPageTitle,
+  SettingsPageState,
+  DETAIL_COLUMN_CLASS,
+  type SettingsPageProps,
+} from './SettingsPage'
+
+export {
   SettingsSection,
   SettingsGroup,
   SettingsDivider,
@@ -26,6 +34,7 @@ export {
 
 export {
   SettingsCard,
+  SettingsCardDivider,
   SettingsCardContent,
   SettingsCardFooter,
   type SettingsCardProps,

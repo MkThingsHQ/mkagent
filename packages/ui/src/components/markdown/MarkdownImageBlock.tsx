@@ -22,12 +22,19 @@
  */
 
 import * as React from 'react'
-import { Maximize2 } from 'lucide-react'
+import { Image as ImageIcon, Maximize2 } from 'lucide-react'
 import { cn } from '../../lib/utils'
 import { CodeBlock } from './CodeBlock'
 import { ImagePreviewOverlay } from '../overlay/ImagePreviewOverlay'
 import { usePlatform } from '../../context/PlatformContext'
 import { ImageCardStack } from './ImageCardStack'
+import {
+  PreviewBlockAction,
+  PreviewBlockError,
+  PreviewBlockFrame,
+  PreviewBlockHeader,
+  PreviewBlockLoading,
+} from './PreviewBlockChrome'
 import { useTranslation } from 'react-i18next'
 
 interface PreviewItem {
@@ -223,21 +230,20 @@ export function MarkdownImageBlock({ code, className, onCreateRegionAnnotation: 
 
   return (
     <ImageBlockErrorBoundary fallback={fallback}>
-      <div className={cn('relative group rounded-[8px] overflow-visible', className)}>
-        <div className="relative h-[320px] overflow-visible flex items-center justify-center p-3">
-          <button
+      {/* overflow-visible: dragged stack cards may leave the well (the header has no fill of its
+          own, so nothing needs clipping to the radius) */}
+      <PreviewBlockFrame className={cn('overflow-visible', className)}>
+        {/* Header: title · fullscreen */}
+        <PreviewBlockHeader icon={<ImageIcon />} title={spec.title || t('preview.imagePreview')}>
+          <PreviewBlockAction
+            aria-label={t('common.viewFullscreen')}
+            icon={<Maximize2 />}
             onClick={() => setIsFullscreen(true)}
-            className={cn(
-              'absolute right-2 top-2 z-10 p-1 rounded-[6px] transition-all select-none',
-              'bg-background/90 shadow-minimal',
-              'text-muted-foreground/60 hover:text-foreground',
-              'focus:outline-none focus-visible:ring-1 focus-visible:ring-ring focus-visible:opacity-100',
-              hasMultiple ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
-            )}
-            title={t('common.viewFullscreen')}
-          >
-            <Maximize2 className="w-3.5 h-3.5" />
-          </button>
+          />
+        </PreviewBlockHeader>
+
+        {/* Fixed 320px stage: images and the card stack load into a box that never resizes */}
+        <div className="relative flex h-[320px] items-center justify-center p-3">
           {hasMultiple && stackItems.length > 0 && (
             <ImageCardStack
               items={stackItems}
@@ -251,23 +257,23 @@ export function MarkdownImageBlock({ code, className, onCreateRegionAnnotation: 
           {!hasMultiple && activeDataUrl && (
             <img
               src={activeDataUrl}
-              alt={safeActiveItem?.label || safeActiveItem?.src.split('/').pop() || 'Image preview'}
-              className="max-w-full max-h-full object-contain"
+              alt={safeActiveItem?.label || safeActiveItem?.src.split('/').pop() || t('preview.imagePreview')}
+              className="max-w-full max-h-full cursor-zoom-in rounded-sm object-contain"
               draggable={false}
               onClick={() => setIsFullscreen(true)}
             />
           )}
 
           {loading && (!activeDataUrl || (hasMultiple && stackItems.length === 0)) && (
-            <div className="py-8 text-center text-muted-foreground text-[13px]">{t('common.loading')}</div>
+            <PreviewBlockLoading>{t('common.loading')}</PreviewBlockLoading>
           )}
 
           {!loading && error && (!activeDataUrl || (hasMultiple && stackItems.length === 0)) && (
-            <div className="py-6 text-center text-destructive/70 text-[13px]">{error}</div>
+            <PreviewBlockError>{error}</PreviewBlockError>
           )}
 
         </div>
-      </div>
+      </PreviewBlockFrame>
 
       <ImagePreviewOverlay
         isOpen={isFullscreen}

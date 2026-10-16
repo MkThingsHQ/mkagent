@@ -142,6 +142,7 @@ const PI_AUTH_PROVIDER_DOMAINS: Record<string, string> = {
   cerebras: 'cerebras.ai',
   deepseek: 'deepseek.com',
   zai: 'z.ai',
+  'cloudflare-ai-gateway': 'cloudflare.com',
 }
 
 /**

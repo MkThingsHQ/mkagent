@@ -115,6 +115,9 @@ export interface AppShellContextType {
   /** Whether this panel is the focused panel (for multi-panel visual differentiation) */
   isFocusedPanel?: boolean
 
+  /** The panel-stack entry this subtree renders in (set by PanelSlot; the same session can be open in two panels) */
+  panelId?: string
+
   /** Whether the shell is currently in compact/narrow mode */
   isCompactMode?: boolean
 

@@ -12,10 +12,8 @@
 import * as React from 'react'
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { PanelHeader } from '@/components/app-shell/PanelHeader'
-import { ScrollArea } from '@/components/ui/scroll-area'
 import { HeaderMenu } from '@/components/ui/HeaderMenu'
-import { Loader2 } from 'lucide-react'
+import { Spinner } from '@mkagent/ui'
 import { useAppShellContext, useActiveWorkspace } from '@/context/AppShellContext'
 import { type PermissionsConfigFile } from '@mkagent/shared/agent/modes'
 import {
@@ -23,9 +21,11 @@ import {
   type PermissionRow,
 } from '@/components/info'
 import {
+  SettingsPage,
   SettingsSection,
   SettingsCard,
 } from '@/components/settings'
+import { settingsUI } from '@/components/settings/SettingsUIConstants'
 import { EditPopover, EditButton, getEditConfig } from '@/components/ui/EditPopover'
 import { getDocUrl } from '@mkagent/shared/docs/doc-links'
 import { routes } from '@/lib/navigate'
@@ -176,127 +176,122 @@ export default function PermissionsSettingsPage() {
   }, [])
 
   return (
-    <div className="h-full flex flex-col">
-      <PanelHeader title={t("settings.permissions.title")} actions={<HeaderMenu route={routes.view.settings('permissions')} helpFeature="permissions" />} />
-      <div className="flex-1 min-h-0 mask-fade-y">
-        <ScrollArea className="h-full">
-          <div className="px-5 py-7 max-w-3xl mx-auto">
-            <div className="space-y-8">
-              {isLoading ? (
-                <div className="flex items-center justify-center py-12">
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                </div>
+    <SettingsPage
+      title={t("settings.permissions.title")}
+      description={t("settings.permissions.description")}
+      actions={<HeaderMenu route={routes.view.settings('permissions')} helpFeature="permissions" />}
+    >
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <Spinner className="text-lg text-tertiary" />
+        </div>
+      ) : (
+        <>
+          {/* About Section */}
+          <SettingsSection title={t("settings.permissions.aboutPermissions")}>
+            <SettingsCard className="px-3.5 py-3">
+              <div className={settingsUI.prose}>
+                <p>
+                  {t("settings.permissions.aboutText1")}
+                </p>
+                <p>
+                  {t("settings.permissions.aboutText2")}
+                </p>
+                <p>
+                  <button
+                    type="button"
+                    onClick={() => window.electronAPI?.openUrl(getDocUrl('permissions'))}
+                    className={settingsUI.link}
+                  >
+                    {t("common.learnMore")}
+                  </button>
+                </p>
+              </div>
+            </SettingsCard>
+          </SettingsSection>
+
+          {/* Default Permissions Section */}
+          <SettingsSection
+            title={t("settings.permissions.defaultPermissions")}
+            description={t("settings.permissions.defaultPermissionsDesc")}
+            action={
+              // EditPopover for AI-assisted default permissions editing
+              defaultPermissionsPath ? (
+                <EditPopover
+                  trigger={<EditButton />}
+                  {...getEditConfig('default-permissions', defaultPermissionsPath)}
+                  secondaryAction={{
+                    label: t("common.editFile"),
+                    filePath: defaultPermissionsPath,
+                  }}
+                />
+              ) : null
+            }
+          >
+            <SettingsCard className="p-0">
+              {defaultPermissionsData.length > 0 ? (
+                <PermissionsDataTable
+                  data={defaultPermissionsData}
+                  searchable
+                  maxHeight={350}
+                  fullscreen
+                  fullscreenTitle={t("settings.permissions.defaultPermissions")}
+                />
               ) : (
-                <>
-                  {/* About Section */}
-                  <SettingsSection title={t("settings.permissions.aboutPermissions")}>
-                    <SettingsCard className="px-4 py-3.5">
-                      <div className="text-sm text-muted-foreground leading-relaxed space-y-1.5">
-                        <p>
-                          {t("settings.permissions.aboutText1")}
-                        </p>
-                        <p>
-                          {t("settings.permissions.aboutText2")}
-                        </p>
-                        <p>
-                          <button
-                            type="button"
-                            onClick={() => window.electronAPI?.openUrl(getDocUrl('permissions'))}
-                            className="text-foreground/70 hover:text-foreground underline underline-offset-2"
-                          >
-                            {t("common.learnMore")}
-                          </button>
-                        </p>
-                      </div>
-                    </SettingsCard>
-                  </SettingsSection>
-
-                  {/* Default Permissions Section */}
-                  <SettingsSection
-                    title={t("settings.permissions.defaultPermissions")}
-                    description={t("settings.permissions.defaultPermissionsDesc")}
-                    action={
-                      // EditPopover for AI-assisted default permissions editing
-                      defaultPermissionsPath ? (
-                        <EditPopover
-                          trigger={<EditButton />}
-                          {...getEditConfig('default-permissions', defaultPermissionsPath)}
-                          secondaryAction={{
-                            label: t("common.editFile"),
-                            filePath: defaultPermissionsPath,
-                          }}
-                        />
-                      ) : null
-                    }
-                  >
-                    <SettingsCard className="p-0">
-                      {defaultPermissionsData.length > 0 ? (
-                        <PermissionsDataTable
-                          data={defaultPermissionsData}
-                          searchable
-                          maxHeight={350}
-                          fullscreen
-                          fullscreenTitle={t("settings.permissions.defaultPermissions")}
-                        />
-                      ) : (
-                        <div className="p-8 text-center text-muted-foreground">
-                          <p className="text-sm">{t("settings.permissions.noDefaultPermissions")}</p>
-                          <p className="text-xs mt-1 text-foreground/40">
-                            {t("settings.permissions.noDefaultPermissionsDesc")}
-                          </p>
-                        </div>
-                      )}
-                    </SettingsCard>
-                  </SettingsSection>
-
-                  {/* Custom Permissions Section */}
-                  <SettingsSection
-                    title={t("settings.permissions.workspaceCustomizations")}
-                    description={t("settings.permissions.workspaceCustomizationsDesc")}
-                    action={
-                      (() => {
-                        // Get centralized edit config - all strings defined in EditPopover.tsx
-                        const { context, example, displayLabel } = getEditConfig('workspace-permissions', activeWorkspace?.rootPath || '')
-                        return (
-                          <EditPopover
-                            trigger={<EditButton />}
-                            example={example}
-                            context={context}
-                            displayLabel={displayLabel}
-                            secondaryAction={activeWorkspace ? {
-                              label: t("common.editFile"),
-                              filePath: `${activeWorkspace.rootPath}/permissions.json`,
-                            } : undefined}
-                          />
-                        )
-                      })()
-                    }
-                  >
-                    <SettingsCard className="p-0">
-                      {customPermissionsData.length > 0 ? (
-                        <PermissionsDataTable
-                          data={customPermissionsData}
-                          searchable
-                          maxHeight={350}
-                          fullscreen
-                          fullscreenTitle={t("settings.permissions.workspaceCustomizations")}
-                        />
-                      ) : (
-                        <div className="p-8 text-center text-muted-foreground">
-                          <p className="text-sm">{t("settings.permissions.noCustomPermissions")}</p>
-                          <p className="text-xs mt-1 text-foreground/40">
-                            {t("settings.permissions.noCustomPermissionsDesc")}
-                          </p>
-                        </div>
-                      )}
-                    </SettingsCard>
-                  </SettingsSection>
-                </>
+                <div className="px-6 py-8 text-center">
+                  <p className="text-label text-secondary">{t("settings.permissions.noDefaultPermissions")}</p>
+                  <p className="mt-1 text-label-sm text-tertiary">
+                    {t("settings.permissions.noDefaultPermissionsDesc")}
+                  </p>
+                </div>
               )}
-            </div>
-          </div>
-        </ScrollArea>
-      </div>
-    </div>
+            </SettingsCard>
+          </SettingsSection>
+
+          {/* Custom Permissions Section */}
+          <SettingsSection
+            title={t("settings.permissions.workspaceCustomizations")}
+            description={t("settings.permissions.workspaceCustomizationsDesc")}
+            action={
+              (() => {
+                // Get centralized edit config - all strings defined in EditPopover.tsx
+                const { context, example, displayLabel } = getEditConfig('workspace-permissions', activeWorkspace?.rootPath || '')
+                return (
+                  <EditPopover
+                    trigger={<EditButton />}
+                    example={example}
+                    context={context}
+                    displayLabel={displayLabel}
+                    secondaryAction={activeWorkspace ? {
+                      label: t("common.editFile"),
+                      filePath: `${activeWorkspace.rootPath}/permissions.json`,
+                    } : undefined}
+                  />
+                )
+              })()
+            }
+          >
+            <SettingsCard className="p-0">
+              {customPermissionsData.length > 0 ? (
+                <PermissionsDataTable
+                  data={customPermissionsData}
+                  searchable
+                  maxHeight={350}
+                  fullscreen
+                  fullscreenTitle={t("settings.permissions.workspaceCustomizations")}
+                />
+              ) : (
+                <div className="px-6 py-8 text-center">
+                  <p className="text-label text-secondary">{t("settings.permissions.noCustomPermissions")}</p>
+                  <p className="mt-1 text-label-sm text-tertiary">
+                    {t("settings.permissions.noCustomPermissionsDesc")}
+                  </p>
+                </div>
+              )}
+            </SettingsCard>
+          </SettingsSection>
+        </>
+      )}
+    </SettingsPage>
   )
 }

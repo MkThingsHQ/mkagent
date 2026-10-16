@@ -32,6 +32,15 @@ export type { Info_BadgeProps, BadgeColor } from './Info_Badge'
 export { Info_StatusBadge } from './Info_StatusBadge'
 export type { Info_StatusBadgeProps } from './Info_StatusBadge'
 
+export { Info_FullscreenButton } from './Info_FullscreenButton'
+
+export { Info_HeaderMenu } from './Info_HeaderMenu'
+
+export { Info_StatePill } from './Info_StatePill'
+export type { StatePillTone } from './Info_StatePill'
+
+export { Info_TechnicalDetails } from './Info_TechnicalDetails'
+
 export { Info_Markdown } from './Info_Markdown'
 export type { Info_MarkdownProps } from './Info_Markdown'
 

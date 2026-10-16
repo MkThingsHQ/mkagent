@@ -1,24 +1,29 @@
 /**
  * Info_Alert
  *
- * Warning/error/info/success alert boxes with compound Title/Description.
+ * Banner (mockup `.banner`): a role tint with a matching inset hairline, the icon in the role's
+ * solved text color, a semibold title and secondary body text.
+ * - warning: neutral (paused / disabled notices)
+ * - error:   destructive tint
+ * - info:    info (amber "needs you") tint
+ * - success: success tint
  */
 
 import * as React from 'react'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
-const alertVariants = cva('rounded-[8px] border', {
+const alertVariants = cva('rounded-lg', {
   variants: {
     variant: {
-      warning: 'bg-foreground/5 border-border/50',
-      error: 'bg-destructive/5 border-destructive/30',
-      info: 'bg-info/5 border-info/30',
-      success: 'bg-success/5 border-success/30',
+      warning: 'bg-fill-hover inset-ring inset-ring-border',
+      error: 'bg-destructive-tint inset-ring inset-ring-[var(--destructive-border)]',
+      info: 'bg-info-tint inset-ring inset-ring-[var(--info-border)]',
+      success: 'bg-success-tint inset-ring inset-ring-[var(--success-border)]',
     },
     inline: {
-      true: 'px-4 py-2',
-      false: 'px-4 py-3',
+      true: 'px-3.5 py-2',
+      false: 'px-3.5 py-3',
     },
   },
   defaultVariants: {
@@ -26,6 +31,13 @@ const alertVariants = cva('rounded-[8px] border', {
     inline: false,
   },
 })
+
+const iconColor: Record<NonNullable<VariantProps<typeof alertVariants>['variant']>, string> = {
+  warning: 'text-secondary',
+  error: 'text-destructive',
+  info: 'text-info',
+  success: 'text-success',
+}
 
 export interface Info_AlertProps
   extends React.HTMLAttributes<HTMLDivElement>,
@@ -44,9 +56,9 @@ function Info_AlertRoot({
 }: Info_AlertProps) {
   return (
     <div className={cn(alertVariants({ variant, inline }), className)} {...props}>
-      <div className="flex items-start gap-2 text-sm">
+      <div className="flex items-start gap-2.5 text-label">
         {icon && (
-          <span className="shrink-0 mt-0.5 text-muted-foreground">{icon}</span>
+          <span className={cn('mt-px shrink-0 [&_svg]:size-4', iconColor[variant ?? 'warning'])}>{icon}</span>
         )}
         <div className="flex-1 min-w-0">{children}</div>
       </div>
@@ -55,11 +67,11 @@ function Info_AlertRoot({
 }
 
 function Info_AlertTitle({ className, ...props }: React.HTMLAttributes<HTMLSpanElement>) {
-  return <span className={cn('font-medium', className)} {...props} />
+  return <span className={cn('font-semibold text-foreground', className)} {...props} />
 }
 
 function Info_AlertDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return <p className={cn('text-foreground/60 mt-0.5', className)} {...props} />
+  return <p className={cn('mt-0.5 leading-5 text-secondary', className)} {...props} />
 }
 
 export const Info_Alert = Object.assign(Info_AlertRoot, {

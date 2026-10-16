@@ -34,7 +34,7 @@ export function resolvePiModel(
   // If we know the auth provider, do an exact provider+model lookup first.
   // This avoids the getAll() ambiguity where the same model ID exists under
   // multiple providers (e.g., "gpt-5.2" under both "openai" and
-  // "azure-openai-responses") and the wrong one matches first.
+  // "azure") and the wrong one matches first.
   if (piAuthProvider) {
     const exact = modelRegistry.find(piAuthProvider, bareId);
     if (exact) {
@@ -50,7 +50,8 @@ export function resolvePiModel(
   // Fallback: search all available models.
   // When piAuthProvider is set, only return models from the same provider
   // (or 'custom-endpoint'). Without this guard, a model that exists under
-  // a different provider would be returned, and the Pi SDK
+  // a different provider (e.g. "gpt-5.4" under "azure"
+  // when authed as "github-copilot") would be returned, and the Pi SDK
   // would fail with "No API key found for <wrong-provider>".
   const allModels = modelRegistry.getAll();
   const match = allModels.find(m =>

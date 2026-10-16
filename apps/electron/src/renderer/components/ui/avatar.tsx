@@ -113,7 +113,7 @@ function CrossfadeAvatar({
       {/* Fallback - always rendered, fades out when image loads */}
       <div
         className={cn(
-          "absolute inset-0 flex items-center justify-center transition-opacity duration-200",
+          "absolute inset-0 flex items-center justify-center transition-opacity duration-base",
           isLoaded ? "opacity-0" : "opacity-100",
           fallbackClassName
         )}
@@ -127,7 +127,7 @@ function CrossfadeAvatar({
           // SVG as background image for better control
           <div
             className={cn(
-              "w-full h-full transition-opacity duration-200",
+              "w-full h-full transition-opacity duration-base",
               isLoaded ? "opacity-100" : "opacity-0",
               imageClassName
             )}
@@ -157,7 +157,7 @@ function CrossfadeAvatar({
             alt={alt}
             onLoad={() => setIsLoaded(true)}
             className={cn(
-              "h-full w-full object-cover transition-opacity duration-200",
+              "h-full w-full object-cover transition-opacity duration-base",
               isLoaded ? "opacity-100" : "opacity-0",
               imageClassName
             )}

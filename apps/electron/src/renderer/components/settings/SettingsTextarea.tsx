@@ -69,7 +69,7 @@ export function SettingsTextarea({
     <div
       className={cn(
         'space-y-2',
-        inCard && 'px-4 py-3.5',
+        inCard && settingsUI.cardPadding,
         className
       )}
     >
@@ -83,11 +83,7 @@ export function SettingsTextarea({
           )}
         </div>
       )}
-      <div className={cn(
-        'relative rounded-md shadow-minimal has-[:focus-visible]:bg-background',
-        error && 'ring-1 ring-destructive',
-        isOverLimit && 'ring-1 ring-destructive'
-      )}>
+      <div className="relative">
         <Textarea
           id={id}
           value={value}
@@ -95,23 +91,24 @@ export function SettingsTextarea({
           placeholder={placeholder}
           rows={rows}
           disabled={disabled}
+          aria-invalid={error || isOverLimit ? true : undefined}
           className={cn(
-            'bg-muted/50 border-0 shadow-none resize-y min-h-[120px] focus-visible:ring-0 focus-visible:outline-none focus-visible:bg-transparent',
+            'resize-y min-h-[120px]',
             maxLength && 'pb-6'
           )}
         />
         {maxLength !== undefined && (
           <div
             className={cn(
-              'absolute bottom-2 right-3 text-xs',
-              isOverLimit ? 'text-destructive' : 'text-muted-foreground'
+              'pointer-events-none absolute bottom-2 right-3 text-label-sm tabular-nums',
+              isOverLimit ? 'text-destructive' : 'text-tertiary'
             )}
           >
             {charCount}/{maxLength}
           </div>
         )}
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && <p className="text-label-sm text-destructive">{error}</p>}
     </div>
   )
 }
