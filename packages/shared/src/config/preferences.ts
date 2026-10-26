@@ -40,6 +40,12 @@ export interface UserPreferences {
    * Not user-editable; not exposed via the `update_user_preferences` tool.
    */
   uiLanguage?: LanguageCode;
+  /**
+   * Internal: default zoom for app windows in percent (Appearance → Default zoom).
+   * Maintained only by the Electron main process (`zoom:setDefault` IPC); a per-device
+   * display setting, so it lives here and never on a remote server. Not exposed to the agent.
+   */
+  defaultZoomLevel?: number;
   // When the preferences were last updated
   updatedAt?: number;
 }
@@ -113,6 +119,18 @@ export function setPersistedUiLanguage(code: LanguageCode): void {
   const current = loadPreferences();
   if (current.uiLanguage === code) return;
   savePreferences({ ...current, uiLanguage: code });
+}
+
+/** The stored default zoom percentage, if any (callers snap it to the offered choices). */
+export function getPersistedDefaultZoomLevel(): number | undefined {
+  const level = loadPreferences().defaultZoomLevel;
+  return typeof level === 'number' && Number.isFinite(level) ? level : undefined;
+}
+
+export function setPersistedDefaultZoomLevel(level: number): void {
+  const current = loadPreferences();
+  if (current.defaultZoomLevel === level) return;
+  savePreferences({ ...current, defaultZoomLevel: level });
 }
 
 /**

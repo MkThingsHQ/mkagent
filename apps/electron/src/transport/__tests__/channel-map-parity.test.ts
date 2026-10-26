@@ -21,6 +21,8 @@ type ApiToChannelMapKeys = Exclude<
   | 'isChannelAvailable'
   | 'getSystemWarnings' // reads env var set at startup — no IPC needed
   | 'changeLanguage' // direct IPC to main process — syncs i18n language
+  | 'getDefaultZoomLevel' // local Electron IPC, never remote RPC
+  | 'setDefaultZoomLevel' // local Electron IPC, never remote RPC
   | 'getWindowVibrancy'
   | 'getFilePath' // renderer-local — webUtils.getPathForFile, no IPC round-trip
 > | BrowserPaneKeys

@@ -1,0 +1,294 @@
+{
+  "fromTag": "v0.15.4",
+  "fromCommit": "89e2d6a25fb1c5c46e27ecf8e8f9a744f5abc27b",
+  "toTag": "v0.15.5",
+  "toCommit": "cede6ea49e0c4a42933ed0f1bc129db698fc581f",
+  "mkagentVersion": "0.2.5",
+  "paths": [
+    {
+      "path": "CONTRIBUTING.md",
+      "status": "reviewed",
+      "reason": "MkAgent docs already use MkThingsHQ clone/release links and retained architecture. No stale lukilabs/anthropics links or published Docker image claims exist; upstream Dockerfile/contributing guide absent. Do not substitute Craft installation or advertise an unpublished MkAgent image."
+    },
+    {
+      "path": "Dockerfile.server",
+      "status": "reviewed",
+      "reason": "MkAgent docs already use MkThingsHQ clone/release links and retained architecture. No stale lukilabs/anthropics links or published Docker image claims exist; upstream Dockerfile/contributing guide absent. Do not substitute Craft installation or advertise an unpublished MkAgent image."
+    },
+    {
+      "path": "README.md",
+      "status": "reviewed",
+      "reason": "MkAgent docs already use MkThingsHQ clone/release links and retained architecture. No stale lukilabs/anthropics links or published Docker image claims exist; upstream Dockerfile/contributing guide absent. Do not substitute Craft installation or advertise an unpublished MkAgent image."
+    },
+    {
+      "path": "apps/cli/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.5 versions/lock; no upstream dependency version changes; Pi remains 1.1.0. Session-tools description already identifies Pi."
+    },
+    {
+      "path": "apps/electron/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.5 versions/lock; no upstream dependency version changes; Pi remains 1.1.0. Session-tools description already identifies Pi."
+    },
+    {
+      "path": "apps/electron/resources/release-notes/0.15.5.md",
+      "status": "adapted",
+      "reason": "Replace upstream product notes with MkAgent 0.2.5 notes for retained features and Lite boundaries."
+    },
+    {
+      "path": "apps/electron/src/main/__tests__/context-menu.test.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.5 shared implementation with package namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/main/__tests__/zoom.isolated.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.5 shared implementation with package namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/main/context-menu.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.5 shared implementation with package namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/main/handlers/system.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.5 shared implementation with package namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/main/index.ts",
+      "status": "adapted",
+      "reason": "Wire default zoom through local Electron main IPC, retained Pi host and Lite API/schema; production window context menu stays separate from browser-pane external sites."
+    },
+    {
+      "path": "apps/electron/src/main/menu.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.5 shared implementation with package namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/main/window-manager.ts",
+      "status": "adapted",
+      "reason": "Wire default zoom through local Electron main IPC, retained Pi host and Lite API/schema; production window context menu stays separate from browser-pane external sites."
+    },
+    {
+      "path": "apps/electron/src/main/zoom.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.5 shared implementation with package namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/preload/bootstrap.ts",
+      "status": "adapted",
+      "reason": "Wire default zoom through local Electron main IPC, retained Pi host and Lite API/schema; production window context menu stays separate from browser-pane external sites."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/CompactWorkspaceSwitcher.tsx",
+      "status": "adapted",
+      "reason": "Confirm before unregistering local workspace; Cancel focus, file-manager action, preserved data and reopen instructions. Omit remote workspace binding; WebUI removal hidden. Actual storage/RPC additionally preserve legacy data and block open workspaces."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/WorkspaceSwitcher.tsx",
+      "status": "adapted",
+      "reason": "Confirm before unregistering local workspace; Cancel focus, file-manager action, preserved data and reopen instructions. Omit remote workspace binding; WebUI removal hidden. Actual storage/RPC additionally preserve legacy data and block open workspaces."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/ui/dialog.tsx",
+      "status": "retained",
+      "reason": "Retain v0.15.5 shared implementation with package namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/workspace/RemoveWorkspaceDialog.tsx",
+      "status": "adapted",
+      "reason": "Confirm before unregistering local workspace; Cancel focus, file-manager action, preserved data and reopen instructions. Omit remote workspace binding; WebUI removal hidden. Actual storage/RPC additionally preserve legacy data and block open workspaces."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/__tests__/useSessionSearch.test.ts",
+      "status": "adapted",
+      "reason": "Apply independent unread-group pagination, collapse safety and date global-window behavior; omit status/project branches and their tests because those product systems remain absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/useSessionSearch.ts",
+      "status": "adapted",
+      "reason": "Apply independent unread-group pagination, collapse safety and date global-window behavior; omit status/project branches and their tests because those product systems remain absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx",
+      "status": "retained",
+      "reason": "Retain v0.15.5 shared implementation with package namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/mock-utils.ts",
+      "status": "excluded",
+      "reason": "Development playground is absent from MkAgent; production dialog and browser behavior reviewed separately."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/browser-ui.tsx",
+      "status": "excluded",
+      "reason": "Development playground is absent from MkAgent; production dialog and browser behavior reviewed separately."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/index.ts",
+      "status": "excluded",
+      "reason": "Development playground is absent from MkAgent; production dialog and browser behavior reviewed separately."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/workspaces.tsx",
+      "status": "excluded",
+      "reason": "Development playground is absent from MkAgent; production dialog and browser behavior reviewed separately."
+    },
+    {
+      "path": "apps/electron/src/shared/__tests__/zoom.test.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.5 shared implementation with package namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "status": "adapted",
+      "reason": "Wire default zoom through local Electron main IPC, retained Pi host and Lite API/schema; production window context menu stays separate from browser-pane external sites."
+    },
+    {
+      "path": "apps/electron/src/shared/zoom.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.5 shared implementation with package namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/transport/__tests__/channel-map-parity.test.ts",
+      "status": "adapted",
+      "reason": "Wire default zoom through local Electron main IPC, retained Pi host and Lite API/schema; production window context menu stays separate from browser-pane external sites."
+    },
+    {
+      "path": "apps/viewer/package.json",
+      "status": "excluded",
+      "reason": "Messaging and public Viewer remain excluded; package version only."
+    },
+    {
+      "path": "apps/webui/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.5 versions/lock; no upstream dependency version changes; Pi remains 1.1.0. Session-tools description already identifies Pi."
+    },
+    {
+      "path": "bun.lock",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.5 versions/lock; no upstream dependency version changes; Pi remains 1.1.0. Session-tools description already identifies Pi."
+    },
+    {
+      "path": "docs/cli.md",
+      "status": "reviewed",
+      "reason": "MkAgent docs already use MkThingsHQ clone/release links and retained architecture. No stale lukilabs/anthropics links or published Docker image claims exist; upstream Dockerfile/contributing guide absent. Do not substitute Craft installation or advertise an unpublished MkAgent image."
+    },
+    {
+      "path": "package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.5 versions/lock; no upstream dependency version changes; Pi remains 1.1.0. Session-tools description already identifies Pi."
+    },
+    {
+      "path": "packages/core/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.5 versions/lock; no upstream dependency version changes; Pi remains 1.1.0. Session-tools description already identifies Pi."
+    },
+    {
+      "path": "packages/messaging-gateway/package.json",
+      "status": "excluded",
+      "reason": "Messaging and public Viewer remain excluded; package version only."
+    },
+    {
+      "path": "packages/messaging-whatsapp-worker/package.json",
+      "status": "excluded",
+      "reason": "Messaging and public Viewer remain excluded; package version only."
+    },
+    {
+      "path": "packages/pi-agent-server/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.5 versions/lock; no upstream dependency version changes; Pi remains 1.1.0. Session-tools description already identifies Pi."
+    },
+    {
+      "path": "packages/server-core/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.5 versions/lock; no upstream dependency version changes; Pi remains 1.1.0. Session-tools description already identifies Pi."
+    },
+    {
+      "path": "packages/server-core/src/sessions/SessionManager.ts",
+      "status": "excluded",
+      "reason": "Only a stale issue URL in the removed Claude authentication comment changes; MkAgent Pi runtime has no matching comment or stale link."
+    },
+    {
+      "path": "packages/server/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.5 versions/lock; no upstream dependency version changes; Pi remains 1.1.0. Session-tools description already identifies Pi."
+    },
+    {
+      "path": "packages/session-tools-core/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.5 versions/lock; no upstream dependency version changes; Pi remains 1.1.0. Session-tools description already identifies Pi."
+    },
+    {
+      "path": "packages/shared/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.5 versions/lock; no upstream dependency version changes; Pi remains 1.1.0. Session-tools description already identifies Pi."
+    },
+    {
+      "path": "packages/shared/src/config/preferences.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.5 shared implementation with package namespace normalization."
+    },
+    {
+      "path": "packages/shared/src/config/validators.ts",
+      "status": "adapted",
+      "reason": "Wire default zoom through local Electron main IPC, retained Pi host and Lite API/schema; production window context menu stays separate from browser-pane external sites."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/de.json",
+      "status": "excluded",
+      "reason": "Non-shipped locale; MkAgent supports English and Simplified Chinese only."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/en.json",
+      "status": "adapted",
+      "reason": "Import default zoom, workspace confirmation, context-menu labels and removal failure translations into Lite locale."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/es.json",
+      "status": "excluded",
+      "reason": "Non-shipped locale; MkAgent supports English and Simplified Chinese only."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/hu.json",
+      "status": "excluded",
+      "reason": "Non-shipped locale; MkAgent supports English and Simplified Chinese only."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ja.json",
+      "status": "excluded",
+      "reason": "Non-shipped locale; MkAgent supports English and Simplified Chinese only."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/pl.json",
+      "status": "excluded",
+      "reason": "Non-shipped locale; MkAgent supports English and Simplified Chinese only."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "status": "adapted",
+      "reason": "Import default zoom, workspace confirmation, context-menu labels and removal failure translations into Lite locale."
+    },
+    {
+      "path": "packages/ui/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.5 versions/lock; no upstream dependency version changes; Pi remains 1.1.0. Session-tools description already identifies Pi."
+    },
+    {
+      "path": "packages/ui/src/components/chat/TurnCard.tsx",
+      "status": "retained",
+      "reason": "Retain v0.15.5 shared implementation with package namespace normalization."
+    },
+    {
+      "path": "packages/ui/src/components/chat/UserMessageBubble.tsx",
+      "status": "adapted",
+      "reason": "Retain accessible hover/focus/touch copy control and compact omission; copy raw content rather than badge-stripped display text."
+    },
+    {
+      "path": "packages/ui/src/lib/use-copy-to-clipboard.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.5 shared implementation with package namespace normalization."
+    }
+  ]
+}

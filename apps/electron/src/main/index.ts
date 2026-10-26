@@ -36,6 +36,7 @@ import type { HandlerDeps } from './handlers/handler-deps'
 import { mainLog } from './logger'
 import { createElectronPlatform } from './platform'
 import { WindowManager } from './window-manager'
+import { registerDefaultZoomIpc } from './zoom'
 import {
   checkForUpdatesOnLaunch,
   setAutoUpdateEventSink,
@@ -161,6 +162,8 @@ async function start() {
   registerPiModelResolver(provider => provider ? getPiModelsForAuthProvider(provider) : getAllPiModels())
 
   windowManager = new WindowManager()
+  const windows = windowManager
+  registerDefaultZoomIpc(() => windows.getAllWindows().map(managed => managed.window))
   createApplicationMenu(windowManager)
   browserPaneManager = new BrowserPaneManager()
   browserPaneManager.setWindowManager(windowManager)

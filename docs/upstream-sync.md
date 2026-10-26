@@ -7,33 +7,29 @@ MkAgent derives its architecture, UI, and runtime from [Craft Agents OSS](https:
 | Item | Value |
 |---|---|
 | Repository | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.15.4` |
-| Commit | `89e2d6a25fb1c5c46e27ecf8e8f9a744f5abc27b` |
+| Tag | `v0.15.5` |
+| Commit | `cede6ea49e0c4a42933ed0f1bc129db698fc581f` |
 
 ## Latest evaluated release
 
 | Item | Value |
 |---|---|
 | Evaluated on | `2026-10-26` |
-| Upstream tag | `v0.15.4` |
-| Upstream commit | `89e2d6a25fb1c5c46e27ecf8e8f9a744f5abc27b` |
+| Upstream tag | `v0.15.5` |
+| Upstream commit | `cede6ea49e0c4a42933ed0f1bc129db698fc581f` |
 
-MkAgent 0.2.4 synchronizes **only v0.15.3 → v0.15.4**. All 133 changed paths are classified in [the inventory](./sync/0.15.4-inventory.json); [validation](./sync/0.15.4-validation.md) separates automated, actual Pi and UI evidence. No v0.15.5/v0.15.6 behavior is imported.
+MkAgent 0.2.5 synchronizes **only v0.15.4 → v0.15.5**. [The inventory](./sync/0.15.5-inventory.json) classifies all 57 changed paths; [validation](./sync/0.15.5-validation.md) distinguishes automation and actual UI evidence.
 
-Coding mode persists per session and selects a lean system prompt and retained coding tools. Workspace defaults, CLI `--coding`, the composer chip and session glyph use the same state. After a conversation starts the mode is fixed; switching synchronously summarizes it into a fresh session with the same model, connection, thinking/permission settings and folder. The summary is hidden first-turn context. Preferences and CLAUDE.md/AGENTS.md remain. The later asynchronous handoff is not imported.
+Default window zoom (80–150%) persists on this computer, applies to new windows and Reset Zoom, and uses direct Electron main IPC rather than remote RPC. WebUI retains browser zoom. User-message copy supports hover, keyboard focus and touch, copying original input while preserving attachment/rich display. Workspace removal confirms its folder, file-manager action and reopen instructions; unregistering preserves sessions and legacy data, and workspaces open in any app window cannot be removed. Production Desktop context menus offer editing, selected-text/link copy and spelling; Inspect remains development-only. Unread groups paginate independently; date groups retain chronological global pagination. Statuses/projects remain absent.
 
-The Coding picker offers an existing folder or an isolated worktree. Recent directories, immediate repositories in the workspace default folder and `gh repo list` populate it; common git directories deduplicate bare layouts and linked worktrees. Explicit clone confirmation precedes remote clones. Branches default to `codex/<session id>` and start from the refreshed default branch. Existing dirty checkouts and their branches are preserved; temporary clones and owned failed-checkout paths/branches are cleaned up. No later recursive repository discovery is imported.
-
-PR status uses the existing `gh` login and shows PR state, conflicts, review conversations, checks and local dirty/ahead state. The card adds commit/check/reviewer summaries and local Resolve/Fix/Fix CI prompts. Turn completion and Git refs trigger refresh; adaptive polling runs every 15 seconds to 2 minutes and unsubscribes while hidden. The narrow header yields title space to PR metadata; compact/mobile follows upstream by omitting the PR chip. Labels/custom statuses stay absent. Git branch lookup is asynchronous and returns null for detached HEAD, errors, timeouts and empty paths.
-
-Pi 1.1.0, HEIC/HEIF, OpenCode Go, maxTokens, compaction windows, Skills starters, usage/fork billing, browser/Stop behavior, local config and branding remain. Claude SDK, Sources/MCP, Pages, Projects/conductor, Automations, public sharing, labels/custom statuses and messaging remain excluded; Decision/Guarded stay deferred. The PR watcher does not require Sources. Later multi-PR, pr_bind/pr_status and automatic review/merge features are not imported. UI locales remain English and Simplified Chinese.
+MkAgent installation/release links remain under MkThingsHQ. Existing documentation has no stale Docker image references; no unpublished MkAgent container image or Craft installation is advertised. Preserve v0.15.4 Coding/worktree/PR status/async Git, Pi 1.1.0, HEIC/HEIF, maxTokens, compaction, Skills, usage/fork billing, browser/Stop and local config. Claude SDK, Sources/MCP, Pages, Projects/conductor, Automations, public sharing, labels/custom statuses and messaging remain excluded; Decision/Guarded stay deferred. No v0.15.6 multi-PR, automated review fixes or asynchronous mode handoff is imported.
 
 ```bash
 # Fetch and check out only an independent disposable reference clone.
-git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0154
-git -C /tmp/craft-v0154 fetch origin refs/tags/v0.15.4
-git -C /tmp/craft-v0154 checkout --detach 89e2d6a25fb1c5c46e27ecf8e8f9a744f5abc27b
-export CRAFT_AGENT_SOURCE=/tmp/craft-v0154
+git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0155
+git -C /tmp/craft-v0155 fetch origin refs/tags/v0.15.5
+git -C /tmp/craft-v0155 checkout --detach cede6ea49e0c4a42933ed0f1bc129db698fc581f
+export CRAFT_AGENT_SOURCE=/tmp/craft-v0155
 ```
 
 When upstream publishes a new tag worth evaluating:

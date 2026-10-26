@@ -62,6 +62,7 @@ export const UserPreferencesSchema = z.object({
   notes: z.string().optional(),
   includeCoAuthoredBy: z.boolean().optional(),
   uiLanguage: z.enum(['en', 'zh-Hans']).optional(),
+  defaultZoomLevel: z.number().positive().optional(),
   updatedAt: z.number().optional(),
 }).passthrough();
 

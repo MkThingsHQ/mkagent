@@ -64,6 +64,8 @@ api.getSystemWarnings = async () => ({
   vcredistMissing: process.platform === 'win32' && process.env.MKAGENT_VCREDIST_MISSING === '1',
 })
 api.getFilePath = (file: File) => webUtils.getPathForFile(file)
+api.getDefaultZoomLevel = () => ipcRenderer.invoke('zoom:getDefault')
+api.setDefaultZoomLevel = (level: number) => ipcRenderer.invoke('zoom:setDefault', level)
 api.changeLanguage = (language: string) => ipcRenderer.invoke('__i18n:changeLanguage', language)
 
 api.startClaudeOAuth = async () => {
