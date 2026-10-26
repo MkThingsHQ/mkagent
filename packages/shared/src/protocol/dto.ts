@@ -1,3 +1,4 @@
+import type { BoundPr, PrMonitorState } from './pr-watch'
 import type { ContextUsageSnapshot } from '@mkagent/core/types';
 import type {
   AnnotationV1,
@@ -33,6 +34,8 @@ export interface Session {
   llmConnection?: string;
   thinkingLevel?: ThinkingLevel;
   codingMode?: boolean;
+  boundPrs?: BoundPr[];
+  prMonitors?: Record<string, PrMonitorState>;
   lastMessageRole?: 'user' | 'assistant' | 'plan' | 'tool' | 'error';
   lastFinalMessageId?: string;
   isAsyncOperationOngoing?: boolean;
@@ -232,7 +235,9 @@ export interface Plan { id: string; title: string; summary?: string; steps: Plan
 export interface GitBashStatus { found: boolean; path: string | null; platform: 'win32' | 'darwin' | 'linux' }
 export interface UpdateInfo { available: boolean; currentVersion: string; latestVersion: string | null; downloadState: 'idle' | 'downloading' | 'ready' | 'installing' | 'error'; downloadProgress: number; error?: string }
 export interface WorkspaceSettings {
-  codingMode?: boolean; chatStarters?: import('../workspaces/types').ChatStarter[]; name?: string; model?: string; permissionMode?: PermissionMode; cyclablePermissionModes?: PermissionMode[]; thinkingLevel?: ThinkingLevel; workingDirectory?: string; defaultLlmConnection?: string }
+  codingMode?: boolean;
+  boundPrs?: BoundPr[];
+  prMonitors?: Record<string, PrMonitorState>; chatStarters?: import('../workspaces/types').ChatStarter[]; name?: string; model?: string; permissionMode?: PermissionMode; cyclablePermissionModes?: PermissionMode[]; thinkingLevel?: ThinkingLevel; workingDirectory?: string; defaultLlmConnection?: string }
 export type WindowCloseRequestSource = 'keyboard-shortcut' | 'window-button' | 'unknown';
 export interface WindowCloseRequest { source: WindowCloseRequestSource }
 export interface BrowserInstanceInfo {

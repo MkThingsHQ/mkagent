@@ -8,6 +8,19 @@ All notable changes to MkAgent are documented in this file. The format follows
 
 Add user-visible changes here before running `bun run release:prepare <version>`.
 
+## [0.2.6] - 2026-10-26
+
+### Added
+
+- Synchronize Craft v0.15.5 → v0.15.6 within the Pi/Lite boundary. Coding sessions gain `pr_status`, `pr_bind`, `pr_unbind`, and explicitly requested `pr_set_auto_merge`, with header snapshot reuse and automatic pinning after `gh pr create`.
+- Track branch and pinned PRs together, with tabs, overflow, urgency indicators, copy/unpin and separate-checkout fix prompts. PR-card Auto fixes trusted new review feedback locally every five minutes while the app runs, with persisted deduplication and restart recovery.
+
+### Improved
+
+- Worktree discovery searches four levels under code folders with a shared two-second IO/Git budget, skip rules and bare/worktree deduplication.
+- Switching Coding mode opens a new session immediately and summarizes in the background. The first message waits at most 30 seconds; queued messages, cancellation, deletion and late summaries remain isolated.
+- Preserve Pi 1.1.0 context/compaction/image handling, local configuration and all earlier Lite capabilities. Claude SDK and excluded product integrations remain absent.
+
 ## [0.2.5] - 2026-10-26
 
 ### Added
@@ -169,6 +182,7 @@ Add user-visible changes here before running `bun run release:prepare <version>`
 - Local session search, flags, archives, import, export, and branching.
 
 [Unreleased]: https://github.com/MkThingsHQ/mkagent/releases
+[0.2.6]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.6
 [0.2.5]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.5
 [0.2.4]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.4
 [0.2.3]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.3

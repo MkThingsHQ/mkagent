@@ -77,6 +77,16 @@ export class HoverIntent {
     this.set(this.state.open && this.state.pinned ? { open: false, pinned: false } : { open: true, pinned: true })
   }
 
+  /**
+   * Keep an open card open while it is being used from a layer outside it (a menu opened from the
+   * card renders in a portal, so reaching it looks like leaving the card). Never opens a closed card.
+   */
+  pin(): void {
+    if (!this.state.open) return
+    this.cancelClose()
+    this.set({ open: true, pinned: true })
+  }
+
   /** Esc or an outside click (Radix `onOpenChange(false)`). */
   dismiss(): void {
     this.cancelOpen()
@@ -113,6 +123,8 @@ type PointerHandler = (event: React.PointerEvent) => void
 export interface HoverPopover extends HoverIntentState {
   /** For the Radix `Popover`'s `onOpenChange` (it only ever reports closes here) */
   onOpenChange: (open: boolean) => void
+  /** Pin an open card (see {@link HoverIntent.pin}) */
+  pin: () => void
   /** Spread on the trigger; its onClick prevents Radix's own toggle */
   triggerProps: { onPointerEnter: PointerHandler; onPointerLeave: PointerHandler; onClick: (event: React.MouseEvent) => void }
   /** Spread on the popover content */
@@ -136,6 +148,7 @@ export function useHoverPopover({ openDelay = 300, closeDelay = 150 }: { openDel
       onOpenChange: (open: boolean) => {
         if (!open) intent.dismiss()
       },
+      pin: () => intent.pin(),
       triggerProps: {
         onPointerEnter: enter,
         onPointerLeave: leave,

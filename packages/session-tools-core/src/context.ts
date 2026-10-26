@@ -80,6 +80,7 @@ export interface BackgroundTaskInfo {
 }
 
 export interface SessionToolContext {
+  prWatch?: PrWatchToolCallbacks;
   sessionId: string;
   workspacePath: string;
   skillsPath: string;
@@ -118,4 +119,94 @@ export function createNodeFileSystem(): FileSystemInterface {
       return { size: stats.size, isDirectory: () => stats.isDirectory() };
     },
   };
+}
+
+export type PrToolMergeMethod = 'merge' | 'squash' | 'rebase';
+
+/** One PR in a session's status (pr_status). */
+export interface PrToolStatus {
+  /** Stable id: host/owner/repo#number */
+  id: string;
+  origin: 'branch' | 'bound';
+  number: number;
+  title: string;
+  url: string;
+  /** open | draft | merged | closed */
+  state: string;
+  /** pending | success | failure | none */
+  checks: string;
+  /** approved | changes_requested | review_required | none */
+  reviewDecision: string;
+  /** clean | behind | blocked | conflicting | unstable | draft | unknown */
+  mergeState: string;
+  unresolvedThreads: number;
+  localAhead: number;
+  localDirty: boolean;
+  autoMerge?: { enabled: boolean; method?: PrToolMergeMethod };
+  /**
+   * Set while auto-merge is off and GitHub won't turn it on: repo-disabled (the repository has it
+   * off), draft, mergeable (nothing pending, so it can be merged now) or unavailable (e.g. no access)
+   */
+  autoMergeBlocked?: 'repo-disabled' | 'draft' | 'mergeable' | 'unavailable';
+  /** Auto-fix (the card's Fix toggle) is on: new review feedback gets fixed automatically */
+  autoFix?: boolean;
+  /** Which credential answered ("gh" or a source name) */
+  via: string;
+}
+
+export interface PrToolStatusResult {
+  /** 'ready' with prs, else why the session has none */
+  kind: 'ready' | 'none' | 'unavailable' | 'loading';
+  /** Why there are no PRs (not-git / not-github / no-token / error), when kind !== 'ready' */
+  reason?: string;
+  /** The session the status is for (defaults to the current session) */
+  sessionId: string;
+  prs: PrToolStatus[];
+  /** True when state came from persisted bindings without a live fetch (cross-session, R3). */
+  cached?: boolean;
+}
+
+export interface PrBindToolResult {
+  ok: boolean;
+  error?: string;
+  /** The bound PR's status when ok */
+  pr?: PrToolStatus;
+  /** Total PRs bound to the session after the change */
+  boundCount?: number;
+  /** Not pinned (with `skipBranchPr`): it is the folder's own branch PR */
+  skipped?: 'branch-pr';
+}
+
+export interface PrUnbindToolResult {
+  ok: boolean;
+  error?: string;
+  /** False when the ref wasn't actually bound */
+  removed?: boolean;
+  boundCount?: number;
+}
+
+export interface PrAutoMergeToolResult {
+  ok: boolean;
+  error?: string;
+  enabled?: boolean;
+  method?: PrToolMergeMethod;
+}
+
+/**
+ * PR watcher callbacks, injected by the backend (SessionManager) bound to the invoking session.
+ * Credential resolution and GitHub calls live behind these — the agent never sees a token.
+ */
+export interface PrWatchToolCallbacks {
+  /** Status of the current session's PRs, or another session's persisted PRs (cross-session, no fetch). */
+  status(input: { sessionId?: string }): Promise<PrToolStatusResult>;
+  /**
+   * Pin a PR to the current session by URL or number (verifies before persisting). `skipBranchPr`
+   * (the post-tool hook after `gh pr create`) leaves out the folder's own branch PR, which the
+   * carousel shows anyway.
+   */
+  bind(input: { ref: string; skipBranchPr?: boolean }): Promise<PrBindToolResult>;
+  /** Remove a pinned PR from the current session. */
+  unbind(input: { ref: string }): Promise<PrUnbindToolResult>;
+  /** Enable/disable GitHub auto-merge on one of the current session's PRs. */
+  setAutoMerge(input: { ref: string; enabled: boolean; method?: PrToolMergeMethod }): Promise<PrAutoMergeToolResult>;
 }

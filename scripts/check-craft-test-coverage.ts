@@ -116,7 +116,7 @@ const intentionalCaseReductions: Record<string, { upstream: number; retained: nu
   'packages/shared/src/agent/__tests__/base-agent.test.ts': { upstream: 34, retained: 19, reason: 'Source managers, Claude prompt builders, and direct backend callbacks were removed' },
   'packages/shared/src/agent/__tests__/conversation-summary.test.ts': { upstream: 4, retained: 3, reason: 'Cross-workspace transferred-session context was removed' },
   "packages/shared/src/agent/__tests__/session-self-management-bindings.test.ts": { upstream: 12, retained: 7, reason: "Status/label mutation, MCP resources and project append bindings are excluded." },
-  'packages/shared/src/agent/backend/__tests__/factory.test.ts': { upstream: 38, retained: 16, reason: 'Claude SDK, Copilot, and unsupported auth combinations were removed; Pi OAuth routing remains covered' },
+  'packages/shared/src/agent/backend/__tests__/factory.test.ts': { upstream: 39, retained: 17, reason: 'Claude SDK, Copilot, and unsupported auth combinations were removed; Pi OAuth routing remains covered' },
   'packages/shared/src/agent/backend/__tests__/runtime-resolver.test.ts': { upstream: 10, retained: 8, reason: 'Claude native binary resolution was removed' },
   "packages/shared/src/agent/core/__tests__/pre-tool-use-checks.isolated.ts": { upstream: 83, retained: 20, reason: "Sources, Pages and Guarded cases excluded; retained Browser/Skill shell prerequisite pipeline and permission mode ordering tested." },
   "packages/shared/src/agent/core/__tests__/prerequisite-manager.isolated.ts": { upstream: 43, retained: 26, reason: "Source guide/API rule cases excluded; all new shell parsing cases for Browser/Skill are retained with injectable configuration instead of global fs mocks." },

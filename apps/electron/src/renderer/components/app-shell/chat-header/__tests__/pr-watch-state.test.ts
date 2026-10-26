@@ -6,6 +6,7 @@ import {
   fixReviewMessage,
   isPrWatchVisible,
   mergeTone,
+  mostUrgentStatus,
   prCardAction,
   prCardActionMessage,
   prChipStatus,
@@ -194,5 +195,22 @@ describe('Card actions', () => {
   it('reads naturally with one thread and no named reviewer', () => {
     const message = fixReviewMessage({ ...summary, unresolvedThreads: 1 }, { ...details, reviewers: [] })
     expect(message.split('\n')[0]).toEndWith(': 1 unresolved review thread; changes requested.')
+  })
+})
+
+describe('mostUrgentStatus (the "+N" of other PRs)', () => {
+  const pr = (overrides: Partial<PrSummary> = {}): PrSummary => ({
+    number: 1, title: 'T', url: 'https://github.com/acme/app/pull/1', state: 'open', headRef: 'h', baseRef: 'main',
+    checks: 'success', reviewDecision: 'none', mergeState: 'clean', unresolvedThreads: 0, localAhead: 0, localDirty: false,
+    fetchedAt: 0, via: 'gh', ...overrides,
+  })
+
+  it('surfaces only what needs attention, in the card action order: conflicts, review, failing CI', () => {
+    expect(mostUrgentStatus([])).toBeNull()
+    expect(mostUrgentStatus([pr(), pr({ checks: 'pending' }), pr({ localAhead: 2 })])).toBeNull()
+    expect(mostUrgentStatus([pr({ checks: 'failure' }), pr()])).toBe('fix-ci')
+    expect(mostUrgentStatus([pr({ checks: 'failure' }), pr({ unresolvedThreads: 2 })])).toBe('fix')
+    expect(mostUrgentStatus([pr({ unresolvedThreads: 2 }), pr({ mergeState: 'conflicting' })])).toBe('resolve')
+    expect(mostUrgentStatus([pr({ state: 'merged', checks: 'failure' })])).toBeNull() // merged/closed need nothing
   })
 })

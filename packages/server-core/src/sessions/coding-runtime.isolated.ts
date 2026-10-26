@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 
-it('runs Coding, defaults, frozen settings, forks, synchronous handoffs and restarts through the actual Pi subprocess', async () => {
+it('runs Coding, defaults, frozen settings, forks, background handoffs and restarts through the actual Pi subprocess', async () => {
   const root = mkdtempSync(join(tmpdir(), 'mkagent-coding-runtime-'))
   const previous = process.env.CONFIG_DIR
   process.env.CONFIG_DIR = root
@@ -61,6 +61,10 @@ it('runs Coding, defaults, frozen settings, forks, synchronous handoffs and rest
     expect(codingPrompt).toContain('CLAUDE.md')
     expect(codingPrompt).toContain(repo)
     const names = codingCall.tools.map((tool: any) => tool.function.name)
+    expect(names).toContain('mcp__session__pr_status')
+    expect(names).toContain('mcp__session__pr_bind')
+    expect(names).toContain('mcp__session__pr_unbind')
+    expect(names).toContain('mcp__session__pr_set_auto_merge')
     expect(names).toContain('mcp__session__SubmitPlan')
     expect(names).toContain('mcp__session__list_background_tasks')
     expect(names).not.toContain('mcp__session__browser_tool')
@@ -78,14 +82,17 @@ it('runs Coding, defaults, frozen settings, forks, synchronous handoffs and rest
     expect(continued).toMatchObject({ workingDirectory: repo, model: source.model, llmConnection: source.llmConnection, thinkingLevel: source.thinkingLevel, permissionMode: source.permissionMode, messages: [] })
     expect(continued.codingMode).toBeUndefined()
     expect((await manager.getSession(session.id))?.messages).toEqual(source.messages)
-    expect(loadSession(wsRoot, next.sessionId)?.transferredSessionSummary).toContain('preserve fixture goal')
+    await manager.sendMessage(next.sessionId, 'Use the handoff now.')
+    expect(JSON.stringify(requests.at(-1)?.messages)).toContain('preserve fixture goal')
+    expect(loadSession(wsRoot, next.sessionId)?.transferredSessionSummaryApplied).toBe(true)
     manager.cleanup(); manager = new SessionManager(); await manager.initialize(); manager.setEventSink(() => {})
     expect(manager.getSessions(workspace.id).find(item => item.id === session.id)?.codingMode).toBe(true)
     await manager.sendMessage(next.sessionId, 'Continue fixture.')
     const resumed = requests.at(-1)
-    expect(JSON.stringify(resumed.messages)).toContain('Handoff summary: preserve fixture goal')
+    expect(JSON.stringify(resumed.messages).match(/<session_transfer_summary>/g)).toHaveLength(1)
     expect(resumed.messages.find((message: any) => message.role === 'system').content).not.toContain('**Coding mode**')
     expect(resumed.tools.map((tool: any) => tool.function.name)).toContain('mcp__session__call_llm')
+    expect(resumed.tools.map((tool: any) => tool.function.name)).not.toContain('mcp__session__pr_status')
     expect(loadSession(wsRoot, next.sessionId)?.transferredSessionSummaryApplied).toBe(true)
     await handlers.get(RPC_CHANNELS.workspace.SETTINGS_UPDATE)({}, workspace.id, 'codingMode', false)
     expect(JSON.parse(readFileSync(join(wsRoot, 'config.json'), 'utf8')).defaults.codingMode).toBeUndefined()

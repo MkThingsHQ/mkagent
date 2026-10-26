@@ -293,8 +293,17 @@ export const RPC_CHANNELS = {
     SUBSCRIBE: 'prWatch:subscribe',
     UNSUBSCRIBE: 'prWatch:unsubscribe',
     REFRESH: 'prWatch:refresh',
+    /** Card details for one carousel entry: (sessionId, prId) */
     GET_DETAILS: 'prWatch:getDetails',
-    /** Server → client push: (sessionId, PrWatchState) */
+    /** Pin a PR to the session by URL or number (verifies before persisting) */
+    BIND: 'prWatch:bind',
+    /** Remove a pinned PR from the session */
+    UNBIND: 'prWatch:unbind',
+    /** Enable/disable GitHub auto-merge for one of the session's PRs */
+    SET_AUTO_MERGE: 'prWatch:setAutoMerge',
+    /** Turn auto-fix (the card's Fix toggle) on/off for one of the session's PRs: (sessionId, prId, enabled) */
+    SET_AUTO_FIX: 'prWatch:setAutoFix',
+    /** Server → client push: (sessionId, PrWatchSessionState) */
     CHANGED: 'prWatch:changed',
   },
   gitbash: {

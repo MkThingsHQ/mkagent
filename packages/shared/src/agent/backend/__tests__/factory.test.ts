@@ -103,3 +103,17 @@ describe('Pi-only backend registry', () => {
     })).toBe('model-a');
   });
 });
+
+
+describe('backend config propagation', () => {
+  it('preserves Coding, context, compaction and image-resize settings in Pi', () => {
+    const onImageResize = async () => null;
+    const fields = { agentProfile: 'coding' as const, enable1MContext: false, autoCompactWindow: 200_000, onImageResize };
+    const agent = createBackend({ ...createMockBackendConfig(), ...fields });
+    try {
+      expect(agent.getAgentProfile()).toBe('coding');
+      const config = (agent as any).config;
+      for (const [key, value] of Object.entries(fields)) expect(config[key]).toBe(value);
+    } finally { agent.destroy(); }
+  });
+});

@@ -1,9 +1,26 @@
 import { describe, expect, it } from 'bun:test'
 import type { GqlPullRequestDetails, GqlPullRequestSummary } from './github-queries'
-import { mapCheck, mapDetails, mapMergeState, mapReviewers, mapRollup, mapSummary, pickPullRequest } from './map-github'
+import {
+  allowedMergeMethods,
+  autoMergeBlockMessage,
+  mapAutoMergeBlock,
+  mapCheck,
+  mapDetails,
+  mapMergeState,
+  mapReviewSignature,
+  mapReviewers,
+  mapRollup,
+  mapSummary,
+  pickMergeMethod,
+  pickPullRequest,
+} from './map-github'
 
-/** PR #479 as GitHub returned it (2026-10-18), the summary query's node. */
+/**
+ * PR #479 as GitHub returned it (2026-10-18), the summary query's node; the auto-merge fields as the
+ * repository answered on 2026-10-22 (auto-merge and squash off).
+ */
 const PR_479: GqlPullRequestSummary = {
+  id: 'PR_kwDOexample479',
   number: 479,
   title: 'Add Coding mode + uplift Claude Agent SDK to 0.3.302',
   url: 'https://github.com/craft-ai-agents/craft-agents/pull/479',
@@ -16,6 +33,9 @@ const PR_479: GqlPullRequestSummary = {
   reviewDecision: null,
   mergeable: 'MERGEABLE',
   mergeStateStatus: 'CLEAN',
+  autoMergeRequest: null,
+  viewerCanEnableAutoMerge: false,
+  baseRepository: { autoMergeAllowed: false, viewerDefaultMergeMethod: 'MERGE', mergeCommitAllowed: true, squashMergeAllowed: false, rebaseMergeAllowed: true },
   commits: { nodes: [{ commit: { statusCheckRollup: { state: 'SUCCESS' } } }] },
   reviewThreads: { nodes: [] },
 }
@@ -58,6 +78,7 @@ describe('mapSummary', () => {
       localDirty: true,
       fetchedAt: 1000,
       via: 'gh',
+      autoMergeBlocked: 'repo-disabled',
     })
   })
 
@@ -70,6 +91,47 @@ describe('mapSummary', () => {
     expect(mapSummary(pr({ reviewThreads: { nodes: [{ isResolved: false }, { isResolved: true }, { isResolved: false }] } }), local, meta).unresolvedThreads).toBe(2)
     expect(mapSummary(pr({ commits: { nodes: [{ commit: { statusCheckRollup: null } }] } }), local, meta).checks).toBe('none')
     expect(mapSummary(pr({ reviewDecision: 'CHANGES_REQUESTED' }), local, meta).reviewDecision).toBe('changes_requested')
+  })
+})
+
+describe('auto-merge', () => {
+  const REPO = { autoMergeAllowed: true, viewerDefaultMergeMethod: 'SQUASH' as const, mergeCommitAllowed: true, squashMergeAllowed: true, rebaseMergeAllowed: true }
+  const blocked = (overrides: Partial<GqlPullRequestSummary>) => mapAutoMergeBlock(pr({ baseRepository: REPO, ...overrides }))
+
+  it('says why GitHub won\'t turn it on', () => {
+    expect(blocked({ viewerCanEnableAutoMerge: false, baseRepository: { ...REPO, autoMergeAllowed: false } })).toBe('repo-disabled')
+    expect(blocked({ viewerCanEnableAutoMerge: false, isDraft: true, mergeStateStatus: 'DRAFT' })).toBe('draft')
+    // Nothing pending: GitHub merges these now or not at all
+    for (const mergeStateStatus of ['CLEAN', 'HAS_HOOKS', 'UNSTABLE'] as const) {
+      expect(blocked({ viewerCanEnableAutoMerge: false, mergeStateStatus })).toBe('mergeable')
+    }
+    // Checks pending and still refused: a reason GitHub doesn't give (e.g. no write access)
+    expect(blocked({ viewerCanEnableAutoMerge: false, mergeStateStatus: 'BLOCKED' })).toBe('unavailable')
+  })
+
+  it('reports no block when it can be turned on, when it is on, or when the PR is done', () => {
+    expect(blocked({ viewerCanEnableAutoMerge: true, mergeStateStatus: 'BLOCKED' })).toBeUndefined()
+    expect(blocked({ viewerCanEnableAutoMerge: false, autoMergeRequest: { mergeMethod: 'MERGE' } })).toBeUndefined()
+    expect(blocked({ viewerCanEnableAutoMerge: false, state: 'MERGED' })).toBeUndefined()
+    expect(mapSummary(pr({ viewerCanEnableAutoMerge: true }), { localAhead: 0, localDirty: false }, { fetchedAt: 0, via: 'gh' })).not.toHaveProperty('autoMergeBlocked')
+  })
+
+  it('picks a merge method the repository allows', () => {
+    const noSquash = { ...REPO, viewerDefaultMergeMethod: 'MERGE' as const, squashMergeAllowed: false }
+    expect(allowedMergeMethods(noSquash)).toEqual(['merge', 'rebase'])
+    expect(pickMergeMethod(noSquash)).toBe('merge')
+    expect(pickMergeMethod(noSquash, 'rebase')).toBe('rebase')
+    expect(pickMergeMethod(noSquash, 'squash')).toBeNull()
+    // The viewer's default is off there now: the first allowed method
+    expect(pickMergeMethod({ ...REPO, viewerDefaultMergeMethod: 'SQUASH', squashMergeAllowed: false, mergeCommitAllowed: false })).toBe('rebase')
+    expect(pickMergeMethod({ ...REPO, mergeCommitAllowed: false, squashMergeAllowed: false, rebaseMergeAllowed: false })).toBeNull()
+    expect(pickMergeMethod(null)).toBe('merge')
+  })
+
+  it('words the refusal for the agent and the card', () => {
+    expect(autoMergeBlockMessage('repo-disabled', 'acme/app #7')).toBe(
+      'Can\'t turn on auto-merge for acme/app #7: auto-merge is off for this repository (turn on "Allow auto-merge" in its GitHub settings).',
+    )
   })
 })
 
@@ -179,3 +241,36 @@ describe('mapReviewers', () => {
     ])
   })
 })
+
+describe('mapReviewSignature (auto-fix trigger)', () => {
+  const thread = (id: string, comments: Array<[string, string, string]>, isResolved = false) =>
+    ({ id, isResolved, comments: { nodes: comments.map(([cid, assoc, login]) => ({ id: cid, authorAssociation: assoc, author: { login } })) } })
+
+  it('names the latest trusted comment per open thread, never the viewer\'s or a stranger\'s', () => {
+    const signature = mapReviewSignature({
+      reviewThreads: { nodes: [
+        thread('T1', [['C1', 'COLLABORATOR', 'rev'], ['C2', 'NONE', 'stranger'], ['C3', 'OWNER', 'Me']]),
+        thread('T2', [['C4', 'NONE', 'stranger']]),
+        thread('T3', [['C5', 'MEMBER', 'rev']], true),
+      ] },
+      latestOpinionatedReviews: { nodes: [] },
+    }, 'me')
+    expect(signature).toEqual(['t:T1:C1'])
+  })
+
+  it('a stranger replying never changes the signature, a collaborator replying does', () => {
+    const base = { latestOpinionatedReviews: { nodes: [] } }
+    const before = mapReviewSignature({ ...base, reviewThreads: { nodes: [thread('T1', [['C1', 'COLLABORATOR', 'rev']])] } }, 'me')
+    const strangerReply = mapReviewSignature({ ...base, reviewThreads: { nodes: [thread('T1', [['C1', 'COLLABORATOR', 'rev'], ['C2', 'NONE', 'x']])] } }, 'me')
+    const collaboratorReply = mapReviewSignature({ ...base, reviewThreads: { nodes: [thread('T1', [['C1', 'COLLABORATOR', 'rev'], ['C3', 'COLLABORATOR', 'rev']])] } }, 'me')
+    expect(strangerReply).toEqual(before)
+    expect(collaboratorReply).not.toEqual(before)
+  })
+})
+
+
+it('does not trigger unattended fixes when viewer or feedback identity is missing', () => {
+  const pr = { reviewThreads: { nodes: [{ id: 't', isResolved: false, comments: { nodes: [{ id: 'c', authorAssociation: 'MEMBER', author: null }] } }] }, latestOpinionatedReviews: { nodes: [] } };
+  expect(mapReviewSignature(pr, 'me')).toEqual([]);
+  expect(mapReviewSignature(pr, null)).toEqual([]);
+});

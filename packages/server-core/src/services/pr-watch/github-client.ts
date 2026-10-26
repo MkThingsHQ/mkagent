@@ -1,7 +1,8 @@
 /**
  * Minimal GitHub GraphQL client for the PR watcher: one POST, a timeout, and errors classified so
  * the token chain knows whether to try the next credential (`GitHubAuthError`) or back off
- * (`GitHubRequestError`, with `retryAfterMs` for rate limits).
+ * (`GitHubRequestError`, with `retryAfterMs` for rate limits); a request GitHub rejected outright
+ * throws `GitHubRefusedError` with its reason.
  */
 
 import { graphqlEndpoint } from './remote-url'
@@ -22,6 +23,17 @@ export class GitHubRequestError extends Error {
   constructor(message: string, readonly status?: number, readonly retryAfterMs?: number) {
     super(message)
     this.name = 'GitHubRequestError'
+  }
+}
+
+/**
+ * GitHub answered and said no (e.g. a mutation it rejected: "Auto merge is not allowed for this
+ * repository"). The message is GitHub's reason; retrying or another credential won't change it.
+ */
+export class GitHubRefusedError extends Error {
+  constructor(message: string) {
+    super(message)
+    this.name = 'GitHubRefusedError'
   }
 }
 
@@ -86,5 +98,11 @@ export async function githubGraphql<T>(
     throw new GitHubRequestError('GitHub rate limit', 200, retryAfterMs ?? 60_000)
   }
   if (!body.data) throw new GitHubRequestError(body.errors?.map(error => error.message).join('; ') || 'GitHub returned no data')
+  // A rejected mutation still sends `data`, with every field null, and the reason in `errors`
+  // (UNPROCESSABLE); returning that data would read as success. Queries also ask for `rateLimit`,
+  // so a partial error there keeps the data that did come back.
+  if (body.errors?.length && Object.values(body.data as Record<string, unknown>).every(value => value === null)) {
+    throw new GitHubRefusedError(body.errors.map(error => error.message).filter(Boolean).join('; ') || 'GitHub refused the request')
+  }
   return body.data
 }

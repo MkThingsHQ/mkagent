@@ -80,13 +80,20 @@ function normalizeHeaderPermissionModes<T extends SessionHeader>(header: T): T {
 export function readSessionHeader(sessionFile: string): SessionHeader | null {
   try {
     const fd = openSync(sessionFile, 'r');
-    const buffer = Buffer.alloc(8192); // 8KB is plenty for metadata header
-    const bytesRead = readSync(fd, buffer, 0, 8192, 0);
-    closeSync(fd);
-
-    const content = buffer.toString('utf-8', 0, bytesRead);
-    const firstNewline = content.indexOf('\n');
-    const firstLine = firstNewline > 0 ? content.slice(0, firstNewline) : content;
+    let firstLine: string;
+    try {
+      const chunks: Buffer[] = [];
+      const buffer = Buffer.alloc(8192);
+      let position = 0;
+      for (;;) {
+        const count = readSync(fd, buffer, 0, buffer.length, position);
+        const newline = buffer.subarray(0, count).indexOf(10);
+        chunks.push(Buffer.from(buffer.subarray(0, newline < 0 ? count : newline)));
+        position += count;
+        if (newline >= 0 || count < buffer.length) break;
+      }
+      firstLine = Buffer.concat(chunks).toString('utf8');
+    } finally { closeSync(fd); }
 
     const parsed = safeJsonParse(expandSessionPath(firstLine, dirname(sessionFile))) as SessionHeader;
     return normalizeHeaderPermissionModes(parsed);
@@ -189,7 +196,10 @@ export function createSessionHeader(session: StoredSession): SessionHeader {
  * Only returns roles that are meaningful for UI display (user, assistant, plan, tool, error).
  */
 function extractLastMessageRole(messages: StoredMessage[]): SessionHeader['lastMessageRole'] {
-  const lastMessage = messages[messages.length - 1];
+  let lastMessage: StoredMessage | undefined;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (!messages[i]?.hidden) { lastMessage = messages[i]; break; }
+  }
   if (!lastMessage) return undefined;
   // Map message types to the subset we care about for display
   const role = lastMessage.type;
@@ -220,7 +230,7 @@ function extractLastFinalMessageId(messages: StoredMessage[]): string | undefine
  * Returns first 150 chars.
  */
 function extractPreview(messages: StoredMessage[]): string | undefined {
-  const firstUserMessage = messages.find(m => m.type === 'user');
+  const firstUserMessage = messages.find(m => m.type === 'user' && !m.hidden);
   if (!firstUserMessage?.content) return undefined;
 
   // Sanitize: strip special blocks, tags, and bracket mentions, normalize whitespace
@@ -244,11 +254,17 @@ export async function readSessionHeaderAsync(sessionFile: string): Promise<Sessi
   try {
     const handle = await open(sessionFile, 'r');
     try {
+      const chunks: Buffer[] = [];
       const buffer = Buffer.alloc(8192);
-      const { bytesRead } = await handle.read(buffer, 0, 8192, 0);
-      const content = buffer.toString('utf-8', 0, bytesRead);
-      const firstNewline = content.indexOf('\n');
-      const firstLine = firstNewline > 0 ? content.slice(0, firstNewline) : content;
+      let position = 0;
+      for (;;) {
+        const { bytesRead } = await handle.read(buffer, 0, buffer.length, position);
+        const newline = buffer.subarray(0, bytesRead).indexOf(10);
+        chunks.push(Buffer.from(buffer.subarray(0, newline < 0 ? bytesRead : newline)));
+        position += bytesRead;
+        if (newline >= 0 || bytesRead < buffer.length) break;
+      }
+      const firstLine = Buffer.concat(chunks).toString('utf8');
       const parsed = safeJsonParse(expandSessionPath(firstLine, dirname(sessionFile))) as SessionHeader;
       return normalizeHeaderPermissionModes(parsed);
     } finally {
