@@ -19,7 +19,7 @@ export const SESSION_PERSISTENT_FIELDS = [
   'isArchived', 'archivedAt',
   'branchFromMessageId', 'branchFromSdkSessionId', 'branchFromSessionPath',
   'branchFromSdkCwd', 'branchFromSdkTurnId',
-  'parentSessionId',
+  'parentSessionId', 'codingMode', 'transferredSessionSummary', 'transferredSessionSummaryApplied',
 ] as const;
 
 export type SessionPersistentField = (typeof SESSION_PERSISTENT_FIELDS)[number];
@@ -64,6 +64,9 @@ export interface SessionConfig {
   llmConnection?: string;
   connectionLocked?: boolean;
   thinkingLevel?: ThinkingLevel;
+  codingMode?: boolean;
+  transferredSessionSummary?: string;
+  transferredSessionSummaryApplied?: boolean;
   pendingPlanExecution?: PendingPlanExecution;
   hidden?: boolean;
   isArchived?: boolean;

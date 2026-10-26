@@ -1,4 +1,6 @@
 import * as React from "react"
+import { useStore } from "jotai"
+import { addSessionAtom, replaceLoadedSessionAtom, sessionMetaMapAtom } from "@/atoms/sessions"
 import { useTranslation } from "react-i18next"
 import { useEffect, useState, useMemo, useCallback } from "react"
 import { Bot, Info } from "lucide-react"
@@ -168,6 +170,11 @@ interface ChatDisplayProps {
   thinkingLevel?: ThinkingLevel
   /** Callback when thinking level changes */
   onThinkingLevelChange?: (level: ThinkingLevel) => void
+  // Coding mode (session-level, fixed once the conversation starts)
+  /** Coding mode is on: lean coding prompt and session tools */
+  codingMode?: boolean
+  /** Toggle coding mode (only before the first message) */
+  onCodingModeChange?: (enabled: boolean) => void
   // Advanced options
   /** Current permission mode */
   permissionMode?: PermissionMode
@@ -275,6 +282,8 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
   // Thinking level
   thinkingLevel = 'medium',
   onThinkingLevelChange,
+  codingMode = false,
+  onCodingModeChange,
   // Advanced options
   permissionMode = 'ask',
   onPermissionModeChange,
@@ -315,6 +324,7 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
 
   // Panel focus state (for multi-panel auto-scroll behavior)
   const appShellContext = useAppShellContext()
+  const store = useStore()
   const isFocusedPanel = appShellContext?.isFocusedPanel ?? true
 
   // Input is only disabled when explicitly disabled (e.g., agent needs activation)
@@ -863,6 +873,28 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
     const custom = pickCustomSuggestions(chatStarters ?? [])
     return custom.length ? custom : pickNewChatSuggestions()
   }, [chatStarters])
+
+  // Coding mode is fixed once the conversation starts: continue in a new session with it switched.
+  // The server carries the folder, model, sources and a summary of this conversation over.
+  const handleContinueWithCodingMode = useCallback(async (enabled: boolean) => {
+    if (!session) return
+    const toastId = toast.loading(t('chat.codingMode.continuing'))
+    try {
+      const result = await window.electronAPI.sessionCommand(session.id, { type: 'continueInNewSession', codingMode: enabled })
+      // The session-created push loads metadata asynchronously. Navigation validates the
+      // target against that metadata, so register the returned session before navigating.
+      const created = await window.electronAPI.getSessionMessages(result.sessionId)
+      if (!created) throw new Error('The continued session could not be loaded')
+      store.set(store.get(sessionMetaMapAtom).has(created.id) ? replaceLoadedSessionAtom : addSessionAtom, created)
+      toast.dismiss(toastId)
+      navigate(routes.view.allSessions(result.sessionId))
+    } catch (error) {
+      toast.error(t('chat.codingMode.continueFailed'), {
+        id: toastId,
+        description: error instanceof Error ? error.message : String(error),
+      })
+    }
+  }, [session, store, t])
 
   // A background task's full output, from its chip card
   const handleOpenTaskOutput = useCallback((task: BackgroundTask, output: BackgroundTaskOutput) => {
@@ -1652,6 +1684,9 @@ export const ChatDisplay = React.forwardRef<ChatDisplayHandle, ChatDisplayProps>
               onModelChange,
               thinkingLevel,
               onThinkingLevelChange,
+              codingMode,
+              onCodingModeChange,
+              onContinueWithCodingMode: handleContinueWithCodingMode,
               enabledModes,
               enableCompactModelPicker,
               structuredInput,

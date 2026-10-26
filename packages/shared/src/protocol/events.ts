@@ -1,3 +1,4 @@
+import type { PrWatchState } from './pr-watch.ts';
 import type { ThemeOverrides } from '../config/index.ts';
 import type { LoadedSkill } from '../skills/types.ts';
 import { RPC_CHANNELS } from './channels.ts';
@@ -10,6 +11,7 @@ import type {
 } from './dto.ts';
 
 export interface BroadcastEventMap {
+  [RPC_CHANNELS.prWatch.CHANGED]: [sessionId: string, state: PrWatchState];
   [RPC_CHANNELS.sessions.EVENT]: [event: SessionEvent];
   [RPC_CHANNELS.sessions.UNREAD_SUMMARY_CHANGED]: [summary: UnreadSummary];
   [RPC_CHANNELS.sessions.FILES_CHANGED]: [sessionId: string];

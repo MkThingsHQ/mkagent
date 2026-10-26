@@ -7,29 +7,33 @@ MkAgent derives its architecture, UI, and runtime from [Craft Agents OSS](https:
 | Item | Value |
 |---|---|
 | Repository | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.15.3` |
-| Commit | `22c9f0414ab63e0a22814c9a2ada740206e09091` |
+| Tag | `v0.15.4` |
+| Commit | `89e2d6a25fb1c5c46e27ecf8e8f9a744f5abc27b` |
 
 ## Latest evaluated release
 
 | Item | Value |
 |---|---|
 | Evaluated on | `2026-10-26` |
-| Upstream tag | `v0.15.3` |
-| Upstream commit | `22c9f0414ab63e0a22814c9a2ada740206e09091` |
+| Upstream tag | `v0.15.4` |
+| Upstream commit | `89e2d6a25fb1c5c46e27ecf8e8f9a744f5abc27b` |
 
-MkAgent 0.2.3 synchronizes **only v0.15.2 → v0.15.3**. All 53 changed paths are reviewed in [the inventory](./sync/0.15.3-inventory.json); [validation](./sync/0.15.3-validation.md) records actual runtime and UI evidence. No v0.15.4–0.15.6 feature is included.
+MkAgent 0.2.4 synchronizes **only v0.15.3 → v0.15.4**. All 133 changed paths are classified in [the inventory](./sync/0.15.4-inventory.json); [validation](./sync/0.15.4-validation.md) separates automated, actual Pi and UI evidence. No v0.15.5/v0.15.6 behavior is imported.
 
-HEIC/HEIF attachments become JPEG at ingestion, including thumbnails and actual model input. OpenCode Go is a branded OpenAI-compatible preset with editable models. Endpoint `customEndpoint.maxTokens` is editable, validated, persisted and refreshed in live Pi model registration; omitted values retain 8192. Pi now consumes the global 100K–1M compaction setting: its per-model reserve is `max(SDK reserve, contextWindow − selectedWindow)`. Context occupancy uses that same reserve, independently of billable usage. Changing the global setting restarts an idle runtime on the next turn, restoring its SDK journal. Model/connection changes and application restart retain the setting.
+Coding mode persists per session and selects a lean system prompt and retained coding tools. Workspace defaults, CLI `--coding`, the composer chip and session glyph use the same state. After a conversation starts the mode is fixed; switching synchronously summarizes it into a fresh session with the same model, connection, thinking/permission settings and folder. The summary is hidden first-turn context. Preferences and CLAUDE.md/AGENTS.md remain. The later asynchronous handoff is not imported.
 
-Rich Chat Starters, Skill badges/invocation, immediate settings refresh and empty-config fallback were already retained in 0.2.2 and are revalidated. Sources are not restored. MkAgent branding/local config, Pi 1.1.0 and previous browser/Stop/usage fixes remain. Claude SDK, Sources/MCP, Pages, Projects/conductor, Automations, public sharing, labels/custom statuses and messaging remain excluded; Decision/Guarded remain deferred. UI locales remain English and Simplified Chinese.
+The Coding picker offers an existing folder or an isolated worktree. Recent directories, immediate repositories in the workspace default folder and `gh repo list` populate it; common git directories deduplicate bare layouts and linked worktrees. Explicit clone confirmation precedes remote clones. Branches default to `codex/<session id>` and start from the refreshed default branch. Existing dirty checkouts and their branches are preserved; temporary clones and owned failed-checkout paths/branches are cleaned up. No later recursive repository discovery is imported.
+
+PR status uses the existing `gh` login and shows PR state, conflicts, review conversations, checks and local dirty/ahead state. The card adds commit/check/reviewer summaries and local Resolve/Fix/Fix CI prompts. Turn completion and Git refs trigger refresh; adaptive polling runs every 15 seconds to 2 minutes and unsubscribes while hidden. The narrow header yields title space to PR metadata; compact/mobile follows upstream by omitting the PR chip. Labels/custom statuses stay absent. Git branch lookup is asynchronous and returns null for detached HEAD, errors, timeouts and empty paths.
+
+Pi 1.1.0, HEIC/HEIF, OpenCode Go, maxTokens, compaction windows, Skills starters, usage/fork billing, browser/Stop behavior, local config and branding remain. Claude SDK, Sources/MCP, Pages, Projects/conductor, Automations, public sharing, labels/custom statuses and messaging remain excluded; Decision/Guarded stay deferred. The PR watcher does not require Sources. Later multi-PR, pr_bind/pr_status and automatic review/merge features are not imported. UI locales remain English and Simplified Chinese.
 
 ```bash
 # Fetch and check out only an independent disposable reference clone.
-git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0153
-git -C /tmp/craft-v0153 fetch origin refs/tags/v0.15.3
-git -C /tmp/craft-v0153 checkout --detach 22c9f0414ab63e0a22814c9a2ada740206e09091
-export CRAFT_AGENT_SOURCE=/tmp/craft-v0153
+git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0154
+git -C /tmp/craft-v0154 fetch origin refs/tags/v0.15.4
+git -C /tmp/craft-v0154 checkout --detach 89e2d6a25fb1c5c46e27ecf8e8f9a744f5abc27b
+export CRAFT_AGENT_SOURCE=/tmp/craft-v0154
 ```
 
 When upstream publishes a new tag worth evaluating:

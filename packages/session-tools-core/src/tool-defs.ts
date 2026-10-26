@@ -183,15 +183,40 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
   { name: 'send_agent_message', description: TOOL_DESCRIPTIONS.send_agent_message, inputSchema: SendAgentMessageSchema, executionMode: 'registry', safeMode: 'block', handler: handleSendAgentMessage },
 ];
 
+/**
+ * Agent profile: the prompt and session-tool set a session runs with.
+ * - `default`: the full Craft Agent toolset (desktop workflows, sources, Pages, browser…).
+ * - `coding`: coding mode — a lean prompt and only the tools in {@link CODING_PROFILE_TOOLS}.
+ */
+export type AgentProfile = 'default' | 'coding';
+
+/**
+ * Session tools a `coding` profile keeps, and the condition each one needs. Everything else
+ * (Pages, browser, session self-management, inter-session messaging, config/skill/mermaid
+ * validation, data/template/LLM helpers, preferences) serves desktop workflows and is dropped.
+ * - `always`: kept in every coding session (feature flags still apply)
+ * - `sources`: kept while the session has at least one enabled source (auth + MCP resources)
+ * - `project`: kept while the session is bound to a project
+ */
+export const CODING_PROFILE_TOOLS: Readonly<Record<string, 'always'>> = {
+  SubmitPlan: 'always',
+  list_background_tasks: 'always',
+  send_developer_feedback: 'always',
+};
+
 export interface SessionToolFilterOptions {
   includeDeveloperFeedback?: boolean;
+  includeBrowser?: boolean;
+  profile?: AgentProfile;
 }
 
 export function getSessionToolDefs(options?: SessionToolFilterOptions): SessionToolDef[] {
-  if (options?.includeDeveloperFeedback === false) {
-    return SESSION_TOOL_DEFS.filter(def => def.name !== 'send_developer_feedback');
-  }
-  return SESSION_TOOL_DEFS;
+  return SESSION_TOOL_DEFS.filter(def => {
+    if (options?.includeDeveloperFeedback === false && def.name === 'send_developer_feedback') return false;
+    if (options?.includeBrowser === false && def.name === 'browser_tool') return false;
+    if (options?.profile === 'coding' && !CODING_PROFILE_TOOLS[def.name]) return false;
+    return true;
+  });
 }
 
 export function getSessionToolRegistry(options?: SessionToolFilterOptions): Map<string, SessionToolDef> {
@@ -237,10 +262,7 @@ export interface JsonSchemaToolDef {
   inputSchema: Record<string, unknown>;
 }
 
-export function getToolDefsAsJsonSchema(options?: {
-  prefix?: string;
-  includeDeveloperFeedback?: boolean;
-}): JsonSchemaToolDef[] {
+export function getToolDefsAsJsonSchema(options?: SessionToolNameOptions): JsonSchemaToolDef[] {
   const prefix = options?.prefix ?? '';
   return getSessionToolDefs(options).map(def => {
     const inputSchema = zodToJsonSchema(def.inputSchema as any, {

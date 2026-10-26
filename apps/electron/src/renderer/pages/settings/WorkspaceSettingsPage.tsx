@@ -63,6 +63,7 @@ export default function WorkspaceSettingsPage() {
   const [renameDialogOpen, setRenameDialogOpen] = useState(false)
   const [wsIconUrl, setWsIconUrl] = useState<string | null>(null)
   const [isUploadingIcon, setIsUploadingIcon] = useState(false)
+  const [codingModeDefault, setCodingModeDefault] = useState(false)
   const [permissionMode, setPermissionMode] = useState<PermissionMode>('ask')
   const [workingDirectory, setWorkingDirectory] = useState('')
   const [isLoadingWorkspace, setIsLoadingWorkspace] = useState(true)
@@ -87,6 +88,7 @@ export default function WorkspaceSettingsPage() {
           setWsName(settings.name || '')
           setWsNameEditing(settings.name || '')
           setPermissionMode(settings.permissionMode || 'ask')
+          setCodingModeDefault(settings.codingMode ?? false)
           setWorkingDirectory(settings.workingDirectory || '')
           // Load cyclable permission modes from workspace settings
           if (settings.cyclablePermissionModes && settings.cyclablePermissionModes.length >= 2) {
@@ -148,6 +150,14 @@ export default function WorkspaceSettingsPage() {
       }
     },
     [activeWorkspaceId, t]
+  )
+
+  const handleCodingModeDefaultChange = useCallback(
+    async (enabled: boolean) => {
+      setCodingModeDefault(enabled)
+      if (!await updateWorkspaceSetting('codingMode', enabled)) setCodingModeDefault(!enabled)
+    },
+    [updateWorkspaceSetting]
   )
 
   // Workspace icon upload handler
@@ -402,7 +412,7 @@ export default function WorkspaceSettingsPage() {
             }
             const isEnabled = enabledModes.includes(m)
             return (
-              <SettingsToggle
+          <SettingsToggle
                 key={m}
                 label={modeTranslations[m].label}
                 description={modeTranslations[m].desc}
@@ -422,6 +432,14 @@ export default function WorkspaceSettingsPage() {
 
       {/* Advanced */}
       <SettingsSection title={t("settings.workspace.advanced")}>
+        <SettingsCard>
+          <SettingsToggle
+            label={t("settings.workspace.codingModeDefault")}
+            description={t("settings.workspace.codingModeDefaultDesc")}
+            checked={codingModeDefault}
+            onCheckedChange={handleCodingModeDefaultChange}
+          />
+        </SettingsCard>
         <SettingsCard>
           <SettingsRow
             label={t("settings.workspace.defaultWorkingDir")}

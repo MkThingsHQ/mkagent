@@ -22,6 +22,7 @@ import { coerceInputText } from '@/lib/input-text'
 import { deriveSessionMessagesLoadState, formatSessionLoadFailure } from '@/lib/session-load'
 import { ensureSessionMessagesLoadedAtom, forceSessionMessagesReloadAtom, loadedSessionsAtom, sessionMetaMapAtom } from '@/atoms/sessions'
 import { getSessionTitle } from '@/utils/session'
+import { usePrWatch } from '@/hooks/usePrWatch'
 // Model resolution: connection.defaultModel (no hardcoded defaults)
 import { resolveEffectiveConnectionSlug, isSessionConnectionUnavailable } from '@config/llm-connections'
 
@@ -309,6 +310,9 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
 
   // Working directory for this session
   const workingDirectory = session?.workingDirectory
+  // Coding mode's header PR chip: desktop only, with a folder. The chip itself renders only once that
+  // folder is a git repo whose branch has a PR (see ChatHeaderPrChip).
+  const prWatch = usePrWatch(sessionId, !!sessionOpts.codingMode && !!workingDirectory && !isCompactMode, workingDirectory)
   const activeWorkspace = React.useMemo(
     () => workspaces.find((w) => w.id === activeWorkspaceId) || null,
     [workspaces, activeWorkspaceId]
@@ -441,6 +445,8 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
 
               thinkingLevel={sessionOpts.thinkingLevel}
               onThinkingLevelChange={(level) => setOption('thinkingLevel', level)}
+              codingMode={sessionOpts.codingMode}
+              onCodingModeChange={(enabled) => setOption('codingMode', enabled)}
               permissionMode={sessionOpts.permissionMode}
 
               onPermissionModeChange={setPermissionMode}
@@ -494,6 +500,9 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
 
         workingDirectory={workingDirectory}
         sessionFolderPath={session?.sessionFolderPath}
+        prWatch={prWatch.state}
+        onRefreshPrWatch={prWatch.refresh}
+        onPrCardOpenChange={prWatch.onCardOpenChange}
       />
       <div className="flex-1 flex flex-col min-h-0">
         <ChatDisplay
@@ -515,6 +524,8 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
 
           thinkingLevel={sessionOpts.thinkingLevel}
           onThinkingLevelChange={(level) => setOption('thinkingLevel', level)}
+          codingMode={sessionOpts.codingMode}
+          onCodingModeChange={(enabled) => setOption('codingMode', enabled)}
           permissionMode={sessionOpts.permissionMode}
 
           onPermissionModeChange={setPermissionMode}

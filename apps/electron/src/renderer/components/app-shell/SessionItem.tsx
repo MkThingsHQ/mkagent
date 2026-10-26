@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { formatDistanceToNowStrict } from 'date-fns'
 import type { Locale } from 'date-fns'
-import { Flag, ShieldAlert, AlertCircle, MessageSquare, FileCheck } from 'lucide-react'
+import { CodeXml, Flag, ShieldAlert, AlertCircle, MessageSquare, FileCheck } from 'lucide-react'
 import { useActionLabel } from '@/actions'
 import { cn } from '@/lib/utils'
 import { rendererPerf } from '@/lib/perf'
@@ -125,7 +125,7 @@ export function SessionItem({
           {...menuProps}
         />
       )}
-      icon={<MessageSquare className="size-4 text-tertiary" />}
+      icon={item.codingMode ? <CodeXml aria-label={t("chat.codingMode.label")} className="size-4 text-tertiary" /> : <MessageSquare className="size-4 text-tertiary" />}
       moreButtonLabel={t('session.actionsFor', { title })}
       title={ctx.searchQuery ? highlightMatch(title, ctx.searchQuery) : title}
       titleClassName={cn('text-label', hasUnreadMeta(item) && 'font-semibold', item.isAsyncOperationOngoing && 'animate-shimmer-text')}

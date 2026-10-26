@@ -17,6 +17,7 @@ import { handleTextDelta, handleTextComplete, handleTextDiscard } from './handle
 import { handleToolStart, handleToolResult, handleTaskBackgrounded, handleShellBackgrounded, handleTaskProgress, handleTaskCompleted } from './handlers/tool'
 import {
   handleComplete,
+  handleCodingModeChanged,
   handleError,
   handleTypedError,
   handleSessionFlagged,
@@ -146,6 +147,8 @@ export function processEvent(
         effects: [{ type: 'toast_error', message: event.error }],
       }
 
+    case 'coding_mode_changed':
+      return handleCodingModeChanged(state, event)
     case 'permission_mode_changed':
       return handlePermissionModeChanged(state, event)
 

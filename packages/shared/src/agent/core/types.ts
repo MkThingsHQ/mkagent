@@ -71,6 +71,7 @@ export interface ToolPermissionResult {
  * Configuration for PromptBuilder
  */
 export interface PromptBuilderConfig {
+  agentProfile?: import('@mkagent/session-tools-core').AgentProfile;
   /** Workspace configuration */
   workspace: Workspace;
   /** Session configuration */

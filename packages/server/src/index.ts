@@ -52,7 +52,7 @@ if (process.argv.includes('--generate-token')) {
   process.exit(0)
 }
 import type { WsRpcTlsOptions } from '@mkagent/server-core/transport'
-import { registerCoreRpcHandlers, cleanupSessionFileWatchForClient } from '@mkagent/server-core/handlers/rpc'
+import { registerCoreRpcHandlers, cleanupRpcClientResources } from '@mkagent/server-core/handlers/rpc'
 import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@mkagent/server-core/sessions'
 import { initModelRefreshService, setFetcherPlatform } from '@mkagent/server-core/model-fetchers'
 import { setSearchPlatform, setImageProcessor } from '@mkagent/server-core/services'
@@ -241,7 +241,7 @@ const instance = await (async () => {
           sessionManager.cleanup()
         }
       },
-      cleanupClientResources: cleanupSessionFileWatchForClient,
+      cleanupClientResources: cleanupRpcClientResources,
     })
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error))

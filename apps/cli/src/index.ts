@@ -20,6 +20,7 @@ export interface CliArgs {
   mode: string
   name?: string
   outputFormat: string
+  coding: boolean
   noCleanup: boolean
   verbose: boolean
   serverEntry?: string
@@ -51,6 +52,7 @@ export function parseArgs(argv: string[]): CliArgs {
     mode: '',
     outputFormat: 'text',
     noCleanup: false,
+    coding: false,
     verbose: false,
     provider: '',
     model: '',
@@ -70,6 +72,7 @@ export function parseArgs(argv: string[]): CliArgs {
       case '--mode': args.mode = takeValue(input, index++, value); break
       case '--name': args.name = takeValue(input, index++, value); break
       case '--output-format': args.outputFormat = takeValue(input, index++, value); break
+      case '--coding': args.coding = true; break
       case '--no-cleanup': args.noCleanup = true; break
       case '--verbose': args.verbose = true; break
       case '--server-entry': args.serverEntry = takeValue(input, index++, value); break
@@ -317,6 +320,7 @@ async function commandRun(args: CliArgs): Promise<void> {
 
     const session = await client.invoke(RPC_CHANNELS.sessions.CREATE, workspaceId, {
       permissionMode: args.mode || 'allow-all',
+      ...(args.coding ? { codingMode: true } : {}),
     }) as { id: string }
     sessionId = session.id
     if (args.model) {
@@ -470,7 +474,7 @@ Commands:
 Options:
   --url <ws-url> --token <token> --workspace <id> --json
   --timeout <ms> --send-timeout <ms> --tls-ca <path>
-  --mode <mode> --output-format <text|stream-json> --no-cleanup
+  --mode <mode> --output-format <text|stream-json> --no-cleanup --coding
   --server-entry <path> --workspace-dir <path>
   --provider <preset> --model <id> --api-key <key> --base-url <url>
   --protocol <openai-completions|anthropic-messages>

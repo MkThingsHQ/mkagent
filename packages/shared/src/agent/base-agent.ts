@@ -1,3 +1,5 @@
+import { buildTransferredSessionContext } from './conversation-summary.ts';
+import type { AgentProfile } from '@mkagent/session-tools-core';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import type { AgentEvent } from '@mkagent/core/types';
@@ -72,6 +74,7 @@ export abstract class BaseAgent implements AgentBackend {
   protected workingDirectory: string;
   protected _sessionId: string;
   protected _model: string;
+  protected _agentProfile: AgentProfile;
   protected _thinkingLevel: ThinkingLevel;
   protected permissionManager: PermissionManager;
   protected prerequisiteManager: PrerequisiteManager;
@@ -87,6 +90,7 @@ export abstract class BaseAgent implements AgentBackend {
 
   constructor(config: BackendConfig, defaultModel: string) {
     this.config = config;
+    this._agentProfile = config.agentProfile ?? 'default';
     this.workingDirectory = config.session?.workingDirectory ?? config.workspace.rootPath;
     this._sessionId = config.session?.id ?? `agent-${Date.now()}`;
     this._model = config.model ?? defaultModel;
@@ -125,6 +129,13 @@ export abstract class BaseAgent implements AgentBackend {
   protected stopConfigWatcher(): void {
     this.configWatcherManager?.stop();
     this.configWatcherManager = null;
+  }
+
+  getAgentProfile(): AgentProfile { return this._agentProfile; }
+
+  setAgentProfile(profile: AgentProfile): void {
+    this._agentProfile = profile;
+    this.config.agentProfile = profile;
   }
 
   getModel(): string {
@@ -299,7 +310,10 @@ export abstract class BaseAgent implements AgentBackend {
     }
     const branchContext = this.buildBranchSeedContext(this.config.getBranchSeedMessages?.());
     if (branchContext) this.config.markBranchSeedApplied?.();
-    const effectiveMessage = [branchContext, this.formatSkillDirective(skillPaths), cleanMessage]
+    const summary = this.config.getTransferredSessionSummary?.();
+    const handoffContext = summary ? buildTransferredSessionContext(summary) : null;
+    if (handoffContext) this.config.markTransferredSessionSummaryApplied?.();
+    const effectiveMessage = [branchContext, handoffContext, this.formatSkillDirective(skillPaths), cleanMessage]
       .filter(Boolean)
       .join('\n\n');
     this._currentTurnUserMessage = cleanMessage;

@@ -16,6 +16,14 @@ describe('parseArgs', () => {
     expect(args.json).toBe(true)
   })
 
+  it('parses --coding (off by default)', () => {
+    expect(parseArgs(['bun', 'index.ts', 'run', 'hello']).coding).toBe(false)
+    const args = parseArgs(['bun', 'index.ts', 'run', '--coding', 'fix the build'])
+    expect(args.coding).toBe(true)
+    expect(args.command).toBe('run')
+    expect(args.rest).toEqual(['fix the build'])
+  })
+
   it('parses --tls-ca', () => {
     expect(parseArgs(['bun', 'index.ts', '--tls-ca', '/path/to/ca.pem', 'ping']).tlsCa).toBe('/path/to/ca.pem')
   })

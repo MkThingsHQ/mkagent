@@ -5,8 +5,10 @@ import { registerAuthHandlers } from './auth'
 import { registerFilesHandlers } from './files'
 import { registerLlmConnectionsHandlers } from './llm-connections'
 import { registerOnboardingHandlers } from './onboarding'
-import { registerSessionsHandlers } from './sessions'
+import { cleanupSessionFileWatchForClient, registerSessionsHandlers } from './sessions'
 export { registerSessionsHandlers, cleanupSessionFileWatchForClient } from './sessions'
+import { cleanupPrWatchForClient, registerPrWatchHandlers } from './pr-watch'
+import { registerCodingReposHandlers } from './coding-repos'
 import { registerServerHandlers } from './server'
 import type { ServerHandlerContext } from '../../bootstrap/headless-start'
 export type { ServerHandlerContext } from '../../bootstrap/headless-start'
@@ -31,4 +33,12 @@ export function registerCoreRpcHandlers(
   registerSkillsHandlers(server, deps)
   registerSystemCoreHandlers(server, deps)
   registerWorkspaceCoreHandlers(server, deps)
+  registerPrWatchHandlers(server, deps)
+  registerCodingReposHandlers(server, deps)
+}
+
+/** Per-client server state to drop when a client disconnects (session file watches, PR watches). */
+export function cleanupRpcClientResources(clientId: string): void {
+  cleanupSessionFileWatchForClient(clientId)
+  cleanupPrWatchForClient(clientId)
 }

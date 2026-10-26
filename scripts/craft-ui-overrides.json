@@ -2,8 +2,8 @@
   "version": 2,
   "files": {
     "apps/electron/src/renderer/App.tsx": {
-      "sha256": "52908953f5d97733a602e69b1d90d47a241c6271dcdc08dec7aa54af447a2a25",
-      "reason": "Craft application shell retains Claude and ChatGPT OAuth props while excluded product surfaces remain removed; v0.15.3: normalize real HEIC/HEIF to JPEG across platform thumbnails and stored/model attachments; preserve original MIME/name/size and decode errors; avoid AVIF misclassification."
+      "sha256": "aee4835f5da7091e742ac2e0cf12ccb6390099bc10aa3ffa2700eea1045673e9",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
     },
     "apps/electron/src/renderer/assets/mkagent_app_icon.png": {
       "sha256": "8ef2d656c2eb9bbef8d0d8abb646e1ded0e4143046434866d541aaf9e3da6dc5",
@@ -42,8 +42,8 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/atoms/sessions.ts": {
-      "sha256": "e6daa75b314719dd5c241fb1b2791d3e412f9b65c34b6b507af0b41be58078db",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+      "sha256": "82c961f60ce46ac54acf1e8550a7a9812bb29e37396fa0bbc961ac5ad7ade4fe",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
     },
     "apps/electron/src/renderer/browser-empty-state.html": {
       "sha256": "c82afe0928071236a407e8c4faa1fc3b52e2c7cb2f33bc4c075cbebdbd9fcb6e",
@@ -98,8 +98,8 @@
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx": {
-      "sha256": "70b13ee593d3c45974f23552d4690d239bbe5d3d2364042b7d74611264822b37",
-      "reason": "v0.15 transcript, starter prompts, Shell Run/output overlays and composer with removed Sources/labels/auth request surfaces kept excluded"
+      "sha256": "d1240599d3069142250a727d9bcc9cb6e28b7ec2e62ff53307ee2cdedf8ea3d0",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent. Register loaded session metadata before navigation so the created-session push cannot race with route validation."
     },
     "apps/electron/src/renderer/components/app-shell/CompactSessionMenu.tsx": {
       "sha256": "197b45b31d755640c377a5c3b5409eb8bce35ee58e82a3796568aadd762c19d1",
@@ -129,9 +129,13 @@
       "sha256": "a253bd65b16fa68cd84a4f99831b2464ff8d6cb4d9ced5fe87c61335bb3794a7",
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
+    "apps/electron/src/renderer/components/app-shell/SessionInfoPopover.tsx": {
+      "sha256": "b5c6ca023a1b73b6cf7000b304cc30ec9ea7b04564ec3d3a3a8c2e0302d87b3c",
+      "reason": "Import flex-1/min-h-0 container and overflow-y-auto scroll fix; verify oversized file listing in actual popover and mobile drawer. Keep the mobile drawer wrapper flex-constrained; show retained cumulative output/estimated SDK cost in the info panel for direct UI verification."
+    },
     "apps/electron/src/renderer/components/app-shell/SessionItem.tsx": {
-      "sha256": "9be89da91cf2f8650c0cde3c97b83806f375a257fc05ebb1b2b3031963d23e82",
-      "reason": "v0.15 row grid, run-state subtitles, unread weight and semantic search badges retain Lite actions without configurable statuses/labels/projects"
+      "sha256": "6fe66b26e5c1072612bbc29520e62cafcca55a5dfec410b3152e663eeb299fe0",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
     },
     "apps/electron/src/renderer/components/app-shell/SessionList.tsx": {
       "sha256": "e1f143c56b32c2cc58e96b31c8f5a2b3b53dddb25e9ccd536258e2656ca0025c",
@@ -186,20 +190,24 @@
       "reason": "Local files/news/Skills suggestions replace source-derived and email-setup prompts without restoring Sources"
     },
     "apps/electron/src/renderer/components/app-shell/chat-header/ChatHeader.tsx": {
-      "sha256": "24f91685974ef90b396e662e1cefcd20a9a84b3eb6ac4ae022e11c9158c8dadb",
-      "reason": "v0.15 chat header composes retained rename, archive, flag, file info and mobile actions without labels/statuses/Pages/public sharing"
+      "sha256": "bdad931830183a32f6bb7d5e850ba954157f73aea726148cb47c27720954bac9",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
     },
     "apps/electron/src/renderer/components/app-shell/input/ChatInputZone.tsx": {
       "sha256": "f5c24f3ba1c45cdedc704213562fa20b3dad47a8aec3d31d4f24bce6266a5ac1",
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
+    },
+    "apps/electron/src/renderer/components/app-shell/input/CodingWorkspacePanel.tsx": {
+      "sha256": "26e2315127b62afecdf09d9c4a66529a7f795b27eb475448c083cd4df83a1d6a",
+      "reason": "v0.15.4 direct-child/recent/gh repository listing and isolated worktrees; codex/ convention, exact remote identity and owned failure cleanup. No later recursive discovery."
     },
     "apps/electron/src/renderer/components/app-shell/input/CompactPermissionModeSelector.tsx": {
       "sha256": "36c4fe2bc356312f5f1a10ba024e33ef63e7d86306493704a1f3136204944a18",
       "reason": "Retain Lite permission modes and precise approvals; Guarded and decision configuration deferred"
     },
     "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx": {
-      "sha256": "8c797b1eb537ab8d8793cc114e234c0d1dd2f3060234e618d503dcc08a80ba20",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+      "sha256": "8031ff1a194db0e37a0f5a87443d98ab2295054c2be1bf4542d79763914993e5",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
     },
     "apps/electron/src/renderer/components/app-shell/input/StructuredInput.tsx": {
       "sha256": "33c1c4166eaa90ccd47ff2e7e40cd9233c6d43b4a4cbd2b702d76021ae87fe5c",
@@ -354,20 +362,20 @@
       "reason": "Craft renderer test adapted to retained Lite behavior"
     },
     "apps/electron/src/renderer/event-processor/handlers/session.ts": {
-      "sha256": "f3856241e22116a24cd646ad54e15a7207c5526211de085e1e3c88380604423b",
-      "reason": "Craft v0.13.3 retry lifecycle is adapted to the MkAgent renderer and retained Lite session state"
+      "sha256": "4ef8ca14fc3950331c6b80ca73b08cfeb4747283461950228d4b612f5abba781",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
     },
     "apps/electron/src/renderer/event-processor/index.ts": {
       "sha256": "d21117d69820e7d70aefdfa9a7dedd03ff6ea1a2e01fc271748d159738fa615b",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/event-processor/processor.ts": {
-      "sha256": "3c93040fa9899add34ed4f1b789bddcd06cf0db50698dfa6a00762fb7bbbd175",
-      "reason": "Craft v0.13.3 retry and text-discard events are routed through the retained MkAgent event processor"
+      "sha256": "71b190ad6270ae83efbbc3bd19cdb0860445c4bf9fdceffd03b0e43319323090",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
     },
     "apps/electron/src/renderer/event-processor/types.ts": {
-      "sha256": "602ca1993bb50809cd9a3238501ae855f1310510db148218ac0000e4729a35a7",
-      "reason": "Craft v0.13.3 retry event types are adapted to the narrower MkAgent protocol surface"
+      "sha256": "337b5f970cc177c4275eaf96cdcb34e9904042e5fbd75a6cce21e017dcf32199",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
     },
     "apps/electron/src/renderer/hooks/__tests__/useOnboarding.test.ts": {
       "sha256": "f6f47abc46b7346c2636a2e5bd95eef6dc82f1d923e41c0ec08ca9484a0a8e20",
@@ -398,8 +406,8 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/hooks/useSessionOptions.ts": {
-      "sha256": "7eefd45f5dcef7fbbad12ac4c1bb39c0350a931952284b580f8be8a2bcec1f44",
-      "reason": "Retain Lite permission modes and precise approvals; Guarded and decision configuration deferred"
+      "sha256": "186ecbc6a30b6ab5c2b375db765a50c8507a45ad9970a55d36df1137e59caa32",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
     },
     "apps/electron/src/renderer/hooks/useSessionSearch.ts": {
       "sha256": "5825a043c104f917a67f52779521084538f944568ac5c5c764b7bc7e68134239",
@@ -442,8 +450,8 @@
       "reason": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded"
     },
     "apps/electron/src/renderer/pages/ChatPage.tsx": {
-      "sha256": "cf9c65ccaa94f34f309789a4efe5ffb09c1d6fa29eb2385445ce5f5ef4ec8d23",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+      "sha256": "0fb77deec1f288f04280a6b150dc540111fa7839ec575e5b65bfe3a6aff054ed",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
     },
     "apps/electron/src/renderer/pages/SkillInfoPage.tsx": {
       "sha256": "f05f8b41d93399a332e785d5ed45e3e2db48fc5e4964c0805c72e24b23636eeb",
@@ -466,8 +474,16 @@
       "reason": "Craft settings UI adapted only to retained MkAgent settings"
     },
     "apps/electron/src/renderer/pages/settings/WorkspaceSettingsPage.tsx": {
-      "sha256": "4d539cd4ec9a9737ebd31910e54ca22d4b9d229295bee8e83c13fa8673f87f3a",
-      "reason": "Craft settings UI adapted only to retained MkAgent settings"
+      "sha256": "bde953f577635dc7403a25faab4304bdae16c9503de5a47dc91b1a021d2f04ff",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    "apps/electron/src/renderer/pages/settings/__tests__/ai-settings-loader.test.ts": {
+      "sha256": "5dca222cc598cf81035813bd11bd6733f54d4b6dad44b63af52855ecb49c1b1d",
+      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types.; v0.15.3: restore applicable Pi compaction-window settings/config/RPC/UI/runtime chain and endpoint output cap; use model-aware SDK reserves, lazy restart with journal restore, validated legacy defaults; no excluded backend/product restored."
+    },
+    "apps/electron/src/renderer/pages/settings/ai-settings-loader.ts": {
+      "sha256": "2fe10e5a0c87d4a1d068607db9255b186e3e584d20a1fa56e51ab53819c4f0bf",
+      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types.; v0.15.3: restore applicable Pi compaction-window settings/config/RPC/UI/runtime chain and endpoint output cap; use model-aware SDK reserves, lazy restart with journal restore, validated legacy defaults; no excluded backend/product restored."
     },
     "apps/electron/src/renderer/pages/settings/index.ts": {
       "sha256": "b7bfec4ded6fcd0ad804b7079866f600c8b10ce00de8a832650f52e6f7c58454",
@@ -486,20 +502,8 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/utils/session.ts": {
-      "sha256": "7982f7e7d639b50e8f729249b016eab8a11a275b35677b027e93578fcfa9f4bf",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
-    },
-    "apps/electron/src/renderer/pages/settings/ai-settings-loader.ts": {
-      "sha256": "2fe10e5a0c87d4a1d068607db9255b186e3e584d20a1fa56e51ab53819c4f0bf",
-      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types.; v0.15.3: restore applicable Pi compaction-window settings/config/RPC/UI/runtime chain and endpoint output cap; use model-aware SDK reserves, lazy restart with journal restore, validated legacy defaults; no excluded backend/product restored."
-    },
-    "apps/electron/src/renderer/pages/settings/__tests__/ai-settings-loader.test.ts": {
-      "sha256": "5dca222cc598cf81035813bd11bd6733f54d4b6dad44b63af52855ecb49c1b1d",
-      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types.; v0.15.3: restore applicable Pi compaction-window settings/config/RPC/UI/runtime chain and endpoint output cap; use model-aware SDK reserves, lazy restart with journal restore, validated legacy defaults; no excluded backend/product restored."
-    },
-    "apps/electron/src/renderer/components/app-shell/SessionInfoPopover.tsx": {
-      "sha256": "b5c6ca023a1b73b6cf7000b304cc30ec9ea7b04564ec3d3a3a8c2e0302d87b3c",
-      "reason": "Import flex-1/min-h-0 container and overflow-y-auto scroll fix; verify oversized file listing in actual popover and mobile drawer. Keep the mobile drawer wrapper flex-constrained; show retained cumulative output/estimated SDK cost in the info panel for direct UI verification."
+      "sha256": "6a4d7291381feffa9735a244ad7cb7d6824642b02700244e411bd3b1b3bbf1d8",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
     }
   }
 }
