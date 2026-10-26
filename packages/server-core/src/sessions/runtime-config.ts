@@ -6,6 +6,7 @@ export interface BackendRuntimeSignatureInput {
   connection: LlmConnection | null
   provider: AgentProvider
   authType?: LlmAuthType
+  autoCompactWindow?: number
   resolvedModel: string
 }
 
@@ -51,6 +52,7 @@ export function buildRestartRequiredSignature(input: BackendRuntimeSignatureInpu
   const { connection, provider, authType } = input
   return JSON.stringify(definedObject({
     provider,
+    autoCompactWindow: input.autoCompactWindow,
     authType,
     slug: connection?.slug,
     providerType: connection?.providerType,
@@ -81,6 +83,7 @@ export function buildBackendRuntimeSignature(input: BackendRuntimeSignatureInput
                     supportsImages: typeof connection.customEndpoint.supportsImages === 'boolean'
                       ? connection.customEndpoint.supportsImages
                       : undefined,
+                    maxTokens: connection.customEndpoint.maxTokens,
                   })
                 : undefined,
               models: normalizeCustomModels(connection),
@@ -91,6 +94,7 @@ export function buildBackendRuntimeSignature(input: BackendRuntimeSignatureInput
 
   return JSON.stringify(definedObject({
     provider,
+    autoCompactWindow: input.autoCompactWindow,
     authType,
     resolvedModel,
     connection: connectionShape,

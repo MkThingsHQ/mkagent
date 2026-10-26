@@ -1,3 +1,4 @@
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select'
 import { AnimatedCollapsibleContent } from '@mkagent/ui'
 import { settingsUI } from '@/components/settings/SettingsUIConstants'
 import { loadAiSettings } from './ai-settings-loader'
@@ -816,6 +817,7 @@ export default function AiSettingsPage() {
     activePreset?: string
     models?: string[]
     customApi?: CustomEndpointApi
+    customEndpoint?: import("@config/llm-connections").CustomEndpointConfig
   } | undefined>(undefined)
   const setFullscreenOverlayOpen = useSetAtom(fullscreenOverlayOpenAtom)
 
@@ -824,6 +826,9 @@ export default function AiSettingsPage() {
 
   // Default settings state (app-level)
   const [defaultThinking, setDefaultThinking] = useState<ThinkingLevel>(DEFAULT_THINKING_LEVEL)
+  const [autoCompactDraft, setAutoCompactDraft] = useState('')
+  const [autoCompactError, setAutoCompactError] = useState<string>()
+  const [autoCompactWindow, setAutoCompactWindow] = useState<number | undefined>()
   const [extendedPromptCache, setExtendedPromptCache] = useState(false)
   const [enable1MContext, setEnable1MContext] = useState(false)
   const [rtkEnabled, setRtkEnabled] = useState(false)
@@ -855,6 +860,8 @@ export default function AiSettingsPage() {
       if (cancelled) return
       setWorkspaces(snapshot.workspaces)
       setDefaultThinking(snapshot.thinking)
+      setAutoCompactWindow(snapshot.autoCompactWindow)
+      setAutoCompactDraft(String(snapshot.autoCompactWindow ?? ''))
       setExtendedPromptCache(snapshot.extendedCache)
       setEnable1MContext(snapshot.enable1M)
       setRtkEnabled(snapshot.rtkEnabled)
@@ -991,9 +998,10 @@ export default function AiSettingsPage() {
       apiKey,
       baseUrl: connection.baseUrl,
       connectionDefaultModel: modelStr,
-      activePreset: isCustomEndpointConnection ? 'custom' : (connection.piAuthProvider || undefined),
+      activePreset: isCustomEndpointConnection ? (connection.baseUrl?.trim() === 'https://opencode.ai/zen/go/v1' ? 'opencode-go' : 'custom') : (connection.piAuthProvider || undefined),
       models: modelIds,
       customApi: connection.customEndpoint?.api,
+      customEndpoint: connection.customEndpoint,
     })
 
     // Open overlay and jump directly to credentials step (no reset — jumpToCredentials sets state)
@@ -1286,6 +1294,39 @@ export default function AiSettingsPage() {
               {/* Performance */}
               <SettingsSection title={t("settings.ai.performance")} description={t("settings.ai.performanceDesc")}>
                 <SettingsCard>
+                  <SettingsRow label={t('settings.ai.autoCompactWindow')} description={t('settings.ai.autoCompactWindowDesc')}>
+                    <Select value={String(autoCompactWindow ?? 'default')} onValueChange={async value => {
+                      const next = value === 'default' ? undefined : Number(value)
+                      try {
+                        await window.electronAPI.setAutoCompactWindow(next ?? null)
+                        setAutoCompactWindow(next)
+                        setAutoCompactDraft(String(next ?? ''))
+                        setAutoCompactError(undefined)
+                      } catch { toast.error(t('settings.ai.autoCompactWindowError')) }
+                    }}>
+                      <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {autoCompactWindow !== undefined && ![100000, 200000, 400000, 600000, 800000, 1000000].includes(autoCompactWindow) && <SelectItem value={String(autoCompactWindow)}>{autoCompactWindow / 1000}K</SelectItem>}
+                        <SelectItem value="default">{t('common.default')}</SelectItem>
+                        {[100000, 200000, 400000, 600000, 800000, 1000000].map(value => <SelectItem key={value} value={String(value)}>{value / 1000}K</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </SettingsRow>
+                  <SettingsInput inCard label={t('settings.ai.autoCompactCustom')} value={autoCompactDraft}
+                    onChange={value => { setAutoCompactDraft(value); setAutoCompactError(undefined) }}
+                    placeholder="350000" error={autoCompactError}
+                    onBlur={async () => {
+                      const next = autoCompactDraft.trim() ? Number(autoCompactDraft) : undefined
+                      if (next !== undefined && (!Number.isSafeInteger(next) || next < 100000 || next > 1000000)) {
+                        setAutoCompactError(t('settings.ai.autoCompactInvalid'))
+                        return
+                      }
+                      if (next === autoCompactWindow) return
+                      try {
+                        await window.electronAPI.setAutoCompactWindow(next ?? null)
+                        setAutoCompactWindow(next)
+                      } catch { setAutoCompactError(t('settings.ai.autoCompactWindowError')) }
+                    }} />
                   <SettingsToggle
                     label={t("settings.ai.extendedContext")}
                     description={t("settings.ai.extendedContextDesc")}

@@ -45,6 +45,7 @@ import {
 import {
   ConfigWatcher,
   getMiniModel,
+  getAutoCompactWindow,
   getWorkspaces,
   resolveTitleLanguageName,
   type ConfigWatcherCallbacks,
@@ -841,6 +842,7 @@ export class SessionManager implements ISessionManager {
         this.emit(managed.workspace.id, { type: 'status', sessionId, message: event.message })
         break
       case 'info':
+        if (event.compactionTrigger) managed.currentStatus = undefined
         if (event.compactionTrigger === 'manual' && managed.pendingPlanExecution) {
           managed.pendingPlanExecution.awaitingCompaction = false
           this.persistSession(managed)
@@ -1110,6 +1112,7 @@ export class SessionManager implements ISessionManager {
         workspace: managed.workspace,
         session: this.toStored(managed),
         model: context.resolvedModel,
+        autoCompactWindow: getAutoCompactWindow(),
         miniModel: context.connection ? getMiniModel(context.connection) : undefined,
         thinkingLevel: managed.thinkingLevel,
         isHeadless: !this.browserPaneManager,
@@ -1261,8 +1264,8 @@ export class SessionManager implements ISessionManager {
     const result = await agent.postInit()
     if (result.authWarning) log.warn(result.authWarning)
     managed.agent = agent
-    managed.backendRuntimeSignature = buildBackendRuntimeSignature({ connection: context.connection, provider: context.provider, authType: context.authType, resolvedModel: context.resolvedModel })
-    managed.backendRestartSignature = buildRestartRequiredSignature({ connection: context.connection, provider: context.provider, authType: context.authType, resolvedModel: context.resolvedModel })
+    managed.backendRuntimeSignature = buildBackendRuntimeSignature({ connection: context.connection, provider: context.provider, authType: context.authType, resolvedModel: context.resolvedModel, autoCompactWindow: getAutoCompactWindow() })
+    managed.backendRestartSignature = buildRestartRequiredSignature({ connection: context.connection, provider: context.provider, authType: context.authType, resolvedModel: context.resolvedModel, autoCompactWindow: getAutoCompactWindow() })
     return agent
   }
 
@@ -1285,9 +1288,9 @@ export class SessionManager implements ISessionManager {
     if (!agent || agent.isProcessing()) return
     const workspaceConfig = loadWorkspaceConfig(managed.workspace.rootPath)
     const context = resolveBackendContext({ sessionConnectionSlug: managed.llmConnection, workspaceDefaultConnectionSlug: workspaceConfig?.defaults?.defaultLlmConnection, managedModel: managed.model })
-    const runtimeSignature = buildBackendRuntimeSignature({ connection: context.connection, provider: context.provider, authType: context.authType, resolvedModel: context.resolvedModel })
+    const runtimeSignature = buildBackendRuntimeSignature({ connection: context.connection, provider: context.provider, authType: context.authType, resolvedModel: context.resolvedModel, autoCompactWindow: getAutoCompactWindow() })
     if (runtimeSignature === managed.backendRuntimeSignature) return
-    const restartSignature = buildRestartRequiredSignature({ connection: context.connection, provider: context.provider, authType: context.authType, resolvedModel: context.resolvedModel })
+    const restartSignature = buildRestartRequiredSignature({ connection: context.connection, provider: context.provider, authType: context.authType, resolvedModel: context.resolvedModel, autoCompactWindow: getAutoCompactWindow() })
     if (restartSignature !== managed.backendRestartSignature || !agent.updateRuntimeConfig) {
       await agent.disposeForRestart?.()
       agent.dispose()

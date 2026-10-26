@@ -101,3 +101,14 @@ describe('filterAttachmentsForModelInput', () => {
     expect(result.attachments).toBeUndefined()
   })
 })
+
+  // An edited output cap must refresh live sessions, or it only applies after restart.
+  it('changes when the custom endpoint maxTokens changes', () => {
+    const withCap = (maxTokens?: number) => sig({
+      ...baseCompat,
+      customEndpoint: { api: 'openai-completions', supportsImages: true, maxTokens },
+    })
+
+    expect(withCap(32_768)).not.toBe(withCap(undefined))
+    expect(withCap(32_768)).not.toBe(withCap(65_536))
+  })

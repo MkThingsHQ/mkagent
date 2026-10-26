@@ -522,6 +522,7 @@ export class PiAgent extends BaseAgent {
       piAuth,
       baseUrl: runtime.baseUrl,
       customEndpoint: runtime.customEndpoint,
+      autoCompactWindow: this.config.autoCompactWindow,
       customModels: runtime.customModels,
       // Branch params for Pi SDK session fork
       branchFromSdkSessionId: this.config.session?.branchFromSdkSessionId,
@@ -967,6 +968,10 @@ export class PiAgent extends BaseAgent {
       }
       if (agentEvent.type === 'info' && agentEvent.message.startsWith('Compacted')) this.resetPrerequisiteState();
       if (!this._isProcessing && this.backgroundEventSink && (
+        // Pi threshold compaction may outlive the foreground agent_end.
+        // Its result and post-append context snapshot still belong to this session.
+        ((eventType === 'compaction_start' || eventType === 'compaction_end') && event.reason !== 'manual') ||
+        agentEvent.type === 'context_usage' ||
         agentEvent.type === 'shell_backgrounded' ||
         agentEvent.type === 'task_activity' ||
         agentEvent.type === 'task_backgrounded' ||

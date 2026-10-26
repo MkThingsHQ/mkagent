@@ -8,6 +8,20 @@ All notable changes to MkAgent are documented in this file. The format follows
 
 Add user-visible changes here before running `bun run release:prepare <version>`.
 
+## [0.2.3] - 2026-10-26
+
+### Added
+
+- Automatically convert HEIC/HEIF attachments to JPEG for previews, thumbnails and Pi model input; preserve original file metadata and report decode failures.
+- OpenCode Go connection preset with its endpoint, branding and editable model IDs.
+- Configurable endpoint output caps (`customEndpoint.maxTokens`), including long-session compaction budgets; legacy connections retain the 8192 default.
+- Pi “Compact context at” setting with 100K–1M presets/custom values, model-aware triggers and existing-session restart support.
+
+### Improved
+
+- Synchronize applicable Craft v0.15.2 → v0.15.3 changes, preserving Pi 1.1.0, MkAgent branding and Lite boundaries.
+- Revalidate existing rich Chat Starters, Skill invocation, live settings refresh and session usage accounting.
+
 ## [0.2.2] - 2026-10-16
 
 ### Added
@@ -120,6 +134,7 @@ Add user-visible changes here before running `bun run release:prepare <version>`
 - Local session search, flags, archives, import, export, and branching.
 
 [Unreleased]: https://github.com/MkThingsHQ/mkagent/releases
+[0.2.3]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.3
 [0.2.2]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.2
 [0.2.1]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.1
 [0.2.0]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.0

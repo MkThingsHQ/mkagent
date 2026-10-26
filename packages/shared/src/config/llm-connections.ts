@@ -18,6 +18,8 @@ export type MidStreamBehavior = 'steer' | 'queue';
 export interface CustomEndpointConfig {
   api: CustomEndpointApi;
   supportsImages?: boolean;
+  /** Endpoint output cap; defaults to 8192. Also bounds Pi compaction summaries. */
+  maxTokens?: number;
 }
 
 export interface LlmConnection {

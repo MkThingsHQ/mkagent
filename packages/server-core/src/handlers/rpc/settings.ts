@@ -2,7 +2,7 @@ import { validateChatStarters } from '../../utils/chat-starters'
 import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { dirname } from 'path'
 import { RPC_CHANNELS } from '@mkagent/shared/protocol'
-import { getPreferencesPath, getSessionDraft, setSessionDraft, deleteSessionDraft, getAllSessionDrafts, getWorkspaceByNameOrId, getDefaultThinkingLevel, setDefaultThinkingLevel } from '@mkagent/shared/config'
+import { getPreferencesPath, getSessionDraft, setSessionDraft, deleteSessionDraft, getAllSessionDrafts, getWorkspaceByNameOrId, getDefaultThinkingLevel, setDefaultThinkingLevel, getAutoCompactWindow, setAutoCompactWindow } from '@mkagent/shared/config'
 import { isValidThinkingLevel, normalizeThinkingLevel, THINKING_LEVEL_IDS } from '@mkagent/shared/agent/thinking-levels'
 
 const VALID_THINKING_LEVELS_LIST = THINKING_LEVEL_IDS.map(id => `'${id}'`).join(', ')
@@ -36,6 +36,8 @@ export const HANDLED_CHANNELS = [
   RPC_CHANNELS.caching.SET_ENABLE_1M_CONTEXT,
   RPC_CHANNELS.sessions.GET_MODEL,
   RPC_CHANNELS.sessions.SET_MODEL,
+  RPC_CHANNELS.settings.GET_AUTO_COMPACT_WINDOW,
+  RPC_CHANNELS.settings.SET_AUTO_COMPACT_WINDOW,
   RPC_CHANNELS.settings.GET_DEFAULT_THINKING_LEVEL,
   RPC_CHANNELS.settings.SET_DEFAULT_THINKING_LEVEL,
   RPC_CHANNELS.tools.GET_BROWSER_TOOL_ENABLED,
@@ -49,6 +51,11 @@ export const HANDLED_CHANNELS = [
 ] as const
 
 export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): void {
+  server.handle(RPC_CHANNELS.settings.GET_AUTO_COMPACT_WINDOW, async () => getAutoCompactWindow())
+  server.handle(RPC_CHANNELS.settings.SET_AUTO_COMPACT_WINDOW, async (_ctx, value: number | null | undefined) => {
+    if (!setAutoCompactWindow(value ?? undefined)) throw new Error('Failed to persist compaction window')
+    return { success: true }
+  })
   // ============================================================
   // Settings - Default Thinking Level (App-Level)
   // ============================================================

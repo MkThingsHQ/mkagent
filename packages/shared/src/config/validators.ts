@@ -31,11 +31,17 @@ const WorkspaceSchema = z.object({
   createdAt: z.number(),
 }).passthrough();
 
+export const CustomEndpointSchema = z.object({
+  api: z.enum(['openai-completions', 'anthropic-messages']),
+  supportsImages: z.boolean().optional(),
+  maxTokens: z.number().int().positive().max(Number.MAX_SAFE_INTEGER).optional(),
+});
+
 export const StoredConfigSchema = z.object({
   workspaces: z.array(WorkspaceSchema),
   activeWorkspaceId: z.string().nullable(),
   activeSessionId: z.string().nullable(),
-  llmConnections: z.array(z.object({ slug: z.string(), name: z.string() }).passthrough()).optional(),
+  llmConnections: z.array(z.object({ slug: z.string(), name: z.string(), customEndpoint: CustomEndpointSchema.optional() }).passthrough()).optional(),
   defaultLlmConnection: z.string().optional(),
   networkProxy: z.object({
     enabled: z.boolean(),

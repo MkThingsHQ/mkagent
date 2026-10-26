@@ -1,6 +1,6 @@
 {
   "name": "@mkagent/server-core",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "license": "Apache-2.0",
   "description": "Reusable headless server infrastructure for MkAgent",
   "type": "module",
@@ -29,10 +29,12 @@
     "jose": "^6.0.0",
     "ws": "^8.19.0",
     "sharp": "0.34.5",
-    "@earendil-works/pi-ai": "1.1.0"
+    "@earendil-works/pi-ai": "1.1.0",
+    "heic-convert": "^2.1.0"
   },
   "devDependencies": {
     "typescript": "^5.8.2",
-    "@types/node": "^22.0.0"
+    "@types/node": "^22.0.0",
+    "@types/heic-convert": "^2.1.1"
   }
 }
