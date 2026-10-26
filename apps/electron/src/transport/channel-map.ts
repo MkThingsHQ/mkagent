@@ -77,6 +77,8 @@ export const CHANNEL_MAP = {
   testLlmConnectionSetup: invoke(RPC_CHANNELS.settings.TEST_LLM_CONNECTION_SETUP),
   deleteLlmConnection: invoke(RPC_CHANNELS.llmConnections.DELETE),
   setDefaultLlmConnection: invoke(RPC_CHANNELS.llmConnections.SET_DEFAULT),
+  getAutoCompactWindow: invoke(RPC_CHANNELS.settings.GET_AUTO_COMPACT_WINDOW),
+  setAutoCompactWindow: invoke(RPC_CHANNELS.settings.SET_AUTO_COMPACT_WINDOW),
   getDefaultThinkingLevel: invoke(RPC_CHANNELS.settings.GET_DEFAULT_THINKING_LEVEL),
   setDefaultThinkingLevel: invoke(RPC_CHANNELS.settings.SET_DEFAULT_THINKING_LEVEL),
   onLlmConnectionsChanged: listener(RPC_CHANNELS.llmConnections.CHANGED),

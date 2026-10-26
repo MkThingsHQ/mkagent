@@ -76,6 +76,7 @@ export interface StoredConfig {
   browserToolEnabled?: boolean;  // Enable built-in browser tool (default: true). Disable for Playwright/Puppeteer.
   // Prompt caching & context
   extendedPromptCache?: boolean;  // Use 1h prompt cache TTL instead of 5m (default: false)
+  autoCompactWindow?: number;
   enable1MContext?: boolean;  // Enable 1M context window for supported models (default: false — opt-in; requires Anthropic Tier 4+)
   // Token optimization
   rtkExcludeCommands?: string[];
@@ -2075,4 +2076,22 @@ export function setServerConfig(serverConfig: ServerConfig): void {
 export function getRtkExcludeCommands(): string[] {
   const value = loadStoredConfig()?.rtkExcludeCommands;
   return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === 'string' && entry.trim().length > 0).map(entry => entry.trim()) : [];
+}
+
+/** Configured Pi compaction window. Legacy/invalid values use the SDK default. */
+export function getAutoCompactWindow(): number | undefined {
+  const value = loadStoredConfig()?.autoCompactWindow;
+  return Number.isSafeInteger(value) && value! >= 100_000 && value! <= 1_000_000 ? value : undefined;
+}
+
+export function setAutoCompactWindow(value: number | undefined): boolean {
+  if (value !== undefined && (!Number.isSafeInteger(value) || value < 100_000 || value > 1_000_000)) {
+    throw new Error('Compaction window must be an integer between 100000 and 1000000');
+  }
+  const config = loadStoredConfig();
+  if (!config) return false;
+  if (value === undefined) delete config.autoCompactWindow;
+  else config.autoCompactWindow = value;
+  saveConfig(config);
+  return true;
 }

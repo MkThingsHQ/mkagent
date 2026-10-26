@@ -212,6 +212,7 @@ export interface StoredAttachment {
   name: string;                  // Original filename
   mimeType: string;
   size: number;                  // Final size (after any resize)
+  originalMimeType?: string;     // Format before normalization (e.g. HEIC to JPEG)
   originalSize?: number;         // Original size before resize (if applicable)
   storedPath: string;            // Full path to copied file on disk
   thumbnailPath?: string;        // Path to OS-generated thumbnail (images/PDFs/Office)

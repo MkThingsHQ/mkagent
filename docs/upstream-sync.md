@@ -7,29 +7,29 @@ MkAgent derives its architecture, UI, and runtime from [Craft Agents OSS](https:
 | Item | Value |
 |---|---|
 | Repository | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.15.2` |
-| Commit | `b879152d2a4e1232bcd4efb7d8c4568a24638f25` |
+| Tag | `v0.15.3` |
+| Commit | `22c9f0414ab63e0a22814c9a2ada740206e09091` |
 
 ## Latest evaluated release
 
 | Item | Value |
 |---|---|
-| Evaluated on | `2026-10-16` |
-| Upstream tag | `v0.15.2` |
-| Upstream commit | `b879152d2a4e1232bcd4efb7d8c4568a24638f25` |
+| Evaluated on | `2026-10-26` |
+| Upstream tag | `v0.15.3` |
+| Upstream commit | `22c9f0414ab63e0a22814c9a2ada740206e09091` |
 
-MkAgent 0.2.2 synchronizes **only v0.15.1 → v0.15.2** from `2e3ba53ff80b229a07e9d1884dc58f6733f22e1f`; v0.15.3 is not included. All 74 changed paths are classified in [the inventory](./sync/0.15.2-inventory.json), including excluded hunks inside retained files. See [validation](./sync/0.15.2-validation.md) for evidence and boundaries.
+MkAgent 0.2.3 synchronizes **only v0.15.2 → v0.15.3**. All 53 changed paths are reviewed in [the inventory](./sync/0.15.3-inventory.json); [validation](./sync/0.15.3-validation.md) records actual runtime and UI evidence. No v0.15.4–0.15.6 feature is included.
 
-Settings → AI now stores up to three workspace Chat Starters with separate labels and prompts, Skill mentions, live refresh and automatic suggestions after clearing. Pi sums all API message output/cost within each app turn, and SessionManager accumulates across turns and restarts while keeping current context occupancy separate. Pi forks and independent children start with fresh billing; explicit child models are preserved. The Anthropic tool-schema closure fix applies to Pi's actual preloaded interceptor. Session info content scrolls, and spawn_session guidance asks for narrow tasks, supplied context, ranged reads and concise results.
+HEIC/HEIF attachments become JPEG at ingestion, including thumbnails and actual model input. OpenCode Go is a branded OpenAI-compatible preset with editable models. Endpoint `customEndpoint.maxTokens` is editable, validated, persisted and refreshed in live Pi model registration; omitted values retain 8192. Pi now consumes the global 100K–1M compaction setting: its per-model reserve is `max(SDK reserve, contextWindow − selectedWindow)`. Context occupancy uses that same reserve, independently of billable usage. Changing the global setting restarts an idle runtime on the next turn, restoring its SDK journal. Model/connection changes and application restart retain the setting.
 
-MkAgent branding/configuration, Pi 1.1.0 and previous browser/Stop/attachment/prerequisite fixes remain. Claude CLI compaction windows, Agent/Task model aliases and running-total state have no Pi consumer and are omitted individually from shared files. Decision/Guarded remain deferred. Sources/MCP, Pages, Projects/conductor, Automations, sharing, labels/custom statuses and messaging remain outside Lite. Supported UI locales remain English and Simplified Chinese; no unavailable controls or empty backend modules are added.
+Rich Chat Starters, Skill badges/invocation, immediate settings refresh and empty-config fallback were already retained in 0.2.2 and are revalidated. Sources are not restored. MkAgent branding/local config, Pi 1.1.0 and previous browser/Stop/usage fixes remain. Claude SDK, Sources/MCP, Pages, Projects/conductor, Automations, public sharing, labels/custom statuses and messaging remain excluded; Decision/Guarded remain deferred. UI locales remain English and Simplified Chinese.
 
 ```bash
 # Fetch and check out only an independent disposable reference clone.
-git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0152
-git -C /tmp/craft-v0152 fetch origin refs/tags/v0.15.2
-git -C /tmp/craft-v0152 checkout --detach b879152d2a4e1232bcd4efb7d8c4568a24638f25
-export CRAFT_AGENT_SOURCE=/tmp/craft-v0152
+git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0153
+git -C /tmp/craft-v0153 fetch origin refs/tags/v0.15.3
+git -C /tmp/craft-v0153 checkout --detach 22c9f0414ab63e0a22814c9a2ada740206e09091
+export CRAFT_AGENT_SOURCE=/tmp/craft-v0153
 ```
 
 When upstream publishes a new tag worth evaluating:

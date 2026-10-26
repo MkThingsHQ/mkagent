@@ -69,6 +69,7 @@ export interface ApiKeyInputProps {
     models?: string[]
     /** Pre-fill the protocol toggle for custom endpoints */
     customApi?: CustomEndpointApi
+    customEndpoint?: CustomEndpointConfig
   }
 }
 
@@ -104,6 +105,7 @@ const PI_PROVIDER_PRESETS: Preset[] = [
   { key: 'vercel-ai-gateway', label: 'Vercel AI Gateway', url: 'https://ai-gateway.vercel.sh', placeholder: 'Paste your key here...' },
   // The gateway URL carries the account and gateway ids the Pi SDK needs (cloudflare-gateway.ts).
   { key: CLOUDFLARE_AI_GATEWAY_PROVIDER, label: 'Cloudflare AI Gateway', url: '', placeholder: 'Cloudflare API token', urlPlaceholder: CLOUDFLARE_AI_GATEWAY_URL_EXAMPLE },
+  { key: 'opencode-go', label: 'OpenCode Go', url: 'https://opencode.ai/zen/go/v1', placeholder: 'Paste your key here...' },
   { key: 'manifest', label: 'Manifest', url: 'https://app.manifest.build/v1', placeholder: 'mnfst_...' },
   { key: 'custom', label: 'Custom', url: '', placeholder: 'Paste your key here...' },
 ]
@@ -113,7 +115,7 @@ const PI_PROVIDER_PRESETS: Preset[] = [
  * OpenAI-compatible protocol. They behave like 'custom' on submit (customEndpoint
  * gets pinned to openai-completions) but stay branded in the dropdown.
  */
-const OPENAI_COMPAT_CUSTOM_URL_PRESETS: ReadonlySet<string> = new Set(['manifest'])
+const OPENAI_COMPAT_CUSTOM_URL_PRESETS: ReadonlySet<string> = new Set(['manifest', 'opencode-go'])
 
 const COMPAT_CUSTOM_DEFAULTS = 'claude-opus-4-8, claude-opus-4-7, claude-sonnet-4-6, claude-haiku-4-5'
 const COMPAT_MINIMAX_DEFAULTS = 'MiniMax-M2.5, MiniMax-M2.5-highspeed'
@@ -160,6 +162,7 @@ export function ApiKeyInput({
   )
   const [connectionDefaultModel, setConnectionDefaultModel] = useState(initialValues?.connectionDefaultModel ?? '')
   const [customApi, setCustomApi] = useState<CustomEndpointApi>(initialValues?.customApi ?? 'openai-completions')
+  const [maxTokens, setMaxTokens] = useState(String(initialValues?.customEndpoint?.maxTokens ?? ''))
   const [modelError, setModelError] = useState<string | null>(null)
 
 
@@ -240,6 +243,8 @@ export function ApiKeyInput({
       setConnectionDefaultModel(COMPAT_MINIMAX_DEFAULTS)
     } else if (preset.key === 'kimi-coding') {
       setConnectionDefaultModel(COMPAT_KIMI_DEFAULTS)
+    } else if (preset.key === 'opencode-go') {
+      setConnectionDefaultModel('')
     } else if (preset.key === 'manifest') {
       setConnectionDefaultModel('auto')
     } else if (preset.key === 'custom' || OPENAI_COMPAT_CUSTOM_URL_PRESETS.has(preset.key)) {
@@ -271,7 +276,7 @@ export function ApiKeyInput({
         setConnectionDefaultModel(COMPAT_MINIMAX_DEFAULTS)
       } else if (presetKey === 'kimi-coding') {
         setConnectionDefaultModel(COMPAT_KIMI_DEFAULTS)
-      } else if (presetKey === 'openrouter' || presetKey === 'vercel-ai-gateway' || presetKey === 'custom') {
+      } else if (presetKey === 'openrouter' || presetKey === 'vercel-ai-gateway' || presetKey === 'custom' || OPENAI_COMPAT_CUSTOM_URL_PRESETS.has(presetKey)) {
         setConnectionDefaultModel(COMPAT_CUSTOM_DEFAULTS)
       }
     }
@@ -327,6 +332,11 @@ export function ApiKeyInput({
       fallbackPiAuthProvider: effectivePiAuthProvider,
     })
 
+    const cap = maxTokens.trim() ? Number(maxTokens) : undefined
+    if (customEndpoint && cap !== undefined && (!Number.isSafeInteger(cap) || cap <= 0)) {
+      setModelError(t('apiSetup.maxTokensInvalid'))
+      return
+    }
     onSubmit({
       apiKey: apiKey.trim(),
       baseUrl: isUsingDefaultEndpoint ? undefined : effectiveBaseUrl,
@@ -334,7 +344,7 @@ export function ApiKeyInput({
       models: parsedModels.length > 0 ? parsedModels : undefined,
       piAuthProvider: resolvedPiAuthProvider,
       modelSelectionMode: parsedModels.length > 0 ? 'userDefined3Tier' : 'automaticallySyncedFromProvider',
-      customEndpoint,
+      customEndpoint: customEndpoint ? { ...initialValues?.customEndpoint, ...customEndpoint, maxTokens: cap } : undefined,
     })
   }
 
@@ -460,6 +470,15 @@ export function ApiKeyInput({
           <p className="text-label-sm text-tertiary">
             Most third-party APIs (Ollama, vLLM, DashScope) use OpenAI Compatible.
           </p>
+        </div>
+      )}
+
+      {(activePreset === 'custom' || OPENAI_COMPAT_CUSTOM_URL_PRESETS.has(activePreset)) && (
+        <div className="space-y-2">
+          <Label htmlFor="endpoint-max-tokens">{t('apiSetup.maxTokens')}</Label>
+          <Input id="endpoint-max-tokens" type="number" min="1" step="1" value={maxTokens}
+            onChange={e => setMaxTokens(e.target.value)} placeholder="8192" disabled={isDisabled} />
+          <p className="text-label-sm text-tertiary">{t('apiSetup.maxTokensDesc')}</p>
         </div>
       )}
 

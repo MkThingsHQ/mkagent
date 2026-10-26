@@ -1,5 +1,6 @@
 import { RPC_CHANNELS, type LlmConnectionSetup } from '@mkagent/shared/protocol'
 import {
+  CustomEndpointSchema,
   addLlmConnection,
   deleteLlmConnection,
   getDefaultLlmConnection,
@@ -67,6 +68,7 @@ export const HANDLED_CHANNELS = [
 ] as const
 
 function createConnection(setup: LlmConnectionSetup): LlmConnection {
+  if (setup.customEndpoint) CustomEndpointSchema.parse(setup.customEndpoint)
   const baseUrl = setup.baseUrl?.trim() || undefined
   const baseSlug = setup.slug.replace(/-\d+$/, '')
   if (!baseUrl && (baseSlug === 'chatgpt-plus' || baseSlug === 'claude-max')) {
@@ -100,7 +102,7 @@ function createConnection(setup: LlmConnectionSetup): LlmConnection {
 
   return {
     slug: setup.slug,
-    name: custom?.name
+    name: (baseUrl && new URL(baseUrl).hostname === 'opencode.ai' ? 'OpenCode Go' : custom?.name)
       ?? (providerName ? `MkAgent Backend (${providerName})` : 'MkAgent Backend'),
     providerType,
     authType: custom?.authType ?? 'api_key',
@@ -137,6 +139,14 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
       }
 
       const connection = createConnection(setup)
+      // The setup editor changes IDs/cap, not per-model context/capability hints.
+      // Keep those hints for IDs that are still present when editing a connection.
+      if (existing && connection.models) {
+        connection.models = connection.models.map(model => {
+          if (typeof model !== 'string') return model
+          return existing.models?.find(previous => typeof previous !== 'string' && previous.id === model) ?? model
+        })
+      }
       if (connection.models?.length) {
         const validation = validateModelList(connection.models, connection.defaultModel)
         if (!validation.valid) return { success: false, error: validation.error }
@@ -175,6 +185,7 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
     piAuthProvider?: string
     customEndpoint?: LlmConnection['customEndpoint']
   }) => {
+    if (params.customEndpoint && !CustomEndpointSchema.safeParse(params.customEndpoint).success) return { success: false, error: 'Invalid custom endpoint settings' }
     const validation = validateSetupTestInput(params)
     if (!validation.valid) return { success: false, error: validation.error }
     try {
@@ -332,6 +343,7 @@ export function registerLlmConnectionsHandlers(server: RpcServer, deps: HandlerD
   })
   server.handle(RPC_CHANNELS.llmConnections.SAVE, async (_ctx, connection: LlmConnection) => {
     try {
+      if (connection.customEndpoint) CustomEndpointSchema.parse(connection.customEndpoint)
       const existing = getLlmConnection(connection.slug)
       const success = existing
         ? updateLlmConnection(connection.slug, connection)

@@ -25,7 +25,6 @@ function isTestFile(file: string): boolean {
 
 const deletedFeaturePatterns: Array<{ pattern: RegExp; reason: string }> = [
   { pattern: /^packages\/shared\/src\/agent\/__tests__\/subagent-model\.test\.ts$/, reason: 'Claude Agent/Task family aliases and custom .claude agents absent; actual Pi spawn model preservation covered by pi-usage-runtime.isolated.ts' },
-  { pattern: /^packages\/shared\/src\/config\/__tests__\/auto-compact-window\.test\.ts$/, reason: 'Claude CLI compaction/model settings only; retained Pi SDK compaction remains independent' },
   { pattern: /^apps\/electron\/src\/transport\/__tests__\/source\-oauth\.test\.ts$/, reason: "Sources OAuth client orchestration is absent; LLM login remains independent and browser website popup tests are retained." },
   { pattern: /^packages\/server\-core\/src\/handlers\/rpc\/oauth\.test\.ts$/, reason: "Generic Sources OAuth RPC is absent from Lite." },
   { pattern: /^packages\/server\-core\/src\/handlers\/rpc\/tasks\-generate\-wait\.test\.ts$/, reason: "Conductor subtask generation and activity timeout API are absent from Lite." },

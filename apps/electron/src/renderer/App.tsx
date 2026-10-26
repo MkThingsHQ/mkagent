@@ -1316,6 +1316,7 @@ export default function App() {
               storedPath: stored.storedPath,
               markdownPath: stored.markdownPath,
               // Use resized base64 if available (for images that exceeded size limits)
+              mimeType: stored.mimeType,
               base64: stored.resizedBase64 ?? att.base64,
             }
           })

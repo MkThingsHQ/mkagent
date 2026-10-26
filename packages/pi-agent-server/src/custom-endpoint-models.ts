@@ -3,8 +3,23 @@ export type CustomEndpointInput = 'text' | 'image'
 /** Custom endpoint protocol — determines which streaming adapter Pi SDK uses. */
 export type CustomEndpointApi = 'openai-completions' | 'anthropic-messages'
 
+/**
+ * Output-token cap for custom endpoint models when the connection doesn't set
+ * `customEndpoint.maxTokens`. We can't query an arbitrary endpoint for its real
+ * limit, so the default stays conservative.
+ */
+export const DEFAULT_CUSTOM_ENDPOINT_MAX_TOKENS = 8_192
+
+/** Connection-level custom endpoint config (`LlmConnection.customEndpoint`) as sent by the main process. */
+export interface CustomEndpointConfig {
+  api: CustomEndpointApi
+  supportsImages?: boolean
+  maxTokens?: number
+}
+
 export interface CustomEndpointModelDefaults {
   supportsImages?: boolean
+  maxTokens?: number
 }
 
 export interface CustomEndpointModelOverrides {
@@ -46,6 +61,11 @@ export function normalizeCustomEndpointModelEntry(model: CustomEndpointModelConf
   }
 }
 
+function resolveMaxTokens(configured: number | undefined): number {
+  return configured !== undefined && Number.isSafeInteger(configured) && configured > 0
+    ? configured : DEFAULT_CUSTOM_ENDPOINT_MAX_TOKENS
+}
+
 /**
  * Build a synthetic model definition for a custom endpoint.
  * Uses reasonable defaults for context window and max tokens since we can't
@@ -68,7 +88,7 @@ export function buildCustomEndpointModelDef(
     input,
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
     contextWindow: overrides?.contextWindow ?? 131_072,
-    maxTokens: 8_192,
+    maxTokens: resolveMaxTokens(defaults?.maxTokens),
     ...(api === 'openai-completions' ? { compat: { supportsStore: false } } : {}),
   }
 }

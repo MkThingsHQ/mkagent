@@ -1,0 +1,274 @@
+{
+  "fromTag": "v0.15.2",
+  "fromCommit": "b879152d2a4e1232bcd4efb7d8c4568a24638f25",
+  "toTag": "v0.15.3",
+  "toCommit": "22c9f0414ab63e0a22814c9a2ada740206e09091",
+  "mkagentVersion": "0.2.3",
+  "paths": [
+    {
+      "path": "README.md",
+      "status": "excluded",
+      "reason": "Upstream Discord community badge belongs to Craft; preserve MkAgent links and branding."
+    },
+    {
+      "path": "apps/cli/package.json",
+      "status": "adapted",
+      "reason": "Bump retained MkAgent workspaces to 0.2.3; retain Pi 1.1.0; add heic-convert and server types, update lockfile without restoring excluded dependencies."
+    },
+    {
+      "path": "apps/electron/package.json",
+      "status": "adapted",
+      "reason": "Bump retained MkAgent workspaces to 0.2.3; retain Pi 1.1.0; add heic-convert and server types, update lockfile without restoring excluded dependencies."
+    },
+    {
+      "path": "apps/electron/resources/release-notes/0.15.3.md",
+      "status": "adapted",
+      "reason": "Publish MkAgent 0.2.3 notes for retained features; Skills starter changes already implemented in 0.2.2, Sources remain excluded."
+    },
+    {
+      "path": "apps/electron/resources/scripts/img_tool.py",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "apps/electron/resources/scripts/tests/test_img_tool_smoke.py",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "apps/electron/src/main/platform.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "apps/electron/src/renderer/App.tsx",
+      "status": "adapted",
+      "reason": "Propagate stored normalized MIME and base64 in the retained shared Desktop/WebUI attachment-send path."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/apisetup/ApiKeyInput.tsx",
+      "status": "adapted",
+      "reason": "OpenCode Go preset in Pi provider list, pinned OpenAI protocol, editable model IDs; also expose and preserve endpoint output cap while editing."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/apisetup/__tests__/ApiKeyInput.test.ts",
+      "status": "adapted",
+      "reason": "OpenCode Go preset in Pi provider list, pinned OpenAI protocol, editable model IDs; also expose and preserve endpoint output cap while editing."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/AttachmentPreview.tsx",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/provider-icons.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "apps/viewer/package.json",
+      "status": "excluded",
+      "reason": "Viewer/Messaging workspace is excluded from Lite; do not restore it for a version bump."
+    },
+    {
+      "path": "apps/webui/package.json",
+      "status": "adapted",
+      "reason": "Bump retained MkAgent workspaces to 0.2.3; retain Pi 1.1.0; add heic-convert and server types, update lockfile without restoring excluded dependencies."
+    },
+    {
+      "path": "bun.lock",
+      "status": "adapted",
+      "reason": "Bump retained MkAgent workspaces to 0.2.3; retain Pi 1.1.0; add heic-convert and server types, update lockfile without restoring excluded dependencies."
+    },
+    {
+      "path": "package.json",
+      "status": "adapted",
+      "reason": "Bump retained MkAgent workspaces to 0.2.3; retain Pi 1.1.0; add heic-convert and server types, update lockfile without restoring excluded dependencies."
+    },
+    {
+      "path": "packages/core/package.json",
+      "status": "adapted",
+      "reason": "Bump retained MkAgent workspaces to 0.2.3; retain Pi 1.1.0; add heic-convert and server types, update lockfile without restoring excluded dependencies."
+    },
+    {
+      "path": "packages/messaging-gateway/package.json",
+      "status": "excluded",
+      "reason": "Viewer/Messaging workspace is excluded from Lite; do not restore it for a version bump."
+    },
+    {
+      "path": "packages/messaging-whatsapp-worker/package.json",
+      "status": "excluded",
+      "reason": "Viewer/Messaging workspace is excluded from Lite; do not restore it for a version bump."
+    },
+    {
+      "path": "packages/pi-agent-server/package.json",
+      "status": "adapted",
+      "reason": "Bump retained MkAgent workspaces to 0.2.3; retain Pi 1.1.0; add heic-convert and server types, update lockfile without restoring excluded dependencies."
+    },
+    {
+      "path": "packages/pi-agent-server/src/context-usage.test.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "packages/pi-agent-server/src/context-usage.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "packages/pi-agent-server/src/custom-endpoint-models.test.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "packages/pi-agent-server/src/custom-endpoint-models.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "packages/pi-agent-server/src/index.ts",
+      "status": "adapted",
+      "reason": "Thread output cap into synthetic model registration and global window into isolated main settings; preserve MkAgent subprocess lifecycle/tool/runtime behavior."
+    },
+    {
+      "path": "packages/pi-agent-server/src/session-settings.test.ts",
+      "status": "adapted",
+      "reason": "Retain MkAgent isolated in-memory Pi settings and retry policy; wrap model-aware reserve for configured compaction window; preserve all new upstream cases."
+    },
+    {
+      "path": "packages/pi-agent-server/src/session-settings.ts",
+      "status": "adapted",
+      "reason": "Retain MkAgent isolated in-memory Pi settings and retry policy; wrap model-aware reserve for configured compaction window; preserve all new upstream cases."
+    },
+    {
+      "path": "packages/server-core/package.json",
+      "status": "adapted",
+      "reason": "Bump retained MkAgent workspaces to 0.2.3; retain Pi 1.1.0; add heic-convert and server types, update lockfile without restoring excluded dependencies."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/files.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "packages/server-core/src/runtime/platform-headless.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "packages/server-core/src/services/heic.test.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "packages/server-core/src/services/heic.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "packages/server-core/src/services/index.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "packages/server-core/src/sessions/runtime-config.test.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "packages/server-core/src/sessions/runtime-config.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "packages/server/package.json",
+      "status": "adapted",
+      "reason": "Bump retained MkAgent workspaces to 0.2.3; retain Pi 1.1.0; add heic-convert and server types, update lockfile without restoring excluded dependencies."
+    },
+    {
+      "path": "packages/session-tools-core/package.json",
+      "status": "adapted",
+      "reason": "Bump retained MkAgent workspaces to 0.2.3; retain Pi 1.1.0; add heic-convert and server types, update lockfile without restoring excluded dependencies."
+    },
+    {
+      "path": "packages/shared/CLAUDE.md",
+      "status": "adapted",
+      "reason": "Upstream shared-module development guidance is replaced by the MkAgent sync/validation documentation. Record output-cap propagation and Pi compaction mapping there; exclude Claude/Source/Decision guidance."
+    },
+    {
+      "path": "packages/shared/package.json",
+      "status": "adapted",
+      "reason": "Bump retained MkAgent workspaces to 0.2.3; retain Pi 1.1.0; add heic-convert and server types, update lockfile without restoring excluded dependencies."
+    },
+    {
+      "path": "packages/shared/src/agent/backend/internal/driver-types.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "packages/shared/src/agent/backend/types.ts",
+      "status": "adapted",
+      "reason": "Typed endpoint config plus Pi autoCompactWindow core field; no Claude SDK contract restored."
+    },
+    {
+      "path": "packages/shared/src/agent/pi-agent.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "packages/shared/src/config/llm-connections.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "packages/shared/src/config/storage.ts",
+      "status": "adapted",
+      "reason": "Restore the previously Claude-only global window as a validated Pi setting (100K\u20131M); persistence and RPC/UI/runtime chain now have a Pi consumer."
+    },
+    {
+      "path": "packages/shared/src/config/validators.ts",
+      "status": "retained",
+      "reason": "Apply v0.15.3 retained shared/runtime hunk with existing Pi/Lite seams."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/de.json",
+      "status": "excluded",
+      "reason": "MkAgent supports EN/ZH only; absent locale remains absent."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/en.json",
+      "status": "adapted",
+      "reason": "Use Pi-specific compaction-window labels/help and endpoint output-cap validation; no Claude-only/subagent settings."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/es.json",
+      "status": "excluded",
+      "reason": "MkAgent supports EN/ZH only; absent locale remains absent."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/hu.json",
+      "status": "excluded",
+      "reason": "MkAgent supports EN/ZH only; absent locale remains absent."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ja.json",
+      "status": "excluded",
+      "reason": "MkAgent supports EN/ZH only; absent locale remains absent."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/pl.json",
+      "status": "excluded",
+      "reason": "MkAgent supports EN/ZH only; absent locale remains absent."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "status": "adapted",
+      "reason": "Use Pi-specific compaction-window labels/help and endpoint output-cap validation; no Claude-only/subagent settings."
+    },
+    {
+      "path": "packages/ui/package.json",
+      "status": "adapted",
+      "reason": "Bump retained MkAgent workspaces to 0.2.3; retain Pi 1.1.0; add heic-convert and server types, update lockfile without restoring excluded dependencies."
+    }
+  ]
+}

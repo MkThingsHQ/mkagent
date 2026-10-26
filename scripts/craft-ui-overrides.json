@@ -2,8 +2,8 @@
   "version": 2,
   "files": {
     "apps/electron/src/renderer/App.tsx": {
-      "sha256": "b53cce4b1e05255cbd025d129ba3f5542e037391ae546f85983182d3199b5ceb",
-      "reason": "Craft application shell retains Claude and ChatGPT OAuth props while excluded product surfaces remain removed"
+      "sha256": "52908953f5d97733a602e69b1d90d47a241c6271dcdc08dec7aa54af447a2a25",
+      "reason": "Craft application shell retains Claude and ChatGPT OAuth props while excluded product surfaces remain removed; v0.15.3: normalize real HEIC/HEIF to JPEG across platform thumbnails and stored/model attachments; preserve original MIME/name/size and decode errors; avoid AVIF misclassification."
     },
     "apps/electron/src/renderer/assets/mkagent_app_icon.png": {
       "sha256": "8ef2d656c2eb9bbef8d0d8abb646e1ded0e4143046434866d541aaf9e3da6dc5",
@@ -74,8 +74,8 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/components/apisetup/ApiKeyInput.tsx": {
-      "sha256": "93e47026f5f244dc6b024000dd566f683cc7d1742ba18e3a324d2530d70f2295",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+      "sha256": "48212eaa12242f1a7f21b813fc6e00c6b8a5e9dc058da16ef6ed56c71badd851",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding; v0.15.3: OpenCode Go preset/branding and editable models; validate and preserve endpoint output cap through setup/edit/save/test and live Pi runtime refresh. Pi/Lite provider boundary retained."
     },
     "apps/electron/src/renderer/components/app-menu/DesktopAppMenu.tsx": {
       "sha256": "77c3b4bb700fd48fb1742b85ce708cab5f319a2c762ed23361023e03a1323301",
@@ -434,8 +434,8 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/lib/provider-icons.ts": {
-      "sha256": "54a2b3347a252c5b0ff3a7b8a82d16d87ee4e8ca9245084074ba95fd2a41b4c8",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+      "sha256": "1ca067c190eed930f3fc8b9f965c448b7482e759eea69506a4ebb2517abcce2d",
+      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding; v0.15.3: OpenCode Go preset/branding and editable models; validate and preserve endpoint output cap through setup/edit/save/test and live Pi runtime refresh. Pi/Lite provider boundary retained."
     },
     "apps/electron/src/renderer/main.tsx": {
       "sha256": "21c7f0dc860147dd161fc307ff2ebf65bc3973c39186f462e7bbb78cf51609f7",
@@ -454,8 +454,8 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/pages/settings/AiSettingsPage.tsx": {
-      "sha256": "2f1b5d26b0c317d9c3ce29fafa5054df6e4658abfe91a33bc6cc10a7fc55ec80",
-      "reason": "Single-column v0.15 settings and atomic parallel loading retain Pi connections, credential health and RTK; decision-model and Claude SDK settings excluded"
+      "sha256": "7c8a01476d806c5bce984f231377faab1b43af8bddc6b34b5782352bb64d37bf",
+      "reason": "Single-column v0.15 settings and atomic parallel loading retain Pi connections, credential health and RTK; decision-model and Claude SDK settings excluded; v0.15.3: restore applicable Pi compaction-window settings/config/RPC/UI/runtime chain and endpoint output cap; use model-aware SDK reserves, lazy restart with journal restore, validated legacy defaults; no excluded backend/product restored."
     },
     "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx": {
       "sha256": "722d36a5dd5b532e067304df9e9925cd5a7cde985599a71cecacba55885daf92",
@@ -490,12 +490,12 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/pages/settings/ai-settings-loader.ts": {
-      "sha256": "059eeb9739d43435a5ec6e2f465a97eccf49ac016169d640cd981024a29916f1",
-      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types."
+      "sha256": "2fe10e5a0c87d4a1d068607db9255b186e3e584d20a1fa56e51ab53819c4f0bf",
+      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types.; v0.15.3: restore applicable Pi compaction-window settings/config/RPC/UI/runtime chain and endpoint output cap; use model-aware SDK reserves, lazy restart with journal restore, validated legacy defaults; no excluded backend/product restored."
     },
     "apps/electron/src/renderer/pages/settings/__tests__/ai-settings-loader.test.ts": {
-      "sha256": "1e54c574ad85d47afd51af1412572b7e6e471fcf36a61e6b295502ea752ba869",
-      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types."
+      "sha256": "5dca222cc598cf81035813bd11bd6733f54d4b6dad44b63af52855ecb49c1b1d",
+      "reason": "All v0.15.2 hunks add Claude auto-compact-window/subagent-model config and RPC/loading contracts. Pi uses its existing SDK compaction and independent spawn_session model, not Claude CLI settings. Existing workspace SETTINGS_GET/UPDATE carry chatStarters; WorkspaceSettings lives in shared protocol/dto and remains re-exported through desktop types.; v0.15.3: restore applicable Pi compaction-window settings/config/RPC/UI/runtime chain and endpoint output cap; use model-aware SDK reserves, lazy restart with journal restore, validated legacy defaults; no excluded backend/product restored."
     },
     "apps/electron/src/renderer/components/app-shell/SessionInfoPopover.tsx": {
       "sha256": "b5c6ca023a1b73b6cf7000b304cc30ec9ea7b04564ec3d3a3a8c2e0302d87b3c",

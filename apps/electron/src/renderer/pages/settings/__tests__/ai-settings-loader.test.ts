@@ -3,6 +3,7 @@ import { loadAiSettings } from '../ai-settings-loader'
 
 type Api = Parameters<typeof loadAiSettings>[0]
 const api = (): Api => ({
+  getAutoCompactWindow: async () => undefined,
   getWorkspaces: async () => [],
   getDefaultThinkingLevel: async () => 'medium',
   getExtendedPromptCache: async () => false,

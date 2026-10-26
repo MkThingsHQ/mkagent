@@ -7,29 +7,29 @@ MkAgent 的架构、UI 与运行时继承自 [Craft Agents OSS](https://github.c
 | 项 | 值 |
 |---|---|
 | 仓库 | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.15.2` |
-| Commit | `b879152d2a4e1232bcd4efb7d8c4568a24638f25` |
+| Tag | `v0.15.3` |
+| Commit | `22c9f0414ab63e0a22814c9a2ada740206e09091` |
 
 ## 最近一次上游评估
 
 | 项 | 值 |
 |---|---|
-| 评估日期 | `2026-10-16` |
-| 上游 Tag | `v0.15.2` |
-| 上游 Commit | `b879152d2a4e1232bcd4efb7d8c4568a24638f25` |
+| 评估日期 | `2026-10-26` |
+| 上游 Tag | `v0.15.3` |
+| 上游 Commit | `22c9f0414ab63e0a22814c9a2ada740206e09091` |
 
-MkAgent 0.2.2 本次**仅同步 v0.15.1 → v0.15.2**，之前的基线为 `2e3ba53ff80b229a07e9d1884dc58f6733f22e1f`，未混入 v0.15.3。[逐路径清单](../sync/0.15.2-inventory.json)覆盖全部 74 个改动路径，并单独分类共享文件中的排除 hunks；[验证报告](../sync/0.15.2-validation.md)记录证据与限制。
+MkAgent 0.2.3 **仅同步 v0.15.2 → v0.15.3**。[逐路径清单](../sync/0.15.3-inventory.json)覆盖全部 53 个改动路径；[验证报告](../sync/0.15.3-validation.md)记录运行和界面实测证据。没有混入 v0.15.4–0.15.6。
 
-设置 → AI 支持最多三个工作区开场提示，分别保存标签和提示词，支持技能提及、即时刷新，以及清空后恢复自动建议。Pi 汇总整轮每次 API 调用的输出 token/费用，SessionManager 跨轮与重启累加，同时保留独立上下文占用指标。Pi 分支和独立子会话从零计费，显式子模型不被覆盖。Anthropic schema 闭合修复接入 Pi 实际预加载的网络拦截器。会话信息内容可以滚动，spawn_session 提示引导窄任务、传入上下文、范围读取和简短结果。
+HEIC/HEIF 附件在存储入口转为 JPEG，缩略图、预览和实际模型输入均使用可解码格式。新增 OpenCode Go 品牌预设及可编辑模型 ID。端点级 `customEndpoint.maxTokens` 支持编辑、校验、持久化和实时模型注册刷新，未设置仍默认 8192。Pi 现在完整支持全局 100K–1M 压缩窗口：按当前模型换算 `max(SDK reserve, contextWindow − selectedWindow)`，上下文占用与实际压缩使用同一阈值，计费统计保持独立。全局窗口修改在下一轮重建空闲运行时、恢复 SDK 日志；模型/连接切换和应用重启保留设置。
 
-保留 MkAgent 品牌/配置、Pi 1.1.0 以及之前的浏览器、Stop、附件和指南读取修复。共享文件逐 hunk 排除仅供 Claude CLI 使用的压缩窗口、Agent/Task 模型别名和累计 running-total 状态，不向 Pi 暴露无效控件。Decision/Guarded 继续暂缓；Sources/MCP、Pages、Projects/conductor、Automations、公开分享、标签/自定义状态和消息集成仍在 Lite 边界之外。界面保留英文和简体中文，不恢复空模块。
+富文本 Chat Starters、Skills badge/实际调用、保存即时刷新和空配置回退已在 0.2.2 实现，本次复验；不恢复 Sources。保留 MkAgent 品牌、本地配置、Pi 1.1.0 和既有浏览器/Stop/用量修复。Claude SDK、Sources/MCP、Pages、Projects/conductor、Automations、公开分享、labels/custom statuses、messaging 仍排除；Decision/Guarded 继续暂缓。界面只保留英文和简体中文。
 
 ```bash
 # 仅操作独立的临时参考副本，已有参考目录保持只读。
-git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0152
-git -C /tmp/craft-v0152 fetch origin refs/tags/v0.15.2
-git -C /tmp/craft-v0152 checkout --detach b879152d2a4e1232bcd4efb7d8c4568a24638f25
-export CRAFT_AGENT_SOURCE=/tmp/craft-v0152
+git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0153
+git -C /tmp/craft-v0153 fetch origin refs/tags/v0.15.3
+git -C /tmp/craft-v0153 checkout --detach 22c9f0414ab63e0a22814c9a2ada740206e09091
+export CRAFT_AGENT_SOURCE=/tmp/craft-v0153
 ```
 
 当上游发布值得评估的新 tag 时:
