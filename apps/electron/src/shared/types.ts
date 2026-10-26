@@ -518,11 +518,20 @@ export interface ElectronAPI {
   createCodingWorktree(workspaceId: string, request: import('@mkagent/shared/protocol').CreateWorktreeRequest, recentDirs: string[]): Promise<import('@mkagent/shared/protocol').CreateWorktreeResult>
 
   // PR watcher (Coding mode): subscribe per session, then receive pushes; see protocol/pr-watch.ts
-  prWatchSubscribe(sessionId: string): Promise<{ subscriptionId: string | null; state: import('@mkagent/shared/protocol').PrWatchState }>
+  prWatchSubscribe(sessionId: string): Promise<{ subscriptionId: string | null; state: import('@mkagent/shared/protocol').PrWatchSessionState }>
   prWatchUnsubscribe(subscriptionId: string): Promise<void>
   prWatchRefresh(sessionId: string): Promise<void>
-  prWatchGetDetails(sessionId: string): Promise<import('@mkagent/shared/protocol').PrDetails | null>
-  onPrWatchChanged(callback: (sessionId: string, state: import('@mkagent/shared/protocol').PrWatchState) => void): () => void
+  /** Card details for one carousel entry (by its stable PR id) */
+  prWatchGetDetails(sessionId: string, prId: string): Promise<import('@mkagent/shared/protocol').PrDetails | null>
+  /** Pin a PR to the session by URL or number (verifies before persisting) */
+  prWatchBind(sessionId: string, ref: string): Promise<import('@mkagent/session-tools-core').PrBindToolResult>
+  /** Remove a pinned PR from the session */
+  prWatchUnbind(sessionId: string, ref: string): Promise<import('@mkagent/session-tools-core').PrUnbindToolResult>
+  /** Enable/disable GitHub auto-merge for one of the session's PRs */
+  prWatchSetAutoMerge(sessionId: string, ref: string, enabled: boolean, method?: import('@mkagent/shared/protocol').PrMergeMethod): Promise<import('@mkagent/session-tools-core').PrAutoMergeToolResult>
+  /** Turn auto-fix (the card's Fix toggle) on/off for one of the session's PRs, by its entry id */
+  prWatchSetAutoFix(sessionId: string, prId: string, enabled: boolean): Promise<import('@mkagent/shared/protocol').PrAutoFixResult>
+  onPrWatchChanged(callback: (sessionId: string, state: import('@mkagent/shared/protocol').PrWatchSessionState) => void): () => void
 
   // Git Bash (Windows)
   checkGitBash(): Promise<GitBashStatus>

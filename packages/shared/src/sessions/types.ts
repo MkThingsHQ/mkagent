@@ -1,3 +1,4 @@
+import type { BoundPr, PrMonitorState } from '../protocol/pr-watch'
 import type {
   ContextUsageSnapshot,
   MessageRole,
@@ -19,7 +20,7 @@ export const SESSION_PERSISTENT_FIELDS = [
   'isArchived', 'archivedAt',
   'branchFromMessageId', 'branchFromSdkSessionId', 'branchFromSessionPath',
   'branchFromSdkCwd', 'branchFromSdkTurnId',
-  'parentSessionId', 'codingMode', 'transferredSessionSummary', 'transferredSessionSummaryApplied',
+  'parentSessionId', 'codingMode', 'boundPrs', 'prMonitors', 'transferredSessionSummary', 'transferredSessionSummaryApplied',
 ] as const;
 
 export type SessionPersistentField = (typeof SESSION_PERSISTENT_FIELDS)[number];
@@ -65,6 +66,8 @@ export interface SessionConfig {
   connectionLocked?: boolean;
   thinkingLevel?: ThinkingLevel;
   codingMode?: boolean;
+  boundPrs?: BoundPr[];
+  prMonitors?: Record<string, PrMonitorState>;
   transferredSessionSummary?: string;
   transferredSessionSummaryApplied?: boolean;
   pendingPlanExecution?: PendingPlanExecution;

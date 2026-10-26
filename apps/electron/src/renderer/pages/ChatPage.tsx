@@ -501,7 +501,13 @@ const ChatPage = React.memo(function ChatPage({ sessionId }: ChatPageProps) {
         workingDirectory={workingDirectory}
         sessionFolderPath={session?.sessionFolderPath}
         prWatch={prWatch.state}
+        prWatchNav={prWatch.nav}
+        prWatchActiveOrigin={prWatch.activeOrigin}
         onRefreshPrWatch={prWatch.refresh}
+        onUnbindPr={prWatch.unbind}
+        onSetPrAutoMerge={prWatch.setAutoMerge}
+        prWatchAutoFix={prWatch.autoFix}
+        onSetPrAutoFix={prWatch.setAutoFix}
         onPrCardOpenChange={prWatch.onCardOpenChange}
       />
       <div className="flex-1 flex flex-col min-h-0">

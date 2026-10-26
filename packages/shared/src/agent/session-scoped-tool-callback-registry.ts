@@ -11,6 +11,7 @@ import type { LLMQueryRequest, LLMQueryResult } from './llm-tool.ts';
 import type { SpawnSessionFn } from './spawn-session-tool.ts';
 
 export interface SessionScopedToolCallbacks {
+  prWatch?: import('@mkagent/session-tools-core').PrWatchToolCallbacks;
   onPlanSubmitted?: (planPath: string) => void;
   queryFn?: (request: LLMQueryRequest) => Promise<LLMQueryResult>;
   spawnSessionFn?: SpawnSessionFn;

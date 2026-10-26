@@ -7,29 +7,33 @@ MkAgent derives its architecture, UI, and runtime from [Craft Agents OSS](https:
 | Item | Value |
 |---|---|
 | Repository | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.15.5` |
-| Commit | `cede6ea49e0c4a42933ed0f1bc129db698fc581f` |
+| Tag | `v0.15.6` |
+| Commit | `8df01c5d0ac73c35add5954e6f190ce038d35845` |
 
 ## Latest evaluated release
 
 | Item | Value |
 |---|---|
 | Evaluated on | `2026-10-26` |
-| Upstream tag | `v0.15.5` |
-| Upstream commit | `cede6ea49e0c4a42933ed0f1bc129db698fc581f` |
+| Upstream tag | `v0.15.6` |
+| Upstream commit | `8df01c5d0ac73c35add5954e6f190ce038d35845` |
 
-MkAgent 0.2.5 synchronizes **only v0.15.4 → v0.15.5**. [The inventory](./sync/0.15.5-inventory.json) classifies all 57 changed paths; [validation](./sync/0.15.5-validation.md) distinguishes automation and actual UI evidence.
+MkAgent 0.2.6 synchronizes **only v0.15.5 → v0.15.6**. [The inventory](./sync/0.15.6-inventory.json) covers all 93 changed paths; [validation](./sync/0.15.6-validation.md) separates automation, real Pi transport and UI fixtures.
 
-Default window zoom (80–150%) persists on this computer, applies to new windows and Reset Zoom, and uses direct Electron main IPC rather than remote RPC. WebUI retains browser zoom. User-message copy supports hover, keyboard focus and touch, copying original input while preserving attachment/rich display. Workspace removal confirms its folder, file-manager action and reopen instructions; unregistering preserves sessions and legacy data, and workspaces open in any app window cannot be removed. Production Desktop context menus offer editing, selected-text/link copy and spelling; Inspect remains development-only. Unread groups paginate independently; date groups retain chronological global pagination. Statuses/projects remain absent.
+Coding sessions gain `pr_status`, `pr_bind`, `pr_unbind` and `pr_set_auto_merge`. Status reuses the header snapshot first; another session is cache-only. Pins are verified before storage; `gh pr create` pins additional PRs automatically. Auto-merge changes require explicit user intent and an allowed repository method. Registration, Pi execution routing and Explore permission checks retain profile filtering.
 
-MkAgent installation/release links remain under MkThingsHQ. Existing documentation has no stale Docker image references; no unpublished MkAgent container image or Craft installation is advertised. Preserve v0.15.4 Coding/worktree/PR status/async Git, Pi 1.1.0, HEIC/HEIF, maxTokens, compaction, Skills, usage/fork billing, browser/Stop and local config. Claude SDK, Sources/MCP, Pages, Projects/conductor, Automations, public sharing, labels/custom statuses and messaging remain excluded; Decision/Guarded stay deferred. No v0.15.6 multi-PR, automated review fixes or asynchronous mode handoff is imported.
+The header combines branch and pinned PRs with tabs, overflow +N, arrows, urgency, link copy and Unpin. Pinned action prompts use an existing worktree, new worktree or separate clone while preserving the current checkout and dirty files. User-enabled Auto applies only to the own-branch PR: every five minutes while the app runs and the computer is awake, the server checks new owner/member/collaborator feedback, excluding the viewer's replies. Scheduling is independent of windows, deduplication cursors persist, restart re-arms monitors and Off/deletion/shutdown clean up. After a network await it rechecks the toggle, permissions and actual checkout. Comments are untrusted data: supplied commands/links are not instructions, and push/comment/merge/auto-merge authorization is not expanded.
+
+Repository discovery searches four levels, stops at repositories, skips node_modules/Library/hidden/workspace data, avoids symlink loops and deduplicates bare/worktree layouts. Its two-second overall budget includes filesystem and Git descriptions; ~ paths expand. Switching an existing session's Coding mode creates the target immediately and summarizes in the background. The first message waits at most 30 seconds; ordered sends, cancellation, failure, timeout, deletion and late summaries remain isolated.
+
+Preserve MkAgent branding/config, Pi 1.1.0 and all earlier synchronized behavior, including v0.15.4/0.15.5. Claude config forwarding was reviewed by hunk: Pi already passes its whole config, uses SDK image resizing and retained compaction/context metering; add regression coverage without restoring Claude SDK. Sources/MCP OAuth relay, Pages, Projects/conductor, product Automations, public sharing, labels/custom statuses and messaging stay excluded; Decision/Guarded remain deferred. Coding PR Auto review fix is explicitly included in this sync.
 
 ```bash
 # Fetch and check out only an independent disposable reference clone.
-git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0155
-git -C /tmp/craft-v0155 fetch origin refs/tags/v0.15.5
-git -C /tmp/craft-v0155 checkout --detach cede6ea49e0c4a42933ed0f1bc129db698fc581f
-export CRAFT_AGENT_SOURCE=/tmp/craft-v0155
+git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0156
+git -C /tmp/craft-v0156 fetch origin refs/tags/v0.15.6
+git -C /tmp/craft-v0156 checkout --detach 8df01c5d0ac73c35add5954e6f190ce038d35845
+export CRAFT_AGENT_SOURCE=/tmp/craft-v0156
 ```
 
 When upstream publishes a new tag worth evaluating:

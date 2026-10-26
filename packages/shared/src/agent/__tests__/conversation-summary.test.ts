@@ -1,6 +1,7 @@
 import { describe, expect, it, mock } from 'bun:test'
 
 import {
+  buildTransferredSessionContext,
   buildConversationSummaryPrompt,
   buildConversationSummaryTranscript,
   generateConversationSummary,
@@ -44,5 +45,10 @@ describe('conversation-summary helpers', () => {
     expect(result).toBe('condensed summary')
     expect(runMiniCompletion).toHaveBeenCalledTimes(1)
   })
+
+  it('frames a Coding continuation summary as prior context', () => {
+    expect(buildTransferredSessionContext('Earlier decision')).toContain('another session or workspace');
+    expect(buildTransferredSessionContext('Earlier decision')).toContain('Earlier decision');
+  });
 
 })

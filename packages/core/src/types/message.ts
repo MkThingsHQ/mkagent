@@ -297,6 +297,8 @@ export interface Message {
  * Excludes transient runtime-only fields (isStreaming, isPending)
  */
 export interface StoredMessage {
+  /** App-generated notices stay hidden after persistence and restart. */
+  hidden?: boolean;
   id: string;
   type: MessageRole;
   content: string;

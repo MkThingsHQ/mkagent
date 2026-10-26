@@ -1970,7 +1970,7 @@ export function shouldAllowToolInMode(
         includeDeveloperFeedback: FEATURE_FLAGS.developerFeedback,
       });
 
-      if (safeAllowedSessionTools.has(toolName)) {
+      if (safeAllowedSessionTools.has(toolName) || getSessionSafeAllowedToolNames({ prefix: 'mcp__session__', profile: 'coding' }).has(toolName)) {
         return { allowed: true };
       }
 

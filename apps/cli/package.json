@@ -1,6 +1,6 @@
 {
   "name": "@mkagent/cli",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "license": "Apache-2.0",
   "description": "Terminal client for MkAgent server",
   "type": "module",

@@ -1,8 +1,10 @@
 /**
- * The card behind the Coding-mode PR chip: the PR's head (number, title, state, branches, size),
+ * The card behind the Coding-mode PR chip: the session's PRs as tabs when it tracks more than one
+ * (PrTabStrip; the chip's popover handles ←/→), then the PR's head (number, title, state, branches, size),
  * then Last commit (with local commits not pushed yet), Checks, Review and Merge, and a footer with
  * freshness, the credential that answered, one action (Resolve merge conflicts, else Fix review
- * comments, else Fix CI, else a green tick; see `prCardAction`), Refresh and Open on GitHub.
+ * comments, else Fix CI, else a green tick; see `prCardAction`; on a pinned PR they work in a separate
+ * checkout), Refresh and Open on GitHub.
  *
  * The summary renders at once; detail sections show skeletons until `details` arrives.
  */
@@ -13,6 +15,7 @@ import {
   AlertTriangle,
   ArrowDown,
   ArrowUpFromLine,
+  Check,
   CircleCheck,
   CircleDashed,
   CircleX,
@@ -20,14 +23,19 @@ import {
   FilePen,
   FlaskConical,
   GitMerge,
+  Link,
   MessageSquare,
+  Pin,
+  PinOff,
   RefreshCw,
   ShieldAlert,
   Wrench,
   type LucideIcon,
 } from 'lucide-react'
 import { Spinner } from '@mkagent/ui'
+import { Switch } from '@/components/ui/switch'
 import { CardButton } from '@/components/ui/card-button'
+import type { PrAutoFixView, PrAutoMergeChange } from '@/hooks/usePrWatch'
 import { cn } from '@/lib/utils'
 import { formatShortAge } from '@/utils/session'
 import {
@@ -38,17 +46,23 @@ import {
   reviewTone,
   shortSha,
   type MergeState,
+  type PrAutoMergeBlock,
+  type PrAutoMergeState,
   type PrCardAction,
   type PrCheck,
   type PrDetails,
+  type PrMergeMethod,
   type PrSummary,
   type ReviewDecision,
   type ReviewerState,
 } from './pr-watch-state'
 import { CheckStatusGlyph, PR_STATE_ICON, TONE_TEXT } from './pr-watch-visuals'
+import { PrTabStrip, type PrTabStripProps } from './PrTabStrip'
 
 /** The footer's "Updated 12s ago" stays roughly current while the card is open. */
 const AGE_TICK_MS = 10_000
+/** How long the copy-link button shows its "Copied!" tick. */
+const COPIED_MS = 1500
 
 const REVIEW_KEY: Record<ReviewDecision, string> = {
   approved: 'chat.prWatch.review.approved',
@@ -84,9 +98,21 @@ export interface PrDetailsCardProps {
   action?: PrCardAction | null
   /** Sends the action's prompt to the session */
   onAction?: () => void
+  /** The active PR was pinned (pr_bind), not the branch's own: it can be unpinned, and its actions work in a separate checkout */
+  pinned?: boolean
+  /** Remove the pinned PR from the session */
+  onUnbind?: () => void
+  /** Enable/disable GitHub auto-merge for this PR (the toggle is hidden when absent); resolves with GitHub's answer */
+  onSetAutoMerge?: (enabled: boolean, method?: PrMergeMethod) => Promise<PrAutoMergeChange>
+  /** Auto-fix (the Fix button's toggle) for this PR */
+  autoFix?: PrAutoFixView
+  /** Turn auto-fix on/off (the toggle is hidden when absent: always for a pinned PR) */
+  onSetAutoFix?: (enabled: boolean) => void
+  /** The session's PRs as tabs above the header, when it tracks more than one (see PrTabStrip) */
+  tabs?: PrTabStripProps
 }
 
-export function PrDetailsCard({ summary, details, refreshing, onRefresh, onOpenUrl, action, onAction }: PrDetailsCardProps) {
+export function PrDetailsCard({ summary, details, refreshing, onRefresh, onOpenUrl, action, onAction, pinned, onUnbind, onSetAutoMerge, autoFix, onSetAutoFix, tabs }: PrDetailsCardProps) {
   const { t } = useTranslation()
   const [, tick] = React.useReducer((n: number) => n + 1, 0)
   React.useEffect(() => {
@@ -97,10 +123,15 @@ export function PrDetailsCard({ summary, details, refreshing, onRefresh, onOpenU
   const StateIcon = PR_STATE_ICON[summary.state]
   const stateTone = TONE_TEXT[prStateTone(summary.state)]
   const updatedLine = t('chat.prWatch.updated', { age: formatShortAge(summary.fetchedAt), via: summary.via })
+  // The Fix control (with its auto-fix toggle) shows while there is review feedback to fix, and stays
+  // while auto-fix is on — next to a more urgent action (Resolve, Fix CI) or the tick, if any.
+  const showFixControl = !!onSetAutoFix && (summary.state === 'open' || summary.state === 'draft') && (action === 'fix' || !!autoFix?.enabled)
+  const hasTabs = !!tabs && tabs.entries.length > 1
 
   return (
     <div className="flex max-h-[min(560px,70vh)] flex-col">
-      <header className="flex gap-2.5 px-3.5 pt-3 pb-2.5">
+      {hasTabs && <PrTabStrip {...tabs} />}
+      <header className={cn('flex gap-2.5 px-3.5 pb-2.5', hasTabs ? 'pt-2' : 'pt-3')}>
         <StateIcon className={cn('mt-0.5 size-4 shrink-0', stateTone)} aria-hidden />
         <div className="min-w-0 flex-1">
           <p className="line-clamp-2 text-label font-medium text-foreground" title={summary.title}>
@@ -112,6 +143,15 @@ export function PrDetailsCard({ summary, details, refreshing, onRefresh, onOpenU
             <span className="min-w-0 truncate font-mono text-mono-ui" title={`${summary.headRef} → ${summary.baseRef}`}>
               {summary.headRef} → {summary.baseRef}
             </span>
+            {pinned && (
+              <>
+                <span aria-hidden>·</span>
+                <span className="inline-flex shrink-0 items-center gap-1">
+                  <Pin className="size-3" aria-hidden />
+                  {t('chat.prWatch.pinned')}
+                </span>
+              </>
+            )}
           </p>
           {details && (
             <p className="mt-0.5 text-label-sm text-tertiary tabular-nums">
@@ -122,6 +162,8 @@ export function PrDetailsCard({ summary, details, refreshing, onRefresh, onOpenU
             </p>
           )}
         </div>
+        {/* Keyed by PR: another tab starts without the previous PR's "Copied!" */}
+        <CopyLinkButton key={summary.url} url={summary.url} />
       </header>
 
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -147,6 +189,10 @@ export function PrDetailsCard({ summary, details, refreshing, onRefresh, onOpenU
         </CardSection>
         <CardSection title={t('chat.prWatch.merge.title')}>
           <MergeLine state={summary.mergeState} />
+          {/* Keyed by PR: another tab starts without the previous PR's pending switch or refusal */}
+          {onSetAutoMerge && (summary.state === 'open' || summary.state === 'draft') && (
+            <AutoMergeRow key={summary.url} autoMerge={summary.autoMerge} blocked={summary.autoMergeBlocked} onSetAutoMerge={onSetAutoMerge} />
+          )}
         </CardSection>
       </div>
 
@@ -155,7 +201,17 @@ export function PrDetailsCard({ summary, details, refreshing, onRefresh, onOpenU
         <span className="min-w-0 flex-1 truncate px-2 text-label-sm text-tertiary" title={updatedLine}>
           {updatedLine}
         </span>
-        <CardAction action={action} onAction={onAction} />
+        {pinned && onUnbind && (
+          <CardButton icon={PinOff} onClick={onUnbind} aria-label={t('chat.prWatch.unbind')} title={t('chat.prWatch.unbindHint')} />
+        )}
+        {showFixControl && onSetAutoFix ? (
+          <>
+            {action !== 'fix' && <CardAction action={action} onAction={onAction} pinned={pinned} />}
+            <FixControl canFixNow={action === 'fix' && !!onAction} autoFix={autoFix} onFixNow={onAction} onToggleAuto={onSetAutoFix} />
+          </>
+        ) : (
+          <CardAction action={action} onAction={onAction} pinned={pinned} />
+        )}
         <CardButton
           icon={refreshing ? RefreshSpinner : RefreshCw}
           disabled={refreshing || !onRefresh}
@@ -179,9 +235,10 @@ const ACTION_BUTTON: Record<Exclude<PrCardAction, 'ok' | 'unsynced'>, { icon: Lu
 
 /**
  * Resolve (conflicts), else Fix (review comments), else Fix CI, else a tick: green when all good,
- * orange while local changes aren't in the PR (see prCardAction).
+ * orange while local changes aren't in the PR (see prCardAction). On a pinned PR the tooltip adds that
+ * the agent works in a separate checkout.
  */
-function CardAction({ action, onAction }: { action?: PrCardAction | null; onAction?: () => void }) {
+function CardAction({ action, onAction, pinned }: { action?: PrCardAction | null; onAction?: () => void; pinned?: boolean }) {
   const { t } = useTranslation()
   if (!action) return null
   if (action === 'ok' || action === 'unsynced') {
@@ -195,10 +252,103 @@ function CardAction({ action, onAction }: { action?: PrCardAction | null; onActi
   if (!onAction) return null
   const button = ACTION_BUTTON[action]
   return (
-    <CardButton icon={button.icon} onClick={onAction} title={t(button.hint)}>
+    <CardButton icon={button.icon} onClick={onAction} title={pinned ? `${t(button.hint)}\n${t('chat.prWatch.pinnedActionHint')}` : t(button.hint)}>
       {t(button.label)}
     </CardButton>
   )
+}
+
+/**
+ * The Fix action with its auto-fix toggle. The body sends the one-time Fix prompt, while there is review
+ * feedback to fix (the card's `fix` action); the "Auto" switch turns auto-fix on or off. While it's on,
+ * the wrench turns slowly: the server checks the PR for new review comments every 5 minutes and fixes
+ * them in this session (no push, no GitHub replies), even while this window is hidden. With nothing to
+ * fix right now, a turning wrench says it's watching (a glyph, not a disabled button, so its tooltip shows).
+ */
+function FixControl({ canFixNow, autoFix, onFixNow, onToggleAuto }: {
+  canFixNow: boolean
+  autoFix?: PrAutoFixView
+  onFixNow?: () => void
+  onToggleAuto: (enabled: boolean) => void
+}) {
+  const { t } = useTranslation()
+  // Optimistic: show the requested state until a push confirms it (or ~6 s pass, so a refused change reverts)
+  const serverOn = autoFix?.enabled ?? false
+  const [pending, setPending] = React.useState<boolean | null>(null)
+  React.useEffect(() => {
+    if (pending === null) return
+    if (pending === serverOn) { setPending(null); return }
+    const timer = setTimeout(() => setPending(null), 6000)
+    return () => clearTimeout(timer)
+  }, [pending, serverOn])
+  const on = pending ?? serverOn
+  const toggleTitle = !on
+    ? t('chat.prWatch.autoFix.off')
+    : autoFix?.lastRunAt
+      ? t('chat.prWatch.autoFix.onLastRun', { age: formatShortAge(autoFix.lastRunAt) })
+      : t('chat.prWatch.autoFix.on')
+  return (
+    <span className="inline-flex items-center">
+      {canFixNow ? (
+        <CardButton icon={on ? TurningWrench : Wrench} onClick={onFixNow} title={t('chat.prWatch.fixReviewHint')} className="rounded-r-none">
+          {t('chat.prWatch.fixReview')}
+        </CardButton>
+      ) : (
+        <span role="img" aria-label={t('chat.prWatch.autoFix.watching')} title={t('chat.prWatch.autoFix.watching')} className="inline-flex h-7 items-center px-2 text-accent">
+          <TurningWrench className="size-3.5 shrink-0" />
+        </span>
+      )}
+      <button
+        type="button"
+        role="switch"
+        aria-checked={on}
+        aria-label={t('chat.prWatch.autoFix.toggle')}
+        title={toggleTitle}
+        onClick={() => {
+          setPending(!on)
+          onToggleAuto(!on)
+        }}
+        className={cn(
+          'motion-press inline-flex h-7 items-center rounded-md px-1.5 text-label-sm font-medium -outline-offset-2',
+          'transition-[background-color,color] duration-micro ease-out-subtle hover:duration-instant',
+          canFixNow && 'rounded-l-none',
+          on ? 'bg-accent-tint text-accent' : 'text-tertiary hover:bg-fill-hover hover:text-foreground',
+        )}
+      >
+        {t('chat.prWatch.autoFix.short')}
+      </button>
+    </span>
+  )
+}
+
+/** Copies the PR's link; the icon turns into a green tick with "Copied!" for a moment. */
+function CopyLinkButton({ url }: { url: string }) {
+  const { t } = useTranslation()
+  const [copied, setCopied] = React.useState(false)
+  React.useEffect(() => {
+    if (!copied) return
+    const timer = setTimeout(() => setCopied(false), COPIED_MS)
+    return () => clearTimeout(timer)
+  }, [copied])
+  const label = copied ? t('common.copied') : t('chat.prWatch.copyLink')
+  return (
+    <CardButton
+      icon={copied ? Check : Link}
+      aria-label={label}
+      title={label}
+      // Lines up with the title's first line, its padding bleeding into the header's
+      className={cn('-mt-1 -mr-1.5 shrink-0 self-start px-1.5', copied && 'text-success hover:text-success')}
+      onClick={() => {
+        // No tick when the clipboard refuses (it doesn't in the app): the missing tick is the signal
+        navigator.clipboard.writeText(url).then(() => setCopied(true), () => {})
+      }}
+    />
+  )
+}
+
+/** The wrench while auto-fix is on: a slow turn (stops under reduced motion; see base.css). */
+function TurningWrench({ className }: { className?: string }) {
+  return <Wrench className={cn(className, 'animate-autofix-spin')} />
 }
 
 /** CardButton takes an icon component; while refreshing that icon is the spinner. */
@@ -360,5 +510,76 @@ function MergeLine({ state }: { state: MergeState }) {
       <Icon className="size-3.5 shrink-0" aria-hidden />
       {t(`chat.prWatch.merge.${state}`)}
     </p>
+  )
+}
+
+const AUTO_MERGE_BLOCK_KEY: Record<PrAutoMergeBlock, string> = {
+  'repo-disabled': 'chat.prWatch.autoMerge.blocked.repoDisabled',
+  draft: 'chat.prWatch.autoMerge.blocked.draft',
+  mergeable: 'chat.prWatch.autoMerge.blocked.mergeable',
+  unavailable: 'chat.prWatch.autoMerge.blocked.unavailable',
+}
+
+/**
+ * GitHub auto-merge toggle. Reflects `summary.autoMerge`, with an optimistic value held until the
+ * next push confirms it (or ~6 s passes). A refusal reverts it at once and shows GitHub's reason
+ * under it. While GitHub won't take auto-merge (`blocked`), the switch is off and says why; turning
+ * it off always works. Enabling uses the repository's default merge method.
+ */
+function AutoMergeRow({ autoMerge, blocked, onSetAutoMerge }: {
+  autoMerge?: PrAutoMergeState
+  blocked?: PrAutoMergeBlock
+  onSetAutoMerge: (enabled: boolean, method?: PrMergeMethod) => Promise<PrAutoMergeChange>
+}) {
+  const { t } = useTranslation()
+  const serverEnabled = autoMerge?.enabled ?? false
+  const [pending, setPending] = React.useState<boolean | null>(null)
+  const [error, setError] = React.useState<string | null>(null)
+  // Only the latest click's answer counts (an older refusal must not undo a newer change)
+  const requestRef = React.useRef(0)
+  const autoMergeNoteId = React.useId()
+  React.useEffect(() => {
+    if (pending === null) return
+    if (pending === serverEnabled) { setPending(null); return }
+    const timer = setTimeout(() => setPending(null), 6000)
+    return () => clearTimeout(timer)
+  }, [pending, serverEnabled])
+  const enabled = pending ?? serverEnabled
+  const blockedKey = blocked && !enabled ? AUTO_MERGE_BLOCK_KEY[blocked] : null
+  const unavailable = blockedKey !== null
+  const note = error ?? (blockedKey ? t(blockedKey) : null)
+  const toggle = (next: boolean) => {
+    const request = ++requestRef.current
+    setPending(next)
+    setError(null)
+    void onSetAutoMerge(next).then(result => {
+      if (result.ok || request !== requestRef.current) return
+      setPending(null)
+      setError(result.error ?? t('chat.prWatch.autoMerge.failed'))
+    })
+  }
+  return (
+    <div className="pt-0.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className={cn('min-w-0 text-label-sm', unavailable ? 'text-tertiary' : 'text-secondary')}>
+          {t('chat.prWatch.autoMerge.label')}
+          {enabled && autoMerge?.method && (
+            <span className="text-tertiary"> · {t(`chat.prWatch.autoMerge.method.${autoMerge.method}`)}</span>
+          )}
+        </span>
+        <Switch
+          checked={enabled}
+          disabled={unavailable}
+          onCheckedChange={toggle}
+          aria-label={t('chat.prWatch.autoMerge.label')}
+          aria-describedby={note ? autoMergeNoteId : undefined}
+        />
+      </div>
+      {note && (
+        <p id={autoMergeNoteId} className={cn('mt-0.5 text-caption', error ? 'text-destructive' : 'text-tertiary')}>
+          {note}
+        </p>
+      )}
+    </div>
   )
 }

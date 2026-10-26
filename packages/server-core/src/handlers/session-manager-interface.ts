@@ -9,6 +9,8 @@ import type {
 import type { PermissionMode } from '@mkagent/shared/agent/mode-types'
 import type { ThinkingLevel } from '@mkagent/shared/agent/thinking-levels'
 import type {
+  BoundPr,
+  PrMonitorState,
   CreateSessionOptions,
   FileAttachment,
   PermissionModeState,
@@ -38,6 +40,7 @@ export interface ISessionManager {
   getSessionWorkingDirectory(sessionId: string): string | undefined
   /** Calls `listener(sessionId)` each time a session's turn completes; returns an unsubscribe.
    *  (The PR watcher refetches then: a turn is when pushes and `gh pr create` happen.) */
+  onPrWatchSessionChange?(listener: (sessionId: string | null) => void): () => void
   onTurnComplete?(listener: (sessionId: string) => void): () => void
   deleteSession(sessionId: string): Promise<void>
 
@@ -56,6 +59,22 @@ export interface ISessionManager {
   setSessionThinkingLevel(sessionId: string, level: ThinkingLevel): void
   setSessionCodingMode(sessionId: string, enabled: boolean): void
   continueSessionInNewSession(sessionId: string, codingMode: boolean): Promise<{ sessionId: string }>
+  /** Coding mode: PRs pinned to a session (chat-header PR carousel, in addedAt order). */
+  getSessionBoundPrs(sessionId: string): BoundPr[]
+  /** Pin a PR to a session (deduped by host/owner/repo#number); persists and returns the new list. */
+  bindPrToSession(sessionId: string, pr: BoundPr): BoundPr[]
+  /** Remove a pinned PR from a session (and its auto-fix state); persists and returns the new list. */
+  unbindPrFromSession(sessionId: string, pr: { host: string; owner: string; repo: string; number: number }): BoundPr[]
+  /** Coding mode: per-PR monitor state (auto-fix), keyed by PR id. */
+  getSessionPrMonitors(sessionId: string): Record<string, PrMonitorState>
+  /** Turn auto-fix on/off for one PR of a session; persists and returns the monitors. */
+  setSessionPrAutoFix(sessionId: string, prId: string, enabled: boolean): Record<string, PrMonitorState>
+  /** Record an auto-fix run (time + the review signature it acted on). */
+  recordPrAutoFixRun(sessionId: string, prId: string, signature: string[], at: number): void
+  /** A session's metadata without loading its messages (cheap, unlike getSession). */
+  getSessionSnapshot(sessionId: string): Session | null
+  /** Start a hidden, app-labelled turn in an idle session; false (nothing sent) when missing or busy. */
+  wakeIdleSessionWithNotice(sessionId: string, text: string): boolean
   updateWorkingDirectory(sessionId: string, path: string): void
   setSessionConnection(sessionId: string, connectionSlug: string): Promise<void>
   updateSessionModel(

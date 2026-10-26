@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'bun:test'
-import { GitHubAuthError, GitHubRequestError, githubGraphql, type FetchLike } from './github-client'
+import { GitHubAuthError, GitHubRefusedError, GitHubRequestError, githubGraphql, type FetchLike } from './github-client'
 
 function respond(status: number, body: unknown, headers: Record<string, string> = {}): FetchLike {
   return async () => ({
@@ -36,6 +36,19 @@ describe('githubGraphql', () => {
     await expect(call(respond(403, {}, { 'x-ratelimit-remaining': '0' }))).rejects.toBeInstanceOf(GitHubRequestError)
     await expect(call(respond(200, { errors: [{ type: 'RATE_LIMITED', message: 'API rate limit exceeded' }] }))).rejects.toBeInstanceOf(GitHubRequestError)
     await expect(call(respond(502, {}))).rejects.toBeInstanceOf(GitHubRequestError)
+  })
+
+  it('rejects a refused mutation with GitHub\'s reason instead of returning its null payload', async () => {
+    // Recorded from enablePullRequestAutoMerge on a repository with auto-merge off
+    const refused = await call(respond(200, {
+      data: { enablePullRequestAutoMerge: null },
+      errors: [{ type: 'UNPROCESSABLE', path: ['enablePullRequestAutoMerge'], message: 'Auto merge is not allowed for this repository' }],
+    })).catch(e => e)
+    expect(refused).toBeInstanceOf(GitHubRefusedError)
+    expect(refused.message).toBe('Auto merge is not allowed for this repository')
+    // A query's partial error keeps the data that did come back
+    expect(await call(respond(200, { data: { ok: true, other: null }, errors: [{ type: 'SERVICE_UNAVAILABLE', message: 'partial' }] })))
+      .toEqual({ ok: true, other: null } as unknown as { ok: boolean })
   })
 
   it('turns a network failure or timeout into a retry-later error', async () => {

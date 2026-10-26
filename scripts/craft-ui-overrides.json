@@ -190,8 +190,20 @@
       "reason": "Local files/news/Skills suggestions replace source-derived and email-setup prompts without restoring Sources"
     },
     "apps/electron/src/renderer/components/app-shell/chat-header/ChatHeader.tsx": {
-      "sha256": "bdad931830183a32f6bb7d5e850ba954157f73aea726148cb47c27720954bac9",
-      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+      "sha256": "b67db3a0c0e1617eae564223ac181526b664a0a21119dc8918e959f9184fd4b5",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    "apps/electron/src/renderer/components/app-shell/chat-header/__tests__/pr-tabs.test.ts": {
+      "sha256": "b9306aec769b1b41d54a0c50b54a5036e6dc0d180e5837783352ed64a606853b",
+      "reason": "Cover PR overflow sizing and active-tab visibility without restoring excluded label tests."
+    },
+    "apps/electron/src/renderer/components/app-shell/chat-header/pr-watch/PrTabStrip.tsx": {
+      "sha256": "6f76722c4f9915f95fa8afdcc4b609ec7e51b94400ce2208ac570fb4865ae0c6",
+      "reason": "Retain tabs/overflow/urgency and arrows; extract generic sizing to PR-specific helpers without restoring labels, and remove hidden tabs from keyboard focus."
+    },
+    "apps/electron/src/renderer/components/app-shell/chat-header/pr-watch/tab-layout.ts": {
+      "sha256": "63ca456f7f0b7f49a2a7b279ea0524287a5696a40b76e80a87719c7a2acdc5b2",
+      "reason": "Extract generic upstream chip sizing into PR-only helpers; no removed label UI is reintroduced."
     },
     "apps/electron/src/renderer/components/app-shell/input/ChatInputZone.tsx": {
       "sha256": "f5c24f3ba1c45cdedc704213562fa20b3dad47a8aec3d31d4f24bce6266a5ac1",
@@ -329,6 +341,10 @@
       "sha256": "f5552f9fa804d7885b4a3bdcd5f24a4869c0af989acf6e72928badbebd616476",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
+    "apps/electron/src/renderer/components/workspace/RemoveWorkspaceDialog.tsx": {
+      "sha256": "75c1ed42a687b9314ba3167d0637cb604487fed00bdda3fb133d4ab2c41561e9",
+      "reason": "Retain v0.15.5 confirmation, Cancel focus, folder reveal and reopen guidance; local workspace DTO only, no excluded remote binding."
+    },
     "apps/electron/src/renderer/components/workspace/WorkspaceCreationScreen.tsx": {
       "sha256": "e666b076dac19fd817fd93bc9484e8b8e318817204903febf61f2ea76a54776d",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
@@ -450,8 +466,8 @@
       "reason": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded"
     },
     "apps/electron/src/renderer/pages/ChatPage.tsx": {
-      "sha256": "0fb77deec1f288f04280a6b150dc540111fa7839ec575e5b65bfe3a6aff054ed",
-      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+      "sha256": "0eea02afef71791dd72dfb6f4db0113d5cf4e735b74a721064e12db6c214a903",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
     },
     "apps/electron/src/renderer/pages/SkillInfoPage.tsx": {
       "sha256": "f05f8b41d93399a332e785d5ed45e3e2db48fc5e4964c0805c72e24b23636eeb",
@@ -504,10 +520,6 @@
     "apps/electron/src/renderer/utils/session.ts": {
       "sha256": "6a4d7291381feffa9735a244ad7cb7d6824642b02700244e411bd3b1b3bbf1d8",
       "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
-    },
-    "apps/electron/src/renderer/components/workspace/RemoveWorkspaceDialog.tsx": {
-      "sha256": "75c1ed42a687b9314ba3167d0637cb604487fed00bdda3fb133d4ab2c41561e9",
-      "reason": "Retain v0.15.5 confirmation, Cancel focus, folder reveal and reopen guidance; local workspace DTO only, no excluded remote binding."
     }
   }
 }

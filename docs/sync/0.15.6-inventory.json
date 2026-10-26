@@ -1,0 +1,474 @@
+{
+  "fromTag": "v0.15.5",
+  "fromCommit": "cede6ea49e0c4a42933ed0f1bc129db698fc581f",
+  "toTag": "v0.15.6",
+  "toCommit": "8df01c5d0ac73c35add5954e6f190ce038d35845",
+  "mkagentVersion": "0.2.6",
+  "paths": [
+    {
+      "path": "apps/cli/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.6 versions/lock and shared pr-watch export; upstream only changes versions/exports, Pi remains pinned to 1.1.0."
+    },
+    {
+      "path": "apps/electron/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.6 versions/lock and shared pr-watch export; upstream only changes versions/exports, Pi remains pinned to 1.1.0."
+    },
+    {
+      "path": "apps/electron/resources/docs/sources.md",
+      "status": "excluded",
+      "reason": "OAuth relay metadata, credential routing, schema and tests belong exclusively to excluded Sources/MCP; retained Pi LLM authentication is independent."
+    },
+    {
+      "path": "apps/electron/resources/release-notes/0.15.6.md",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.6 changelog/built-in release notes describe retained Coding features and explicit exclusions."
+    },
+    {
+      "path": "apps/electron/resources/release-notes/next.md",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.6 changelog/built-in release notes describe retained Coding features and explicit exclusions."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/ChatHeader.tsx",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/__tests__/pr-watch-state.test.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/pr-watch/ChatHeaderPrChip.tsx",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/pr-watch/PrDetailsCard.tsx",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/pr-watch/PrTabStrip.tsx",
+      "status": "adapted",
+      "reason": "Retain tabs/overflow/urgency and arrows; extract generic sizing to PR-specific helpers without restoring labels, and remove hidden tabs from keyboard focus."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/pr-watch/pr-watch-state.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/__tests__/useHoverPopover.test.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/useHoverPopover.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/usePrWatch.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/ChatPage.tsx",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/chat-header.tsx",
+      "status": "excluded",
+      "reason": "Development-only playground/PR fixtures are absent from shipped Lite; real Desktop/WebUI and controlled local fixtures validate the retained UI."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/chat-panel.tsx",
+      "status": "excluded",
+      "reason": "Development-only playground/PR fixtures are absent from shipped Lite; real Desktop/WebUI and controlled local fixtures validate the retained UI."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/samples/pr-watch.ts",
+      "status": "excluded",
+      "reason": "Development-only playground/PR fixtures are absent from shipped Lite; real Desktop/WebUI and controlled local fixtures validate the retained UI."
+    },
+    {
+      "path": "apps/electron/src/shared/__tests__/ipc-channels.test.ts",
+      "status": "adapted",
+      "reason": "Four new PR channels are covered by retained channel-map parity and actual RPC/UI tests; full upstream IPC test depends on excluded product channels."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "apps/electron/src/transport/channel-map.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "apps/viewer/package.json",
+      "status": "excluded",
+      "reason": "Only version metadata for excluded messaging/public Viewer products; no corresponding MkAgent workspace."
+    },
+    {
+      "path": "apps/webui/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.6 versions/lock and shared pr-watch export; upstream only changes versions/exports, Pi remains pinned to 1.1.0."
+    },
+    {
+      "path": "bun.lock",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.6 versions/lock and shared pr-watch export; upstream only changes versions/exports, Pi remains pinned to 1.1.0."
+    },
+    {
+      "path": "package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.6 versions/lock and shared pr-watch export; upstream only changes versions/exports, Pi remains pinned to 1.1.0."
+    },
+    {
+      "path": "packages/core/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.6 versions/lock and shared pr-watch export; upstream only changes versions/exports, Pi remains pinned to 1.1.0."
+    },
+    {
+      "path": "packages/messaging-gateway/package.json",
+      "status": "excluded",
+      "reason": "Only version metadata for excluded messaging/public Viewer products; no corresponding MkAgent workspace."
+    },
+    {
+      "path": "packages/messaging-whatsapp-worker/package.json",
+      "status": "excluded",
+      "reason": "Only version metadata for excluded messaging/public Viewer products; no corresponding MkAgent workspace."
+    },
+    {
+      "path": "packages/pi-agent-server/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.6 versions/lock and shared pr-watch export; upstream only changes versions/exports, Pi remains pinned to 1.1.0."
+    },
+    {
+      "path": "packages/server-core/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.6 versions/lock and shared pr-watch export; upstream only changes versions/exports, Pi remains pinned to 1.1.0."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/coding-repos.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/pr-watch.ts",
+      "status": "adapted",
+      "reason": "Retain multi-PR/auto-merge/Auto-review implementation via gh-only credentials. Add server cadence, teardown/race checks, actual checkout revalidation, cached-status reuse and persistent cursor/PR restart tests."
+    },
+    {
+      "path": "packages/server-core/src/handlers/session-manager-interface.ts",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "packages/server-core/src/pr-watch/auto-fix.test.ts",
+      "status": "adapted",
+      "reason": "Retain multi-PR/auto-merge/Auto-review implementation via gh-only credentials. Add server cadence, teardown/race checks, actual checkout revalidation, cached-status reuse and persistent cursor/PR restart tests."
+    },
+    {
+      "path": "packages/server-core/src/pr-watch/auto-fix.ts",
+      "status": "adapted",
+      "reason": "Retain multi-PR/auto-merge/Auto-review implementation via gh-only credentials. Add server cadence, teardown/race checks, actual checkout revalidation, cached-status reuse and persistent cursor/PR restart tests."
+    },
+    {
+      "path": "packages/server-core/src/pr-watch/operations.test.ts",
+      "status": "adapted",
+      "reason": "Retain multi-PR/auto-merge/Auto-review implementation via gh-only credentials. Add server cadence, teardown/race checks, actual checkout revalidation, cached-status reuse and persistent cursor/PR restart tests."
+    },
+    {
+      "path": "packages/server-core/src/pr-watch/operations.ts",
+      "status": "adapted",
+      "reason": "Retain multi-PR/auto-merge/Auto-review implementation via gh-only credentials. Add server cadence, teardown/race checks, actual checkout revalidation, cached-status reuse and persistent cursor/PR restart tests."
+    },
+    {
+      "path": "packages/server-core/src/pr-watch/tool-callbacks.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/server-core/src/services/coding-repos/coding-repos.test.ts",
+      "status": "adapted",
+      "reason": "Retain recursive scan and all upstream cases; add async IO, deadline checks inside concurrency workers and one overall filesystem/Git budget, symlink/skip/tilde/large-directory regressions."
+    },
+    {
+      "path": "packages/server-core/src/services/coding-repos/discover.ts",
+      "status": "adapted",
+      "reason": "Retain recursive scan and all upstream cases; add async IO, deadline checks inside concurrency workers and one overall filesystem/Git budget, symlink/skip/tilde/large-directory regressions."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/github-client.test.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/github-client.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/github-queries.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/map-github.test.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/map-github.ts",
+      "status": "adapted",
+      "reason": "Retain auto-merge and trusted review signature mapping; fail closed when viewer/comment identity is missing so unattended fixes cannot mistake own feedback for external review."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/pr-ref.test.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/pr-ref.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/registry.test.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/registry.ts",
+      "status": "adapted",
+      "reason": "Retain multi-PR/auto-merge/Auto-review implementation via gh-only credentials. Add server cadence, teardown/race checks, actual checkout revalidation, cached-status reuse and persistent cursor/PR restart tests."
+    },
+    {
+      "path": "packages/server-core/src/sessions/SessionManager.ts",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "packages/server-core/src/sessions/handoff-summary.test.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/server/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.6 versions/lock and shared pr-watch export; upstream only changes versions/exports, Pi remains pinned to 1.1.0."
+    },
+    {
+      "path": "packages/session-tools-core/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.6 versions/lock and shared pr-watch export; upstream only changes versions/exports, Pi remains pinned to 1.1.0."
+    },
+    {
+      "path": "packages/session-tools-core/src/context.ts",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "packages/session-tools-core/src/handlers/pr-tools.test.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/session-tools-core/src/handlers/pr-tools.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/session-tools-core/src/index.ts",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "packages/session-tools-core/src/tool-defs-filtering.test.ts",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "packages/session-tools-core/src/tool-defs.ts",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "packages/shared/CLAUDE.md",
+      "status": "reviewed",
+      "reason": "Upstream contributor guidance adds whole-config forwarding invariant for Claude; no such file is shipped in MkAgent. Pi factory already forwards whole BackendConfig and is regression-tested."
+    },
+    {
+      "path": "packages/shared/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.6 versions/lock and shared pr-watch export; upstream only changes versions/exports, Pi remains pinned to 1.1.0."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/conversation-summary.test.ts",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/pin-created-pr.test.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/shared/src/agent/backend/__tests__/factory.test.ts",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "packages/shared/src/agent/base-agent.ts",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "packages/shared/src/agent/claude-agent.ts",
+      "status": "excluded",
+      "reason": "Reviewed all hunks: SDK constructor/config alias and PostToolUse hook are Claude-only. Shared BaseAgent and Pi PR hook are adapted; Pi config forwarding, SDK Read image resize and compaction/context behavior are verified separately."
+    },
+    {
+      "path": "packages/shared/src/agent/conversation-summary.ts",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "packages/shared/src/agent/pi-agent.ts",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "packages/shared/src/agent/session-scoped-tool-callback-registry.ts",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "packages/shared/src/agent/session-self-management-bindings.ts",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "packages/shared/src/config/validators.ts",
+      "status": "excluded",
+      "reason": "OAuth relay metadata, credential routing, schema and tests belong exclusively to excluded Sources/MCP; retained Pi LLM authentication is independent."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/de.json",
+      "status": "excluded",
+      "reason": "MkAgent ships EN/ZH only; retained PR and picker strings are synchronized in those locales."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/en.json",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/es.json",
+      "status": "excluded",
+      "reason": "MkAgent ships EN/ZH only; retained PR and picker strings are synchronized in those locales."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/hu.json",
+      "status": "excluded",
+      "reason": "MkAgent ships EN/ZH only; retained PR and picker strings are synchronized in those locales."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ja.json",
+      "status": "excluded",
+      "reason": "MkAgent ships EN/ZH only; retained PR and picker strings are synchronized in those locales."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/pl.json",
+      "status": "excluded",
+      "reason": "MkAgent ships EN/ZH only; retained PR and picker strings are synchronized in those locales."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/shared/src/pr-watch/index.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/shared/src/pr-watch/rules.test.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/shared/src/pr-watch/rules.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/shared/src/protocol/dto.ts",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "packages/shared/src/protocol/events.ts",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "packages/shared/src/protocol/git-repos.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/shared/src/protocol/pr-watch.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "status": "reviewed",
+      "reason": "Lite derives server-eligible routes dynamically from channel namespaces; all four new PR channels are included automatically and validated by parity/real RPC tests. No removed routing products are restored."
+    },
+    {
+      "path": "packages/shared/src/sessions/types.ts",
+      "status": "adapted",
+      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+    },
+    {
+      "path": "packages/shared/src/sources/__tests__/oauth-relay.test.ts",
+      "status": "excluded",
+      "reason": "OAuth relay metadata, credential routing, schema and tests belong exclusively to excluded Sources/MCP; retained Pi LLM authentication is independent."
+    },
+    {
+      "path": "packages/shared/src/sources/credential-manager.ts",
+      "status": "excluded",
+      "reason": "OAuth relay metadata, credential routing, schema and tests belong exclusively to excluded Sources/MCP; retained Pi LLM authentication is independent."
+    },
+    {
+      "path": "packages/shared/src/sources/types.ts",
+      "status": "excluded",
+      "reason": "OAuth relay metadata, credential routing, schema and tests belong exclusively to excluded Sources/MCP; retained Pi LLM authentication is independent."
+    },
+    {
+      "path": "packages/ui/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.6 versions/lock and shared pr-watch export; upstream only changes versions/exports, Pi remains pinned to 1.1.0."
+    },
+    {
+      "path": "packages/ui/src/styles/base.css",
+      "status": "retained",
+      "reason": "Retain v0.15.6 shared implementation and tests with namespace normalization."
+    }
+  ]
+}

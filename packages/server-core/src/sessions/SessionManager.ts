@@ -1,3 +1,7 @@
+import { buildPrWatchToolCallbacks } from '../pr-watch/tool-callbacks'
+import { prEntryId } from '@mkagent/shared/pr-watch'
+import { getPrAutoFixMonitor, getPrWatchRegistry } from '../handlers/rpc/pr-watch'
+import type { BoundPr, PrMonitorState } from '@mkagent/shared/protocol'
 import { addTurnUsage } from './turn-usage'
 import type { BackgroundTaskOutput, StopBackgroundTaskResult } from '@mkagent/shared/protocol'
 import { launchOutputFile, readBackgroundTaskOutput } from './background-task-output'
@@ -231,6 +235,10 @@ interface ManagedSession extends SessionConfig {
   messageCount?: number
   lastFinalMessageId?: string
   lastMessageRole?: Session['lastMessageRole']
+  activeTurnSerial?: number
+  pendingHandoffSummary?: Promise<void>
+  handoffSummaryExpired?: boolean
+  cancelHandoffWait?: () => void
   pendingExternalHeader?: SessionHeader
 }
 
@@ -273,6 +281,8 @@ export function createManagedSession(
     connectionLocked: session.connectionLocked,
     thinkingLevel: normalizeThinkingLevel(session.thinkingLevel),
     codingMode: session.codingMode,
+    boundPrs: session.boundPrs,
+    prMonitors: session.prMonitors,
     transferredSessionSummary: session.transferredSessionSummary,
     transferredSessionSummaryApplied: session.transferredSessionSummaryApplied,
     pendingPlanExecution: session.pendingPlanExecution,
@@ -326,6 +336,7 @@ export function resolveMidStreamDeliveryOutcome(
 }
 
 export class SessionManager implements ISessionManager {
+  private handoffSummaryWaitMs = 30_000
   private sessions = new Map<string, ManagedSession>()
   private configWatchers = new Map<string, ConfigWatcher>()
   private eventSink: EventSink = () => {}
@@ -373,6 +384,12 @@ export class SessionManager implements ISessionManager {
     }
   }
 
+  private readonly prWatchSessionListeners = new Set<(sessionId: string | null) => void>()
+  onPrWatchSessionChange(listener: (sessionId: string | null) => void): () => void {
+    this.prWatchSessionListeners.add(listener)
+    return () => this.prWatchSessionListeners.delete(listener)
+  }
+
   private readonly turnCompleteListeners = new Set<(sessionId: string) => void>()
 
   onTurnComplete(listener: (sessionId: string) => void): () => void {
@@ -381,6 +398,9 @@ export class SessionManager implements ISessionManager {
   }
 
   private emit(workspaceId: string, event: SessionEvent): void {
+    if (['session_deleted', 'session_archived', 'session_unarchived', 'working_directory_changed', 'coding_mode_changed'].includes(event.type)) {
+      for (const listener of this.prWatchSessionListeners) listener(event.sessionId)
+    }
     if (event.type === 'complete') {
       for (const listener of this.turnCompleteListeners) {
         try { listener(event.sessionId) } catch (error) { log.warn('turn-complete listener failed', error) }
@@ -423,6 +443,8 @@ export class SessionManager implements ISessionManager {
       preview: _preview, messageCount: _messageCount,
       lastFinalMessageId: _lastFinalMessageId, lastMessageRole: _lastMessageRole,
       pendingExternalHeader: _pendingExternalHeader,
+      activeTurnSerial: _activeTurnSerial,
+      pendingHandoffSummary: _pendingHandoffSummary, handoffSummaryExpired: _handoffSummaryExpired, cancelHandoffWait: _cancelHandoffWait,
       messages, tokenUsage, ...config } = managed
     return { ...config, messages: messages.map(messageToStored), tokenUsage }
   }
@@ -480,6 +502,8 @@ export class SessionManager implements ISessionManager {
       llmConnection: managed.llmConnection,
       thinkingLevel: managed.thinkingLevel,
       codingMode: managed.codingMode,
+      boundPrs: managed.boundPrs,
+      prMonitors: managed.prMonitors,
       lastMessageRole: managed.lastMessageRole,
       lastFinalMessageId: managed.lastFinalMessageId,
       currentStatus: managed.currentStatus,
@@ -719,6 +743,9 @@ export class SessionManager implements ISessionManager {
       return
     }
 
+    // Reserve before the first await so messages arriving during persistence/summary generation queue.
+    managed.isProcessing = true
+    const acceptedEpoch = managed.stopEpoch ?? 0
     await this.flushSession(sessionId)
     if (!existingMessageId) {
       onAck?.(userMessage.id)
@@ -745,6 +772,7 @@ export class SessionManager implements ISessionManager {
         }
       }
     }
+    if (this.sessions.get(sessionId) !== managed || (managed.stopEpoch ?? 0) !== acceptedEpoch) return
     await this.runTurn(managed, message, attachments)
     if (shouldGenerateTitle) void this.generateTitle(managed, message)
   }
@@ -766,11 +794,14 @@ export class SessionManager implements ISessionManager {
     attachments?: FileAttachment[],
   ): Promise<void> {
     managed.isProcessing = true
+    const turnSerial = managed.activeTurnSerial = (managed.activeTurnSerial ?? 0) + 1
     runtimeHooks.onSessionStarted()
     const stopEpoch = managed.stopEpoch ?? 0
     let stopReason: SessionCompletionEvent['stopReason'] = 'complete'
     try {
       const agent = await this.getOrCreateAgent(managed)
+      if (managed.pendingHandoffSummary) await this.waitForHandoffSummary(managed)
+      if (this.sessions.get(managed.id) !== managed || (managed.stopEpoch ?? 0) !== stopEpoch) return
       for await (const event of agent.chat(message, attachments)) {
         if (this.handleAgentEvent(managed, event)) stopReason = 'error'
       }
@@ -787,6 +818,11 @@ export class SessionManager implements ISessionManager {
       this.emit(managed.workspace.id, { type: 'error', sessionId: managed.id, error: errorMessage, backgroundTasksAlive: [...managed.backgroundTaskRegistry.values()].some(task => task.status === 'running') })
       runtimeHooks.captureException(error, { errorSource: 'session-turn', sessionId: managed.id })
     } finally {
+      // A cancelled wait must not reset a newer turn or revive a deleted session.
+      if (this.sessions.get(managed.id) !== managed || managed.activeTurnSerial !== turnSerial) {
+        runtimeHooks.onSessionStopped()
+        return
+      }
       managed.isProcessing = false
       managed.currentStatus = undefined
       if (managed.pendingExternalHeader) {
@@ -1210,6 +1246,7 @@ export class SessionManager implements ISessionManager {
     const browserPaneFns = this.createBrowserPaneFns(managed)
     mergeSessionScopedToolCallbacks(managed.id, {
       ...(browserPaneFns ? { browserPaneFns } : {}),
+      prWatch: managed.codingMode ? buildPrWatchToolCallbacks({ sessionId: managed.id, sessionManager: this, getRegistry: getPrWatchRegistry, getAutoFixMonitor: getPrAutoFixMonitor }) : undefined,
       archiveSessionFn: async (sessionId, archived) => {
         const target = this.sessions.get(sessionId)
         const guardError = validateArchiveTarget(
@@ -1371,9 +1408,10 @@ export class SessionManager implements ISessionManager {
 
   async cancelProcessing(sessionId: string, silent = false): Promise<void> {
     const managed = this.sessions.get(sessionId)
-    if (!managed?.agent || !managed.isProcessing) return
+    if (!managed?.isProcessing) return
     managed.stopEpoch = (managed.stopEpoch ?? 0) + 1
-    if (!managed.agent.stopTurn?.()) managed.agent.forceAbort(AbortReason.UserStop)
+    managed.cancelHandoffWait?.()
+    if (managed.agent && !managed.agent.stopTurn?.()) managed.agent.forceAbort(AbortReason.UserStop)
     managed.isProcessing = false
     if (!silent) this.emit(managed.workspace.id, { type: 'interrupted', sessionId, backgroundTasksAlive: [...managed.backgroundTaskRegistry.values()].some(task => task.status === 'running') })
   }
@@ -1411,6 +1449,134 @@ export class SessionManager implements ISessionManager {
       log.warn(`[bg-lifecycle] stop failed for task ${taskId}:`, error)
       return { success: false, error: 'failed' }
     }
+  }
+
+  /** Wait for a continued session's handoff summary, at most `handoffSummaryWaitMs`. */
+  private async waitForHandoffSummary(managed: ManagedSession): Promise<void> {
+    const pending = managed.pendingHandoffSummary
+    if (!pending) return
+    const startedAt = Date.now()
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const ready = await Promise.race([
+      pending.then(() => true, () => true),
+      new Promise<boolean>(resolve => { managed.cancelHandoffWait = () => resolve(false) }),
+      new Promise<boolean>(resolve => { timer = setTimeout(() => resolve(false), this.handoffSummaryWaitMs) }),
+    ])
+    clearTimeout(timer)
+    managed.cancelHandoffWait = undefined
+    if (!ready) managed.handoffSummaryExpired = true
+    log.info(`Session ${managed.id}: first turn waited ${Date.now() - startedAt} ms for the previous session's summary${ready ? '' : ', starting without it'}`)
+  }
+
+  /**
+   * Summarize `source`'s conversation and give it to `target` as one-shot hidden context for its
+   * first turn (`transferredSessionSummary`). Never throws: without a summary the new session just
+   * starts without the earlier context.
+   */
+  private async attachHandoffSummary(source: ManagedSession, target: ManagedSession): Promise<void> {
+    const startedAt = Date.now()
+    try {
+      const summary = await this.generateSessionHandoffSummary(source)
+      // Deleted while the summary was generated
+      if (this.sessions.get(target.id) !== target || target.handoffSummaryExpired) return
+      if (summary) {
+        target.transferredSessionSummary = summary
+        target.transferredSessionSummaryApplied = false
+        this.persistSession(target)
+        await sessionPersistenceQueue.flush(target.id)
+      }
+      log.info(`Session ${target.id}: summary of ${source.id} ${summary ? `ready (${summary.length} chars)` : 'empty'} after ${Date.now() - startedAt} ms`)
+    } catch (error) {
+      log.warn(`Session ${target.id}: summary of ${source.id} failed after ${Date.now() - startedAt} ms:`, error)
+    }
+  }
+
+  /** Coding mode: PRs pinned to a session (chat-header PR carousel), in addedAt order. */
+  getSessionBoundPrs(sessionId: string): BoundPr[] {
+    return this.sessions.get(sessionId)?.boundPrs ?? []
+  }
+
+  /**
+   * Pin a PR to a session (pr_bind). Deduped by host/owner/repo#number — re-binding an existing PR
+   * refreshes its position — then persisted. Returns the new list (addedAt order).
+   */
+  bindPrToSession(sessionId: string, pr: BoundPr): BoundPr[] {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) throw new Error(`Session ${sessionId} not found`)
+    const next = [...(managed.boundPrs ?? []).filter(p => !sameBoundPr(p, pr)), pr].sort((a, b) => a.addedAt - b.addedAt)
+    managed.boundPrs = next
+    log.info(`Session ${sessionId}: bound PR ${pr.owner}/${pr.repo}#${pr.number} (${next.length} total)`)
+    this.persistSession(managed)
+    return next
+  }
+
+  /** Remove a pinned PR from a session (pr_unbind); persists and returns the new list. */
+  unbindPrFromSession(sessionId: string, pr: { host: string; owner: string; repo: string; number: number }): BoundPr[] {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) throw new Error(`Session ${sessionId} not found`)
+    const next = (managed.boundPrs ?? []).filter(p => !sameBoundPr(p, pr))
+    // Stored only when non-empty, so sessions that never bind keep an unchanged header (like codingMode)
+    managed.boundPrs = next.length ? next : undefined
+    // An unbound PR's auto-fix goes with it
+    const monitorId = prEntryId(pr)
+    if (managed.prMonitors?.[monitorId]) {
+      const { [monitorId]: _dropped, ...rest } = managed.prMonitors
+      managed.prMonitors = Object.keys(rest).length ? rest : undefined
+    }
+    log.info(`Session ${sessionId}: unbound PR ${pr.owner}/${pr.repo}#${pr.number} (${next.length} left)`)
+    this.persistSession(managed)
+    return next
+  }
+
+  /** Coding mode: per-PR monitor state (auto-fix), keyed by PR id. */
+  getSessionPrMonitors(sessionId: string): Record<string, PrMonitorState> {
+    return this.sessions.get(sessionId)?.prMonitors ?? {}
+  }
+
+  /**
+   * Turn auto-fix (the PR card's Fix toggle) on or off for one PR of a session; persists and returns
+   * the monitors. Turning it off keeps what the last run acted on, so turning it back on only fixes
+   * feedback that is new since then.
+   */
+  setSessionPrAutoFix(sessionId: string, prId: string, enabled: boolean): Record<string, PrMonitorState> {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) throw new Error(`Session ${sessionId} not found`)
+    const monitors = { ...(managed.prMonitors ?? {}) }
+    const entry: PrMonitorState = { ...(monitors[prId] ?? {}), autoFix: enabled || undefined }
+    if (entry.autoFix || entry.lastFixAt) monitors[prId] = entry
+    else delete monitors[prId]
+    managed.prMonitors = Object.keys(monitors).length ? monitors : undefined
+    log.info(`Session ${sessionId}: auto-fix ${enabled ? 'on' : 'off'} for ${prId}`)
+    this.persistSession(managed)
+    return managed.prMonitors ?? {}
+  }
+
+  /** Record an auto-fix run: when, and the review feedback (signature) it acted on. */
+  recordPrAutoFixRun(sessionId: string, prId: string, signature: string[], at: number): void {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) return
+    managed.prMonitors = { ...(managed.prMonitors ?? {}), [prId]: { ...(managed.prMonitors?.[prId] ?? {}), lastFixAt: at, lastFixSignature: signature } }
+    this.persistSession(managed)
+  }
+
+  /** A session's metadata without loading its messages (cheap, unlike getSession). */
+  getSessionSnapshot(sessionId: string): Session | null {
+    const managed = this.sessions.get(sessionId)
+    return managed ? this.toSession(managed, false) : null
+  }
+
+  /**
+   * Start a turn in an idle session with an app-generated notice: hidden (never a transcript bubble)
+   * and labelled as sent by Craft Agents, not the user — the same path background-task completions
+   * use. Returns false, sending nothing, when the session is missing or busy, so the caller can retry.
+   */
+  wakeIdleSessionWithNotice(sessionId: string, text: string): boolean {
+    const managed = this.sessions.get(sessionId)
+    if (!managed || managed.isProcessing) return false
+    void this.sendMessage(sessionId, labelSystemNotice(text), [], [], { hidden: true }).catch((err) => {
+      log.error(`Session ${sessionId}: failed to start a system-notice turn:`, err)
+    })
+    return true
   }
 
   /**
@@ -1510,10 +1676,7 @@ export class SessionManager implements ISessionManager {
     this.emit(managed.workspace.id, { type: 'coding_mode_changed', sessionId, codingMode: enabled })
   }
 
-  async continueSessionInNewSession(sessionId: string, codingMode: boolean): Promise<{ sessionId: string }> {
-    const managed = this.sessions.get(sessionId)
-    if (!managed) throw new Error(`Session ${sessionId} not found`)
-    if (managed.isProcessing) throw new Error('Wait for the current turn to finish before continuing in a new session.')
+  private async generateSessionHandoffSummary(managed: ManagedSession): Promise<string | null> {
     this.ensureMessagesLoaded(managed)
     const messages = managed.messages.filter(m => (m.role === 'user' || m.role === 'assistant') && !m.isIntermediate)
       .map(m => ({ type: m.role as 'user' | 'assistant', content: m.content }))
@@ -1529,19 +1692,24 @@ export class SessionManager implements ISessionManager {
       })
       try { summary = await generateConversationSummary(messages, agent.runMiniCompletion.bind(agent)) }
       finally { agent.destroy() }
-      if (!summary) throw new Error('Could not summarize the conversation. Please try again.')
     }
+    return summary
+  }
+
+  async continueSessionInNewSession(sessionId: string, codingMode: boolean): Promise<{ sessionId: string }> {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) throw new Error(`Session ${sessionId} not found`)
+    if (managed.isProcessing) throw new Error('Wait for the current turn to finish before continuing in a new session.')
     const session = await this.createSession(managed.workspace.id, {
       permissionMode: managed.permissionMode, thinkingLevel: managed.thinkingLevel,
       workingDirectory: managed.workingDirectory ?? 'none', model: managed.model,
       llmConnection: managed.llmConnection, codingMode,
     }, { emitCreatedEvent: false })
     const created = this.sessions.get(session.id)!
-    if (summary) {
-      created.transferredSessionSummary = summary
-      created.transferredSessionSummaryApplied = false
-      await this.flushSession(created.id)
-    }
+    const pending = this.attachHandoffSummary(managed, created).finally(() => {
+      if (created.pendingHandoffSummary === pending) created.pendingHandoffSummary = undefined
+    })
+    created.pendingHandoffSummary = pending
     this.notifySessionCreated(managed.workspace.id, created.id)
     return { sessionId: created.id }
   }
@@ -1960,9 +2128,12 @@ export class SessionManager implements ISessionManager {
   }
 
   cleanup(): void {
+    for (const listener of this.prWatchSessionListeners) listener(null)
+    this.prWatchSessionListeners.clear()
     for (const watcher of this.configWatchers.values()) watcher.stop()
     this.configWatchers.clear()
     for (const managed of this.sessions.values()) {
+      managed.cancelHandoffWait?.()
       managed.agent?.destroy()
       unregisterSessionScopedToolCallbacks(managed.id)
     }
@@ -1975,3 +2146,7 @@ export class SessionManager implements ISessionManager {
 }
 
 export { sanitizeForTitle } from '@mkagent/server-core/domain'
+
+function sameBoundPr(a: BoundPr, b: Pick<BoundPr, 'host' | 'owner' | 'repo' | 'number'>): boolean {
+  return prEntryId(a) === prEntryId(b)
+}

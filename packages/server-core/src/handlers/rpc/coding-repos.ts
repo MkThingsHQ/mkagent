@@ -5,7 +5,8 @@
  */
 
 import { RPC_CHANNELS, type CreateWorktreeRequest, type CreateWorktreeResult, type RepoListing } from '@mkagent/shared/protocol'
-import { getWorkspaceByNameOrId } from '@mkagent/shared/config'
+import { getWorkspaceByNameOrId, getWorkspaces } from '@mkagent/shared/config'
+import { expandPath } from '@mkagent/shared/utils'
 import { loadWorkspaceConfig } from '@mkagent/shared/workspaces'
 import type { RpcServer } from '@mkagent/server-core/transport'
 import type { HandlerDeps } from '../handler-deps'
@@ -24,15 +25,18 @@ const MAX_RECENT_DIRS = 20
 function workspaceFolders(workspaceId: string): { root: string; folder?: string } {
   const workspace = getWorkspaceByNameOrId(workspaceId)
   if (!workspace) throw new Error('Unknown workspace')
+  // Stored as typed in Settings (`~/code`); the file system needs it expanded
   const folder = loadWorkspaceConfig(workspace.rootPath)?.defaults?.workingDirectory
-  return { root: workspace.rootPath, folder: folder || undefined }
+  return { root: workspace.rootPath, folder: folder ? expandPath(folder) : undefined }
 }
 
 async function listing(workspaceId: string, recentDirs: unknown, refreshGitHub: boolean): Promise<RepoListing> {
   const { root, folder } = workspaceFolders(workspaceId)
   const recent = Array.isArray(recentDirs) ? recentDirs.filter((d): d is string => typeof d === 'string').slice(0, MAX_RECENT_DIRS) : []
+  // Workspace data folders (sessions, sources) hold no code: the repo scan never enters them
+  const skipDirs = [root, ...getWorkspaces().map(workspace => expandPath(workspace.rootPath))]
   const [local, github] = await Promise.all([
-    discoverLocalRepos({ workspaceFolder: folder, recentDirs: recent }),
+    discoverLocalRepos({ workspaceFolder: folder, recentDirs: recent, skipDirs }),
     listGitHubRepos({ fresh: refreshGitHub }),
   ])
   // A GitHub repo that is already on disk is listed once, as the local one

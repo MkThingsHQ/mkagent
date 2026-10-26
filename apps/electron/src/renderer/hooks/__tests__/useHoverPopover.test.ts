@@ -87,6 +87,28 @@ describe('HoverIntent', () => {
     expect(intent.current.open).toBe(true)
   })
 
+  it('pin keeps an open card open while a menu opened from it is in use', () => {
+    const { clock, intent } = setup()
+    intent.enter()
+    clock.advance(300)
+    intent.pin() // the card's "+N" menu opened
+    intent.leave() // the pointer moves into the menu, which renders in a portal
+    clock.advance(1000)
+    expect(intent.current).toEqual({ open: true, pinned: true })
+  })
+
+  it('pin cancels a pending close and never opens a closed card', () => {
+    const { clock, intent } = setup()
+    intent.pin()
+    expect(intent.current.open).toBe(false)
+    intent.enter()
+    clock.advance(300)
+    intent.leave()
+    intent.pin()
+    clock.advance(1000)
+    expect(intent.current.open).toBe(true)
+  })
+
   it('opens pinned on a click without hover (keyboard, touch) and closes on a second click', () => {
     const { intent } = setup()
     intent.click()

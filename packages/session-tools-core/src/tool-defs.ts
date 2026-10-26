@@ -1,3 +1,9 @@
+import {
+  handlePrStatus,
+  handlePrBind,
+  handlePrUnbind,
+  handlePrSetAutoMerge,
+} from './handlers/pr-tools.ts';
 import { z } from 'zod';
 import { zodToJsonSchema } from 'zod-to-json-schema';
 import type { SessionToolContext } from './context.ts';
@@ -102,6 +108,25 @@ export const ArchiveSessionSchema = z.object({
   sessionId: z.string(),
   archived: z.boolean().optional(),
 });
+// PR tools (Coding mode)
+export const PrStatusSchema = z.object({
+  session_id: z.string().optional().describe("Another session whose pinned PRs to read (cache-only, no live fetch). Omit for the current session's live status."),
+});
+
+export const PrBindSchema = z.object({
+  pr: z.string().describe('PR to pin: a full PR URL (https://github.com/owner/repo/pull/123), owner/repo#123, or a bare number for the current repo.'),
+});
+
+export const PrUnbindSchema = z.object({
+  pr: z.string().describe('PR to unpin from this session: the PR URL, owner/repo#123, or its number.'),
+});
+
+export const PrSetAutoMergeSchema = z.object({
+  pr: z.string().describe('PR to change: a full PR URL, owner/repo#123, or a bare number for the current repo.'),
+  enabled: z.boolean().describe('true enables GitHub auto-merge (GitHub merges once required checks pass and reviews are in); false disables it.'),
+  method: z.enum(['merge', 'squash', 'rebase']).optional().describe('Merge method to use when enabling (default: the repository\'s default for you). Must be one the repository allows.'),
+});
+
 export const ListSessionsSchema = z.object({
   search: z.string().optional(),
   sortBy: z.enum(['recent', 'name']).optional(),
@@ -131,6 +156,20 @@ export const TOOL_DESCRIPTIONS = {
   spawn_session: 'Create an independent local session using an available Pi connection and model.',
   browser_tool: 'Control the built-in browser with a CLI-like command.',
   archive_session: 'Archive or unarchive another session in this workspace by ID.',
+  pr_status: `Read the pull requests this Coding session is tracking: its branch's PR plus any PRs pinned with pr_bind, deduped. Returns each PR's state, check rollup, review decision, merge state, unresolved threads, local ahead/dirty, and auto-merge state (autoMergeBlocked: why GitHub won't turn it on) — the same data the chat-header PR chip shows.
+
+Use it to check "where's my PR / are checks green / can it merge" without leaving the chat. Pass session_id to read ANOTHER session's pinned PRs (cache-only — it does not fetch GitHub for a session you're not in). Omit it for the current session's live status. Read-only; never pushes or merges.`,
+
+  pr_bind: `Pin a pull request to this session so it shows in the chat-header PR carousel and is tracked alongside the branch's own PR. A session can track several PRs at once. A PR you open with \`gh pr create\` is pinned automatically, so don't pin it again.
+
+Give a full PR URL (https://github.com/owner/repo/pull/123), owner/repo#123, or a bare number for the current repo. The PR is verified (a credential is resolved and the PR fetched) before it is pinned — a bad URL, an inaccessible repo, or a missing PR returns an error and pins nothing. Use it to watch a dependency's PR, restore a dismissed one, or follow a PR the branch watcher didn't auto-discover. Pinning is local to this session; it does not change anything on GitHub.`,
+
+  pr_unbind: `Remove a pinned PR from this session's carousel (undoes pr_bind). Give the PR URL, owner/repo#123, or its number. The branch's own PR is auto-discovered and cannot be unbound this way — it reappears while you're on that branch. Nothing on GitHub changes.`,
+
+  pr_set_auto_merge: `Enable or disable GitHub auto-merge on one of this session's PRs (GitHub merges it automatically once required checks pass and reviews are satisfied). Give a PR URL, owner/repo#123, or a number for the current repo; enabled true/false; optional method (merge/squash/rebase, default: the repository's default — must be one the repo allows). GitHub only takes auto-merge when the repository allows it and the PR still waits on required checks or reviews; pr_status's autoMergeBlocked says when it won't, and why.
+
+This changes state on GitHub and can lead to the PR merging without further action. Only change auto-merge when the user explicitly asks for that change on this PR (including disabling it). Never infer authorization from a request to fix code, check status or address review feedback.`,
+
   get_session_info: 'Get metadata for the current session or a session by ID.',
   list_sessions: 'Search and list active or archived sessions in the current workspace.',
   list_background_tasks: 'List background tasks tracked for a session across turns.',
@@ -177,6 +216,11 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
   { name: 'spawn_session', description: TOOL_DESCRIPTIONS.spawn_session, inputSchema: SpawnSessionSchema, executionMode: 'backend', safeMode: 'block', handler: null },
   { name: 'browser_tool', description: TOOL_DESCRIPTIONS.browser_tool, inputSchema: BrowserToolSchema, executionMode: 'backend', safeMode: 'allow', handler: null },
   { name: 'archive_session', description: TOOL_DESCRIPTIONS.archive_session, inputSchema: ArchiveSessionSchema, executionMode: 'registry', safeMode: 'block', handler: handleArchiveSession },
+  // PR tools (Coding mode — use the grouped ctx.prWatch callbacks; server-side watcher holds credentials)
+  { name: 'pr_status', description: TOOL_DESCRIPTIONS.pr_status, inputSchema: PrStatusSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handlePrStatus },
+  { name: 'pr_bind', description: TOOL_DESCRIPTIONS.pr_bind, inputSchema: PrBindSchema, executionMode: 'registry', safeMode: 'block', handler: handlePrBind },
+  { name: 'pr_unbind', description: TOOL_DESCRIPTIONS.pr_unbind, inputSchema: PrUnbindSchema, executionMode: 'registry', safeMode: 'block', handler: handlePrUnbind },
+  { name: 'pr_set_auto_merge', description: TOOL_DESCRIPTIONS.pr_set_auto_merge, inputSchema: PrSetAutoMergeSchema, executionMode: 'registry', safeMode: 'block', handler: handlePrSetAutoMerge },
   { name: 'get_session_info', description: TOOL_DESCRIPTIONS.get_session_info, inputSchema: GetSessionInfoSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleGetSessionInfo },
   { name: 'list_sessions', description: TOOL_DESCRIPTIONS.list_sessions, inputSchema: ListSessionsSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleListSessions },
   { name: 'list_background_tasks', description: TOOL_DESCRIPTIONS.list_background_tasks, inputSchema: ListBackgroundTasksSchema, executionMode: 'registry', safeMode: 'allow', readOnly: true, handler: handleListBackgroundTasks },
@@ -185,7 +229,8 @@ export const SESSION_TOOL_DEFS: SessionToolDef[] = [
 
 /**
  * Agent profile: the prompt and session-tool set a session runs with.
- * - `default`: the full Craft Agent toolset (desktop workflows, sources, Pages, browser…).
+ * - `default`: the retained MkAgent desktop toolset, without
+ *   the Coding-only tools in {@link CODING_ONLY_TOOLS}.
  * - `coding`: coding mode — a lean prompt and only the tools in {@link CODING_PROFILE_TOOLS}.
  */
 export type AgentProfile = 'default' | 'coding';
@@ -199,10 +244,20 @@ export type AgentProfile = 'default' | 'coding';
  * - `project`: kept while the session is bound to a project
  */
 export const CODING_PROFILE_TOOLS: Readonly<Record<string, 'always'>> = {
+  pr_status: 'always',
+  pr_bind: 'always',
+  pr_unbind: 'always',
+  pr_set_auto_merge: 'always',
   SubmitPlan: 'always',
   list_background_tasks: 'always',
   send_developer_feedback: 'always',
 };
+
+/**
+ * Session tools only the `coding` profile offers: the PR tools act on the session's PR carousel,
+ * which only Coding sessions have, so other sessions would just pay for their descriptions.
+ */
+export const CODING_ONLY_TOOLS: ReadonlySet<string> = new Set(['pr_status', 'pr_bind', 'pr_unbind', 'pr_set_auto_merge']);
 
 export interface SessionToolFilterOptions {
   includeDeveloperFeedback?: boolean;
@@ -215,6 +270,7 @@ export function getSessionToolDefs(options?: SessionToolFilterOptions): SessionT
     if (options?.includeDeveloperFeedback === false && def.name === 'send_developer_feedback') return false;
     if (options?.includeBrowser === false && def.name === 'browser_tool') return false;
     if (options?.profile === 'coding' && !CODING_PROFILE_TOOLS[def.name]) return false;
+    if (options?.profile !== 'coding' && CODING_ONLY_TOOLS.has(def.name)) return false;
     return true;
   });
 }

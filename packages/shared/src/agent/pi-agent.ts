@@ -1,3 +1,5 @@
+import { getBrowserToolEnabled } from '../config/storage.ts';
+import { FEATURE_FLAGS } from '../feature-flags.ts';
 import { formatStableGitDeveloperContext, formatVolatileGitDeveloperContext } from '../prompts/developer-context.ts';
 /**
  * Pi Backend (Subprocess RPC Client)
@@ -60,12 +62,13 @@ import {
 import { attachSessionSelfManagementBindings } from './session-self-management-bindings.ts';
 
 // Session tool proxy definitions (for registering with subprocess)
-import { getSessionToolProxyDefs, SESSION_TOOL_NAMES } from './backend/pi/session-tool-defs.ts';
+import { getSessionToolProxyDefs } from './backend/pi/session-tool-defs.ts';
 
 // Session tool registry (for executing proxy tool calls)
 import {
   SESSION_BACKEND_TOOL_NAMES,
-  SESSION_TOOL_REGISTRY,
+  getSessionToolRegistry,
+  getSessionToolNames,
   type ToolResult as SessionToolResult,
 } from '@mkagent/session-tools-core';
 import type { SessionToolContext } from '@mkagent/session-tools-core';
@@ -156,6 +159,7 @@ interface PendingEphemeralRequest<T> {
  * planning heuristics, config watching, usage tracking).
  */
 export class PiAgent extends BaseAgent {
+  private readonly prCreateCommands = new Map<string, string>();
   protected backendName = 'MkAgent Backend';
 
   // ============================================================
@@ -923,6 +927,8 @@ export class PiAgent extends BaseAgent {
     let adaptedEvent = event;
 
     if (eventType === 'tool_execution_start') {
+      const command = (event.args as { command?: unknown } | undefined)?.command;
+      if (event.toolName === 'bash' && typeof event.toolCallId === 'string' && typeof command === 'string') this.prCreateCommands.set(event.toolCallId, command);
       const toolName = event.toolName as string;
       if (toolName?.startsWith('session__') || toolName?.startsWith('mcp__session__')) {
         // Session tool tracking is handled by the subprocess; it sends
@@ -949,10 +955,12 @@ export class PiAgent extends BaseAgent {
       }
     }
 
+    const completedCommand = eventType === 'tool_execution_end' && typeof event.toolCallId === 'string' ? this.prCreateCommands.get(event.toolCallId) : undefined;
     if (eventType === 'tool_execution_end') {
       const toolCallId = event.toolCallId as string | undefined;
       if (toolCallId) {
         this.preToolMetadataByCallId.delete(toolCallId);
+        this.prCreateCommands.delete(toolCallId);
       }
     }
 
@@ -962,6 +970,9 @@ export class PiAgent extends BaseAgent {
     for (const agentEvent of this.adapter.adaptEvent(adaptedEvent as any)) {
       if (agentEvent.type === 'tool_start' && agentEvent.toolName === 'Read') {
         this.prerequisiteManager.trackReadTool(agentEvent.input as Record<string, unknown>);
+      }
+      if (agentEvent.type === 'tool_result' && !agentEvent.isError && agentEvent.toolName === 'Bash') {
+        void this.pinCreatedPr(completedCommand ?? (agentEvent.input as { command?: unknown } | undefined)?.command, typeof agentEvent.result === 'string' ? agentEvent.result : '');
       }
       if (agentEvent.type === 'info' && agentEvent.message.startsWith('Compacted')) this.resetPrerequisiteState();
       if (!this._isProcessing && this.backgroundEventSink && (
@@ -990,6 +1001,7 @@ export class PiAgent extends BaseAgent {
     // a compaction_end failure that drains a held overflow, or a cancelled
     // auto-retry.
     if (this.adapter.shouldCompleteQueue(eventType === 'agent_end')) {
+      this.prCreateCommands.clear();
       this.eventQueue.complete();
     }
   }
@@ -1195,7 +1207,7 @@ export class PiAgent extends BaseAgent {
       ? toolName.slice('mcp__session__'.length)
       : toolName;
 
-    if (SESSION_TOOL_NAMES.has(strippedName)) {
+    if (getSessionToolNames({ profile: this._agentProfile, includeBrowser: getBrowserToolEnabled(), includeDeveloperFeedback: FEATURE_FLAGS.developerFeedback }).has(strippedName)) {
       return this.executeSessionTool(strippedName, args);
     }
 
@@ -1314,7 +1326,7 @@ export class PiAgent extends BaseAgent {
         }
       }
 
-      const def = SESSION_TOOL_REGISTRY.get(toolName);
+      const def = getSessionToolRegistry({ profile: this._agentProfile, includeBrowser: getBrowserToolEnabled(), includeDeveloperFeedback: FEATURE_FLAGS.developerFeedback }).get(toolName);
       if (!def) {
         return { content: `Unknown session tool: ${toolName}`, isError: true };
       }

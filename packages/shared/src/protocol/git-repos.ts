@@ -18,7 +18,7 @@ export interface LocalRepo {
   worktreeParent: string
   /** Number of checked-out worktrees (1 for a plain clone) */
   worktrees: number
-  /** Why it is listed: under the workspace folder, or one of the recently used folders */
+  /** Why it is listed: one of the recently used folders, or found by the scan of the workspace folder and the folders holding recent repos (`workspace`) */
   origin: 'workspace' | 'recent'
 }
 

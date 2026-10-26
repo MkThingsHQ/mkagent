@@ -1,3 +1,5 @@
+import { createdPrUrl } from '../pr-watch/rules.ts';
+import { getSessionScopedToolCallbacks } from './session-scoped-tool-callback-registry.ts';
 import { buildTransferredSessionContext } from './conversation-summary.ts';
 import type { AgentProfile } from '@mkagent/session-tools-core';
 import { existsSync } from 'node:fs';
@@ -65,6 +67,8 @@ export interface SpawnSessionHelpResult {
   defaults: { defaultConnection: string | null; permissionMode: string };
 }
 
+const PIN_CREATED_PR_TIMEOUT_MS = 8_000;
+
 export const MINI_AGENT_TOOLS = ['Read', 'Edit', 'Write', 'Glob', 'Grep', 'Bash'] as const;
 
 export abstract class BaseAgent implements AgentBackend {
@@ -129,6 +133,34 @@ export abstract class BaseAgent implements AgentBackend {
   protected stopConfigWatcher(): void {
     this.configWatcherManager?.stop();
     this.configWatcherManager = null;
+  }
+
+  /**
+   * Post-tool hook, Coding mode: a Bash `gh pr create` pins the PR it printed to this session's PR
+   * carousel through the same verified path as pr_bind, unless it is the folder's own branch PR
+   * (shown anyway). PRs opened from another branch or worktree would otherwise never appear.
+   * Returns a note when it pinned one. Never throws; the verification wait is bounded.
+   */
+  protected async pinCreatedPr(command: unknown, output: string): Promise<string | null> {
+    if (this._agentProfile !== 'coding' || typeof command !== 'string') return null;
+    const url = createdPrUrl(command, output);
+    const prWatch = url ? getSessionScopedToolCallbacks(this._sessionId)?.prWatch : undefined;
+    if (!url || !prWatch) return null;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    try {
+      const result = await Promise.race([
+        prWatch.bind({ ref: url, skipBranchPr: true }),
+        new Promise<null>(resolve => { timer = setTimeout(() => resolve(null), PIN_CREATED_PR_TIMEOUT_MS); }),
+      ]);
+      if (!result?.ok || result.skipped) return null;
+      this.debug(`[pr-watch] pinned ${url} after gh pr create`);
+      return `The PR you just opened (${url}) is now pinned to this session's PR carousel; there is no need to call pr_bind.`;
+    } catch (error) {
+      this.debug(`[pr-watch] could not pin ${url}: ${error instanceof Error ? error.message : String(error)}`);
+      return null;
+    } finally {
+      clearTimeout(timer);
+    }
   }
 
   getAgentProfile(): AgentProfile { return this._agentProfile; }
