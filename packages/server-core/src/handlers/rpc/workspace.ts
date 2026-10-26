@@ -66,7 +66,9 @@ export function registerWorkspaceCoreHandlers(server: RpcServer, deps: HandlerDe
     return { exists, path: workspacePath }
   })
 
-  server.handle(RPC_CHANNELS.workspaces.REMOVE, async (_ctx, workspaceId: string) => {
+  server.handle(RPC_CHANNELS.workspaces.REMOVE, async (ctx, workspaceId: string) => {
+    // A workspace open in any app window must be switched away before unregistering.
+    if (ctx.workspaceId === workspaceId || windowManager?.getAllWindowsForWorkspace(workspaceId).length) return false
     return removeWorkspace(workspaceId)
   })
 

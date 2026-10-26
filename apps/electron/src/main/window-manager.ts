@@ -1,5 +1,8 @@
-import { BrowserWindow, shell, nativeTheme, Menu, app } from 'electron'
+import { BrowserWindow, clipboard, shell, nativeTheme, Menu, app } from 'electron'
+import { i18n } from '@mkagent/shared/i18n'
 import { windowLog } from './logger'
+import { buildContextMenuTemplate } from './context-menu'
+import { applyDefaultZoom, getDefaultZoomLevel } from './zoom'
 import { join, resolve, sep } from 'path'
 import { existsSync } from 'fs'
 import { release } from 'os'
@@ -254,6 +257,8 @@ export class WindowManager {
         autoHideMenuBar: true,
       }),
       webPreferences: {
+        // Set the first navigation's baseline as well as reapplying after load.
+        zoomFactor: getDefaultZoomLevel() / 100,
         preload: join(__dirname, 'bootstrap-preload.cjs'),
         contextIsolation: true,
         nodeIntegration: false,
@@ -266,8 +271,12 @@ export class WindowManager {
 
     // Show window when first paint is ready (faster perceived startup)
     window.once('ready-to-show', () => {
+      applyDefaultZoom(window.webContents)
       window.show()
     })
+
+    // Chromium resets zoom when a load commits, so the default zoom goes on after each load
+    window.webContents.on('did-finish-load', () => applyDefaultZoom(window.webContents))
 
     // Open external links in default browser, but never hand known-dangerous
     // schemes directly to shell.openExternal. Markdown normal-clicks go through
@@ -288,18 +297,17 @@ export class WindowManager {
       this.openExternalFromRenderer(url, 'will-navigate', window)
     })
 
-    // Enable right-click context menu in development
-    if (!app.isPackaged) {
-      window.webContents.on('context-menu', (_event, params) => {
-        Menu.buildFromTemplate([
-          { label: 'Inspect Element', click: () => window.webContents.inspectElement(params.x, params.y) },
-          { type: 'separator' },
-          { label: 'Cut', role: 'cut', enabled: params.editFlags.canCut },
-          { label: 'Copy', role: 'copy', enabled: params.editFlags.canCopy },
-          { label: 'Paste', role: 'paste', enabled: params.editFlags.canPaste },
-        ]).popup()
+    // Right-click menu in every build: spelling, Copy Link, edit actions (+ Inspect in dev)
+    window.webContents.on('context-menu', (_event, params) => {
+      const template = buildContextMenuTemplate(params, {
+        t: key => i18n.t(key),
+        replaceMisspelling: suggestion => window.webContents.replaceMisspelling(suggestion),
+        learnSpelling: word => window.webContents.session.addWordToSpellCheckerDictionary(word),
+        copyText: text => clipboard.writeText(text),
+        inspectElement: app.isPackaged ? undefined : (x, y) => window.webContents.inspectElement(x, y),
       })
-    }
+      if (template.length > 0) Menu.buildFromTemplate(template).popup({ window })
+    })
 
     // The renderer's index.html ships with `<title>MkAgent</title>`, so
     // without this Electron auto-syncs every window's title back to that on

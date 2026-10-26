@@ -6,6 +6,7 @@ import type { MenuItem } from '../shared/menu-schema'
 import type { WindowManager } from './window-manager'
 import type { EventSink } from '@mkagent/server-core/transport'
 import { mainLog, isDebugMode } from './logger'
+import { resetZoomOfFocusedWindow } from './zoom'
 
 type ClientResolver = (webContentsId: number) => string | undefined
 
@@ -263,6 +264,10 @@ function toElectronMenuItem(item: MenuItem): Electron.MenuItemConstructorOptions
   }
 
   if (item.type === 'role') {
+    // The resetZoom role goes to 100%; Reset Zoom returns to the default zoom (Settings → Appearance)
+    if (item.role === 'resetZoom') {
+      return { label: i18n.t(item.labelKey), accelerator: 'CmdOrCtrl+0', click: resetZoomOfFocusedWindow }
+    }
     // Use Electron's built-in role - it handles accelerators automatically
     return { role: item.role as Electron.MenuItemConstructorOptions['role'] }
   }

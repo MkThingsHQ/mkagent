@@ -8,6 +8,24 @@ All notable changes to MkAgent are documented in this file. The format follows
 
 Add user-visible changes here before running `bun run release:prepare <version>`.
 
+## [0.2.5] - 2026-10-26
+
+### Added
+
+- Per-device default window zoom (80–150%) in Appearance, applied to new windows and View → Reset Zoom.
+- Copy original user-message text with hover, keyboard focus and touch access.
+- Confirm workspace removal with its folder, file-manager action and instructions to reopen it; preserve all session data.
+
+### Fixed
+
+- Enable native editing, selected-text/link copy and spelling menus in installed Desktop builds; keep Inspect development-only.
+- Paginate unread session groups independently so older unread conversations remain visible.
+- Reject removal of a workspace still open in another window.
+
+### Improved
+
+- Synchronize applicable Craft v0.15.4 → v0.15.5 changes while preserving Pi 1.1.0 and MkAgent Lite boundaries.
+
 ## [0.2.4] - 2026-10-26
 
 ### Added
@@ -151,6 +169,7 @@ Add user-visible changes here before running `bun run release:prepare <version>`
 - Local session search, flags, archives, import, export, and branching.
 
 [Unreleased]: https://github.com/MkThingsHQ/mkagent/releases
+[0.2.5]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.5
 [0.2.4]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.4
 [0.2.3]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.3
 [0.2.2]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.2

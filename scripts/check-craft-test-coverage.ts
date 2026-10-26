@@ -90,6 +90,7 @@ const replacements: Record<string, string> = {
 }
 
 const intentionalCaseReductions: Record<string, { upstream: number; retained: number; reason: string }> = {
+  'apps/electron/src/renderer/hooks/__tests__/useSessionSearch.test.ts': { upstream: 9, retained: 6, reason: 'Four cases require excluded status/project metadata; retain unread independent windows and date pagination, with additional Lite unread collapse tests below.' },
   'packages/server-core/src/sessions/turn-usage.test.ts': { upstream: 9, retained: 3, reason: 'Retain Pi per-turn accumulation in the actual Lite manager; eight upstream Claude running-total/reset/fork-parent cases have no Pi backend state. Extra Lite occupancy and usage-free tests, and real SDK multi-call/turn/disk/restart/fork/child coverage in pi-usage-runtime.isolated.ts.' },
   "packages/server-core/src/sessions/session-completion.test.ts": { upstream: 9, retained: 2, reason: "Lite has no conductor completion listeners, activity subscriptions or workflow counting; cancelled turns, fallback abort and preservation of child sessions/background shells are tested, with real Pi Stop integration." },
   'apps/electron/src/renderer/components/app-shell/chat-display/__tests__/new-chat-suggestions.test.ts': { upstream: 13, retained: 7, reason: 'Source ranking/email setup and source enabling excluded with Sources; custom cap/label/prompt, qualified/unqualified/unknown Skill mentions, no-mention and automatic fallback covered' },

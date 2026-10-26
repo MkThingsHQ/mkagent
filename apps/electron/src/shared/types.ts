@@ -234,6 +234,9 @@ export interface ElectronAPI {
   getServerHomeDir(): Promise<string>
 
   removeWorkspace(workspaceId: string): Promise<boolean>
+  /** Per-device preference through Electron main IPC; absent in WebUI. */
+  getDefaultZoomLevel?(): Promise<number>
+  setDefaultZoomLevel?(level: number): Promise<number>
 
   // Session export/import
   exportSession(sessionId: string): Promise<unknown>

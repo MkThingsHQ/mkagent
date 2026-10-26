@@ -789,17 +789,15 @@ export function addWorkspace(workspace: Omit<Workspace, 'id' | 'createdAt' | 'sl
     return updated;
   }
 
+  // Folder identity survives unregister/reopen; do not assign a fresh ID to existing sessions.
+  const folderConfig = loadWorkspaceConfig(workspace.rootPath)
+    ?? createWorkspaceAtPath(workspace.rootPath, workspace.name);
   const newWorkspace: Workspace = {
     ...workspace,
     slug,
-    id: generateWorkspaceId(),
-    createdAt: Date.now(),
+    id: folderConfig.id || generateWorkspaceId(),
+    createdAt: folderConfig.createdAt || Date.now(),
   };
-
-  // Create workspace folder structure if it doesn't exist
-  if (!isValidWorkspace(newWorkspace.rootPath)) {
-    createWorkspaceAtPath(newWorkspace.rootPath, newWorkspace.name);
-  }
 
   config.workspaces.push(newWorkspace);
 
@@ -860,6 +858,14 @@ export async function removeWorkspace(workspaceId: string): Promise<boolean> {
   const index = config.workspaces.findIndex(w => w.id === workspaceId);
   if (index === -1) return false;
 
+  // Older registrations could use a different ID from their folder config.
+  // Keep the registration identity so reopening also retains legacy session associations.
+  const removed = config.workspaces[index]!;
+  const folderConfig = loadWorkspaceConfig(removed.rootPath);
+  if (folderConfig && folderConfig.id !== removed.id) {
+    saveWorkspaceConfig(removed.rootPath, { ...folderConfig, id: removed.id });
+  }
+
   config.workspaces.splice(index, 1);
 
   // If we removed the active workspace, switch to first available
@@ -869,15 +875,7 @@ export async function removeWorkspace(workspaceId: string): Promise<boolean> {
 
   saveConfig(config);
 
-  // Delete workspace data directory (sessions, plans, etc.)
-  const workspaceDataDir = join(WORKSPACES_DIR, workspaceId);
-  if (existsSync(workspaceDataDir)) {
-    try {
-      rmSync(workspaceDataDir, { recursive: true });
-    } catch (error) {
-      console.error(`[storage] Failed to delete workspace data directory: ${workspaceDataDir}`, error);
-    }
-  }
+  // Unregister only: folders, sessions and legacy workspace data stay on disk.
 
   return true;
 }

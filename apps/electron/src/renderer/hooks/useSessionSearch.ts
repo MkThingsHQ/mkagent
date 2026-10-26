@@ -36,6 +36,8 @@ export interface CollapsedGroupMeta {
   count: number
 }
 
+export type SessionGroupingMode = 'date' | 'unread'
+
 export interface UseSessionSearchOptions {
   items: SessionMeta[]
   searchActive: boolean
@@ -45,7 +47,7 @@ export interface UseSessionSearchOptions {
   /** Collapsed group keys — collapsed items are excluded from pagination and flatItems */
   collapsedGroups?: Set<string>
   /** Grouping mode — needed to compute group keys for collapse-aware pagination */
-  groupingMode?: 'date' | 'unread'
+  groupingMode?: SessionGroupingMode
   /** Ref to the ScrollArea viewport element — used for scroll-based pagination */
   scrollViewportRef?: React.RefObject<HTMLDivElement>
 }
@@ -111,9 +113,45 @@ function groupSessionsByDate(sessions: SessionMeta[]): DateGroup[] {
     }))
 }
 
-function getCollapseGroupKey(item: SessionMeta, groupingMode?: 'date' | 'unread'): string {
+function getCollapseGroupKey(item: SessionMeta, groupingMode?: SessionGroupingMode): string {
   if (groupingMode === 'unread') return item.hasUnread ? 'unread-yes' : 'unread-no'
   return startOfDay(new Date(item.lastMessageAt || 0)).toISOString()
+}
+
+/**
+ * Date groups follow the newest-first order of the list, so one global window that grows on
+ * scroll shows every group in turn. Unread groups don't: an old unread session sits
+ * past the window and vanished from its group until the user scrolled far enough (#501). Those
+ * modes window each group separately, so small groups show in full and big ones stay
+ * bounded; `displayLimit` still grows on scroll.
+ */
+function paginatesPerGroup(groupingMode?: SessionGroupingMode): boolean {
+  return groupingMode === 'unread'
+}
+
+/** The first `limit` items, or the first `limit` of each group. Keeps the order of `items`. */
+function windowItems(
+  items: SessionMeta[],
+  limit: number,
+  groupingMode?: SessionGroupingMode,
+): { visible: SessionMeta[]; hasMore: boolean } {
+  if (!paginatesPerGroup(groupingMode)) {
+    return { visible: items.slice(0, limit), hasMore: limit < items.length }
+  }
+  const shownPerGroup = new Map<string, number>()
+  const visible: SessionMeta[] = []
+  let hasMore = false
+  for (const item of items) {
+    const key = getCollapseGroupKey(item, groupingMode)
+    const shown = shownPerGroup.get(key) ?? 0
+    if (shown < limit) {
+      visible.push(item)
+      shownPerGroup.set(key, shown + 1)
+    } else {
+      hasMore = true
+    }
+  }
+  return { visible, hasMore }
 }
 
 export interface CollapsedPaginationResult {
@@ -126,39 +164,23 @@ export function computeCollapsedPagination(
   items: SessionMeta[],
   displayLimit: number,
   collapsedGroups?: Set<string>,
-  groupingMode?: 'date' | 'unread',
+  groupingMode?: SessionGroupingMode,
 ): CollapsedPaginationResult {
-  // Fast path: no collapse state → original slice
-  if (!collapsedGroups || collapsedGroups.size === 0) {
-    return {
-      paginatedItems: items.slice(0, displayLimit),
-      hasMore: displayLimit < items.length,
-      collapsedGroupsMeta: [],
+  const effectiveCollapsedKeys = new Set<string>()
+  if (collapsedGroups && collapsedGroups.size > 0) {
+    const groupKeysInView = new Set(items.map(item => getCollapseGroupKey(item, groupingMode)))
+    // Safety guard: don't allow collapse state to hide the entire list when only one
+    // group exists in the current filtered view (there would be no meaningful collapse UX).
+    if (groupKeysInView.size > 1) {
+      for (const key of collapsedGroups) {
+        if (groupKeysInView.has(key)) effectiveCollapsedKeys.add(key)
+      }
     }
   }
-
-  const groupKeysInView = new Set(items.map(item => getCollapseGroupKey(item, groupingMode)))
-
-  // Safety guard: don't allow collapse state to hide the entire list when only one
-  // group exists in the current filtered view (there would be no meaningful collapse UX).
-  if (groupKeysInView.size <= 1) {
-    return {
-      paginatedItems: items.slice(0, displayLimit),
-      hasMore: displayLimit < items.length,
-      collapsedGroupsMeta: [],
-    }
-  }
-
-  const effectiveCollapsedKeys = new Set(
-    Array.from(collapsedGroups).filter(key => groupKeysInView.has(key))
-  )
 
   if (effectiveCollapsedKeys.size === 0) {
-    return {
-      paginatedItems: items.slice(0, displayLimit),
-      hasMore: displayLimit < items.length,
-      collapsedGroupsMeta: [],
-    }
+    const { visible, hasMore } = windowItems(items, displayLimit, groupingMode)
+    return { paginatedItems: visible, hasMore, collapsedGroupsMeta: [] }
   }
 
   const expandedItems: SessionMeta[] = []
@@ -178,11 +200,8 @@ export function computeCollapsedPagination(
     ([key, count]) => ({ key, count })
   )
 
-  return {
-    paginatedItems: expandedItems.slice(0, displayLimit),
-    hasMore: displayLimit < expandedItems.length,
-    collapsedGroupsMeta: meta,
-  }
+  const { visible, hasMore } = windowItems(expandedItems, displayLimit, groupingMode)
+  return { paginatedItems: visible, hasMore, collapsedGroupsMeta: meta }
 }
 
 export function sessionMatchesCurrentFilter(

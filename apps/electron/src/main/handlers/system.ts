@@ -7,6 +7,7 @@
 import { RPC_CHANNELS } from '@mkagent/shared/protocol'
 import type { RpcServer } from '@mkagent/server-core/transport'
 import type { HandlerDeps } from './handler-deps'
+import { applyDefaultZoom } from '../zoom'
 
 export const GUI_HANDLED_CHANNELS = [
   RPC_CHANNELS.update.CHECK,
@@ -118,7 +119,7 @@ export function registerSystemGuiHandlers(server: RpcServer, deps: HandlerDeps):
   server.handle(RPC_CHANNELS.menu.ZOOM_RESET, async (ctx) => {
     if (!windowManager) return
     const win = windowManager.getWindowByWebContentsId(ctx.webContentsId!)
-    win?.webContents.setZoomFactor(1.0)
+    if (win) applyDefaultZoom(win.webContents)
   })
 
   server.handle(RPC_CHANNELS.menu.TOGGLE_DEV_TOOLS, async (ctx) => {

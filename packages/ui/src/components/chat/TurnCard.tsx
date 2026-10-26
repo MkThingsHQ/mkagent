@@ -6,6 +6,7 @@ import { isParentTaskTool } from '@mkagent/shared/utils/toolNames'
 import { motion, AnimatePresence } from 'motion/react'
 import { ListTodo } from 'lucide-react'
 import { cn } from '../../lib/utils'
+import { useCopyToClipboard } from '../../lib/use-copy-to-clipboard'
 import { TWEEN } from '../../motion/presets'
 import { Markdown, RunCommandProvider, useRunCommand } from '../markdown'
 import { type IslandTransitionConfig } from '../ui'
@@ -641,8 +642,7 @@ export function ResponseCard({
   // Throttled content for display - updates every CONTENT_THROTTLE_MS during streaming
   const [displayedText, setDisplayedText] = useState(text)
   const lastUpdateRef = useRef(Date.now())
-  // Copy to clipboard state
-  const [copied, setCopied] = useState(false)
+  const { copied, copy } = useCopyToClipboard()
   // Fullscreen state
   const [isFullscreen, setIsFullscreen] = useState(false)
   // Pending text selection waiting for explicit follow-up action
@@ -721,15 +721,7 @@ export function ResponseCard({
     sourceKey: selectionMenuSourceKey,
   })
 
-  const handleCopy = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(text)
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
-    } catch (err) {
-      console.error('Failed to copy:', err)
-    }
-  }, [text])
+  const handleCopy = useCallback(() => copy(text), [copy, text])
 
   const renderedAnnotations = useMemo(() => {
     const persisted = annotations ?? []

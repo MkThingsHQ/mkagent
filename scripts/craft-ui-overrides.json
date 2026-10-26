@@ -106,7 +106,7 @@
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/CompactWorkspaceSwitcher.tsx": {
-      "sha256": "3714c6bffaa924cff71275fc585fbb44711decedcd4528cc4dcbb9bcc9bed16e",
+      "sha256": "804d3ea49797dc267bda576e21b36d64703dee106bdb2894e68710fba2dd0608",
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/LeftSidebar.tsx": {
@@ -162,7 +162,7 @@
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/WorkspaceSwitcher.tsx": {
-      "sha256": "17e01e410855fe4fc598ff333baaf6362ea320ce5846d3d0b080ad6ae4aa52be",
+      "sha256": "d86d733ab603070947ad81a3db6c88fee20cadd2141d6d3b4d870769b27d7370",
       "reason": "Craft application shell adapted only to remove excluded product surfaces"
     },
     "apps/electron/src/renderer/components/app-shell/__tests__/background-task-chip-state.test.ts": {
@@ -382,8 +382,8 @@
       "reason": "Craft onboarding tests retain Claude and ChatGPT slug and identity coverage while excluding Copilot"
     },
     "apps/electron/src/renderer/hooks/__tests__/useSessionSearch.test.ts": {
-      "sha256": "66a69ca7846731efd379f36c822a39389689ee73c1c3dcc7c49c1bc9dcda3b8d",
-      "reason": "Craft renderer test adapted to retained Lite behavior"
+      "sha256": "6dcc554bbbcbc9c97f728e725a988051a3ba4b3f1f73eefddd1969f23bbbf4bf",
+      "reason": "Retain date/collapse and independent unread-group regression cases; statuses/projects remain excluded."
     },
     "apps/electron/src/renderer/hooks/useAvailablePermissionModes.ts": {
       "sha256": "226aafca1bd1124c66892a544be08a735d6cbad03911c8797530dd244a08f277",
@@ -410,8 +410,8 @@
       "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
     },
     "apps/electron/src/renderer/hooks/useSessionSearch.ts": {
-      "sha256": "5825a043c104f917a67f52779521084538f944568ac5c5c764b7bc7e68134239",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+      "sha256": "ebc60ea11c2a4ef257a400f01d429e10f174912de359c2008a0eb8a1bc11bfa7",
+      "reason": "Retain v0.15.5 per-unread-group pagination and collapse safety; omit excluded statuses/projects and retain Lite filters."
     },
     "apps/electron/src/renderer/index.html": {
       "sha256": "d598dd8a823e2023b802502b2851d51f00278c352ead3608ccffdafdf15d49e5",
@@ -466,7 +466,7 @@
       "reason": "Single-column v0.15 settings and atomic parallel loading retain Pi connections, credential health and RTK; decision-model and Claude SDK settings excluded; v0.15.3: restore applicable Pi compaction-window settings/config/RPC/UI/runtime chain and endpoint output cap; use model-aware SDK reserves, lazy restart with journal restore, validated legacy defaults; no excluded backend/product restored."
     },
     "apps/electron/src/renderer/pages/settings/AppearanceSettingsPage.tsx": {
-      "sha256": "722d36a5dd5b532e067304df9e9925cd5a7cde985599a71cecacba55885daf92",
+      "sha256": "d1002b4acf2dc473e2768283ae8f3ea7a600d7a25668fb6844317765f3d47656",
       "reason": "Craft settings UI adapted only to retained MkAgent settings"
     },
     "apps/electron/src/renderer/pages/settings/PermissionsSettingsPage.tsx": {
@@ -504,6 +504,10 @@
     "apps/electron/src/renderer/utils/session.ts": {
       "sha256": "6a4d7291381feffa9735a244ad7cb7d6824642b02700244e411bd3b1b3bbf1d8",
       "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    "apps/electron/src/renderer/components/workspace/RemoveWorkspaceDialog.tsx": {
+      "sha256": "75c1ed42a687b9314ba3167d0637cb604487fed00bdda3fb133d4ab2c41561e9",
+      "reason": "Retain v0.15.5 confirmation, Cancel focus, folder reveal and reopen guidance; local workspace DTO only, no excluded remote binding."
     }
   }
 }
