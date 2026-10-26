@@ -123,6 +123,7 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
       permissionMode: config?.defaults?.permissionMode,
       cyclablePermissionModes: config?.defaults?.cyclablePermissionModes,
       thinkingLevel: normalizeThinkingLevel(config?.defaults?.thinkingLevel),
+      codingMode: config?.defaults?.codingMode === true,
       workingDirectory: config?.defaults?.workingDirectory,
       defaultLlmConnection: config?.defaults?.defaultLlmConnection,
     }
@@ -136,10 +137,12 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
       : value
 
     // Validate key is a known workspace setting
-    const validKeys = ['chatStarters', 'name', 'model', 'permissionMode', 'cyclablePermissionModes', 'thinkingLevel', 'workingDirectory', 'defaultLlmConnection']
+    const validKeys = ['codingMode', 'chatStarters', 'name', 'model', 'permissionMode', 'cyclablePermissionModes', 'thinkingLevel', 'workingDirectory', 'defaultLlmConnection']
     if (!validKeys.includes(key)) {
       throw new Error(`Invalid workspace setting key: ${key}. Valid keys: ${validKeys.join(', ')}`)
     }
+
+    if (key === 'codingMode' && typeof normalizedValue !== 'boolean') throw new Error('Coding mode must be a boolean')
 
     // Validate defaultLlmConnection exists before saving
     if (key === 'defaultLlmConnection' && normalizedValue !== undefined && normalizedValue !== null) {
@@ -165,6 +168,10 @@ export function registerSettingsHandlers(server: RpcServer, deps: HandlerDeps): 
     // Handle 'name' specially - it's a top-level config property, not in defaults
     if (key === 'chatStarters') {
       config.chatStarters = validateChatStarters(normalizedValue)
+    } else if (key === 'codingMode') {
+      config.defaults = config.defaults || {}
+      if (normalizedValue === true) config.defaults.codingMode = true
+      else delete config.defaults.codingMode
     } else if (key === 'name') {
       config.name = String(normalizedValue).trim()
     } else {

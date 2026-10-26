@@ -82,3 +82,55 @@ describe('includeCoAuthoredBy handling', () => {
     expect(prompt).toContain(coAuthor)
   })
 })
+
+describe('coding agent profile', () => {
+  const coding = (includeCoAuthoredBy?: boolean) =>
+    getSystemPrompt(undefined, undefined, '/tmp/workspace', '/tmp/workspace', undefined, undefined, includeCoAuthoredBy, 'coding')
+
+  beforeEach(() => {
+    includeCoAuthor = true
+  })
+
+  it('leaves the default prompt unchanged when the profile is default', () => {
+    const plain = getSystemPrompt(undefined, undefined, '/tmp/workspace', '/tmp/workspace')
+    const explicitDefault = getSystemPrompt(undefined, undefined, '/tmp/workspace', '/tmp/workspace', undefined, undefined, undefined, 'default')
+    expect(explicitDefault).toBe(plain)
+  })
+
+  it('stays within the coding budget (preferences are stubbed out here)', () => {
+    expect(coding().length).toBeLessThan(3_000)
+  })
+
+  it('keeps the coding essentials', () => {
+    const prompt = coding()
+    expect(prompt).toContain('<mkagent_environment')
+    expect(prompt).toContain('Coding mode')
+    expect(prompt).toContain('## Coding Workflow')
+    expect(prompt).toContain('<project_context_files>')
+    expect(prompt).toContain('SubmitPlan')
+    expect(prompt).toContain('[skill:slug]')
+    expect(prompt).toContain('unified diffs')
+    // All four modes stay listed: Claude snapshots the prompt, so a later switch must find its rule
+    for (const mode of ['Explore', 'Ask to Edit', 'Execute']) expect(prompt).toContain(mode)
+  })
+
+  it('drops the desktop-workflow sections whose tools the coding profile does not register', () => {
+    const prompt = coding()
+    for (const section of ['## Pages', '## Preview Blocks', '## Structured Data', '## Session Self-Management', '## Automations', '## Configuration Documentation', 'call_llm', 'update_user_preferences', 'mermaid_validate', 'browser_tool']) {
+      expect(prompt).not.toContain(section)
+    }
+  })
+
+  it('honors the co-author preference like the default prompt', () => {
+    expect(coding(true)).toContain('Co-Authored-By: MkAgent <agents-noreply@mkagent.app>')
+    expect(coding(false)).not.toContain('## Git Conventions')
+  })
+
+  it('still appends the user preferences (only the base prompt is swapped)', () => {
+    const preferences = '\n<user_preferences>\n- Name: Test User\n</user_preferences>\n'
+    const prompt = getSystemPrompt(preferences, undefined, '/tmp/workspace', '/tmp/workspace', undefined, undefined, undefined, 'coding')
+    expect(prompt).toContain(preferences)
+    // The tool that edits preferences is not registered in coding mode, so the prompt must not offer it
+    expect(prompt).not.toContain('update_user_preferences')
+  })
+})

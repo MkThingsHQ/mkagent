@@ -18,6 +18,7 @@ import type { Session, Message } from '../../shared/types'
  * Used by SessionList to avoid re-rendering on message changes
  */
 export interface SessionMeta {
+  codingMode?: boolean;
   id: string
   name?: string
   /** Preview of first user message (for title fallback) */

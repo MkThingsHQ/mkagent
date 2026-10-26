@@ -32,6 +32,7 @@ export interface Session {
   model?: string;
   llmConnection?: string;
   thinkingLevel?: ThinkingLevel;
+  codingMode?: boolean;
   lastMessageRole?: 'user' | 'assistant' | 'plan' | 'tool' | 'error';
   lastFinalMessageId?: string;
   isAsyncOperationOngoing?: boolean;
@@ -61,6 +62,7 @@ export interface CreateSessionOptions {
   name?: string;
   permissionMode?: PermissionMode;
   thinkingLevel?: ThinkingLevel;
+  codingMode?: boolean;
   workingDirectory?: string | 'user_default' | 'none';
   model?: string;
   llmConnection?: string;
@@ -82,6 +84,7 @@ export interface PermissionModeState {
 }
 
 export type SessionEvent =
+  | { type: 'coding_mode_changed'; sessionId: string; codingMode: boolean }
   | { type: 'text_discard'; sessionId: string; turnId: string }
   | { type: 'retry'; sessionId: string; phase: 'backoff'; message: string }
   | { type: 'retry'; sessionId: string; phase: 'active' | 'end' }
@@ -141,6 +144,9 @@ export type SessionCommand =
   | { type: 'setActiveViewing'; workspaceId: string }
   | { type: 'setPermissionMode'; mode: PermissionMode }
   | { type: 'setThinkingLevel'; level: ThinkingLevel }
+  | { type: 'setCodingMode'; enabled: boolean }
+  /** Coding mode is fixed once a session has messages: continue in a new session with it switched. Returns `{ sessionId }`. */
+  | { type: 'continueInNewSession'; codingMode: boolean }
   | { type: 'updateWorkingDirectory'; dir: string }
   | { type: 'showInFinder' }
   | { type: 'copyPath' }
@@ -225,7 +231,8 @@ export interface PlanStep { id: string; description: string; tools?: string[]; s
 export interface Plan { id: string; title: string; summary?: string; steps: PlanStep[]; questions?: string[]; state?: 'creating' | 'refining' | 'ready' | 'executing' | 'completed' | 'cancelled'; createdAt?: number; updatedAt?: number }
 export interface GitBashStatus { found: boolean; path: string | null; platform: 'win32' | 'darwin' | 'linux' }
 export interface UpdateInfo { available: boolean; currentVersion: string; latestVersion: string | null; downloadState: 'idle' | 'downloading' | 'ready' | 'installing' | 'error'; downloadProgress: number; error?: string }
-export interface WorkspaceSettings { chatStarters?: import('../workspaces/types').ChatStarter[]; name?: string; model?: string; permissionMode?: PermissionMode; cyclablePermissionModes?: PermissionMode[]; thinkingLevel?: ThinkingLevel; workingDirectory?: string; defaultLlmConnection?: string }
+export interface WorkspaceSettings {
+  codingMode?: boolean; chatStarters?: import('../workspaces/types').ChatStarter[]; name?: string; model?: string; permissionMode?: PermissionMode; cyclablePermissionModes?: PermissionMode[]; thinkingLevel?: ThinkingLevel; workingDirectory?: string; defaultLlmConnection?: string }
 export type WindowCloseRequestSource = 'keyboard-shortcut' | 'window-button' | 'unknown';
 export interface WindowCloseRequest { source: WindowCloseRequestSource }
 export interface BrowserInstanceInfo {

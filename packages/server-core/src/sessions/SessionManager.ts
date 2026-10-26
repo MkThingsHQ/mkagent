@@ -84,6 +84,7 @@ import { rollbackFailedBranchCreation, sanitizeForTitle } from '@mkagent/server-
 import { validateArchiveTarget } from './archive-guards'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
+import { generateConversationSummary } from '@mkagent/shared/agent/conversation-summary'
 
 let platform: PlatformServices | null = null
 let log: Logger = createScopedLogger(CONSOLE_LOGGER, 'session')
@@ -240,6 +241,10 @@ export function clampSpawnPermissionMode(requested: PermissionMode | undefined, 
   return modes[Math.min(modes.indexOf(parentMode), modes.indexOf(requestedMode))] ?? 'ask'
 }
 
+export function hasConversationStarted(managed: Pick<ManagedSession, 'sdkSessionId' | 'messageCount' | 'messages'>): boolean {
+  return !!managed.sdkSessionId || (managed.messageCount ?? 0) > 0 || managed.messages.some(m => m.role === 'user');
+}
+
 export function createManagedSession(
   session: Partial<StoredSession & SessionMetadata> & Pick<SessionConfig, 'id'>,
   workspace: Workspace,
@@ -267,6 +272,9 @@ export function createManagedSession(
     llmConnection: session.llmConnection,
     connectionLocked: session.connectionLocked,
     thinkingLevel: normalizeThinkingLevel(session.thinkingLevel),
+    codingMode: session.codingMode,
+    transferredSessionSummary: session.transferredSessionSummary,
+    transferredSessionSummaryApplied: session.transferredSessionSummaryApplied,
     pendingPlanExecution: session.pendingPlanExecution,
     isArchived: session.isArchived,
     archivedAt: session.archivedAt,
@@ -365,7 +373,19 @@ export class SessionManager implements ISessionManager {
     }
   }
 
+  private readonly turnCompleteListeners = new Set<(sessionId: string) => void>()
+
+  onTurnComplete(listener: (sessionId: string) => void): () => void {
+    this.turnCompleteListeners.add(listener)
+    return () => this.turnCompleteListeners.delete(listener)
+  }
+
   private emit(workspaceId: string, event: SessionEvent): void {
+    if (event.type === 'complete') {
+      for (const listener of this.turnCompleteListeners) {
+        try { listener(event.sessionId) } catch (error) { log.warn('turn-complete listener failed', error) }
+      }
+    }
     this.eventSink(
       RPC_CHANNELS.sessions.EVENT,
       { to: 'workspace', workspaceId },
@@ -459,6 +479,7 @@ export class SessionManager implements ISessionManager {
       model: managed.model,
       llmConnection: managed.llmConnection,
       thinkingLevel: managed.thinkingLevel,
+      codingMode: managed.codingMode,
       lastMessageRole: managed.lastMessageRole,
       lastFinalMessageId: managed.lastFinalMessageId,
       currentStatus: managed.currentStatus,
@@ -555,6 +576,7 @@ export class SessionManager implements ISessionManager {
       Object.assign(stored, branched)
     }
 
+    stored.codingMode = (branchSource ? branchSource.codingMode : options.codingMode ?? workspaceConfig?.defaults?.codingMode) || undefined
     const managed = createManagedSession(stored, workspace, { messagesLoaded: true })
     managed.thinkingLevel = normalizeThinkingLevel(options.thinkingLevel ?? workspaceConfig?.defaults?.thinkingLevel)
     if (branchSource) {
@@ -1113,6 +1135,12 @@ export class SessionManager implements ISessionManager {
         session: this.toStored(managed),
         model: context.resolvedModel,
         autoCompactWindow: getAutoCompactWindow(),
+        agentProfile: managed.codingMode ? 'coding' : undefined,
+        getTransferredSessionSummary: () => managed.transferredSessionSummaryApplied ? null : managed.transferredSessionSummary ?? null,
+        markTransferredSessionSummaryApplied: () => {
+          managed.transferredSessionSummaryApplied = true
+          this.persistSession(managed)
+        },
         miniModel: context.connection ? getMiniModel(context.connection) : undefined,
         thinkingLevel: managed.thinkingLevel,
         isHeadless: !this.browserPaneManager,
@@ -1124,6 +1152,9 @@ export class SessionManager implements ISessionManager {
         getRecoveryMessages: () => managed.messages.slice(-12).map(item => ({ type: item.role === 'assistant' ? 'assistant' : 'user', content: item.content })),
       },
     })
+    // Restore the persisted mode before wiring callbacks or starting the Pi runtime.
+    // A continued session must use the same mode that the UI and stored header show.
+    agent.setPermissionMode(managed.permissionMode ?? 'ask')
     agent.onPermissionRequest = request => {
       this.handleAgentEvent(managed, { ...request, type: 'permission_request', permissionType: request.type })
     }
@@ -1465,6 +1496,54 @@ export class SessionManager implements ISessionManager {
     managed.thinkingLevel = level
     managed.agent?.setThinkingLevel(level)
     this.persistSession(managed)
+  }
+
+  setSessionCodingMode(sessionId: string, enabled: boolean): void {
+    const managed = this.sessions.get(sessionId)
+    if (!managed || !!managed.codingMode === enabled) return
+    if (managed.isProcessing || hasConversationStarted(managed)) {
+      throw new Error('Coding mode is fixed once a session has messages. Continue in a new session to switch it.')
+    }
+    managed.codingMode = enabled || undefined
+    managed.agent?.setAgentProfile(enabled ? 'coding' : 'default')
+    this.persistSession(managed)
+    this.emit(managed.workspace.id, { type: 'coding_mode_changed', sessionId, codingMode: enabled })
+  }
+
+  async continueSessionInNewSession(sessionId: string, codingMode: boolean): Promise<{ sessionId: string }> {
+    const managed = this.sessions.get(sessionId)
+    if (!managed) throw new Error(`Session ${sessionId} not found`)
+    if (managed.isProcessing) throw new Error('Wait for the current turn to finish before continuing in a new session.')
+    this.ensureMessagesLoaded(managed)
+    const messages = managed.messages.filter(m => (m.role === 'user' || m.role === 'assistant') && !m.isIntermediate)
+      .map(m => ({ type: m.role as 'user' | 'assistant', content: m.content }))
+    let summary: string | null = null
+    if (messages.length) {
+      if (!platform) throw new Error('Session platform has not been initialized')
+      const workspaceConfig = loadWorkspaceConfig(managed.workspace.rootPath)
+      const context = resolveBackendContext({ sessionConnectionSlug: managed.llmConnection, workspaceDefaultConnectionSlug: workspaceConfig?.defaults?.defaultLlmConnection, managedModel: managed.model })
+      const agent = createBackendFromResolvedContext({
+        context,
+        hostRuntime: { appRootPath: platform.appRootPath, resourcesPath: platform.resourcesPath, isPackaged: platform.isPackaged },
+        coreConfig: { workspace: managed.workspace, miniModel: context.connection ? getMiniModel(context.connection) : undefined, isHeadless: true, skipConfigWatcher: true },
+      })
+      try { summary = await generateConversationSummary(messages, agent.runMiniCompletion.bind(agent)) }
+      finally { agent.destroy() }
+      if (!summary) throw new Error('Could not summarize the conversation. Please try again.')
+    }
+    const session = await this.createSession(managed.workspace.id, {
+      permissionMode: managed.permissionMode, thinkingLevel: managed.thinkingLevel,
+      workingDirectory: managed.workingDirectory ?? 'none', model: managed.model,
+      llmConnection: managed.llmConnection, codingMode,
+    }, { emitCreatedEvent: false })
+    const created = this.sessions.get(session.id)!
+    if (summary) {
+      created.transferredSessionSummary = summary
+      created.transferredSessionSummaryApplied = false
+      await this.flushSession(created.id)
+    }
+    this.notifySessionCreated(managed.workspace.id, created.id)
+    return { sessionId: created.id }
   }
 
   updateWorkingDirectory(sessionId: string, path: string): void {
@@ -1867,6 +1946,9 @@ export class SessionManager implements ISessionManager {
     })
     const stored = loadStoredSession(workspace.rootPath, created.id)
     if (!stored) throw new Error('Failed to create imported session')
+    stored.codingMode = bundle.session.header.codingMode
+    stored.transferredSessionSummary = bundle.session.header.transferredSessionSummary
+    stored.transferredSessionSummaryApplied = bundle.session.header.transferredSessionSummaryApplied
     stored.messages = bundle.session.messages
     stored.tokenUsage = bundle.session.header.tokenUsage
     await saveStoredSession(stored)
@@ -1884,6 +1966,7 @@ export class SessionManager implements ISessionManager {
       managed.agent?.destroy()
       unregisterSessionScopedToolCallbacks(managed.id)
     }
+    this.turnCompleteListeners.clear()
     this.sessions.clear()
     this.browserHostPins.clear()
     this.rpcServer = null

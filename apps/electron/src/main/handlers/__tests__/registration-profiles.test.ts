@@ -81,7 +81,7 @@ function createMockDeps(): HandlerDeps {
 async function getExpectedCoreChannels(): Promise<Set<string>> {
   // Core handler channels (now in server-core)
   const [
-    auth, files, llm, sessions, settings, skills, system, workspace, onboarding,
+    auth, files, llm, sessions, settings, skills, system, workspace, onboarding, prWatch, codingRepos,
   ] = await Promise.all([
     import('@mkagent/server-core/handlers/rpc/auth'),
     import('@mkagent/server-core/handlers/rpc/files'),
@@ -92,6 +92,8 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     import('@mkagent/server-core/handlers/rpc/system'),
     import('@mkagent/server-core/handlers/rpc/workspace'),
     import('@mkagent/server-core/handlers/rpc/onboarding'),
+    import('@mkagent/server-core/handlers/rpc/pr-watch'),
+    import('@mkagent/server-core/handlers/rpc/coding-repos'),
   ])
 
   return new Set([
@@ -104,6 +106,8 @@ async function getExpectedCoreChannels(): Promise<Set<string>> {
     ...system.CORE_HANDLED_CHANNELS,
     ...workspace.CORE_HANDLED_CHANNELS,
     ...onboarding.HANDLED_CHANNELS,
+    ...prWatch.HANDLED_CHANNELS,
+    ...codingRepos.HANDLED_CHANNELS,
   ])
 }
 

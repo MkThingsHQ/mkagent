@@ -8,7 +8,7 @@ import { existsSync } from 'node:fs'
 import { homedir, hostname } from 'node:os'
 import { delimiter, join } from 'node:path'
 import { bootstrapServer } from '@mkagent/server-core/bootstrap'
-import { cleanupSessionFileWatchForClient } from '@mkagent/server-core/handlers/rpc'
+import { cleanupRpcClientResources } from '@mkagent/server-core/handlers/rpc'
 import { initModelRefreshService, setFetcherPlatform } from '@mkagent/server-core/model-fetchers'
 import { setImageProcessor, setSearchPlatform } from '@mkagent/server-core/services'
 import { SessionManager, setSessionPlatform, setSessionRuntimeHooks } from '@mkagent/server-core/sessions'
@@ -221,7 +221,7 @@ async function start() {
       if (webContentsId !== null) clients.set(webContentsId, clientId)
     },
     cleanupClientResources: clientId => {
-      cleanupSessionFileWatchForClient(clientId)
+      cleanupRpcClientResources(clientId)
       for (const [webContentsId, id] of clients) if (id === clientId) clients.delete(webContentsId)
     },
   })

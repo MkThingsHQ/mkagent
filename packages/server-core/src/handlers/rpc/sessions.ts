@@ -314,6 +314,13 @@ export function registerSessionsHandlers(server: RpcServer, deps: HandlerDeps): 
           throw new Error(`Invalid thinking level: ${command.level}. Valid values: ${VALID_THINKING_LEVELS_LIST}`)
         }
         return sessionManager.setSessionThinkingLevel(sessionId, command.level)
+      case 'setCodingMode':
+        if (typeof command.enabled !== 'boolean') {
+          throw new Error(`Invalid coding mode value: ${String(command.enabled)}. Expected a boolean`)
+        }
+        return sessionManager.setSessionCodingMode(sessionId, command.enabled)
+      case 'continueInNewSession':
+        return sessionManager.continueSessionInNewSession(sessionId, command.codingMode === true)
       case 'updateWorkingDirectory':
         return sessionManager.updateWorkingDirectory(sessionId, command.dir)
       case 'showInFinder': {

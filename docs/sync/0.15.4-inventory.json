@@ -1,0 +1,674 @@
+{
+  "fromTag": "v0.15.3",
+  "fromCommit": "22c9f0414ab63e0a22814c9a2ada740206e09091",
+  "toTag": "v0.15.4",
+  "toCommit": "89e2d6a25fb1c5c46e27ecf8e8f9a744f5abc27b",
+  "mkagentVersion": "0.2.4",
+  "paths": [
+    {
+      "path": "apps/cli/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.4 package/lock/user notes; Claude-only 0.3.302 dependency change excluded; Pi remains 1.1.0."
+    },
+    {
+      "path": "apps/cli/src/commands.test.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "apps/cli/src/index.ts",
+      "status": "adapted",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "apps/electron/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.4 package/lock/user notes; Claude-only 0.3.302 dependency change excluded; Pi remains 1.1.0."
+    },
+    {
+      "path": "apps/electron/resources/release-notes/0.15.4.md",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.4 package/lock/user notes; Claude-only 0.3.302 dependency change excluded; Pi remains 1.1.0."
+    },
+    {
+      "path": "apps/electron/src/main/handlers/__tests__/registration-profiles.test.ts",
+      "status": "adapted",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "apps/electron/src/main/handlers/__tests__/registration.test.ts",
+      "status": "adapted",
+      "reason": "Retained registration-profiles/channel-map-parity suites cover the new Coding/PR RPCs; duplicate upstream suite stays absent."
+    },
+    {
+      "path": "apps/electron/src/main/handlers/system.ts",
+      "status": "adapted",
+      "reason": "Async execFile branch lookup, detached HEAD null; Electron duplicate core handlers removed in favor of server-core."
+    },
+    {
+      "path": "apps/electron/src/main/index.ts",
+      "status": "adapted",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "apps/electron/src/renderer/App.tsx",
+      "status": "adapted",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/atoms/sessions.ts",
+      "status": "adapted",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/BackgroundTaskChip.tsx",
+      "status": "retained",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx",
+      "status": "retained",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent. Register loaded session metadata before navigation so the created-session push cannot race with route validation."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/SessionItem.tsx",
+      "status": "adapted",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/ChatHeader.tsx",
+      "status": "adapted",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/ChatHeaderLabels.tsx",
+      "status": "excluded",
+      "reason": "excluded: Pages/Projects/labels are absent; retained Coding header adapted separately"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/__tests__/label-strip-layout.test.ts",
+      "status": "excluded",
+      "reason": "excluded: Pages/Projects/labels are absent; retained Coding header adapted separately"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/__tests__/pr-watch-state.test.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/label-strip-layout.ts",
+      "status": "excluded",
+      "reason": "excluded: Pages/Projects/labels are absent; retained Coding header adapted separately"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/pr-watch/ChatHeaderPrChip.tsx",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/pr-watch/PrDetailsCard.tsx",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/pr-watch/pr-watch-state.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/pr-watch/pr-watch-visuals.tsx",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/input/CodingWorkspacePanel.tsx",
+      "status": "retained",
+      "reason": "v0.15.4 direct-child/recent/gh repository listing and isolated worktrees; codex/ convention, exact remote identity and owned failure cleanup. No later recursive discovery."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/input/ComposerCodingChip.tsx",
+      "status": "retained",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/input/FreeFormInput.tsx",
+      "status": "adapted",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/kanban/TaskTile.tsx",
+      "status": "excluded",
+      "reason": "excluded: Pages/Projects/labels are absent; retained Coding header adapted separately"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/grant-visuals.tsx",
+      "status": "excluded",
+      "reason": "excluded: Pages/Projects/labels are absent; retained Coding header adapted separately"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/pages/page-visuals.tsx",
+      "status": "excluded",
+      "reason": "excluded: Pages/Projects/labels are absent; retained Coding header adapted separately"
+    },
+    {
+      "path": "apps/electron/src/renderer/components/ui/card-button.tsx",
+      "status": "retained",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/event-processor/handlers/session.ts",
+      "status": "adapted",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/event-processor/processor.ts",
+      "status": "adapted",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/event-processor/types.ts",
+      "status": "adapted",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/__tests__/useHoverPopover.test.ts",
+      "status": "retained",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/useHoverPopover.ts",
+      "status": "retained",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/usePrWatch.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/useSessionOptions.ts",
+      "status": "retained",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/ChatPage.tsx",
+      "status": "retained",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/pages/settings/WorkspaceSettingsPage.tsx",
+      "status": "adapted",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/PlaygroundSessionProviders.tsx",
+      "status": "excluded",
+      "reason": "excluded: upstream playground is not shipped in Lite; real retained UI validated directly"
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/demos/mobile-webui/MobilePlaygroundProviders.tsx",
+      "status": "excluded",
+      "reason": "excluded: upstream playground is not shipped in Lite; real retained UI validated directly"
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/mock-utils.ts",
+      "status": "excluded",
+      "reason": "excluded: upstream playground is not shipped in Lite; real retained UI validated directly"
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/chat-header.tsx",
+      "status": "excluded",
+      "reason": "excluded: upstream playground is not shipped in Lite; real retained UI validated directly"
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/chat-panel.tsx",
+      "status": "excluded",
+      "reason": "excluded: upstream playground is not shipped in Lite; real retained UI validated directly"
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/chat.tsx",
+      "status": "excluded",
+      "reason": "excluded: upstream playground is not shipped in Lite; real retained UI validated directly"
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/index.ts",
+      "status": "excluded",
+      "reason": "excluded: upstream playground is not shipped in Lite; real retained UI validated directly"
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/samples/pr-watch.ts",
+      "status": "excluded",
+      "reason": "excluded: upstream playground is not shipped in Lite; real retained UI validated directly"
+    },
+    {
+      "path": "apps/electron/src/renderer/utils/session.ts",
+      "status": "retained",
+      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+    },
+    {
+      "path": "apps/electron/src/shared/__tests__/ipc-channels.test.ts",
+      "status": "adapted",
+      "reason": "Retained registration-profiles/channel-map-parity suites cover the new Coding/PR RPCs; duplicate upstream suite stays absent."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "status": "adapted",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "apps/electron/src/transport/channel-map.ts",
+      "status": "adapted",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "apps/viewer/package.json",
+      "status": "excluded",
+      "reason": "Removed Viewer/Messaging workspace stays absent; retained workspace versions update to 0.2.4."
+    },
+    {
+      "path": "apps/webui/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.4 package/lock/user notes; Claude-only 0.3.302 dependency change excluded; Pi remains 1.1.0."
+    },
+    {
+      "path": "bun.lock",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.4 package/lock/user notes; Claude-only 0.3.302 dependency change excluded; Pi remains 1.1.0."
+    },
+    {
+      "path": "package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.4 package/lock/user notes; Claude-only 0.3.302 dependency change excluded; Pi remains 1.1.0."
+    },
+    {
+      "path": "packages/core/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.4 package/lock/user notes; Claude-only 0.3.302 dependency change excluded; Pi remains 1.1.0."
+    },
+    {
+      "path": "packages/messaging-gateway/package.json",
+      "status": "excluded",
+      "reason": "Removed Viewer/Messaging workspace stays absent; retained workspace versions update to 0.2.4."
+    },
+    {
+      "path": "packages/messaging-whatsapp-worker/package.json",
+      "status": "excluded",
+      "reason": "Removed Viewer/Messaging workspace stays absent; retained workspace versions update to 0.2.4."
+    },
+    {
+      "path": "packages/pi-agent-server/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.4 package/lock/user notes; Claude-only 0.3.302 dependency change excluded; Pi remains 1.1.0."
+    },
+    {
+      "path": "packages/server-core/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.4 package/lock/user notes; Claude-only 0.3.302 dependency change excluded; Pi remains 1.1.0."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/coding-repos.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/index.ts",
+      "status": "adapted",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/pr-watch.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/sessions.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/settings.ts",
+      "status": "adapted",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/system.ts",
+      "status": "retained",
+      "reason": "Async execFile branch lookup, detached HEAD null; Electron duplicate core handlers removed in favor of server-core."
+    },
+    {
+      "path": "packages/server-core/src/handlers/session-manager-interface.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/server-core/src/services/coding-repos/coding-repos.test.ts",
+      "status": "retained",
+      "reason": "v0.15.4 direct-child/recent/gh repository listing and isolated worktrees; codex/ convention, exact remote identity and owned failure cleanup. No later recursive discovery."
+    },
+    {
+      "path": "packages/server-core/src/services/coding-repos/discover.ts",
+      "status": "retained",
+      "reason": "v0.15.4 direct-child/recent/gh repository listing and isolated worktrees; codex/ convention, exact remote identity and owned failure cleanup. No later recursive discovery."
+    },
+    {
+      "path": "packages/server-core/src/services/coding-repos/github.ts",
+      "status": "retained",
+      "reason": "v0.15.4 direct-child/recent/gh repository listing and isolated worktrees; codex/ convention, exact remote identity and owned failure cleanup. No later recursive discovery."
+    },
+    {
+      "path": "packages/server-core/src/services/coding-repos/worktree.ts",
+      "status": "retained",
+      "reason": "v0.15.4 direct-child/recent/gh repository listing and isolated worktrees; codex/ convention, exact remote identity and owned failure cleanup. No later recursive discovery."
+    },
+    {
+      "path": "packages/server-core/src/services/git.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/github-client.test.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/github-client.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/github-queries.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/local-git.test.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/local-git.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/map-github.test.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/map-github.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/registry.test.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/registry.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/remote-url.test.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/remote-url.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/schedule.test.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/schedule.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/token-chain.test.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/server-core/src/services/pr-watch/token-chain.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/server-core/src/sessions/SessionManager.ts",
+      "status": "adapted",
+      "reason": "Persist/restore/inherit coding state, freeze started sessions, synchronous summary handoff via actual Pi utility session, one-shot context, turn-complete observer. No later async handoff."
+    },
+    {
+      "path": "packages/server-core/src/sessions/coding-mode.test.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/server/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.4 package/lock/user notes; Claude-only 0.3.302 dependency change excluded; Pi remains 1.1.0."
+    },
+    {
+      "path": "packages/server/src/index.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/session-tools-core/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.4 package/lock/user notes; Claude-only 0.3.302 dependency change excluded; Pi remains 1.1.0."
+    },
+    {
+      "path": "packages/session-tools-core/src/index.ts",
+      "status": "adapted",
+      "reason": "Retain shared/Pi coding profile, lean prompt, context/preferences and canonical tool filtering. Excluded Source/Project/Guarded/Claude cases adapted individually."
+    },
+    {
+      "path": "packages/session-tools-core/src/tool-defs-filtering.test.ts",
+      "status": "retained",
+      "reason": "Retain shared/Pi coding profile, lean prompt, context/preferences and canonical tool filtering. Excluded Source/Project/Guarded/Claude cases adapted individually."
+    },
+    {
+      "path": "packages/session-tools-core/src/tool-defs.ts",
+      "status": "adapted",
+      "reason": "Retain shared/Pi coding profile, lean prompt, context/preferences and canonical tool filtering. Excluded Source/Project/Guarded/Claude cases adapted individually."
+    },
+    {
+      "path": "packages/shared/CLAUDE.md",
+      "status": "excluded",
+      "reason": "excluded: direct Claude SDK or external Sources implementation; shared profile behavior retained in Pi"
+    },
+    {
+      "path": "packages/shared/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.4 package/lock/user notes; Claude-only 0.3.302 dependency change excluded; Pi remains 1.1.0."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/pi-browser-tool-toggle.test.ts",
+      "status": "retained",
+      "reason": "Retain shared/Pi coding profile, lean prompt, context/preferences and canonical tool filtering. Excluded Source/Project/Guarded/Claude cases adapted individually."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/query-llm-partial-output.test.ts",
+      "status": "excluded",
+      "reason": "excluded: direct Claude SDK or external Sources implementation; shared profile behavior retained in Pi"
+    },
+    {
+      "path": "packages/shared/src/agent/backend/pi/session-tool-defs.ts",
+      "status": "adapted",
+      "reason": "Retain shared/Pi coding profile, lean prompt, context/preferences and canonical tool filtering. Excluded Source/Project/Guarded/Claude cases adapted individually."
+    },
+    {
+      "path": "packages/shared/src/agent/backend/types.ts",
+      "status": "adapted",
+      "reason": "Retain shared/Pi coding profile, lean prompt, context/preferences and canonical tool filtering. Excluded Source/Project/Guarded/Claude cases adapted individually."
+    },
+    {
+      "path": "packages/shared/src/agent/base-agent.ts",
+      "status": "adapted",
+      "reason": "Retain shared/Pi coding profile, lean prompt, context/preferences and canonical tool filtering. Excluded Source/Project/Guarded/Claude cases adapted individually."
+    },
+    {
+      "path": "packages/shared/src/agent/claude-agent.ts",
+      "status": "excluded",
+      "reason": "excluded: direct Claude SDK or external Sources implementation; shared profile behavior retained in Pi"
+    },
+    {
+      "path": "packages/shared/src/agent/core/__tests__/prompt-builder.test.ts",
+      "status": "retained",
+      "reason": "Retain shared/Pi coding profile, lean prompt, context/preferences and canonical tool filtering. Excluded Source/Project/Guarded/Claude cases adapted individually."
+    },
+    {
+      "path": "packages/shared/src/agent/core/__tests__/source-manager.test.ts",
+      "status": "excluded",
+      "reason": "excluded: direct Claude SDK or external Sources implementation; shared profile behavior retained in Pi"
+    },
+    {
+      "path": "packages/shared/src/agent/core/prompt-builder.ts",
+      "status": "retained",
+      "reason": "Retain shared/Pi coding profile, lean prompt, context/preferences and canonical tool filtering. Excluded Source/Project/Guarded/Claude cases adapted individually."
+    },
+    {
+      "path": "packages/shared/src/agent/core/source-manager.ts",
+      "status": "excluded",
+      "reason": "excluded: direct Claude SDK or external Sources implementation; shared profile behavior retained in Pi"
+    },
+    {
+      "path": "packages/shared/src/agent/core/types.ts",
+      "status": "adapted",
+      "reason": "Retain shared/Pi coding profile, lean prompt, context/preferences and canonical tool filtering. Excluded Source/Project/Guarded/Claude cases adapted individually."
+    },
+    {
+      "path": "packages/shared/src/agent/options.ts",
+      "status": "excluded",
+      "reason": "excluded: direct Claude SDK or external Sources implementation; shared profile behavior retained in Pi"
+    },
+    {
+      "path": "packages/shared/src/agent/pi-agent.ts",
+      "status": "adapted",
+      "reason": "Retain shared/Pi coding profile, lean prompt, context/preferences and canonical tool filtering. Excluded Source/Project/Guarded/Claude cases adapted individually."
+    },
+    {
+      "path": "packages/shared/src/agent/session-scoped-tools.ts",
+      "status": "excluded",
+      "reason": "excluded: direct Claude SDK or external Sources implementation; shared profile behavior retained in Pi"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/de.json",
+      "status": "excluded",
+      "reason": "excluded: MkAgent ships English and Simplified Chinese"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/en.json",
+      "status": "adapted",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/es.json",
+      "status": "excluded",
+      "reason": "excluded: MkAgent ships English and Simplified Chinese"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/hu.json",
+      "status": "excluded",
+      "reason": "excluded: MkAgent ships English and Simplified Chinese"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ja.json",
+      "status": "excluded",
+      "reason": "excluded: MkAgent ships English and Simplified Chinese"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/pl.json",
+      "status": "excluded",
+      "reason": "excluded: MkAgent ships English and Simplified Chinese"
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "status": "adapted",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/shared/src/prompts/__tests__/system.test.ts",
+      "status": "retained",
+      "reason": "Retain shared/Pi coding profile, lean prompt, context/preferences and canonical tool filtering. Excluded Source/Project/Guarded/Claude cases adapted individually."
+    },
+    {
+      "path": "packages/shared/src/prompts/print-system-prompt.ts",
+      "status": "retained",
+      "reason": "Retain shared/Pi coding profile, lean prompt, context/preferences and canonical tool filtering. Excluded Source/Project/Guarded/Claude cases adapted individually."
+    },
+    {
+      "path": "packages/shared/src/prompts/system.ts",
+      "status": "adapted",
+      "reason": "Retain shared/Pi coding profile, lean prompt, context/preferences and canonical tool filtering. Excluded Source/Project/Guarded/Claude cases adapted individually."
+    },
+    {
+      "path": "packages/shared/src/protocol/channels.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/shared/src/protocol/dto.ts",
+      "status": "adapted",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/shared/src/protocol/events.ts",
+      "status": "adapted",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/shared/src/protocol/git-repos.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/shared/src/protocol/index.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/shared/src/protocol/pr-watch.ts",
+      "status": "retained",
+      "reason": "v0.15.4 single-PR state/details, gh credentials, adaptive/shared/ref/turn polling and local-only action prompts; Sources credential loading omitted."
+    },
+    {
+      "path": "packages/shared/src/protocol/routing.ts",
+      "status": "adapted",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/shared/src/sessions/types.ts",
+      "status": "adapted",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/shared/src/workspaces/types.ts",
+      "status": "retained",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "packages/ui/package.json",
+      "status": "adapted",
+      "reason": "MkAgent 0.2.4 package/lock/user notes; Claude-only 0.3.302 dependency change excluded; Pi remains 1.1.0."
+    },
+    {
+      "path": "packages/ui/src/styles/tokens.css",
+      "status": "retained",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    },
+    {
+      "path": "scripts/electron-dev.ts",
+      "status": "adapted",
+      "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
+    }
+  ]
+}

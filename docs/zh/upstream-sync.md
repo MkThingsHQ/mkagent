@@ -7,29 +7,33 @@ MkAgent 的架构、UI 与运行时继承自 [Craft Agents OSS](https://github.c
 | 项 | 值 |
 |---|---|
 | 仓库 | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.15.3` |
-| Commit | `22c9f0414ab63e0a22814c9a2ada740206e09091` |
+| Tag | `v0.15.4` |
+| Commit | `89e2d6a25fb1c5c46e27ecf8e8f9a744f5abc27b` |
 
 ## 最近一次上游评估
 
 | 项 | 值 |
 |---|---|
 | 评估日期 | `2026-10-26` |
-| 上游 Tag | `v0.15.3` |
-| 上游 Commit | `22c9f0414ab63e0a22814c9a2ada740206e09091` |
+| 上游 Tag | `v0.15.4` |
+| 上游 Commit | `89e2d6a25fb1c5c46e27ecf8e8f9a744f5abc27b` |
 
-MkAgent 0.2.3 **仅同步 v0.15.2 → v0.15.3**。[逐路径清单](../sync/0.15.3-inventory.json)覆盖全部 53 个改动路径；[验证报告](../sync/0.15.3-validation.md)记录运行和界面实测证据。没有混入 v0.15.4–0.15.6。
+MkAgent 0.2.4 **仅同步 v0.15.3 → v0.15.4**。[逐路径清单](../sync/0.15.4-inventory.json)覆盖全部 133 个改动路径；[验证记录](../sync/0.15.4-validation.md)区分自动化、真实 Pi 和实际界面证据。不混入 v0.15.5/v0.15.6。
 
-HEIC/HEIF 附件在存储入口转为 JPEG，缩略图、预览和实际模型输入均使用可解码格式。新增 OpenCode Go 品牌预设及可编辑模型 ID。端点级 `customEndpoint.maxTokens` 支持编辑、校验、持久化和实时模型注册刷新，未设置仍默认 8192。Pi 现在完整支持全局 100K–1M 压缩窗口：按当前模型换算 `max(SDK reserve, contextWindow − selectedWindow)`，上下文占用与实际压缩使用同一阈值，计费统计保持独立。全局窗口修改在下一轮重建空闲运行时、恢复 SDK 日志；模型/连接切换和应用重启保留设置。
+新增 Coding 会话标识、精简提示词与保留的编码工具筛选，支持 Workspace 默认值、CLI `--coding`、输入区 chip 和会话列表图标。对话开始后模式固定；切换会同步生成旧对话总结，在新会话首次发送时作为隐藏上下文注入，保留模型、连接、权限、思考级别和目录。偏好及 CLAUDE.md/AGENTS.md 保留。没有引入后续异步总结改造。
 
-富文本 Chat Starters、Skills badge/实际调用、保存即时刷新和空配置回退已在 0.2.2 实现，本次复验；不恢复 Sources。保留 MkAgent 品牌、本地配置、Pi 1.1.0 和既有浏览器/Stop/用量修复。Claude SDK、Sources/MCP、Pages、Projects/conductor、Automations、公开分享、labels/custom statuses、messaging 仍排除；Decision/Guarded 继续暂缓。界面只保留英文和简体中文。
+开启 Coding 后可选择已有目录或新建 worktree。列表合并近期目录、Workspace 默认目录下的直接仓库和 `gh repo list`；bare/多 worktree 按 common git dir 去重。远端仓库显式确认后 clone，新分支默认 `codex/<session id>`，从刷新后的默认分支创建独立目录。既有 dirty checkout 和分支保持原样；clone 临时目录、checkout 失败的本次分支/路径会清理。没有引入后续递归仓库发现。
+
+PR 状态使用现有 `gh` 登录，显示 PR 状态、冲突、评审、checks 和本地未提交/未推送状态，详情含提交/检查/评审摘要。轮次结束及 Git refs 改变后刷新，按状态 15 秒–2 分钟轮询，隐藏时退订暂停。Resolve/Fix/Fix CI 仅发送本地修复提示，不自行 push、回复或合并 PR。窄屏标题让位给 PR 信息，移动端遵循上游不显示 PR 芯片；不恢复 labels/custom statuses。Git 分支查询异步执行，detached HEAD、错误/超时/空路径返回空。
+
+保留 Pi 1.1.0、HEIC/HEIF、OpenCode Go、maxTokens、压缩窗口、Skills starters、用量、分支计费、浏览器/Stop 和本地配置。Claude SDK、Sources/MCP、Pages、Projects/conductor、Automations、公开分享、labels/custom statuses、messaging 仍排除，Decision/Guarded 继续暂缓。PR watcher 不依赖 Sources；没有引入多 PR、pr_bind/pr_status 或自动 review/merge。界面保留英文和简体中文。
 
 ```bash
 # 仅操作独立的临时参考副本，已有参考目录保持只读。
-git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0153
-git -C /tmp/craft-v0153 fetch origin refs/tags/v0.15.3
-git -C /tmp/craft-v0153 checkout --detach 22c9f0414ab63e0a22814c9a2ada740206e09091
-export CRAFT_AGENT_SOURCE=/tmp/craft-v0153
+git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0154
+git -C /tmp/craft-v0154 fetch origin refs/tags/v0.15.4
+git -C /tmp/craft-v0154 checkout --detach 89e2d6a25fb1c5c46e27ecf8e8f9a744f5abc27b
+export CRAFT_AGENT_SOURCE=/tmp/craft-v0154
 ```
 
 当上游发布值得评估的新 tag 时:

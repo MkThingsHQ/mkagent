@@ -1,0 +1,224 @@
+import { afterAll, beforeAll, describe, expect, it } from 'bun:test'
+import { execFileSync } from 'node:child_process'
+import { existsSync, mkdirSync, mkdtempSync, realpathSync, readdirSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
+import { cloneRootFor, discoverLocalRepos } from './discover'
+import { isValidNameWithOwner, parseGhRepoList } from './github'
+import { branchSlug, createWorktree, gitReason, worktreePath, WorktreeError } from './worktree'
+
+let base: string
+let workspace: string
+let plain: string
+let bareLayout: string
+const env = { ...process.env, GIT_AUTHOR_NAME: 't', GIT_AUTHOR_EMAIL: 't@t', GIT_COMMITTER_NAME: 't', GIT_COMMITTER_EMAIL: 't@t' }
+const git = (cwd: string, ...args: string[]) => execFileSync('git', args, { cwd, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'], env }).trim()
+
+beforeAll(() => {
+  base = realpathSync(mkdtempSync(join(tmpdir(), 'coding-repos-')))
+  workspace = join(base, 'code')
+  mkdirSync(workspace)
+  // An "upstream" with main + a remote HEAD, so clones get origin/HEAD
+  const upstream = join(base, 'upstream.git')
+  git(base, 'init', '--bare', '-b', 'main', upstream)
+  const seed = join(base, 'seed')
+  git(base, 'clone', upstream, seed)
+  writeFileSync(join(seed, 'a.txt'), 'a')
+  git(seed, 'add', '.')
+  git(seed, 'commit', '-m', 'init')
+  git(seed, 'push', 'origin', 'HEAD:main')
+
+  // 1. A plain clone in the workspace folder, origin pointing at GitHub
+  plain = join(workspace, 'app')
+  git(base, 'clone', upstream, plain)
+  git(plain, 'remote', 'set-url', '--push', 'origin', 'git@github.com:acme/app.git')
+  // 2. A bare layout with two worktrees, outside the workspace (found through a recent folder)
+  bareLayout = join(base, 'layout')
+  mkdirSync(bareLayout)
+  git(bareLayout, 'clone', '--bare', upstream, '.bare')
+  git(join(bareLayout, '.bare'), 'config', 'remote.origin.fetch', '+refs/heads/*:refs/remotes/origin/*')
+  git(join(bareLayout, '.bare'), 'fetch', 'origin')
+  git(join(bareLayout, '.bare'), 'worktree', 'add', join(bareLayout, 'one'), '-b', 'one', 'origin/main')
+  git(join(bareLayout, '.bare'), 'worktree', 'add', join(bareLayout, 'two'), '-b', 'two', 'origin/main')
+  // 3. Noise: a plain folder
+  mkdirSync(join(workspace, 'notes'))
+})
+
+afterAll(() => {
+  rmSync(base, { recursive: true, force: true })
+})
+
+describe('discoverLocalRepos', () => {
+  it('lists recent repos first and collapses a bare layout into one entry', async () => {
+    const repos = await discoverLocalRepos({
+      workspaceFolder: workspace,
+      recentDirs: [join(bareLayout, 'two'), join(bareLayout, 'one'), join(base, 'gone')],
+    })
+    expect(repos.map(r => [r.name, r.origin, r.worktrees])).toEqual([
+      ['layout', 'recent', 2],
+      ['app', 'workspace', 1],
+    ])
+    expect(repos[0]!.gitDir).toBe(join(bareLayout, '.bare'))
+    expect(repos[0]!.worktreeParent).toBe(bareLayout)
+    expect(repos[1]!.worktreeParent).toBe(workspace)
+  })
+
+  it('names a repo after its origin when the origin is on a git host', async () => {
+    git(plain, 'remote', 'set-url', 'origin', 'https://github.com/acme/app.git')
+    const [repo] = await discoverLocalRepos({ workspaceFolder: workspace })
+    expect(repo).toMatchObject({ name: 'app', nameWithOwner: 'acme/app' })
+    git(plain, 'remote', 'set-url', 'origin', join(base, 'upstream.git'))
+  })
+
+  it('copes with a missing workspace folder', async () => {
+    expect(await discoverLocalRepos({ workspaceFolder: join(base, 'nope') })).toEqual([])
+  })
+})
+
+describe('cloneRootFor', () => {
+  it('picks the folder most repositories live in, never the workspace data folder', async () => {
+    const repos = await discoverLocalRepos({ workspaceFolder: workspace, recentDirs: [join(bareLayout, 'one')] })
+    // plain clone lives in `code`, the bare layout's folder lives in `base`: a tie goes to the first
+    expect([workspace, base]).toContain(cloneRootFor(repos, workspace, '/ws')!)
+    expect(cloneRootFor([], '/ws', '/ws')).toBeNull()
+  })
+})
+
+describe('worktree naming', () => {
+  it('uses the last branch segment, file-system safe', () => {
+    expect(branchSlug('craft/261018-ivory-badger')).toBe('261018-ivory-badger')
+    expect(branchSlug('feat/My Thing!')).toBe('My-Thing-')
+  })
+  it('puts plain-clone worktrees next to the clone and bare-layout ones inside the layout, de-duplicated', () => {
+    const taken = new Set(['/code/app-x'])
+    expect(worktreePath('/code/app/.git', 'feat/x', p => taken.has(p))).toBe('/code/app-x-2')
+    expect(worktreePath('/code/layout/.bare', 'feat/x', () => false)).toBe('/code/layout/x')
+  })
+})
+
+describe('createWorktree', () => {
+  it('branches from origin/HEAD next to a plain clone', async () => {
+    const result = await createWorktree({ gitDir: join(plain, '.git'), branch: 'craft/test-one' }, { cloneRoot: workspace })
+    expect(result).toMatchObject({ path: join(workspace, 'app-test-one'), branch: 'craft/test-one', base: 'origin/main', cloned: false })
+    expect(git(result.path, 'symbolic-ref', '--short', 'HEAD')).toBe('craft/test-one')
+    expect(existsSync(join(result.path, 'a.txt'))).toBe(true)
+  })
+
+  it('works in a bare layout', async () => {
+    const result = await createWorktree({ gitDir: join(bareLayout, '.bare'), branch: 'craft/test-two' }, { cloneRoot: null })
+    expect(result.path).toBe(join(bareLayout, 'test-two'))
+    expect(git(result.path, 'rev-parse', '--abbrev-ref', 'HEAD')).toBe('craft/test-two')
+  })
+
+  it('rejects invalid branch names before touching git', async () => {
+    for (const branch of ['', 'bad..name', '-x', 'has space']) {
+      await expect(createWorktree({ gitDir: join(plain, '.git'), branch }, { cloneRoot: null })).rejects.toBeInstanceOf(WorktreeError)
+    }
+  })
+
+  it("reports git's reason when the branch already exists", async () => {
+    const error = await createWorktree({ gitDir: join(plain, '.git'), branch: 'craft/test-one' }, { cloneRoot: null }).catch(e => e)
+    expect(error).toBeInstanceOf(WorktreeError)
+    expect(error.message).toBe("a branch named 'craft/test-one' already exists")
+  })
+
+  it('keeps only git\'s reason, not its progress lines', () => {
+    expect(gitReason("Preparing worktree (new branch 'x')\nfatal: a branch named 'x' already exists")).toBe("a branch named 'x' already exists")
+    expect(gitReason('something odd')).toBe('something odd')
+  })
+
+  it('refuses to reuse a folder that is not a clone of the repository', async () => {
+    mkdirSync(join(workspace, 'taken'))
+    const error = await createWorktree({ cloneNameWithOwner: 'acme/taken', branch: 'craft/x' }, { cloneRoot: workspace }).catch(e => e)
+    expect(error?.code).toBe('clone-failed')
+  })
+
+  it('rejects a non-repository folder', async () => {
+    const error = await createWorktree({ gitDir: join(workspace, 'notes'), branch: 'craft/x' }, { cloneRoot: null }).catch(e => e)
+    expect(error?.code).toBe('not-a-repo')
+  })
+})
+
+describe('github helpers', () => {
+  it('parses gh repo list JSON', () => {
+    expect(parseGhRepoList('[{"nameWithOwner":"acme/app","description":"","isPrivate":true,"updatedAt":"2026-10-01T00:00:00Z"}]')).toEqual([
+      { kind: 'github', nameWithOwner: 'acme/app', description: undefined, isPrivate: true, updatedAt: Date.parse('2026-10-01T00:00:00Z') },
+    ])
+  })
+  it('accepts owner/repo only', () => {
+    expect(isValidNameWithOwner('acme/app.js')).toBe(true)
+    for (const bad of ['acme', 'acme/../x', 'acme/app;rm', '../x/y', 'a/b/c']) expect(isValidNameWithOwner(bad)).toBe(false)
+  })
+})
+
+describe('worktree lifecycle protections', () => {
+  it('fetches the latest default branch and leaves a dirty checkout and its branch alone', async () => {
+    const upstream = join(base, 'upstream.git')
+    const updater = join(base, 'updater')
+    git(base, 'clone', upstream, updater)
+    git(updater, 'commit', '--allow-empty', '-m', 'new default tip')
+    git(updater, 'push', 'origin', 'main')
+    const latest = git(upstream, 'rev-parse', 'HEAD')
+    git(plain, 'switch', '-c', 'unrelated-dirty')
+    writeFileSync(join(plain, 'a.txt'), 'local dirty content')
+    writeFileSync(join(plain, 'untracked.txt'), 'keep')
+    const before = git(plain, 'status', '--porcelain')
+    const result = await createWorktree({ gitDir: plain, branch: 'codex/isolated' }, { cloneRoot: null })
+    expect(git(result.path, 'rev-parse', 'HEAD')).toBe(latest)
+    expect(git(plain, 'symbolic-ref', '--short', 'HEAD')).toBe('unrelated-dirty')
+    expect(git(plain, 'status', '--porcelain')).toBe(before)
+    expect(git(result.path, 'status', '--porcelain')).toBe('')
+  })
+  it('rejects ambiguous requests and an origin with a similar owner/repository prefix', async () => {
+    await expect(createWorktree({ gitDir: plain, cloneNameWithOwner: 'acme/app', branch: 'codex/ambiguous' }, { cloneRoot: workspace })).rejects.toThrow('exactly one')
+    git(plain, 'remote', 'set-url', 'origin', 'https://github.com/acme/app-other.git')
+    await expect(createWorktree({ cloneNameWithOwner: 'acme/app', branch: 'codex/wrong-origin' }, { cloneRoot: workspace })).rejects.toThrow('not a clone')
+    git(plain, 'remote', 'set-url', 'origin', join(base, 'upstream.git'))
+  })
+  it('rolls back the owned path and branch when checkout fails', async () => {
+    const hooks = join(base, 'failing-hooks')
+    mkdirSync(hooks)
+    writeFileSync(join(hooks, 'post-checkout'), '#!/bin/sh\nexit 1\n', { mode: 0o755 })
+    git(plain, 'config', 'core.hooksPath', hooks)
+    const branch = 'codex/rollback-fixture'
+    const target = worktreePath(join(plain, '.git'), branch)
+    try {
+      await expect(createWorktree({ gitDir: plain, branch }, { cloneRoot: null })).rejects.toThrow()
+      expect(existsSync(target)).toBe(false)
+      expect(git(plain, 'branch', '--list', branch)).toBe('')
+      expect(git(plain, 'worktree', 'list', '--porcelain')).not.toContain(target)
+      expect(git(plain, 'symbolic-ref', '--short', 'HEAD')).toBe('unrelated-dirty')
+    } finally { git(plain, 'config', '--unset', 'core.hooksPath') }
+  })
+})
+
+
+describe('GitHub clone lifecycle', () => {
+  it('cleans partial clones and never exposes a failed destination', async () => {
+    await expect(createWorktree({ cloneNameWithOwner: 'acme/partial', branch: 'codex/new' }, {
+      cloneRoot: workspace,
+      clone: async (_name, path) => {
+        mkdirSync(path); writeFileSync(join(path, 'partial'), 'incomplete')
+        return { ok: false, message: 'fixture network interruption' }
+      },
+    })).rejects.toThrow('fixture network interruption')
+    expect(existsSync(join(workspace, 'partial'))).toBe(false)
+    expect(readdirSync(workspace).some(name => name.startsWith('.mkagent-clone-'))).toBe(false)
+  })
+  it('creates the isolated branch after a confirmed clone through the gh boundary', async () => {
+    let requested: string | undefined
+    const result = await createWorktree({ cloneNameWithOwner: 'acme/fresh-clone', branch: 'codex/cloned-fixture' }, {
+      cloneRoot: workspace,
+      clone: async (name, path) => {
+        requested = name
+        git(base, 'clone', join(base, 'upstream.git'), path)
+        return { ok: true, message: '' }
+      },
+    })
+    expect(requested).toBe('acme/fresh-clone')
+    expect(result.cloned).toBe(true)
+    expect(result.base).toBe('origin/main')
+    expect(git(result.path, 'symbolic-ref', '--short', 'HEAD')).toBe('codex/cloned-fixture')
+    expect(readdirSync(workspace).some(name => name.startsWith('.mkagent-clone-'))).toBe(false)
+  })
+})

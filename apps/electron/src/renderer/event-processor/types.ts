@@ -278,6 +278,8 @@ export interface WorkingDirectoryErrorEvent {
 /**
  * Permission mode changed event
  */
+export interface CodingModeChangedEvent { type: 'coding_mode_changed'; sessionId: string; codingMode: boolean }
+
 export interface PermissionModeChangedEvent {
   type: 'permission_mode_changed'
   sessionId: string
@@ -450,6 +452,7 @@ export type AgentEvent =
   | AsyncOperationEvent
   | WorkingDirectoryChangedEvent
   | WorkingDirectoryErrorEvent
+  | CodingModeChangedEvent
   | PermissionModeChangedEvent
   | SessionModelChangedEvent
   | LLMConnectionChangedEvent
@@ -469,6 +472,7 @@ export type AgentEvent =
 export type Effect =
   | { type: 'permission_request'; request: PermissionRequest }
   | { type: 'generate_title'; sessionId: string; userMessage: string }
+  | { type: 'coding_mode_changed'; sessionId: string; codingMode: boolean }
   | { type: 'permission_mode_changed'; sessionId: string; permissionMode: PermissionMode; previousPermissionMode?: PermissionMode; transitionDisplay?: string; modeVersion?: number; changedAt?: string; changedBy?: 'user' | 'system' | 'restore' | 'unknown' }
   | { type: 'restore_input'; text: string }
   | { type: 'toast_error'; message: string }

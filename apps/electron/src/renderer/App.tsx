@@ -483,12 +483,13 @@ export default function App() {
         ...current,
         permissionMode: session.permissionMode ?? defaultSessionOptions.permissionMode,
         thinkingLevel: session.thinkingLevel ?? DEFAULT_THINKING_LEVEL,
+        codingMode: session.codingMode === true,
       }
 
       const hasNonDefaultMode = merged.permissionMode !== defaultSessionOptions.permissionMode
       const hasNonDefaultThinking = merged.thinkingLevel !== DEFAULT_THINKING_LEVEL
 
-      if (!hasNonDefaultMode && !hasNonDefaultThinking && merged.permissionModeVersion == null) {
+      if (!hasNonDefaultMode && !hasNonDefaultThinking && !merged.codingMode && merged.permissionModeVersion == null) {
         next.delete(session.id)
       } else {
         next.set(session.id, merged)
@@ -535,10 +536,11 @@ export default function App() {
       for (const s of loadedSessions) {
         const hasNonDefaultMode = s.permissionMode && s.permissionMode !== 'ask'
         const hasNonDefaultThinking = s.thinkingLevel && s.thinkingLevel !== DEFAULT_THINKING_LEVEL
-        if (hasNonDefaultMode || hasNonDefaultThinking) {
+        if (hasNonDefaultMode || hasNonDefaultThinking || s.codingMode) {
           optionsMap.set(s.id, {
             permissionMode: s.permissionMode ?? 'ask',
             thinkingLevel: s.thinkingLevel ?? DEFAULT_THINKING_LEVEL,
+            codingMode: s.codingMode === true,
           })
         }
       }
@@ -856,6 +858,15 @@ export default function App() {
                 : `Permission required: ${effect.request.toolName}`
               showSessionNotification(notifySession, promptBody)
             }
+            break
+          }
+          case 'coding_mode_changed': {
+            // Another window or client changed it (this one already applied it optimistically)
+            setSessionOptions(prevOpts => {
+              const next = new Map(prevOpts)
+              next.set(effect.sessionId, mergeSessionOptions(next.get(effect.sessionId), { codingMode: effect.codingMode }))
+              return next
+            })
             break
           }
           case 'permission_mode_changed': {
@@ -1435,7 +1446,22 @@ export default function App() {
       // Sync thinking level change with backend (session-level, persisted)
       window.electronAPI.sessionCommand(sessionId, { type: 'setThinkingLevel', level: updates.thinkingLevel })
     }
-  }, [sessionOptions])
+    if (updates.codingMode !== undefined) {
+      const enabled = updates.codingMode
+      // The server refuses once the conversation has started (the composer then offers a new
+      // session instead); roll the optimistic value back if it does
+      window.electronAPI.sessionCommand(sessionId, { type: 'setCodingMode', enabled }).catch((error: unknown) => {
+        setSessionOptions(prev => {
+          const next = new Map(prev)
+          next.set(sessionId, mergeSessionOptions(next.get(sessionId), { codingMode: !enabled }))
+          return next
+        })
+        toast.error(t('chat.codingMode.toggleFailed'), {
+          description: error instanceof Error ? error.message : String(error),
+        })
+      })
+    }
+  }, [sessionOptions, t])
 
   // Handle input draft changes per session with debounced persistence
   const draftSaveTimeoutRef = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map())

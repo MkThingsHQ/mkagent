@@ -15,6 +15,7 @@
 import type { AgentEvent } from '@mkagent/core/types';
 import type { FileAttachment } from '../../utils/files.ts';
 import type { ThinkingLevel } from '../thinking-levels.ts';
+import type { AgentProfile } from '@mkagent/session-tools-core';
 import type { PermissionMode } from '../mode-manager.ts';
 import type { Workspace } from '../../config/storage.ts';
 import type { SessionConfig as Session } from '../../sessions/storage.ts';
@@ -120,6 +121,7 @@ export interface BackendHostRuntimeContext {
  * Provider-specific runtime details are resolved by backend drivers internally.
  */
 export interface CoreBackendConfig {
+  agentProfile?: import('@mkagent/session-tools-core').AgentProfile;
   /** Workspace configuration */
   workspace: Workspace;
 
@@ -177,6 +179,8 @@ export interface CoreBackendConfig {
   onBranchForkInvalidated?: () => void;
 
   /** Callback to get recent messages for recovery context */
+  getTransferredSessionSummary?: () => string | null;
+  markTransferredSessionSummaryApplied?: () => void;
   getRecoveryMessages?: () => RecoveryMessage[];
 
   /**
@@ -405,6 +409,15 @@ export interface AgentBackend {
 
   /** Set thinking level */
   setThinkingLevel(level: ThinkingLevel): void;
+
+  /** Get the agent profile (`default` or `coding`) */
+  getAgentProfile(): AgentProfile;
+
+  /**
+   * Set the agent profile. Read when the next query/subprocess is built, so it only takes effect
+   * before the conversation starts (SessionManager enforces that).
+   */
+  setAgentProfile(profile: AgentProfile): void;
 
   // ============================================================
   // Permission Mode

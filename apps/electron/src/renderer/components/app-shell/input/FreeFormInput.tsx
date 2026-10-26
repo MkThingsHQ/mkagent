@@ -28,6 +28,9 @@ import { getComposerMaxHeight } from './composer-height'
 import { getContextDisplay, getContextDisplayLabels, type ContextStatus } from './context-display'
 import { createPendingPlanDispatcher } from './pending-plan-dispatch'
 import { scrollFocusedCaretIntoView } from '@/lib/scroll-focused-caret'
+import { ComposerCodingChip } from './ComposerCodingChip'
+import { useDirectoryPicker } from '@/hooks/useDirectoryPicker'
+import { ServerDirectoryBrowser } from '@/components/ServerDirectoryBrowser'
 import { cn } from '@/lib/utils'
 import { coerceInputText } from '@/lib/input-text'
 import { isMac } from '@/lib/platform'
@@ -168,6 +171,13 @@ export interface FreeFormInputProps {
   disableSend?: boolean
   /** Whether the session is empty (no messages yet) - affects context badge prominence */
   isEmptySession?: boolean
+  // Coding mode (session-level, fixed once the conversation starts)
+  /** Coding mode is on: lean coding prompt and session tools */
+  codingMode?: boolean
+  /** Toggle coding mode (only before the first message) */
+  onCodingModeChange?: (enabled: boolean) => void
+  /** Continue a started session in a new one with coding mode set to `enabled` */
+  onContinueWithCodingMode?: (enabled: boolean) => void
   /** Context status for showing compaction indicator and token usage */
   contextStatus?: ContextStatus
   /** Follow-up annotations shown as context chips above the input */
@@ -249,6 +259,9 @@ export function FreeFormInput({
   sessionId,
   disableSend = false,
   isEmptySession = false,
+  codingMode = false,
+  onCodingModeChange,
+  onContinueWithCodingMode,
   contextStatus,
   followUpItems = [],
   onFollowUpClick,
@@ -846,6 +859,23 @@ export function FreeFormInput({
   }, [workspaceId])
 
   // Inline slash command hook (modes, features, and folders)
+  // Coding mode is about a folder's code: turning it on asks for one (the chip's popover offers a new
+  // worktree or an existing folder; "existing" opens this picker)
+  const codingFolderPicker = useDirectoryPicker(React.useCallback((path: string) => {
+    onWorkingDirectoryChange?.(path)
+  }, [onWorkingDirectoryChange]))
+  const { pickDirectory: pickCodingFolder } = codingFolderPicker
+  const hasWorkingFolder = !!workingDirectory && workingDirectory !== sessionFolderPath
+  const handleCodingModeToggle = React.useCallback((enabled: boolean) => {
+    onCodingModeChange?.(enabled)
+  }, [onCodingModeChange])
+  const codingWorkspaceSetup = React.useMemo(() => (onWorkingDirectoryChange ? {
+    workspaceId,
+    sessionId,
+    currentFolder: hasWorkingFolder ? workingDirectory : undefined,
+    onUseExistingFolder: pickCodingFolder,
+    onWorktreeCreated: onWorkingDirectoryChange,
+  } : undefined), [onWorkingDirectoryChange, workspaceId, sessionId, hasWorkingFolder, workingDirectory, pickCodingFolder])
   const inlineSlash = useInlineSlashCommand({
     inputRef: richInputRef,
     onSelectCommand: handleSlashCommand,
@@ -1531,6 +1561,19 @@ export function FreeFormInput({
               workspaceId={workspaceId}
             />
           ))}
+
+          {/* Coding mode chip — next to the folder: the mode is about the folder's code */}
+          {onCodingModeChange && onContinueWithCodingMode && (
+            <ComposerCodingChip
+              enabled={codingMode}
+              locked={!isEmptySession}
+              compact={compactMode}
+              disabled={disabled}
+              onToggle={handleCodingModeToggle}
+              onContinueInNewSession={onContinueWithCodingMode}
+              workspaceSetup={codingWorkspaceSetup}
+            />
+          )}
           </div>
 
           {/* Spacer — doubles as a tap / hover target while the input is
@@ -1633,6 +1676,13 @@ export function FreeFormInput({
           </div>
         </div>
       </div>
+      {/* Remote servers: folder browser for the coding-mode folder prompt (local uses the native dialog) */}
+      <ServerDirectoryBrowser
+        open={codingFolderPicker.showServerBrowser}
+        mode={codingFolderPicker.serverBrowserMode}
+        onSelect={codingFolderPicker.confirmServerBrowser}
+        onCancel={codingFolderPicker.cancelServerBrowser}
+      />
     </form>
   )
 }

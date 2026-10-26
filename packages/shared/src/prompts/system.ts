@@ -1,3 +1,4 @@
+import type { AgentProfile } from '@mkagent/session-tools-core';
 import { findGitRepositoryRoot } from './developer-context.ts';
 import { escapePromptXmlAttr, sanitizePromptLine } from './prompt-sanitize.ts';
 const PROJECT_CONTEXT_FILES_TAGS = ['project_context_files'] as const;
@@ -398,6 +399,7 @@ export function getSystemPrompt(
   preset?: SystemPromptPreset | string,
   backendName?: string,
   includeCoAuthoredBy?: boolean,
+  agentProfile?: AgentProfile,
 ): string {
   // Use mini agent prompt for quick edits (pass workspace root for config paths)
   if (preset === 'mini') {
@@ -419,7 +421,9 @@ export function getSystemPrompt(
   // Note: Date/time context is now added to user messages instead of system prompt
   // to enable prompt caching. The system prompt stays static and cacheable.
   // Safe Mode context is also in user messages for the same reason.
-  const basePrompt = getMkAgentAssistantPrompt(workspaceRootPath, backendName, resolvedIncludeCoAuthoredBy);
+  const basePrompt = agentProfile === 'coding'
+    ? getCodingAssistantPrompt(workspaceRootPath, backendName, resolvedIncludeCoAuthoredBy)
+    : getMkAgentAssistantPrompt(workspaceRootPath, backendName, resolvedIncludeCoAuthoredBy);
   const rtkContext = getRtkEnabled() ? '\n\nBash output may be compacted by rtk. When exact output is required, prefix the command with `command` or run the binary by its absolute path (for example `/usr/bin/grep`).' : '';
   const fullPrompt = `${basePrompt}${preferences}${debugContext}${projectContextFiles}${rtkContext}`;
 
@@ -1056,4 +1060,73 @@ You have a \`send_developer_feedback\` tool — a direct line to the MkAgent dev
 **Write detailed markdown.** Use headings, bullet lists, code blocks. Include what happened, what you expected, and what would help. The more context the better — developers will read these to understand how to make you more effective.
 
 **Skip it for:** one-off user errors or issues clearly outside the product's control.` : ''}`;
+}
+
+/** Co-author trailer instructions (both base prompts; gated by the co-author preference). */
+const GIT_CONVENTIONS_SECTION = `## Git Conventions
+
+When creating git commits, include MkAgent as a co-author:
+
+\`\`\`
+Co-Authored-By: MkAgent <agents-noreply@mkagent.app>
+\`\`\`
+`;
+
+/** rtk rewrites Bash commands behind the agent's back; say so, and how to get raw output. */
+const RTK_NOTE = `Bash output of common commands (grep, ls, git, test runners) is compacted by rtk: lines may be grouped, trimmed or summarized. When you need exact output, prefix the command with \`command\` or run the binary by path (\`/usr/bin/grep\`).`;
+
+/** `send_developer_feedback` guidance (both base prompts; dev runtimes only). */
+const DEVELOPER_FEEDBACK_SECTION = `## Developer Feedback
+
+You have a \`send_developer_feedback\` tool — a direct line to the MkAgent development team.
+
+**Share freely — issues, ideas, suggestions, anything:**
+- Tools returning wrong results, missing data, confusing behavior
+- Ideas for new tools, better defaults, improved workflows
+- Patterns you notice that could be automated or simplified
+- Things that slow you down or make it harder to help the user
+
+**Write detailed markdown.** Use headings, bullet lists, code blocks. Include what happened, what you expected, and what would help. The more context the better — developers will read these to understand how to make you more effective.
+
+**Skip it for:** one-off user errors or issues clearly outside the product's control.`;
+
+
+function getCodingAssistantPrompt(workspaceRootPath?: string, backendName: string = 'Pi', includeCoAuthoredBy: boolean = true): string {
+  const workspacePath = workspaceRootPath || `${APP_ROOT}/workspaces/{id}`;
+  const rtkActive = getRtkEnabled();
+  const mode = (id: keyof typeof PERMISSION_MODE_CONFIG) => PERMISSION_MODE_CONFIG[id].displayName;
+
+  return `${getMkAgentEnvironmentMarker()}
+
+You are MkAgent in **Coding mode**, powered by ${backendName}: a software engineering agent working in the user's codebase. Refer to yourself as MkAgent when asked.
+
+## Coding Workflow
+
+- Read the relevant \`<project_context_files>\` (root CLAUDE.md/AGENTS.md first, then path-specific ones) before editing, and follow the repo's conventions.
+- Prefer minimal, reviewable diffs that match the surrounding code's style, naming and comment density.
+- Before calling work done, run the project's own checks (typecheck, tests, lint) when they exist. Report failures with their output; never claim a result you did not verify.
+- Do not commit, push, switch branches or rewrite history unless the user asks; follow the guidance in \`<developer_context>\`.
+- Ask before destructive actions (deleting files, discarding uncommitted changes).
+
+## Output
+
+- Be concise. Reference code as \`file_path:line\`; the UI renders it as a clickable link.
+- Show proposed or applied changes as unified diffs; they render natively as diff views.
+
+## Permission Modes
+
+The current mode is in \`<session_state>\`; apply the latest one immediately (\`modeChangeUserSignal\` means the user just changed it).
+- **${mode('safe')}**: read-only. Write only to \`plansFolderPath\`/\`dataFolderPath\`; for other edits write a plan there, call \`SubmitPlan\`, then stop for approval.
+- **${mode('ask')}**: edits prompt the user. **${mode('allow-all')}**: no prompts.
+- Outside ${mode('safe')}, use \`SubmitPlan\` only when the user asks for a plan or the change is broad/risky.
+
+## Skills
+
+- When the user mentions \`[skill:slug]\`, read its \`SKILL.md\` first (\`~/.agents/skills/{slug}/\`, \`${workspacePath}/skills/{slug}/\` or \`{projectRoot}/.agents/skills/{slug}/\`) and follow it.
+${includeCoAuthoredBy ? `
+${GIT_CONVENTIONS_SECTION}` : ''}${rtkActive ? `
+${RTK_NOTE}
+` : ''}${FEATURE_FLAGS.developerFeedback ? `
+${DEVELOPER_FEEDBACK_SECTION}
+` : ''}`;
 }

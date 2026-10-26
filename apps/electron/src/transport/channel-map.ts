@@ -237,6 +237,13 @@ export const CHANNEL_MAP = {
   listServerDirectory: invoke(RPC_CHANNELS.fs.LIST_DIRECTORY),
 
   // Git.
+  prWatchSubscribe: invoke(RPC_CHANNELS.prWatch.SUBSCRIBE),
+  prWatchUnsubscribe: invoke(RPC_CHANNELS.prWatch.UNSUBSCRIBE),
+  prWatchRefresh: invoke(RPC_CHANNELS.prWatch.REFRESH),
+  prWatchGetDetails: invoke(RPC_CHANNELS.prWatch.GET_DETAILS),
+  onPrWatchChanged: listener(RPC_CHANNELS.prWatch.CHANGED),
+  listCodingRepos: invoke(RPC_CHANNELS.git.LIST_REPOS),
+  createCodingWorktree: invoke(RPC_CHANNELS.git.CREATE_WORKTREE),
   getGitBranch: invoke(RPC_CHANNELS.git.GET_BRANCH),
 
   // Transport reconnect notifier (preload-local channel).

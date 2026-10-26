@@ -124,7 +124,7 @@ export class PromptBuilder {
    * can safely live in the cached system prefix (issue #862).
    *
    * Blocks (in order):
-   *  1. workspace capabilities
+   *  1. workspace capabilities (not in coding mode: local MCP support is irrelevant to coding)
    *  2. working directory, when available
    *
    * Pure and idempotent: holds no one-shot state, so it is safe to call any
@@ -136,7 +136,9 @@ export class PromptBuilder {
     if (developerContext) parts.push(developerContext);
 
     // Workspace capabilities
-    parts.push(this.formatWorkspaceCapabilities());
+    if (this.config.agentProfile !== 'coding') {
+      parts.push(this.formatWorkspaceCapabilities());
+    }
 
     // Working directory context
     const workingDirContext = this.getWorkingDirectoryContext();
@@ -247,6 +249,13 @@ Please continue the conversation naturally from where we left off.
   setWorkspace(workspace: PromptBuilderConfig['workspace']): void {
     this.config.workspace = workspace;
     this.workspaceRootPath = workspace?.rootPath ?? '';
+  }
+
+  /**
+   * Update the agent profile (coding mode trims the per-message context).
+   */
+  setAgentProfile(profile: NonNullable<PromptBuilderConfig['agentProfile']>): void {
+    this.config.agentProfile = profile;
   }
 
   /**

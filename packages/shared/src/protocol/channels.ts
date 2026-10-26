@@ -283,6 +283,19 @@ export const RPC_CHANNELS = {
   },
   git: {
     GET_BRANCH: 'git:getBranch',
+    /** Coding mode's worktree picker: local repos + `gh repo list` (see protocol/git-repos.ts) */
+    LIST_REPOS: 'git:listRepos',
+    /** Creates a worktree (cloning first for a GitHub-only repo) for a new Coding session */
+    CREATE_WORKTREE: 'git:createWorktree',
+  },
+  /** Coding mode PR watcher (chat header PR chip): see protocol/pr-watch.ts */
+  prWatch: {
+    SUBSCRIBE: 'prWatch:subscribe',
+    UNSUBSCRIBE: 'prWatch:unsubscribe',
+    REFRESH: 'prWatch:refresh',
+    GET_DETAILS: 'prWatch:getDetails',
+    /** Server → client push: (sessionId, PrWatchState) */
+    CHANGED: 'prWatch:changed',
   },
   gitbash: {
     CHECK: 'gitbash:check',

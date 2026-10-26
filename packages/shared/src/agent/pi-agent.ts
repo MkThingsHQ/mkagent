@@ -1,3 +1,4 @@
+import { formatStableGitDeveloperContext, formatVolatileGitDeveloperContext } from '../prompts/developer-context.ts';
 /**
  * Pi Backend (Subprocess RPC Client)
  *
@@ -86,7 +87,7 @@ import { parseError, type AgentError } from './errors.ts';
 // Centralized PreToolUse pipeline
 import { runPreToolUseChecks, type PreToolUseCheckResult } from './core/pre-tool-use.ts';
 import { getRtkPath } from './core/rtk-detector.ts';
-import { getRtkEnabled, getRtkExcludeCommands, getBrowserToolEnabled } from '../config/storage.ts';
+import { getRtkEnabled, getRtkExcludeCommands } from '../config/storage.ts';
 import type { RtkContext } from './core/rtk-rewrite.ts';
 
 // Workspace slug extraction for skill qualification
@@ -547,15 +548,11 @@ export class PiAgent extends BaseAgent {
     // These tools (SubmitPlan, config_validate, call_llm, etc.)
     // are executed in the main process when the LLM calls them.
     this.assertBackendSessionToolParity();
-    let sessionToolDefs = getSessionToolProxyDefs();
-
-    // Mirror Claude's gate: hide `browser_tool` when the user has disabled
-    // the built-in browser tool. Without this filter, Pi would still advertise
-    // `mcp__session__browser_tool` while Claude doesn't — sessions would behave
-    // inconsistently depending on backend.
-    if (!getBrowserToolEnabled()) {
-      sessionToolDefs = sessionToolDefs.filter(d => d.name !== 'mcp__session__browser_tool');
-    }
+    // Same visibility filters as Claude (session-scoped-tools.ts): feature flags, the
+    // "Built-in browser" setting and the agent profile (coding mode).
+    const sessionToolDefs = getSessionToolProxyDefs({
+      profile: this._agentProfile,
+    });
 
     // Patch call_llm description with provider-specific model hint
     if (this.config.miniModel) {
@@ -1813,6 +1810,7 @@ export class PiAgent extends BaseAgent {
         this.config.systemPromptPreset,
         'MkAgent Backend',
         this.pinnedIncludeCoAuthoredBy ?? undefined,
+        this._agentProfile,
       );
 
       const promptModeDiagnostics = getPermissionModeDiagnostics(this._sessionId)
@@ -1823,11 +1821,13 @@ export class PiAgent extends BaseAgent {
 
       const plansFolderPath = getSessionPlansPath(this.config.workspace.rootPath, this._sessionId);
       const stableParts = [
+        formatStableGitDeveloperContext(this.config.session?.workingDirectory),
         `<workspace_root>${this.config.workspace.rootPath}</workspace_root>`,
         `<working_directory>${this.workingDirectory}</working_directory>`,
         `<plans_directory>${plansFolderPath}</plans_directory>`,
       ];
       const volatileParts = [
+        formatVolatileGitDeveloperContext(this.config.session?.workingDirectory),
         `<session_state permission_mode="${promptModeDiagnostics.permissionMode}" />`,
       ];
 
@@ -1990,6 +1990,12 @@ export class PiAgent extends BaseAgent {
     } else {
       this.debug(`Model updated but no subprocess to forward to: ${previousModel} → ${model}`);
     }
+  }
+
+  override setAgentProfile(profile: import('@mkagent/session-tools-core').AgentProfile): void {
+    if (profile === this._agentProfile) return;
+    super.setAgentProfile(profile);
+    this.killSubprocess();
   }
 
   override setThinkingLevel(level: ThinkingLevel): void {

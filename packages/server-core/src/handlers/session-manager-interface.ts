@@ -36,6 +36,9 @@ export interface ISessionManager {
     internal?: { emitCreatedEvent?: boolean },
   ): Promise<Session>
   getSessionWorkingDirectory(sessionId: string): string | undefined
+  /** Calls `listener(sessionId)` each time a session's turn completes; returns an unsubscribe.
+   *  (The PR watcher refetches then: a turn is when pushes and `gh pr create` happen.) */
+  onTurnComplete?(listener: (sessionId: string) => void): () => void
   deleteSession(sessionId: string): Promise<void>
 
   flagSession(sessionId: string): Promise<void>
@@ -51,6 +54,8 @@ export interface ISessionManager {
 
   setSessionPermissionMode(sessionId: string, mode: PermissionMode): void
   setSessionThinkingLevel(sessionId: string, level: ThinkingLevel): void
+  setSessionCodingMode(sessionId: string, enabled: boolean): void
+  continueSessionInNewSession(sessionId: string, codingMode: boolean): Promise<{ sessionId: string }>
   updateWorkingDirectory(sessionId: string, path: string): void
   setSessionConnection(sessionId: string, connectionSlug: string): Promise<void>
   updateSessionModel(

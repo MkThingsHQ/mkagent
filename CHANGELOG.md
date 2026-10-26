@@ -8,6 +8,23 @@ All notable changes to MkAgent are documented in this file. The format follows
 
 Add user-visible changes here before running `bun run release:prepare <version>`.
 
+## [0.2.4] - 2026-10-26
+
+### Added
+
+- Per-session Coding mode with a lean prompt and coding tool profile, workspace default, CLI `--coding`, composer chip and session glyph. Started conversations continue in a new session with a summary when changing modes.
+- Coding repository picker for recent folders, workspace repositories and GitHub CLI repositories; create an isolated `codex/` branch/worktree from the latest default branch, with clone and checkout failure cleanup.
+- Coding chat-header PR status and details through the existing GitHub CLI login, adaptive polling, Git/turn refresh and hidden-window pause; Resolve/Fix/Fix CI prompts keep changes local.
+
+### Fixed
+
+- Fetch Git branch names asynchronously and hide detached HEAD, including empty paths, errors and timeouts.
+- Keep the Coding header usable on narrow panels without restoring excluded metadata features.
+
+### Improved
+
+- Synchronize applicable Craft v0.15.3 → v0.15.4 changes while preserving Pi 1.1.0, existing local configuration, MkAgent branding and Lite boundaries.
+
 ## [0.2.3] - 2026-10-26
 
 ### Added
@@ -134,6 +151,7 @@ Add user-visible changes here before running `bun run release:prepare <version>`
 - Local session search, flags, archives, import, export, and branching.
 
 [Unreleased]: https://github.com/MkThingsHQ/mkagent/releases
+[0.2.4]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.4
 [0.2.3]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.3
 [0.2.2]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.2
 [0.2.1]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.1
