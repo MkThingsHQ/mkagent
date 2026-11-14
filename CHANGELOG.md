@@ -8,6 +8,25 @@ All notable changes to MkAgent are documented in this file. The format follows
 
 Add user-visible changes here before running `bun run release:prepare <version>`.
 
+## [0.2.7] - 2026-11-14
+
+### Added
+
+- Synchronize applicable Craft v0.15.6 → v0.15.8 changes. Child sessions and branches form collapsible families, kept together across date/unread grouping and pagination; collapse state persists per workspace.
+- Coding mode gains the built-in browser (behind its setting), Mermaid validation, data transformation, focused LLM calls and child-session tools, with the same document and preview guidance as standard sessions.
+
+### Fixed
+
+- Keep a Pi branch's own conversation and branch cutoff when the app restarts or its tool set changes. Replace proxy tool sets completely and defer rebuilds while compaction is active.
+- Decode HEIC/HEIF through macOS ImageIO with upright pixels and sRGB color conversion, retaining the portable fallback.
+- Load session headers asynchronously with bounded concurrency, cloud-eviction detection and per-file timeouts while preserving complete PR metadata headers.
+- Reject unknown tools and isolated subagents in Explore mode; apply Bash checks to Monitor commands.
+
+### Improved
+
+- Child sessions inherit their parent's working folder and Coding mode while retaining permission clamping and explicit model overrides.
+- Preserve MkAgent branding/configuration, Pi 1.1.0 and Lite boundaries. MCP OAuth changes in 0.15.7, Claude SDK, Sources, Pages, Projects, board Tasks and Automations remain excluded.
+
 ## [0.2.6] - 2026-10-26
 
 ### Added
@@ -182,6 +201,7 @@ Add user-visible changes here before running `bun run release:prepare <version>`
 - Local session search, flags, archives, import, export, and branching.
 
 [Unreleased]: https://github.com/MkThingsHQ/mkagent/releases
+[0.2.7]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.7
 [0.2.6]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.6
 [0.2.5]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.5
 [0.2.4]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.4

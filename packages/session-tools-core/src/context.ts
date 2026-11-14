@@ -26,6 +26,7 @@ export interface ValidatorInterface {
 }
 
 export interface SessionInfo {
+  parentSessionId?: string
   id: string;
   name: string;
   permissionMode: string;
@@ -41,6 +42,7 @@ export interface SessionInfo {
 }
 
 export interface SessionListItem {
+  parentSessionId?: string;
   id: string;
   name: string;
   createdAt: number;

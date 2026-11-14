@@ -7,33 +7,29 @@ MkAgent 的架构、UI 与运行时继承自 [Craft Agents OSS](https://github.c
 | 项 | 值 |
 |---|---|
 | 仓库 | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.15.6` |
-| Commit | `8df01c5d0ac73c35add5954e6f190ce038d35845` |
+| Tag | `v0.15.8` |
+| Commit | `1627c43e93bb4f5b1532116b8eb092c0ada4b23f` |
 
 ## 最近一次上游评估
 
 | 项 | 值 |
 |---|---|
-| 评估日期 | `2026-10-26` |
-| 上游 Tag | `v0.15.6` |
-| 上游 Commit | `8df01c5d0ac73c35add5954e6f190ce038d35845` |
+| 评估日期 | `2026-11-14` |
+| 上游 Tag | `v0.15.8` |
+| 上游 Commit | `1627c43e93bb4f5b1532116b8eb092c0ada4b23f` |
 
-MkAgent 0.2.6 **仅同步 v0.15.5 → v0.15.6**。[逐路径清单](../sync/0.15.6-inventory.json)覆盖全部 93 个改动路径；[验证记录](../sync/0.15.6-validation.md)区分自动化、真实 Pi 链路与界面 fixture。
+MkAgent 0.2.7 同步 **v0.15.6 → v0.15.8**。上游没有独立 v0.15.7 标签或提交，其 MCP OAuth 发布说明随 v0.15.8 收录，仍不属于 Lite 范围。[逐路径清单](../sync/0.15.8-inventory.json)覆盖全部 153 个改动文件；[验证记录](../sync/0.15.8-validation.md)区分本地验证与尚未验证的行为。
 
-Coding 会话新增 `pr_status`、`pr_bind`、`pr_unbind`、`pr_set_auto_merge`。状态优先复用 header 快照，其他会话只读缓存；绑定先验证，`gh pr create` 后自动绑定额外 PR。自动合并只在用户明确要求时改变，使用仓库允许的方法。Pi 注册、执行入口及 Explore 权限均保留模式过滤。
+子会话及分支按家族嵌套显示，可折叠并按工作区记忆；日期/未读分组、分页、键盘导航与多选保持家族完整。Coding 模式新增受设置控制的内置浏览器、Mermaid 校验、数据转换、LLM 子任务、spawn/get/list 会话工具，并复用标准模式的文档和预览说明。子会话继承目录、模型和 Coding 模式，权限继续限制在父会话范围内。
 
-多 PR 卡片组合当前分支与 pinned PR，支持 tabs、溢出 +N、左右键、紧急状态、复制链接与 Unpin。pinned PR 的修复提示明确使用已有 worktree、新 worktree 或独立 clone，保留当前目录分支及未提交内容。Auto 仅适用于本分支 PR，由用户主动开启；应用运行且计算机唤醒时每五分钟检查可信 owner/member/collaborator 的新评审反馈，过滤自己的回复。服务端调度独立于窗口，记录去重游标、重启恢复，停用/删除/退出时清理；异步查询返回后重新核实权限、开关与实际 checkout。评论视为不可信数据，不因评论执行命令或打开链接，不扩大 push/comment/merge/auto-merge 授权。
+Pi 分支只从父会话派生一次，重启或工具变化后恢复自己的历史并保留分支截断点。代理工具整组替换，compaction 运行时延后重建。macOS HEIC 使用 ImageIO 转换为方向正确的 sRGB 图片，保留跨平台 fallback。会话发现采用有限并发的异步首行读取、云端逐出检测和超时，保留 MkAgent 对大型 PR 元数据完整读取首行的修复。Lite 管理器保留现有单一初始化等待机制，列表消费者仍等待磁盘加载完成。Explore 拒绝未知工具及隔离子代理，Monitor shell 命令遵循 Bash 权限检查。
 
-本机仓库递归四层搜索，跳过 node_modules、Library、隐藏目录及工作区数据，遇仓库停止、避免 symlink 循环，合并 worktree/bare 仓库；两秒总预算覆盖遍历与 Git 查询，支持 ~ 路径。已开始会话切换 Coding mode 立即创建新会话，后台总结，首条消息最多等待 30 秒，顺序队列、取消、失败、超时、删除与迟到总结均隔离。
-
-保留 MkAgent 品牌、本地配置、Pi 1.1.0，以及 v0.15.4/0.15.5 和此前全部已同步能力。Claude 配置转发修复按段评估：Pi 已整包传递配置、使用 SDK 图片缩放和既有 compaction/context 计量，新增回归验证，不恢复 Claude SDK。Sources/MCP OAuth relay、Pages、Projects/conductor、Automations 产品、公开分享、labels/custom statuses、messaging 仍排除；Decision/Guarded 继续暂缓。PR Auto review fix 属于本次明确接入的 Coding 功能。
+保留 MkAgent 品牌与本地配置、Pi 1.1.0 及此前同步能力。Sources/MCP、Claude SDK 及其 refusal fallback、Pages、Projects、看板 Tasks、Automations、公开分享、messaging 仍排除；Decision/Guarded 继续暂缓。基线表示逐项审查范围，不表示完整 Craft 功能对等。
 
 ```bash
-# 仅操作独立的临时参考副本，已有参考目录保持只读。
-git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0156
-git -C /tmp/craft-v0156 fetch origin refs/tags/v0.15.6
-git -C /tmp/craft-v0156 checkout --detach 8df01c5d0ac73c35add5954e6f190ce038d35845
-export CRAFT_AGENT_SOURCE=/tmp/craft-v0156
+git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/mkagent-craft-0158
+git -C /tmp/mkagent-craft-0158 checkout --detach 1627c43e93bb4f5b1532116b8eb092c0ada4b23f
+export CRAFT_AGENT_SOURCE=/tmp/mkagent-craft-0158
 ```
 
 当上游发布值得评估的新 tag 时:

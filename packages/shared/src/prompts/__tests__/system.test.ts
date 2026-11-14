@@ -98,7 +98,7 @@ describe('coding agent profile', () => {
   })
 
   it('stays within the coding budget (preferences are stubbed out here)', () => {
-    expect(coding().length).toBeLessThan(3_000)
+    expect(coding().length).toBeLessThan(25_000)
   })
 
   it('keeps the coding essentials', () => {
@@ -116,9 +116,15 @@ describe('coding agent profile', () => {
 
   it('drops the desktop-workflow sections whose tools the coding profile does not register', () => {
     const prompt = coding()
-    for (const section of ['## Pages', '## Preview Blocks', '## Structured Data', '## Session Self-Management', '## Automations', '## Configuration Documentation', 'call_llm', 'update_user_preferences', 'mermaid_validate', 'browser_tool']) {
+    for (const section of ['## Pages', '## Preview Blocks', '## Session Self-Management', '## Automations', '## Configuration Documentation', 'update_user_preferences']) {
       expect(prompt).not.toContain(section)
     }
+  })
+
+  it('teaches Coding sessions the same retained presentation and tool workflows', () => {
+    const prompt = coding();
+    for (const feature of ['## Structured Data', 'transform_data', 'mermaid_validate', 'call_llm', 'browser_tool', 'html-preview', 'pdf-preview', 'image-preview', 'markdown-preview', '## Document Tools', 'spawn_session', 'get_session_info', 'list_sessions', 'own worktree']) expect(prompt).toContain(feature);
+    expect(prompt).not.toContain('source_test');
   })
 
   it('honors the co-author preference like the default prompt', () => {

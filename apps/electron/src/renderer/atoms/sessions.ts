@@ -67,6 +67,8 @@ export interface SessionMeta {
   isArchived?: boolean
   /** Timestamp when session was archived (for retention policy) */
   archivedAt?: number
+  parentSessionId?: string
+  branchFromSessionId?: string
 }
 
 /**
