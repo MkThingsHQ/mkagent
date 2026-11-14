@@ -7,29 +7,27 @@ MkAgent 的架构、UI 与运行时继承自 [Craft Agents OSS](https://github.c
 | 项 | 值 |
 |---|---|
 | 仓库 | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.15.8` |
-| Commit | `1627c43e93bb4f5b1532116b8eb092c0ada4b23f` |
+| Tag | `v0.15.9` |
+| Commit | `3ce9fc12837541d688a59a8f0a2e9755ceb89ac2` |
 
 ## 最近一次上游评估
 
 | 项 | 值 |
 |---|---|
 | 评估日期 | `2026-11-14` |
-| 上游 Tag | `v0.15.8` |
-| 上游 Commit | `1627c43e93bb4f5b1532116b8eb092c0ada4b23f` |
+| 上游 Tag | `v0.15.9` |
+| 上游 Commit | `3ce9fc12837541d688a59a8f0a2e9755ceb89ac2` |
 
-MkAgent 0.2.7 同步 **v0.15.6 → v0.15.8**。上游没有独立 v0.15.7 标签或提交，其 MCP OAuth 发布说明随 v0.15.8 收录，仍不属于 Lite 范围。[逐路径清单](../sync/0.15.8-inventory.json)覆盖全部 153 个改动文件；[验证记录](../sync/0.15.8-validation.md)区分本地验证与尚未验证的行为。
+MkAgent 0.2.8 同步 **v0.15.8 → v0.15.9**。[逐路径清单](../sync/0.15.9-inventory.json)覆盖全部 22 个上游改动文件；[验证记录](../sync/0.15.9-validation.md)说明本地验证及其限制。
 
-子会话及分支按家族嵌套显示，可折叠并按工作区记忆；日期/未读分组、分页、键盘导航与多选保持家族完整。Coding 模式新增受设置控制的内置浏览器、Mermaid 校验、数据转换、LLM 子任务、spawn/get/list 会话工具，并复用标准模式的文档和预览说明。子会话继承目录、模型和 Coding 模式，权限继续限制在父会话范围内。
+保留 Fable 5.2 共享模型元数据：名称、最新 Fable 短名称解析、1M context、始终开启的 adaptive thinking，以及 US/EU/global/base Bedrock ID 的反向元数据查询。Fable 5.1/5 仍保持独立，Opus 5.5 默认值不变。上游正向 Bedrock 映射属于已移除的连接实现；保留的静态反向表独立更新。
 
-Pi 分支只从父会话派生一次，重启或工具变化后恢复自己的历史并保留分支截断点。代理工具整组替换，compaction 运行时延后重建。macOS HEIC 使用 ImageIO 转换为方向正确的 sRGB 图片，保留跨平台 fallback。会话发现采用有限并发的异步首行读取、云端逐出检测和超时，保留 MkAgent 对大型 PR 元数据完整读取首行的修复。Lite 管理器保留现有单一初始化等待机制，列表消费者仍等待磁盘加载完成。Explore 拒绝未知工具及隔离子代理，Monitor shell 命令遵循 Bash 权限检查。
-
-保留 MkAgent 品牌与本地配置、Pi 1.1.0 及此前同步能力。Sources/MCP、Claude SDK 及其 refusal fallback、Pages、Projects、看板 Tasks、Automations、公开分享、messaging 仍排除；Decision/Guarded 继续暂缓。基线表示逐项审查范围，不表示完整 Craft 功能对等。
+**元数据识别不等于模型可用。** Pi 保持 1.1.0，实际可运行模型继续来自 provider catalog。当前安装的 Anthropic/Bedrock catalog 没有 Fable 5.2，本次不会把未支持模型加入选择列表，也不声称完成真实 provider 调用。保留 MkAgent 品牌、配置和此前 Lite 能力。Claude SDK 0.3.321 / Claude Code 2.1.321、Automations 产品及其他既定排除项不恢复，Decision/Guarded 运行时继续暂缓。
 
 ```bash
-git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/mkagent-craft-0158
-git -C /tmp/mkagent-craft-0158 checkout --detach 1627c43e93bb4f5b1532116b8eb092c0ada4b23f
-export CRAFT_AGENT_SOURCE=/tmp/mkagent-craft-0158
+git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/mkagent-craft-0159
+git -C /tmp/mkagent-craft-0159 checkout --detach 3ce9fc12837541d688a59a8f0a2e9755ceb89ac2
+export CRAFT_AGENT_SOURCE=/tmp/mkagent-craft-0159
 ```
 
 当上游发布值得评估的新 tag 时:

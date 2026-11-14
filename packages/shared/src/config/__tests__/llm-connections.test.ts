@@ -172,3 +172,58 @@ describe('getMiniModel', () => {
     expect(getMiniModel({ providerType: 'pi', piAuthProvider: 'cloudflare-ai-gateway', models })).toBe('pi/claude-haiku-4-5')
   })
 })
+
+// Craft 0.15.9 metadata is shared by Lite helpers; runnable models still come from Pi.
+import {
+  ANTHROPIC_MODELS,
+  DEFAULT_MODEL,
+  getModelById,
+  getModelContextWindow,
+  getModelDisplayName,
+  getModelIdByShortName,
+  isAdaptiveThinkingAlwaysOnModel,
+} from '../models.ts'
+
+describe('Fable 5.2 metadata in the Pi/Lite boundary', () => {
+  it('registers 1M context and adaptive-only thinking metadata', () => {
+    expect(getModelById('claude-fable-5-2')).toMatchObject({
+      provider: 'anthropic', name: 'Fable 5.2', shortName: 'Fable',
+      contextWindow: 1_000_000, descriptionKey: 'model.fableDesc', thinkingAlwaysOn: true,
+    })
+    expect(getModelDisplayName('claude-fable-5-2')).toBe('Fable 5.2')
+    expect(getModelContextWindow('claude-fable-5-2')).toBe(1_000_000)
+    expect(isAdaptiveThinkingAlwaysOnModel('pi/claude-fable-5-2')).toBe(true)
+  })
+
+  it('resolves the Fable short name to 5.2 while keeping 5.1 and 5 distinct', () => {
+    expect(getModelIdByShortName('Fable')).toBe('claude-fable-5-2')
+    const ids = ANTHROPIC_MODELS.map(model => model.id)
+    expect(ids.indexOf('claude-fable-5-2')).toBeLessThan(ids.indexOf('claude-fable-5-1'))
+    expect(getModelById('claude-fable-5-1')?.name).toBe('Fable 5.1')
+    expect(getModelById('claude-fable-5')?.name).toBe('Fable 5')
+  })
+
+  it('keeps Opus 5.5 as the metadata and Pi Anthropic connection default', () => {
+    expect(DEFAULT_MODEL).toBe('claude-opus-5-5')
+    expect(getDefaultModelForConnection('pi', 'anthropic')).toBe('pi/claude-opus-5-5')
+  })
+
+  it('resolves regional/base Bedrock metadata without crossing Fable generations', () => {
+    for (const prefix of ['us.', 'eu.', 'global.', '']) {
+      const id = `${prefix}anthropic.claude-fable-5-2`
+      expect(getModelById(id)?.id).toBe('claude-fable-5-2')
+      expect(getModelDisplayName(id)).toBe('Fable 5.2')
+      expect(getModelContextWindow(id)).toBe(1_000_000)
+      expect(getModelById(`${prefix}anthropic.claude-fable-5-1`)?.id).toBe('claude-fable-5-1')
+    }
+  })
+
+  it('does not turn static registry entries into unsupported Pi model offerings', () => {
+    for (const provider of ['anthropic', 'amazon-bedrock']) {
+      const catalog = getPiModelsForAuthProvider(provider).map(model => model.id)
+      const offered = getDefaultModelsForConnection('pi', provider).map(model => typeof model === 'string' ? model : model.id)
+      expect(offered.every(id => catalog.includes(id))).toBe(true)
+      expect(offered.filter(id => id.includes('claude-fable-5-2'))).toEqual(catalog.filter(id => id.includes('claude-fable-5-2')))
+    }
+  })
+})

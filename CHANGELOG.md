@@ -8,6 +8,14 @@ All notable changes to MkAgent are documented in this file. The format follows
 
 Add user-visible changes here before running `bun run release:prepare <version>`.
 
+## [0.2.8] - 2026-11-14
+
+### Improved
+
+- Synchronize the retained Craft v0.15.8 → v0.15.9 model metadata. Recognize Fable 5.2 names, 1M context and adaptive-only thinking, including regional Bedrock ID metadata; keep Fable 5.1/5 distinct and Opus 5.5 as the default.
+- Preserve Pi 1.1.0 and connection-owned model catalogs. Static metadata does not advertise Fable 5.2 where the installed Pi catalog does not offer it.
+- Keep Claude Agent SDK upgrades, Sources/MCP, product Automations and other excluded surfaces outside MkAgent Lite.
+
 ## [0.2.7] - 2026-11-14
 
 ### Added
@@ -201,6 +209,7 @@ Add user-visible changes here before running `bun run release:prepare <version>`
 - Local session search, flags, archives, import, export, and branching.
 
 [Unreleased]: https://github.com/MkThingsHQ/mkagent/releases
+[0.2.8]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.8
 [0.2.7]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.7
 [0.2.6]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.6
 [0.2.5]: https://github.com/MkThingsHQ/mkagent/releases/tag/v0.2.5
