@@ -1,0 +1,774 @@
+{
+  "fromTag": "v0.15.6",
+  "fromCommit": "8df01c5d0ac73c35add5954e6f190ce038d35845",
+  "toTag": "v0.15.8",
+  "toCommit": "1627c43e93bb4f5b1532116b8eb092c0ada4b23f",
+  "mkagentVersion": "0.2.7",
+  "paths": [
+    {
+      "path": "apps/cli/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+    },
+    {
+      "path": "apps/electron/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+    },
+    {
+      "path": "apps/electron/resources/docs/automations.md",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "apps/electron/resources/docs/craft-cli.md",
+      "status": "excluded",
+      "reason": "Only excluded product Automation examples change; MkAgent CLI behavior stays unchanged."
+    },
+    {
+      "path": "apps/electron/resources/docs/permissions.md",
+      "status": "adapted",
+      "reason": "Explore fails closed for unknown tools, checks subagent isolation and MCP suffixes, and routes Monitor through Bash permissions. Guarded-only logic remains excluded."
+    },
+    {
+      "path": "apps/electron/resources/docs/sources.md",
+      "status": "excluded",
+      "reason": "Sources/MCP authentication, relay overrides and requested scopes are excluded; retained LLM login is independent."
+    },
+    {
+      "path": "apps/electron/resources/release-notes/0.15.7.md",
+      "status": "excluded",
+      "reason": "Replace upstream release notes with MkAgent 0.2.7 notes covering retained behavior and exclusions; 0.15.7 contains excluded MCP OAuth changes only."
+    },
+    {
+      "path": "apps/electron/resources/release-notes/0.15.8.md",
+      "status": "excluded",
+      "reason": "Replace upstream release notes with MkAgent 0.2.7 notes covering retained behavior and exclusions; 0.15.7 contains excluded MCP OAuth changes only."
+    },
+    {
+      "path": "apps/electron/resources/release-notes/next.md",
+      "status": "excluded",
+      "reason": "Replace upstream release notes with MkAgent 0.2.7 notes covering retained behavior and exclusions; 0.15.7 contains excluded MCP OAuth changes only."
+    },
+    {
+      "path": "apps/electron/src/main/handlers/__tests__/session-watcher.test.ts",
+      "status": "reviewed-no-change",
+      "reason": "Adapt branch-parent DTOs, child folder/profile inheritance and async disk reads to the Lite manager; keep its single initialization gate. Project/task/refusal hunks are excluded."
+    },
+    {
+      "path": "apps/electron/src/main/handlers/system.ts",
+      "status": "reviewed-no-change",
+      "reason": "Adapt branch-parent DTOs, child folder/profile inheritance and async disk reads to the Lite manager; keep its single initialization gate. Project/task/refusal hunks are excluded."
+    },
+    {
+      "path": "apps/electron/src/renderer/atoms/automations.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "apps/electron/src/renderer/atoms/sessions.ts",
+      "status": "adapted",
+      "reason": "Retain session-family nesting/collapse/tree guides and whole-family date/unread pagination; exclude labels, projects and custom status grouping."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx",
+      "status": "reviewed-no-change",
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/SessionBadges.tsx",
+      "status": "excluded",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/SessionItem.tsx",
+      "status": "adapted",
+      "reason": "Retain session-family nesting/collapse/tree guides and whole-family date/unread pagination; exclude labels, projects and custom status grouping."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/SessionList.tsx",
+      "status": "adapted",
+      "reason": "Retain session-family nesting/collapse/tree guides and whole-family date/unread pagination; exclude labels, projects and custom status grouping."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/TaskBrief.tsx",
+      "status": "excluded",
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/__tests__/task-brief.test.ts",
+      "status": "excluded",
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-display/task-brief.ts",
+      "status": "excluded",
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/app-shell/chat-header/ChatHeader.tsx",
+      "status": "reviewed-no-change",
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/ActionTypeIcon.tsx",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationActionPreview.tsx",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationActionRow.tsx",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationInfoPage.tsx",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/AutomationsListPanel.tsx",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/__tests__/types.test.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/constants.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/automations/types.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "apps/electron/src/renderer/components/ui/entity-row.tsx",
+      "status": "retained",
+      "reason": "Retain session-family nesting/collapse/tree guides and whole-family date/unread pagination; exclude labels, projects and custom status grouping."
+    },
+    {
+      "path": "apps/electron/src/renderer/event-processor/handlers/__tests__/messages-retracted.test.ts",
+      "status": "excluded",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "apps/electron/src/renderer/event-processor/handlers/text.ts",
+      "status": "reviewed-no-change",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "apps/electron/src/renderer/event-processor/processor.ts",
+      "status": "reviewed-no-change",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "apps/electron/src/renderer/event-processor/types.ts",
+      "status": "reviewed-no-change",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/__tests__/useSessionSearch.test.ts",
+      "status": "adapted",
+      "reason": "Retain session-family nesting/collapse/tree guides and whole-family date/unread pagination; exclude labels, projects and custom status grouping."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/useAutomations.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/useOpenTaskEditor.ts",
+      "status": "excluded",
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
+    },
+    {
+      "path": "apps/electron/src/renderer/hooks/useSessionSearch.ts",
+      "status": "adapted",
+      "reason": "Retain session-family nesting/collapse/tree guides and whole-family date/unread pagination; exclude labels, projects and custom status grouping."
+    },
+    {
+      "path": "apps/electron/src/renderer/lib/local-storage.ts",
+      "status": "adapted",
+      "reason": "Retain session-family nesting/collapse/tree guides and whole-family date/unread pagination; exclude labels, projects and custom status grouping."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/mock-utils.ts",
+      "status": "excluded",
+      "reason": "The upstream development playground is excluded from the shipped Lite renderer."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/automations.tsx",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/chat-panel.tsx",
+      "status": "excluded",
+      "reason": "The upstream development playground is excluded from the shipped Lite renderer."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/chat.tsx",
+      "status": "excluded",
+      "reason": "The upstream development playground is excluded from the shipped Lite renderer."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/index.ts",
+      "status": "excluded",
+      "reason": "The upstream development playground is excluded from the shipped Lite renderer."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/samples/task-specs.ts",
+      "status": "excluded",
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/sub-sessions.tsx",
+      "status": "excluded",
+      "reason": "The upstream development playground is excluded from the shipped Lite renderer."
+    },
+    {
+      "path": "apps/electron/src/renderer/playground/registry/types.ts",
+      "status": "excluded",
+      "reason": "The upstream development playground is excluded from the shipped Lite renderer."
+    },
+    {
+      "path": "apps/electron/src/renderer/utils/__tests__/session-tree.test.ts",
+      "status": "retained",
+      "reason": "Retain session-family nesting/collapse/tree guides and whole-family date/unread pagination; exclude labels, projects and custom status grouping."
+    },
+    {
+      "path": "apps/electron/src/renderer/utils/session-tree.ts",
+      "status": "retained",
+      "reason": "Retain session-family nesting/collapse/tree guides and whole-family date/unread pagination; exclude labels, projects and custom status grouping."
+    },
+    {
+      "path": "apps/electron/src/shared/types.ts",
+      "status": "reviewed-no-change",
+      "reason": "Only excluded AutomationLoadIssue export changes upstream."
+    },
+    {
+      "path": "apps/viewer/package.json",
+      "status": "excluded",
+      "reason": "Viewer and messaging applications/packages are excluded from Lite."
+    },
+    {
+      "path": "apps/webui/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+    },
+    {
+      "path": "bun.lock",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+    },
+    {
+      "path": "package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+    },
+    {
+      "path": "packages/core/CLAUDE.md",
+      "status": "excluded",
+      "reason": "Upstream Claude SDK/tool-authoring documentation does not apply to the Pi/Lite runtime."
+    },
+    {
+      "path": "packages/core/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+    },
+    {
+      "path": "packages/core/src/types/index.ts",
+      "status": "reviewed-no-change",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "packages/core/src/types/message.ts",
+      "status": "reviewed-no-change",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "packages/messaging-gateway/package.json",
+      "status": "excluded",
+      "reason": "Viewer and messaging applications/packages are excluded from Lite."
+    },
+    {
+      "path": "packages/messaging-whatsapp-worker/package.json",
+      "status": "excluded",
+      "reason": "Viewer and messaging applications/packages are excluded from Lite."
+    },
+    {
+      "path": "packages/pi-agent-server/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+    },
+    {
+      "path": "packages/pi-agent-server/src/index.ts",
+      "status": "adapted",
+      "reason": "Preserve branch history/cutoff across restarts and tool rebuilds, replace proxy sets and wait for compaction; adapt tool synchronization to the Source-free Pi runtime."
+    },
+    {
+      "path": "packages/pi-agent-server/src/session-rebuild.test.ts",
+      "status": "adapted",
+      "reason": "Preserve branch history/cutoff across restarts and tool rebuilds, replace proxy sets and wait for compaction; adapt tool synchronization to the Source-free Pi runtime."
+    },
+    {
+      "path": "packages/server-core/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/automations.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/sessions.ts",
+      "status": "reviewed-no-change",
+      "reason": "Adapt branch-parent DTOs, child folder/profile inheritance and async disk reads to the Lite manager; keep its single initialization gate. Project/task/refusal hunks are excluded."
+    },
+    {
+      "path": "packages/server-core/src/handlers/rpc/tasks.ts",
+      "status": "excluded",
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
+    },
+    {
+      "path": "packages/server-core/src/handlers/session-manager-interface.ts",
+      "status": "reviewed-no-change",
+      "reason": "Adapt branch-parent DTOs, child folder/profile inheritance and async disk reads to the Lite manager; keep its single initialization gate. Project/task/refusal hunks are excluded."
+    },
+    {
+      "path": "packages/server-core/src/services/heic.test.ts",
+      "status": "adapted",
+      "reason": "Use macOS ImageIO for upright sRGB HEIC conversion with the existing portable decoder fallback; retain native color/orientation regressions."
+    },
+    {
+      "path": "packages/server-core/src/services/heic.ts",
+      "status": "adapted",
+      "reason": "Use macOS ImageIO for upright sRGB HEIC conversion with the existing portable decoder fallback; retain native color/orientation regressions."
+    },
+    {
+      "path": "packages/server-core/src/sessions/SessionManager.ts",
+      "status": "adapted",
+      "reason": "Adapt branch-parent DTOs, child folder/profile inheritance and async disk reads to the Lite manager; keep its single initialization gate. Project/task/refusal hunks are excluded."
+    },
+    {
+      "path": "packages/server-core/src/sessions/adopt-task-draft.test.ts",
+      "status": "excluded",
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
+    },
+    {
+      "path": "packages/server-core/src/sessions/create-managed-session.test.ts",
+      "status": "adapted",
+      "reason": "Adapt branch-parent DTOs, child folder/profile inheritance and async disk reads to the Lite manager; keep its single initialization gate. Project/task/refusal hunks are excluded."
+    },
+    {
+      "path": "packages/server-core/src/sessions/refusal-fallback.test.ts",
+      "status": "excluded",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "packages/server-core/src/sessions/spawn-options.test.ts",
+      "status": "adapted",
+      "reason": "Adapt branch-parent DTOs, child folder/profile inheritance and async disk reads to the Lite manager; keep its single initialization gate. Project/task/refusal hunks are excluded."
+    },
+    {
+      "path": "packages/server-core/src/sessions/spawn-options.ts",
+      "status": "adapted",
+      "reason": "Adapt branch-parent DTOs, child folder/profile inheritance and async disk reads to the Lite manager; keep its single initialization gate. Project/task/refusal hunks are excluded."
+    },
+    {
+      "path": "packages/server-core/src/sessions/task-session-context.test.ts",
+      "status": "excluded",
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
+    },
+    {
+      "path": "packages/server-core/src/tasks/TaskRunner.test.ts",
+      "status": "excluded",
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
+    },
+    {
+      "path": "packages/server-core/src/tasks/TaskRunner.ts",
+      "status": "excluded",
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
+    },
+    {
+      "path": "packages/server/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+    },
+    {
+      "path": "packages/session-tools-core/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+    },
+    {
+      "path": "packages/session-tools-core/src/context.ts",
+      "status": "adapted",
+      "reason": "Expand Coding tools to retained browser/Mermaid/data/LLM/session helpers and expose parent metadata; Sources, Pages, Projects and board Tasks remain excluded."
+    },
+    {
+      "path": "packages/session-tools-core/src/index.ts",
+      "status": "reviewed-no-change",
+      "reason": "Expand Coding tools to retained browser/Mermaid/data/LLM/session helpers and expose parent metadata; Sources, Pages, Projects and board Tasks remain excluded."
+    },
+    {
+      "path": "packages/session-tools-core/src/tool-defs-filtering.test.ts",
+      "status": "adapted",
+      "reason": "Expand Coding tools to retained browser/Mermaid/data/LLM/session helpers and expose parent metadata; Sources, Pages, Projects and board Tasks remain excluded."
+    },
+    {
+      "path": "packages/session-tools-core/src/tool-defs.ts",
+      "status": "adapted",
+      "reason": "Expand Coding tools to retained browser/Mermaid/data/LLM/session helpers and expose parent metadata; Sources, Pages, Projects and board Tasks remain excluded."
+    },
+    {
+      "path": "packages/shared/CLAUDE.md",
+      "status": "excluded",
+      "reason": "Upstream Claude SDK/tool-authoring documentation does not apply to the Pi/Lite runtime."
+    },
+    {
+      "path": "packages/shared/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/base-agent-turn-context.test.ts",
+      "status": "excluded",
+      "reason": "Decision/Guarded per-turn context is deferred; no related runtime exists in Lite."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/claude-live-mcp-servers.test.ts",
+      "status": "excluded",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/claude-live-thinking.test.ts",
+      "status": "excluded",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/claude-refusal-fallback.test.ts",
+      "status": "excluded",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/claude-subprocess-env.test.ts",
+      "status": "excluded",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/explore-tool-allowlist.test.ts",
+      "status": "adapted",
+      "reason": "Explore fails closed for unknown tools, checks subagent isolation and MCP suffixes, and routes Monitor through Bash permissions. Guarded-only logic remains excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/__tests__/pi-agent-proxy-tools.test.ts",
+      "status": "adapted",
+      "reason": "Preserve branch history/cutoff across restarts and tool rebuilds, replace proxy sets and wait for compaction; adapt tool synchronization to the Source-free Pi runtime."
+    },
+    {
+      "path": "packages/shared/src/agent/backend/claude/event-adapter.ts",
+      "status": "excluded",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/backend/claude/live-mcp-servers.test.ts",
+      "status": "excluded",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/backend/claude/live-mcp-servers.ts",
+      "status": "excluded",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/backend/types.ts",
+      "status": "reviewed-no-change",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/base-agent.ts",
+      "status": "reviewed-no-change",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/claude-agent.ts",
+      "status": "excluded",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/core/__tests__/monitor-permissions.test.ts",
+      "status": "adapted",
+      "reason": "Explore fails closed for unknown tools, checks subagent isolation and MCP suffixes, and routes Monitor through Bash permissions. Guarded-only logic remains excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/core/guarded-mode.ts",
+      "status": "excluded",
+      "reason": "Guarded mode remains explicitly deferred in MkAgent Lite."
+    },
+    {
+      "path": "packages/shared/src/agent/core/pre-tool-use.ts",
+      "status": "adapted",
+      "reason": "Explore fails closed for unknown tools, checks subagent isolation and MCP suffixes, and routes Monitor through Bash permissions. Guarded-only logic remains excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/errors.ts",
+      "status": "reviewed-no-change",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/llm-tool.ts",
+      "status": "adapted",
+      "reason": "Retain bounded asynchronous session discovery, cloud-eviction checks and timeout helpers; preserve full metadata header reads from MkAgent."
+    },
+    {
+      "path": "packages/shared/src/agent/mode-manager.ts",
+      "status": "adapted",
+      "reason": "Explore fails closed for unknown tools, checks subagent isolation and MCP suffixes, and routes Monitor through Bash permissions. Guarded-only logic remains excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/options.ts",
+      "status": "excluded",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "packages/shared/src/agent/pi-agent.ts",
+      "status": "adapted",
+      "reason": "Preserve branch history/cutoff across restarts and tool rebuilds, replace proxy sets and wait for compaction; adapt tool synchronization to the Source-free Pi runtime."
+    },
+    {
+      "path": "packages/shared/src/agent/session-scoped-tools.ts",
+      "status": "reviewed-no-change",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
+    {
+      "path": "packages/shared/src/auth/__tests__/oauth.test.ts",
+      "status": "excluded",
+      "reason": "Sources/MCP authentication, relay overrides and requested scopes are excluded; retained LLM login is independent."
+    },
+    {
+      "path": "packages/shared/src/auth/oauth.ts",
+      "status": "excluded",
+      "reason": "Sources/MCP authentication, relay overrides and requested scopes are excluded; retained LLM login is independent."
+    },
+    {
+      "path": "packages/shared/src/automations/automation-system.test.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "packages/shared/src/automations/automation-system.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "packages/shared/src/automations/handlers/prompt-handler.test.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "packages/shared/src/automations/handlers/prompt-handler.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "packages/shared/src/automations/index.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "packages/shared/src/automations/sdk-bridge.test.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "packages/shared/src/automations/sdk-bridge.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "packages/shared/src/automations/security.test.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "packages/shared/src/automations/security.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "packages/shared/src/automations/types.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "packages/shared/src/automations/utils.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "packages/shared/src/automations/validation-lenient.test.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "packages/shared/src/automations/validation.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "packages/shared/src/automations/webhook-utils.test.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "packages/shared/src/automations/webhook-utils.ts",
+      "status": "excluded",
+      "reason": "Product Automations and their runtime/validation/UI are excluded from MkAgent Lite."
+    },
+    {
+      "path": "packages/shared/src/config/validators.ts",
+      "status": "reviewed-no-change",
+      "reason": "Sources/MCP authentication, relay overrides and requested scopes are excluded; retained LLM login is independent."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/de.json",
+      "status": "excluded",
+      "reason": "Retain sub-session labels in shipped EN/ZH locales; other locales and excluded product strings stay absent."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/en.json",
+      "status": "adapted",
+      "reason": "Retain sub-session labels in shipped EN/ZH locales; other locales and excluded product strings stay absent."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/es.json",
+      "status": "excluded",
+      "reason": "Retain sub-session labels in shipped EN/ZH locales; other locales and excluded product strings stay absent."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/hu.json",
+      "status": "excluded",
+      "reason": "Retain sub-session labels in shipped EN/ZH locales; other locales and excluded product strings stay absent."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/ja.json",
+      "status": "excluded",
+      "reason": "Retain sub-session labels in shipped EN/ZH locales; other locales and excluded product strings stay absent."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/pl.json",
+      "status": "excluded",
+      "reason": "Retain sub-session labels in shipped EN/ZH locales; other locales and excluded product strings stay absent."
+    },
+    {
+      "path": "packages/shared/src/i18n/locales/zh-Hans.json",
+      "status": "adapted",
+      "reason": "Retain sub-session labels in shipped EN/ZH locales; other locales and excluded product strings stay absent."
+    },
+    {
+      "path": "packages/shared/src/prompts/__tests__/system.test.ts",
+      "status": "adapted",
+      "reason": "Share retained data, LLM, document and preview instructions across standard/Coding prompts; honor browser settings and preserve Lite identity/permissions."
+    },
+    {
+      "path": "packages/shared/src/prompts/system.ts",
+      "status": "adapted",
+      "reason": "Share retained data, LLM, document and preview instructions across standard/Coding prompts; honor browser settings and preserve Lite identity/permissions."
+    },
+    {
+      "path": "packages/shared/src/protocol/dto.ts",
+      "status": "adapted",
+      "reason": "Expose transient branch source id for tree nesting; exclude task/automation and Claude retraction fields."
+    },
+    {
+      "path": "packages/shared/src/sessions/__tests__/jsonl-async-read.test.ts",
+      "status": "retained",
+      "reason": "Retain asynchronous storage resilience and ordering tests, alongside MkAgent full-header regressions."
+    },
+    {
+      "path": "packages/shared/src/sessions/__tests__/storage-list-async.test.ts",
+      "status": "retained",
+      "reason": "Retain asynchronous storage resilience and ordering tests, alongside MkAgent full-header regressions."
+    },
+    {
+      "path": "packages/shared/src/sessions/index.ts",
+      "status": "adapted",
+      "reason": "Retain bounded asynchronous session discovery, cloud-eviction checks and timeout helpers; preserve full metadata header reads from MkAgent."
+    },
+    {
+      "path": "packages/shared/src/sessions/jsonl.ts",
+      "status": "adapted",
+      "reason": "Retain bounded asynchronous session discovery, cloud-eviction checks and timeout helpers; preserve full metadata header reads from MkAgent."
+    },
+    {
+      "path": "packages/shared/src/sessions/storage.ts",
+      "status": "adapted",
+      "reason": "Retain bounded asynchronous session discovery, cloud-eviction checks and timeout helpers; preserve full metadata header reads from MkAgent."
+    },
+    {
+      "path": "packages/shared/src/sessions/types.ts",
+      "status": "reviewed-no-change",
+      "reason": "Only task-context fingerprints change upstream; board Tasks and conductor are excluded."
+    },
+    {
+      "path": "packages/shared/src/sources/__tests__/oauth-relay.test.ts",
+      "status": "excluded",
+      "reason": "Sources/MCP authentication, relay overrides and requested scopes are excluded; retained LLM login is independent."
+    },
+    {
+      "path": "packages/shared/src/sources/credential-manager.ts",
+      "status": "excluded",
+      "reason": "Sources/MCP authentication, relay overrides and requested scopes are excluded; retained LLM login is independent."
+    },
+    {
+      "path": "packages/shared/src/sources/types.ts",
+      "status": "excluded",
+      "reason": "Sources/MCP authentication, relay overrides and requested scopes are excluded; retained LLM login is independent."
+    },
+    {
+      "path": "packages/shared/src/tasks/index.ts",
+      "status": "excluded",
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
+    },
+    {
+      "path": "packages/shared/src/tasks/session-context.test.ts",
+      "status": "excluded",
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
+    },
+    {
+      "path": "packages/shared/src/tasks/session-context.ts",
+      "status": "excluded",
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
+    },
+    {
+      "path": "packages/shared/src/utils/__tests__/async.test.ts",
+      "status": "retained",
+      "reason": "Retain bounded concurrency ordering/limit and timeout utility regressions."
+    },
+    {
+      "path": "packages/shared/src/utils/async.ts",
+      "status": "retained",
+      "reason": "Retain bounded asynchronous session discovery, cloud-eviction checks and timeout helpers; preserve full metadata header reads from MkAgent."
+    },
+    {
+      "path": "packages/shared/src/utils/index.ts",
+      "status": "adapted",
+      "reason": "Retain bounded asynchronous session discovery, cloud-eviction checks and timeout helpers; preserve full metadata header reads from MkAgent."
+    },
+    {
+      "path": "packages/ui/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+    }
+  ]
+}

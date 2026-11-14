@@ -24,6 +24,10 @@ function isTestFile(file: string): boolean {
 }
 
 const deletedFeaturePatterns: Array<{ pattern: RegExp; reason: string }> = [
+  { pattern: /^packages\/server\-core\/src\/sessions\/task\-session\-context\.test\.ts$/, reason: "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently." },
+  { pattern: /^packages\/server\-core\/src\/sessions\/refusal\-fallback\.test\.ts$/, reason: "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded." },
+  { pattern: /^apps\/electron\/src\/renderer\/event\-processor\/handlers\/__tests__\/messages\-retracted\.test\.ts$/, reason: "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded." },
+  { pattern: /^apps\/electron\/src\/renderer\/components\/app\-shell\/chat\-display\/__tests__\/task\-brief\.test\.ts$/, reason: "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently." },
   { pattern: /^packages\/shared\/src\/agent\/__tests__\/subagent-model\.test\.ts$/, reason: 'Claude Agent/Task family aliases and custom .claude agents absent; actual Pi spawn model preservation covered by pi-usage-runtime.isolated.ts' },
   { pattern: /^apps\/electron\/src\/transport\/__tests__\/source\-oauth\.test\.ts$/, reason: "Sources OAuth client orchestration is absent; LLM login remains independent and browser website popup tests are retained." },
   { pattern: /^packages\/server\-core\/src\/handlers\/rpc\/oauth\.test\.ts$/, reason: "Generic Sources OAuth RPC is absent from Lite." },
@@ -90,12 +94,14 @@ const replacements: Record<string, string> = {
 }
 
 const intentionalCaseReductions: Record<string, { upstream: number; retained: number; reason: string }> = {
-  'apps/electron/src/renderer/hooks/__tests__/useSessionSearch.test.ts': { upstream: 9, retained: 6, reason: 'Four cases require excluded status/project metadata; retain unread independent windows and date pagination, with additional Lite unread collapse tests below.' },
+  "packages/shared/src/agent/core/__tests__/monitor-permissions.test.ts": {"upstream": 3, "retained": 2, "reason": "Guarded runtime is excluded; retain Explore and Ask Bash-equivalence checks."},
+  "packages/server-core/src/sessions/spawn-options.test.ts": {"upstream": 4, "retained": 3, "reason": "Project-dependent folders are excluded; retain folder/model overrides and both Coding-mode inheritance directions."},
+  'apps/electron/src/renderer/hooks/__tests__/useSessionSearch.test.ts': { upstream: 15, retained: 12, reason: 'Status/project filters and grouping are excluded; retain family/date/unread pagination, whole-family weighting and collapse tests.' },
   'packages/server-core/src/sessions/turn-usage.test.ts': { upstream: 9, retained: 3, reason: 'Retain Pi per-turn accumulation in the actual Lite manager; eight upstream Claude running-total/reset/fork-parent cases have no Pi backend state. Extra Lite occupancy and usage-free tests, and real SDK multi-call/turn/disk/restart/fork/child coverage in pi-usage-runtime.isolated.ts.' },
   "packages/server-core/src/sessions/session-completion.test.ts": { upstream: 9, retained: 2, reason: "Lite has no conductor completion listeners, activity subscriptions or workflow counting; cancelled turns, fallback abort and preservation of child sessions/background shells are tested, with real Pi Stop integration." },
   'apps/electron/src/renderer/components/app-shell/chat-display/__tests__/new-chat-suggestions.test.ts': { upstream: 13, retained: 7, reason: 'Source ranking/email setup and source enabling excluded with Sources; custom cap/label/prompt, qualified/unqualified/unknown Skill mentions, no-mention and automatic fallback covered' },
   'packages/shared/src/agent/__tests__/tool-matching.test.ts': { upstream: 62, retained: 61, reason: 'Sources MCP matching excluded; Lite tool matching retained' },
-  "packages/session-tools-core/src/tool-defs-filtering.test.ts": { upstream: 16, retained: 14, reason: "Decide and Source resource schema cases are excluded; Coding allowlist and Pi schema/browser flags are retained, with Source/project conditional case asserting Lite absence." },
+  "packages/session-tools-core/src/tool-defs-filtering.test.ts": { upstream: 17, retained: 14, reason: "Decide and Source resource schema cases are excluded; Coding allowlist and Pi schema/browser flags are retained, with Source/project conditional case asserting Lite absence." },
   'packages/server-core/src/sessions/pi-retry-streaming.test.ts': { upstream: 4, retained: 2, reason: 'Lite forwards unbatched deltas and has no upstream delta-flush timers; discard and recovered persistence covered' },
   'packages/server-core/src/sessions/midstream-queue.test.ts': { upstream: 12, retained: 7, reason: 'Decision routing and Claude queue lifecycle excluded; Lite queue, compaction, claims and spawn clamp covered' },
   'apps/cli/src/commands.test.ts': { upstream: 53, retained: 37, reason: 'Sources, automations, labels, webhooks, and their validation steps were removed' },
@@ -124,7 +130,7 @@ const intentionalCaseReductions: Record<string, { upstream: number; retained: nu
   'packages/shared/src/config/__tests__/midstream-behavior.test.ts': { upstream: 11, retained: 10, reason: 'Direct Anthropic queue behavior was removed' },
   'packages/shared/src/config/__tests__/model-supports-images.test.ts': { upstream: 8, retained: 7, reason: 'Direct Anthropic catalog behavior was removed' },
   'packages/shared/src/i18n/__tests__/locale-registry.test.ts': { upstream: 15, retained: 11, reason: 'Lite intentionally ships only English and Simplified Chinese' },
-  "packages/shared/src/prompts/__tests__/system.test.ts": { upstream: 32, retained: 15, reason: "Project memory append and Source MCP instructions excluded; all six Coding prompt cases retained with Lite signature, branding and three permission modes; Git/developer context covered separately." },
+  "packages/shared/src/prompts/__tests__/system.test.ts": { upstream: 35, retained: 16, reason: "Project memory append and Source MCP instructions excluded; all six Coding prompt cases retained with Lite signature, branding and three permission modes; Git/developer context covered separately." },
   'packages/shared/src/skills/__tests__/storage.test.ts': { upstream: 33, retained: 30, reason: 'Skill requiredSources metadata was removed with Sources' },
   'packages/shared/tests/content-validators.test.ts': { upstream: 41, retained: 15, reason: 'Source and status validators were removed; retained Skills and permissions validators remain covered' },
   'packages/shared/tests/mode-manager.test.ts': { upstream: 176, retained: 174, reason: 'External MCP pattern and source policy cases excluded; retained Bash restrictions covered by pi-permission-sync' },

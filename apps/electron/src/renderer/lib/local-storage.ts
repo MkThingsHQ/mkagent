@@ -19,6 +19,7 @@ export const KEYS = {
   expandedFolders: 'expanded-folders',
   collapsedSidebarItems: 'collapsed-sidebar-items',
   collapsedSessionGroups: 'collapsed-session-groups',
+  collapsedSessionFamilies: 'collapsed-session-families',
 
   // Focus mode
   focusModeEnabled: 'focus-mode-enabled',

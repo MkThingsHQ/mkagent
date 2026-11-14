@@ -67,9 +67,29 @@ it('runs Coding, defaults, frozen settings, forks, background handoffs and resta
     expect(names).toContain('mcp__session__pr_set_auto_merge')
     expect(names).toContain('mcp__session__SubmitPlan')
     expect(names).toContain('mcp__session__list_background_tasks')
-    expect(names).not.toContain('mcp__session__browser_tool')
-    expect(names).not.toContain('mcp__session__call_llm')
-    expect(names).not.toContain('mcp__session__spawn_session')
+    expect(names).toContain('mcp__session__browser_tool')
+    expect(names).toContain('mcp__session__call_llm')
+    expect(names).toContain('mcp__session__spawn_session')
+    for (const tool of ['mermaid_validate', 'transform_data', 'get_session_info', 'list_sessions']) expect(names).toContain(`mcp__session__${tool}`)
+    for (const tool of ['source_test', 'create_page', 'project_memory_append']) expect(names).not.toContain(`mcp__session__${tool}`)
+    for (const feature of ['html-preview', 'pdf-preview', 'image-preview', 'markdown-preview', '## Document Tools']) expect(codingPrompt).toContain(feature)
+    const agent = (manager as any).sessions.get(session.id).agent
+    const spawned = await agent.onSpawnSession({ name: 'Coding child', prompt: 'Check the child fixture.', model: 'fixture', permissionMode: 'safe' })
+    const deadline = Date.now() + 10_000
+    while (!(await manager.getSession(spawned.sessionId))?.messages.some(message => message.role === 'assistant')) {
+      if (Date.now() > deadline) throw new Error('Coding child did not finish its fixture turn')
+      await Bun.sleep(20)
+    }
+    const child = (await manager.getSession(spawned.sessionId))!
+    expect(child).toMatchObject({ parentSessionId: session.id, workingDirectory: repo, codingMode: true, model: 'fixture', permissionMode: 'safe' })
+    await manager.flushSession(child.id)
+    expect(loadSession(wsRoot, child.id)?.codingMode).toBe(true)
+
+    const { setBrowserToolEnabled } = await import('@mkagent/shared/config/storage')
+    setBrowserToolEnabled(false)
+    await manager.sendMessage(session.id, 'Verify the browser is disabled now.')
+    expect(requests.at(-1).tools.map((tool: any) => tool.function.name)).not.toContain('mcp__session__browser_tool')
+    setBrowserToolEnabled(true)
     expect(() => manager.setSessionCodingMode(session.id, false)).toThrow('fixed')
     await manager.flushSession(session.id)
     expect(loadSession(wsRoot, session.id)?.codingMode).toBe(true)

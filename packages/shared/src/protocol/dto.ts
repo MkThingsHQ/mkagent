@@ -16,6 +16,8 @@ import type { CustomEndpointConfig } from '../config/llm-connections.ts';
 export { generateMessageId } from '@mkagent/core/types';
 
 export interface Session {
+  /** Source session of this branch, for list nesting. */
+  branchFromSessionId?: string
   id: string;
   workspaceId: string;
   workspaceName: string;

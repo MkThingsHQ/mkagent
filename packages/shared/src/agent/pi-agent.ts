@@ -160,6 +160,7 @@ interface PendingEphemeralRequest<T> {
  */
 export class PiAgent extends BaseAgent {
   private readonly prCreateCommands = new Map<string, string>();
+  private sentProxyTools: string | null = null;
   protected backendName = 'MkAgent Backend';
 
   // ============================================================
@@ -548,10 +549,14 @@ export class PiAgent extends BaseAgent {
       this.debug(`Failed to configure PI auto-compaction (continuing): ${error instanceof Error ? error.message : String(error)}`);
     }
 
-    // Register session-scoped tools as proxy tools in the subprocess.
-    // These tools (SubmitPlan, config_validate, call_llm, etc.)
-    // are executed in the main process when the LLM calls them.
     this.assertBackendSessionToolParity();
+    this.sentProxyTools = null;
+    this.syncProxyTools();
+  }
+
+  /** Send the complete current set; omitted tools disappear at the next idle prompt. */
+  private syncProxyTools(): void {
+    if (!this.subprocess?.stdin?.writable) return;
     // Same visibility filters as Claude (session-scoped-tools.ts): feature flags, the
     // "Built-in browser" setting and the agent profile (coding mode).
     const sessionToolDefs = getSessionToolProxyDefs({
@@ -566,12 +571,11 @@ export class PiAgent extends BaseAgent {
       }
     }
 
-    this.send({
-      type: 'register_tools',
-      tools: sessionToolDefs,
-    });
+    const json = JSON.stringify(sessionToolDefs);
+    if (json === this.sentProxyTools) return;
+    this.send({ type: 'register_tools', tools: sessionToolDefs });
+    this.sentProxyTools = json;
     this.debug(`Registered ${sessionToolDefs.length} session tools with subprocess`);
-
   }
 
   /** Build Pi's provider-aware credential. */
@@ -1884,6 +1888,8 @@ export class PiAgent extends BaseAgent {
         message,
       ].filter(Boolean);
       const userMessage = userParts.join('\n\n');
+
+      this.syncProxyTools();
 
       // Send prompt to subprocess
       const turnId = `turn-${++this.rpcIdCounter}`;

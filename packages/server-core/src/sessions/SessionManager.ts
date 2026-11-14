@@ -1,3 +1,4 @@
+import { spawnedSessionOptions } from './spawn-options'
 import { buildPrWatchToolCallbacks } from '../pr-watch/tool-callbacks'
 import { prEntryId } from '@mkagent/shared/pr-watch'
 import { getPrAutoFixMonitor, getPrWatchRegistry } from '../handlers/rpc/pr-watch'
@@ -62,7 +63,7 @@ import {
   deleteSession as deleteStoredSession,
   getPendingPlanExecution as getStoredPendingPlanExecution,
   getSessionPath as getSessionStoragePath,
-  listSessions as listStoredSessions,
+  listSessionsAsync as listStoredSessionsAsync,
   loadSession as loadStoredSession,
   markCompactionComplete as markStoredCompactionComplete,
   saveSession as saveStoredSession,
@@ -87,7 +88,7 @@ import { buildBackendRuntimeSignature, buildRestartRequiredSignature } from './r
 import { rollbackFailedBranchCreation, sanitizeForTitle } from '@mkagent/server-core/domain'
 import { validateArchiveTarget } from './archive-guards'
 import { mkdir, readFile, writeFile } from 'node:fs/promises'
-import { join } from 'node:path'
+import { basename, join } from 'node:path'
 import { generateConversationSummary } from '@mkagent/shared/agent/conversation-summary'
 
 let platform: PlatformServices | null = null
@@ -354,10 +355,10 @@ export class SessionManager implements ISessionManager {
 
   initialize(): Promise<void> {
     if (this.initPromise) return this.initPromise
-    this.initPromise = Promise.resolve().then(() => {
+    this.initPromise = Promise.resolve().then(async () => {
       for (const workspace of getWorkspaces()) {
         this.setupConfigWatcher(workspace.rootPath, workspace.id)
-        for (const metadata of listStoredSessions(workspace.rootPath)) {
+        for (const metadata of await listStoredSessionsAsync(workspace.rootPath)) {
           this.sessions.set(metadata.id, createManagedSession(metadata, workspace))
         }
       }
@@ -515,6 +516,7 @@ export class SessionManager implements ISessionManager {
       archivedAt: managed.archivedAt,
       supportsBranching: managed.agent?.supportsBranching ?? true,
       parentSessionId: managed.parentSessionId,
+      branchFromSessionId: managed.branchFromSessionPath ? basename(managed.branchFromSessionPath) : undefined,
     }
   }
 
@@ -1207,13 +1209,8 @@ export class SessionManager implements ISessionManager {
     // Craft's session self-management wiring, reduced to the Lite session surface.
     agent.onSpawnSession = async request => {
       const session = await this.createSession(managed.workspace.id, {
-        name: request.name,
-        llmConnection: request.llmConnection ?? managed.llmConnection,
-        model: request.model ?? managed.model,
+        ...spawnedSessionOptions(request, managed),
         permissionMode: clampSpawnPermissionMode(request.permissionMode, managed.permissionMode),
-        thinkingLevel: request.thinkingLevel ?? managed.thinkingLevel,
-        workingDirectory: request.workingDirectory,
-        parentSessionId: managed.id,
       })
       let fileAttachments: FileAttachment[] | undefined
       if (request.attachments?.length) {
@@ -1264,6 +1261,7 @@ export class SessionManager implements ISessionManager {
         if (!session) return null
         return {
           id: session.id,
+          parentSessionId: session.parentSessionId,
           name: session.name ?? session.id,
           permissionMode: session.permissionMode ?? 'ask',
           createdAt: session.createdAt,
@@ -1297,6 +1295,7 @@ export class SessionManager implements ISessionManager {
           returned: page.length,
           sessions: page.map(item => ({
             id: item.id,
+            parentSessionId: item.parentSessionId,
             name: item.name ?? item.id,
             createdAt: item.createdAt ?? 0,
             lastUsedAt: item.lastMessageAt,

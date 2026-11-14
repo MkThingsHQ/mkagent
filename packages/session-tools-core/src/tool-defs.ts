@@ -237,17 +237,21 @@ export type AgentProfile = 'default' | 'coding';
 
 /**
  * Session tools a `coding` profile keeps, and the condition each one needs. Everything else
- * (Pages, browser, session self-management, inter-session messaging, config/skill/mermaid
- * validation, data/template/LLM helpers, preferences) serves desktop workflows and is dropped.
+ * (Pages, inter-session messaging, config/skill validation, template helpers, preferences) serves desktop workflows and is dropped.
  * - `always`: kept in every coding session (feature flags still apply)
- * - `sources`: kept while the session has at least one enabled source (auth + MCP resources)
- * - `project`: kept while the session is bound to a project
  */
 export const CODING_PROFILE_TOOLS: Readonly<Record<string, 'always'>> = {
   pr_status: 'always',
   pr_bind: 'always',
   pr_unbind: 'always',
   pr_set_auto_merge: 'always',
+  mermaid_validate: 'always',
+  transform_data: 'always',
+  call_llm: 'always',
+  spawn_session: 'always',
+  get_session_info: 'always',
+  list_sessions: 'always',
+  browser_tool: 'always',
   SubmitPlan: 'always',
   list_background_tasks: 'always',
   send_developer_feedback: 'always',

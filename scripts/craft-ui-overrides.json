@@ -42,8 +42,8 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/atoms/sessions.ts": {
-      "sha256": "82c961f60ce46ac54acf1e8550a7a9812bb29e37396fa0bbc961ac5ad7ade4fe",
-      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+      "sha256": "6d85ee5ef0fe6acacdc5af38b72e008186bc738a330a452b218faa3650dd0dd0",
+      "reason": "Retain session-family nesting/collapse/tree guides and whole-family date/unread pagination; exclude labels, projects and custom status grouping."
     },
     "apps/electron/src/renderer/browser-empty-state.html": {
       "sha256": "c82afe0928071236a407e8c4faa1fc3b52e2c7cb2f33bc4c075cbebdbd9fcb6e",
@@ -99,7 +99,7 @@
     },
     "apps/electron/src/renderer/components/app-shell/ChatDisplay.tsx": {
       "sha256": "d1240599d3069142250a727d9bcc9cb6e28b7ec2e62ff53307ee2cdedf8ea3d0",
-      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent. Register loaded session metadata before navigation so the created-session push cannot race with route validation."
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
     },
     "apps/electron/src/renderer/components/app-shell/CompactSessionMenu.tsx": {
       "sha256": "197b45b31d755640c377a5c3b5409eb8bce35ee58e82a3796568aadd762c19d1",
@@ -134,12 +134,12 @@
       "reason": "Import flex-1/min-h-0 container and overflow-y-auto scroll fix; verify oversized file listing in actual popover and mobile drawer. Keep the mobile drawer wrapper flex-constrained; show retained cumulative output/estimated SDK cost in the info panel for direct UI verification."
     },
     "apps/electron/src/renderer/components/app-shell/SessionItem.tsx": {
-      "sha256": "6fe66b26e5c1072612bbc29520e62cafcca55a5dfec410b3152e663eeb299fe0",
-      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+      "sha256": "8f068afbc62e8f8e4b522264167e25cf0f23bcc3743d2deeafd274ab03d9460c",
+      "reason": "Retain session-family nesting/collapse/tree guides and whole-family date/unread pagination; exclude labels, projects and custom status grouping."
     },
     "apps/electron/src/renderer/components/app-shell/SessionList.tsx": {
-      "sha256": "e1f143c56b32c2cc58e96b31c8f5a2b3b53dddb25e9ccd536258e2656ca0025c",
-      "reason": "Craft application shell adapted only to remove excluded product surfaces"
+      "sha256": "4b8ab2ec70d78717e073f5ecd42889eddea8072160302a3ad8f26585e2d1fe46",
+      "reason": "Retain session-family nesting/collapse/tree guides and whole-family date/unread pagination; exclude labels, projects and custom status grouping."
     },
     "apps/electron/src/renderer/components/app-shell/SessionMenu.tsx": {
       "sha256": "188ca4ebfb82016cbb1882ba723fe42397df263e218f720b9fc58133abd27eef",
@@ -169,6 +169,10 @@
       "sha256": "fa4075d34cf0ee3e69e5f1875714f9838f877bf1185980cfb98f3f128584df87",
       "reason": "Retains upstream lifecycle cases and verifies Pi launch acknowledgements preserve live task chips"
     },
+    "apps/electron/src/renderer/components/app-shell/__tests__/session-family-row.isolated.ts": {
+      "sha256": "b01c212d7d89f37dd5750433a8ac16283da9a1e7d908ee3ae2e61725d80b6a55",
+      "reason": "Render actual SessionItem/EntityRow family controls and verify expanded state, count, run-state coexistence and keyboard activation."
+    },
     "apps/electron/src/renderer/components/app-shell/__tests__/transport-connection-banner.test.ts": {
       "sha256": "22b5051fe16d65c5c111f4206bcee44d3c1d4435f861d6a6be73852883e5af90",
       "reason": "Craft renderer test adapted to retained Lite behavior"
@@ -191,7 +195,7 @@
     },
     "apps/electron/src/renderer/components/app-shell/chat-header/ChatHeader.tsx": {
       "sha256": "b67db3a0c0e1617eae564223ac181526b664a0a21119dc8918e959f9184fd4b5",
-      "reason": "Merge applicable PR/handoff contracts into the existing Pi/Lite architecture; retain local context/permissions, persistence and removed-product seams. Strengthen profile routing, snapshot reuse, ordered first-send waiting and lifecycle regressions."
+      "reason": "Task-board brief/context/editor, conductor and project actions are excluded; retained child sessions are handled independently."
     },
     "apps/electron/src/renderer/components/app-shell/chat-header/__tests__/pr-tabs.test.ts": {
       "sha256": "b9306aec769b1b41d54a0c50b54a5036e6dc0d180e5837783352ed64a606853b",
@@ -381,25 +385,29 @@
       "sha256": "4ef8ca14fc3950331c6b80ca73b08cfeb4747283461950228d4b612f5abba781",
       "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
     },
+    "apps/electron/src/renderer/event-processor/handlers/text.ts": {
+      "sha256": "dbe9a078d809a3f36d04b029162d0ad6124f8c885e2c7f0b122cae4a47725a36",
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
+    },
     "apps/electron/src/renderer/event-processor/index.ts": {
       "sha256": "d21117d69820e7d70aefdfa9a7dedd03ff6ea1a2e01fc271748d159738fa615b",
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/event-processor/processor.ts": {
       "sha256": "71b190ad6270ae83efbbc3bd19cdb0860445c4bf9fdceffd03b0e43319323090",
-      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
     },
     "apps/electron/src/renderer/event-processor/types.ts": {
       "sha256": "337b5f970cc177c4275eaf96cdcb34e9904042e5fbd75a6cce21e017dcf32199",
-      "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
+      "reason": "Claude SDK live-MCP/thinking/refusal fallback and retracted-message events are not produced by the retained Pi backend; label badges remain excluded."
     },
     "apps/electron/src/renderer/hooks/__tests__/useOnboarding.test.ts": {
       "sha256": "f6f47abc46b7346c2636a2e5bd95eef6dc82f1d923e41c0ec08ca9484a0a8e20",
       "reason": "Craft onboarding tests retain Claude and ChatGPT slug and identity coverage while excluding Copilot"
     },
     "apps/electron/src/renderer/hooks/__tests__/useSessionSearch.test.ts": {
-      "sha256": "6dcc554bbbcbc9c97f728e725a988051a3ba4b3f1f73eefddd1969f23bbbf4bf",
-      "reason": "Retain date/collapse and independent unread-group regression cases; statuses/projects remain excluded."
+      "sha256": "4b300f407acab323a3953e48efef45dfc48991a73a5c195c57495d6cb258816e",
+      "reason": "Retain session-family nesting/collapse/tree guides and whole-family date/unread pagination; exclude labels, projects and custom status grouping."
     },
     "apps/electron/src/renderer/hooks/useAvailablePermissionModes.ts": {
       "sha256": "226aafca1bd1124c66892a544be08a735d6cbad03911c8797530dd244a08f277",
@@ -426,8 +434,8 @@
       "reason": "Retain Coding UX/state/events/settings and narrow PR header in MkAgent Lite; excluded labels/Source/project metadata stays absent."
     },
     "apps/electron/src/renderer/hooks/useSessionSearch.ts": {
-      "sha256": "ebc60ea11c2a4ef257a400f01d429e10f174912de359c2008a0eb8a1bc11bfa7",
-      "reason": "Retain v0.15.5 per-unread-group pagination and collapse safety; omit excluded statuses/projects and retain Lite filters."
+      "sha256": "373e6db24c5ff04aa686bf78c3f41c7a3daee3da986df628312dea67f4dd77f4",
+      "reason": "Retain session-family nesting/collapse/tree guides and whole-family date/unread pagination; exclude labels, projects and custom status grouping."
     },
     "apps/electron/src/renderer/index.html": {
       "sha256": "d598dd8a823e2023b802502b2851d51f00278c352ead3608ccffdafdf15d49e5",
@@ -442,8 +450,8 @@
       "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
     },
     "apps/electron/src/renderer/lib/local-storage.ts": {
-      "sha256": "a8ee220a566e19e6a23ce35749403d8b17a5cf72422048995d06ee16343ba927",
-      "reason": "Craft renderer file adapted for retained Lite behavior, removed product branches, or MkAgent branding"
+      "sha256": "1ed73b7927ab74ecd55e648226c160ef5ceb701816bc0f37b978cf7f89ebbb5e",
+      "reason": "Retain session-family nesting/collapse/tree guides and whole-family date/unread pagination; exclude labels, projects and custom status grouping."
     },
     "apps/electron/src/renderer/lib/mentions.ts": {
       "sha256": "a26f2a3a6f5d112a4a3f3a19e911f2474066acc5b3cdea75c055722861745a4c",

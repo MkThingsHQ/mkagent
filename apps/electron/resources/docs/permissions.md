@@ -95,7 +95,7 @@ Fields:
 
 Allowed by default:
 
-- Read, Glob, and Grep
+- Read, Glob, Grep, LSP, Find, and Ls
 - WebFetch and WebSearch
 - read-only Browser actions
 - writes to the session plans and data folders
@@ -104,9 +104,12 @@ Allowed by default:
 Blocked by default:
 
 - Write, Edit, MultiEdit, and NotebookEdit outside allowed folders
-- mutating Bash commands
+- mutating Bash commands, including commands run by Monitor
+- unknown tools, subagents with `isolation`, cross-session SendMessage, and Workflow
 - browser or network mutations classified as unsafe
 - commands containing unsafe shell constructs
+
+A Monitor WebSocket watch is read-only. A Monitor shell command follows the same Explore and Ask checks as Bash.
 
 ### Read-only Bash commands
 

@@ -7,33 +7,29 @@ MkAgent derives its architecture, UI, and runtime from [Craft Agents OSS](https:
 | Item | Value |
 |---|---|
 | Repository | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.15.6` |
-| Commit | `8df01c5d0ac73c35add5954e6f190ce038d35845` |
+| Tag | `v0.15.8` |
+| Commit | `1627c43e93bb4f5b1532116b8eb092c0ada4b23f` |
 
 ## Latest evaluated release
 
 | Item | Value |
 |---|---|
-| Evaluated on | `2026-10-26` |
-| Upstream tag | `v0.15.6` |
-| Upstream commit | `8df01c5d0ac73c35add5954e6f190ce038d35845` |
+| Evaluated on | `2026-11-14` |
+| Upstream tag | `v0.15.8` |
+| Upstream commit | `1627c43e93bb4f5b1532116b8eb092c0ada4b23f` |
 
-MkAgent 0.2.6 synchronizes **only v0.15.5 → v0.15.6**. [The inventory](./sync/0.15.6-inventory.json) covers all 93 changed paths; [validation](./sync/0.15.6-validation.md) separates automation, real Pi transport and UI fixtures.
+MkAgent 0.2.7 synchronizes **v0.15.6 → v0.15.8**. The public upstream history has no v0.15.7 tag/commit; its MCP OAuth release notes are included in v0.15.8 and remain outside Lite. [The inventory](./sync/0.15.8-inventory.json) covers all 153 changed paths; [validation](./sync/0.15.8-validation.md) records local checks and their limits.
 
-Coding sessions gain `pr_status`, `pr_bind`, `pr_unbind` and `pr_set_auto_merge`. Status reuses the header snapshot first; another session is cache-only. Pins are verified before storage; `gh pr create` pins additional PRs automatically. Auto-merge changes require explicit user intent and an allowed repository method. Registration, Pi execution routing and Explore permission checks retain profile filtering.
+Child sessions and branches nest in collapsible families. Date/unread grouping, pagination, keyboard navigation and multi-selection keep families together; per-workspace collapse state persists. Coding gains the built-in browser behind its setting, Mermaid validation, data transformations, focused LLM calls, spawn/get/list session tools and the same preview/document instructions as standard sessions. Children inherit their folder, model and Coding mode while permissions remain clamped.
 
-The header combines branch and pinned PRs with tabs, overflow +N, arrows, urgency, link copy and Unpin. Pinned action prompts use an existing worktree, new worktree or separate clone while preserving the current checkout and dirty files. User-enabled Auto applies only to the own-branch PR: every five minutes while the app runs and the computer is awake, the server checks new owner/member/collaborator feedback, excluding the viewer's replies. Scheduling is independent of windows, deduplication cursors persist, restart re-arms monitors and Off/deletion/shutdown clean up. After a network await it rechecks the toggle, permissions and actual checkout. Comments are untrusted data: supplied commands/links are not instructions, and push/comment/merge/auto-merge authorization is not expanded.
+Pi branches fork only once, preserve their cutoff and reopen their own conversation after restart or tool changes. Proxy tools replace the complete previous set; rebuilds wait for compaction. macOS HEIC conversion uses ImageIO with upright pixels and sRGB colors, with a portable fallback. Session discovery uses bounded async header reads, cloud-eviction detection and timeouts, retaining MkAgent's complete first-line reader for large PR metadata. The Lite manager retains its existing single initialization gate so list consumers still wait for disk loading. Explore rejects unknown tools and isolated agents; Monitor shell commands get Bash checks.
 
-Repository discovery searches four levels, stops at repositories, skips node_modules/Library/hidden/workspace data, avoids symlink loops and deduplicates bare/worktree layouts. Its two-second overall budget includes filesystem and Git descriptions; ~ paths expand. Switching an existing session's Coding mode creates the target immediately and summarizes in the background. The first message waits at most 30 seconds; ordered sends, cancellation, failure, timeout, deletion and late summaries remain isolated.
-
-Preserve MkAgent branding/config, Pi 1.1.0 and all earlier synchronized behavior, including v0.15.4/0.15.5. Claude config forwarding was reviewed by hunk: Pi already passes its whole config, uses SDK image resizing and retained compaction/context metering; add regression coverage without restoring Claude SDK. Sources/MCP OAuth relay, Pages, Projects/conductor, product Automations, public sharing, labels/custom statuses and messaging stay excluded; Decision/Guarded remain deferred. Coding PR Auto review fix is explicitly included in this sync.
+Preserve MkAgent branding/configuration, Pi 1.1.0 and all previous synchronized functionality. Sources/MCP, Claude SDK and refusal fallback, Pages, Projects, board Tasks, Automations, public sharing and messaging remain excluded; Decision/Guarded remain deferred. This baseline records reviewed scope, not complete Craft feature parity.
 
 ```bash
-# Fetch and check out only an independent disposable reference clone.
-git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/craft-v0156
-git -C /tmp/craft-v0156 fetch origin refs/tags/v0.15.6
-git -C /tmp/craft-v0156 checkout --detach 8df01c5d0ac73c35add5954e6f190ce038d35845
-export CRAFT_AGENT_SOURCE=/tmp/craft-v0156
+git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/mkagent-craft-0158
+git -C /tmp/mkagent-craft-0158 checkout --detach 1627c43e93bb4f5b1532116b8eb092c0ada4b23f
+export CRAFT_AGENT_SOURCE=/tmp/mkagent-craft-0158
 ```
 
 When upstream publishes a new tag worth evaluating:
