@@ -1,0 +1,119 @@
+{
+  "fromTag": "v0.15.8",
+  "fromCommit": "1627c43e93bb4f5b1532116b8eb092c0ada4b23f",
+  "toTag": "v0.15.9",
+  "toCommit": "3ce9fc12837541d688a59a8f0a2e9755ceb89ac2",
+  "mkagentVersion": "0.2.8",
+  "paths": [
+    {
+      "path": "apps/cli/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
+    },
+    {
+      "path": "apps/electron/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
+    },
+    {
+      "path": "apps/electron/resources/release-notes/0.15.9.md",
+      "status": "excluded",
+      "reason": "Upstream Claude SDK/Automation release prose is replaced by MkAgent 0.2.8 notes describing metadata recognition and Pi catalog limits; no excluded Automation code changes occur in this tag-to-tag diff."
+    },
+    {
+      "path": "apps/electron/resources/release-notes/next.md",
+      "status": "excluded",
+      "reason": "Upstream Claude SDK/Automation release prose is replaced by MkAgent 0.2.8 notes describing metadata recognition and Pi catalog limits; no excluded Automation code changes occur in this tag-to-tag diff."
+    },
+    {
+      "path": "apps/viewer/package.json",
+      "status": "excluded",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
+    },
+    {
+      "path": "apps/webui/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
+    },
+    {
+      "path": "bun.lock",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
+    },
+    {
+      "path": "package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
+    },
+    {
+      "path": "packages/core/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
+    },
+    {
+      "path": "packages/messaging-gateway/package.json",
+      "status": "excluded",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
+    },
+    {
+      "path": "packages/messaging-whatsapp-worker/package.json",
+      "status": "excluded",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
+    },
+    {
+      "path": "packages/pi-agent-server/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
+    },
+    {
+      "path": "packages/server-core/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
+    },
+    {
+      "path": "packages/server/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
+    },
+    {
+      "path": "packages/session-tools-core/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
+    },
+    {
+      "path": "packages/shared/CLAUDE.md",
+      "status": "excluded",
+      "reason": "Upstream edit documents Claude SDK thinking/runtime behavior, which is excluded from Lite; retained metadata behavior is recorded in sync docs."
+    },
+    {
+      "path": "packages/shared/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
+    },
+    {
+      "path": "packages/shared/src/config/__tests__/llm-connections.test.ts",
+      "status": "adapted",
+      "reason": "Adapt all four Fable 5.2 registration/order/default/ID tests to retained metadata/Pi APIs; add a provider-catalog boundary regression. Removed Claude/forward-map APIs are not restored."
+    },
+    {
+      "path": "packages/shared/src/config/llm-connections.ts",
+      "status": "reviewed-no-change",
+      "reason": "Only the removed Claude connection forward/reverse Bedrock maps change upstream. The retained static reverse lookup is in models.ts; Pi provider catalogs/defaults remain authoritative."
+    },
+    {
+      "path": "packages/shared/src/config/models.ts",
+      "status": "retained",
+      "reason": "Retain Fable 5.2 metadata, newest-Fable ordering, context/thinking flags and reverse Bedrock-ID metadata lookup in the Lite shared registry."
+    },
+    {
+      "path": "packages/shared/tests/models.test.ts",
+      "status": "retained",
+      "reason": "Retain upstream Fable 5.2 bare/Pi/Bedrock always-on-thinking regression cases."
+    },
+    {
+      "path": "packages/ui/package.json",
+      "status": "adapted",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
+    }
+  ]
+}

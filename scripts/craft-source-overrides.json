@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "baselineCommit": "1627c43e93bb4f5b1532116b8eb092c0ada4b23f",
+  "baselineCommit": "3ce9fc12837541d688a59a8f0a2e9755ceb89ac2",
   "modified": {
     ".env.example": {
       "sha256": "3fb7bf14e2bb07e5e62631256cc8dca97f87fc745835a9ea3a3782839126f718",
@@ -19,8 +19,8 @@
       "reason": "Craft documentation adapted to the retained MkAgent feature set and product identifiers"
     },
     "apps/cli/package.json": {
-      "sha256": "60ba32f8c5da4f1a62bb3f235e1d0567ff365e98a583674b06b73d326602cee1",
-      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+      "sha256": "a4582117eadcff5908299d1be5ee9a2dcbd238dcfad999e5a7b0aba12f54de50",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
     },
     "apps/cli/src/client.ts": {
       "sha256": "129e8fd80c30500dd9f65a866191cc1fa27c966f5c2f823fed69e842bc907279",
@@ -63,8 +63,8 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/electron/package.json": {
-      "sha256": "b93b6b020d65eafe285ea541dc0a2927e684bd4a4e4a286a3120d771950c4200",
-      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+      "sha256": "315c317867e6ca21e72773ec13cc375f6c0230ceed8c36c577f3c140d57753c0",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
     },
     "apps/electron/resources/bin/doc-diff": {
       "sha256": "2a50d0f63bf51453801e6c222b73d742a03111175a46d5e30dfbb0f364fbc98e",
@@ -907,8 +907,8 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "apps/webui/package.json": {
-      "sha256": "40033e3d44069405742be07564ce99e2594d27c2b03ab26924411f38c2428a65",
-      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+      "sha256": "5479ad1c4f50ded173582730a86fe3f295ee1a82cb65013985940c0f1dd0153e",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
     },
     "apps/webui/src/adapter/web-api.ts": {
       "sha256": "23115fcbb7f2f0dcfae3124e808a3663673b1b46b745a11d19ca43b08ada021b",
@@ -959,20 +959,20 @@
       "reason": "Craft WebUI adapted to the retained authenticated headless transport"
     },
     "bun.lock": {
-      "sha256": "42da27c8cfec873c70d7cb7a2fa18375959620f24265a754028e9a87fc89c72c",
-      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+      "sha256": "ffb8268db9d604e91588e202024875cc754dffc5a36f80b956696339f45ef0de",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
     },
     "package.json": {
-      "sha256": "9d6551159d6810bde22e4464d4e49bbba0464c3e015e47fbcab16029e7b2a887",
-      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+      "sha256": "196e6ebc1b5393928471634dafb56bf0f9a4333c75cc74f7521138b121d67c8c",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
     },
     "packages/core/README.md": {
       "sha256": "cac1ded695383920e62457a566c3ececed3acc5568a733f7eff4ab78c69ba2cd",
       "reason": "Craft documentation adapted to the retained MkAgent feature set and product identifiers"
     },
     "packages/core/package.json": {
-      "sha256": "5113cdd113cb661988f30d72c33fbf204af44e44343f3f9d576546648d895bd9",
-      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+      "sha256": "fa47abfa2359b4611c6ba0221f1480a4e51e417eb7d4bd45dd6ab6c908411e90",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
     },
     "packages/core/src/index.ts": {
       "sha256": "8bbc0c74726bedc944b0c610ec8e3501a9a936737ca171509ad28ca394451667",
@@ -999,8 +999,8 @@
       "reason": "Craft file reviewed and adapted for the locked MkAgent Lite product boundary"
     },
     "packages/pi-agent-server/package.json": {
-      "sha256": "b637c67319741f38a1aa1be9d51205a5dbb755846e7f38f91e950c078ab62303",
-      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+      "sha256": "5ae5ea306879172b5affc26fa3b1586aab507356135327bac2d46e6825cff349",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
     },
     "packages/pi-agent-server/src/adapt-credential.test.ts": {
       "sha256": "708f1d8771ed4b8e833a4de4675cc480e227a88b236be12c39e3bb25cd59dc90",
@@ -1075,8 +1075,8 @@
       "reason": "Craft Pi subprocess adapted to the retained provider and session-tool contract"
     },
     "packages/server-core/package.json": {
-      "sha256": "c1cfe1c6a3dd7df630c0c71d24ee7e6d5b8314382754b2607928c9c337d0f624",
-      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+      "sha256": "6aa51643758f67bb8e1343ccf608a9a8bc45d881b3acb61dd08d2ec9ec83ae31",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
     },
     "packages/server-core/src/bootstrap/headless-start.ts": {
       "sha256": "bce72eba3915678d7a3cad76960fc0e4b2a4dd5f5dac3a809f7488e52223050c",
@@ -1351,8 +1351,8 @@
       "reason": "Craft server module reduced to retained local workspace, session, and WebUI behavior; v0.15.1: Only generic Sources OAuth callback route changes; that route is absent from Lite."
     },
     "packages/server/package.json": {
-      "sha256": "44b44175f546c5d4662c73a8e668e63636be36265d44a67daf9327b27e70e7f6",
-      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+      "sha256": "f21b5220e603cc95552466711c8fbc06f8e1bd869ce975cf09d1d301b4c1832e",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
     },
     "packages/server/src/__tests__/smoke.test.ts": {
       "sha256": "17bb646afe863acc76ef2cdd532e4220b6e07526d0ebf917eff717e48357a91b",
@@ -1363,8 +1363,8 @@
       "reason": "Retain v0.15.4 shared transport/runtime/style/CLI lifecycle hunk with existing MkAgent Pi/Lite seams."
     },
     "packages/session-tools-core/package.json": {
-      "sha256": "896e8129592a7d0a86b9d2187d23cb614d5518f924e46468392f4705e1ee300e",
-      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+      "sha256": "17e00060d69e71b3ca9ae0a659cbf35321d260ac2d744f35987dfbcf98d1fa8d",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
     },
     "packages/session-tools-core/src/context.ts": {
       "sha256": "36ebbc8afbbf9feaf64a1b064075812dc795c6625fddd6056367e9e01875d6fb",
@@ -1467,8 +1467,8 @@
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
     },
     "packages/shared/package.json": {
-      "sha256": "587b3daac747d1665bbcaa3f81ae65a64d38f85791efd84bbaac281343772a0b",
-      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+      "sha256": "38881bff0fba28db09804b9cb70b734b36f8fc24ac3f26da25000d274d94f1d4",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
     },
     "packages/shared/src/__tests__/feature-flags.test.ts": {
       "sha256": "68eeef24a8f1a3f32eec273ba35a72359d0fd9a1a4207d272195b0ef048312b0",
@@ -1819,8 +1819,8 @@
       "reason": "Craft test adapted to the retained Lite feature set or strengthened for retained behavior"
     },
     "packages/shared/src/config/__tests__/llm-connections.test.ts": {
-      "sha256": "988af8ae254131f0b9cc7bc3ed3fa031d8744f5b23fcc88fda976ccce4229496",
-      "reason": "Selective Craft v0.13.3 retained-feature synchronization for the MkAgent Lite boundary"
+      "sha256": "12d39ed1febe31e718c2a92973d90a090d00de8fb6947eb819e4de62fc573c99",
+      "reason": "Adapt all four Fable 5.2 registration/order/default/ID tests to retained metadata/Pi APIs; add a provider-catalog boundary regression. Removed Claude/forward-map APIs are not restored."
     },
     "packages/shared/src/config/__tests__/midstream-behavior.test.ts": {
       "sha256": "7bb7d544a25c92ec65d2773599d442a8251dfcf640648529ff1ad0ff2013946b",
@@ -1856,7 +1856,7 @@
     },
     "packages/shared/src/config/llm-connections.ts": {
       "sha256": "d34701d2db13e6a526142c88f6f2abd264402ee5b34ccd2f44d19829ee5f3fab",
-      "reason": "Pi-only connection catalog and ordered utility models include v0.15 Luna/Haiku/Flash preferences and Cloudflare defaults without Claude SDK provider types; v0.15.3: OpenCode Go preset/branding and editable models; validate and preserve endpoint output cap through setup/edit/save/test and live Pi runtime refresh. Pi/Lite provider boundary retained."
+      "reason": "Only the removed Claude connection forward/reverse Bedrock maps change upstream. The retained static reverse lookup is in models.ts; Pi provider catalogs/defaults remain authoritative."
     },
     "packages/shared/src/config/llm-validation.ts": {
       "sha256": "5c500197763f3525dcc7aae7164d95ee8635ecf18858b7ad9be4699f1eb2dbb2",
@@ -1869,10 +1869,6 @@
     "packages/shared/src/config/models-pi.ts": {
       "sha256": "ed2ecd7e39afd9c943cfa0b77251d987dedbdb351069fe7389a63494544020c6",
       "reason": "Craft shared module reduced to retained Pi, session, configuration, Skill, and UI behavior"
-    },
-    "packages/shared/src/config/models.ts": {
-      "sha256": "73d6b413f3ea6732d5e90cd7d4cefdb108772e3a38233842cd30f8374a9ce553",
-      "reason": "Craft v0.13.3 Pi model catalog and default ranking are adapted to the Pi-only MkAgent connection model"
     },
     "packages/shared/src/config/paths.ts": {
       "sha256": "5440f76d6d30e24e837eab6bf22a799c76d159fde22acaaa6b94a1a9c16be991",
@@ -2139,8 +2135,8 @@
       "reason": "Craft shared UI package reduced to components used by retained interfaces"
     },
     "packages/ui/package.json": {
-      "sha256": "119a3463ff43a686cdaa9b34d9c5856368243bd938a239ad2ae2cbc5f49daf9b",
-      "reason": "Prepare MkAgent 0.2.7 metadata; keep Pi 1.1.0 and existing Lite dependencies rather than upstream Claude SDK upgrades."
+      "sha256": "1062fa54fbc7bade3f93bc4e6d9832d43e50eec50511ff5e71384fd6b964a570",
+      "reason": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages."
     },
     "packages/ui/src/components/annotations/block-markers.ts": {
       "sha256": "c81c4de3715535ab8997bf768e8efffbf688122eea262e776a86d9c97a9360e6",
@@ -2277,7 +2273,7 @@
   },
   "mkOnly": {
     ".github/workflows/ci.yml": {
-      "sha256": "404017a3565fdded242ee18571842e4a9d2e1bc79cd57fff48ee372fdc3ced02",
+      "sha256": "59d1553b3ea5fbcf09d0d77624648860acdc35473ebc21ad6b308956cc72cd6b",
       "reason": "Pin CI to the reviewed v0.15.6 baseline; retain all validation/build jobs."
     },
     ".github/workflows/release.yml": {
@@ -2285,11 +2281,11 @@
       "reason": "MkAgent tag release workflow reads the source-lineage manifest baseline to keep release verification aligned with selective upstream syncs"
     },
     ".github/workflows/upstream-drift.yml": {
-      "sha256": "a65836e3200bd3bf0a5cefa39c23f849dc4d80bd64e429737c9f67f7ac0ee6a9",
+      "sha256": "4305a05b5cf1fb12017ac4f43ba07bc7aafdbb67a15fd650ae236d3609560dfb",
       "reason": "Move drift comparison anchor to v0.15.6 only."
     },
     "CHANGELOG.md": {
-      "sha256": "48f358c73e1b21cc3f968460ab5fa9094581f5d402cd6126742ef75133cef0db",
+      "sha256": "98cdfdb5c4b894ef58912d854dcde0e525663bc8910e7582f55eb01cde4ae06b",
       "reason": "MkAgent-specific release metadata required by the release workflow; v0.15.3 sync: MkAgent 0.2.3 release metadata and HEIC dependencies; Pi remains pinned at 1.1.0 and dynamic release audit baseline is preserved."
     },
     "README.zh.md": {
@@ -2350,6 +2346,10 @@
     },
     "apps/electron/resources/release-notes/0.2.7.md": {
       "sha256": "c0ce51c97e471fd5bfff290c011abd1add6c5db111cfdacd33416c61571051d4",
+      "reason": "MkAgent-specific release metadata required by the release workflow"
+    },
+    "apps/electron/resources/release-notes/0.2.8.md": {
+      "sha256": "28e39429a3d9a5624083034f0716f99ac817b705024bad7561202a46e5fe10f1",
       "reason": "MkAgent-specific release metadata required by the release workflow"
     },
     "apps/electron/resources/tool-icons/mkagent.svg": {
@@ -2577,7 +2577,7 @@
       "reason": "Regression test for retained MkAgent behavior not covered at the same Craft path"
     },
     "scripts/check-craft-test-coverage.ts": {
-      "sha256": "a19016c070393892e226152f0ef04fd1df60e444dd2f7c07a43e4d21fbd4611d",
+      "sha256": "44721d63f939a9123b70c2bb8bc45affc2d98f2d8f1b9d73401c1600e6b1d679",
       "reason": "Update precise factory case counts for retained Pi whole-config regression; all new PR/handoff tests retained, no broader ignore patterns."
     },
     "scripts/check-craft-ui-sync.ts": {
@@ -2679,6 +2679,7 @@
     "apps/electron/resources/release-notes/0.15.6.md": "MkAgent 0.2.6 changelog/built-in release notes describe retained Coding features and explicit exclusions.",
     "apps/electron/resources/release-notes/0.15.7.md": "Replace upstream release notes with MkAgent 0.2.7 notes covering retained behavior and exclusions; 0.15.7 contains excluded MCP OAuth changes only.",
     "apps/electron/resources/release-notes/0.15.8.md": "Replace upstream release notes with MkAgent 0.2.7 notes covering retained behavior and exclusions; 0.15.7 contains excluded MCP OAuth changes only.",
+    "apps/electron/resources/release-notes/0.15.9.md": "Upstream Claude SDK/Automation release prose is replaced by MkAgent 0.2.8 notes describing metadata recognition and Pi catalog limits; no excluded Automation code changes occur in this tag-to-tag diff.",
     "apps/electron/resources/release-notes/0.2.30.md": "Historical Craft release note is not applicable to the MkAgent release line",
     "apps/electron/resources/release-notes/0.2.31.md": "Historical Craft release note is not applicable to the MkAgent release line",
     "apps/electron/resources/release-notes/0.2.32.md": "Historical Craft release note is not applicable to the MkAgent release line",
@@ -2736,7 +2737,7 @@
     "apps/electron/resources/release-notes/0.9.4.md": "Historical Craft release note is not applicable to the MkAgent release line",
     "apps/electron/resources/release-notes/0.9.5.md": "Historical Craft release note is not applicable to the MkAgent release line",
     "apps/electron/resources/release-notes/0.9.6.md": "Historical Craft release note is not applicable to the MkAgent release line",
-    "apps/electron/resources/release-notes/next.md": "Replace upstream release notes with MkAgent 0.2.7 notes covering retained behavior and exclusions; 0.15.7 contains excluded MCP OAuth changes only.",
+    "apps/electron/resources/release-notes/next.md": "Upstream Claude SDK/Automation release prose is replaced by MkAgent 0.2.8 notes describing metadata recognition and Pi catalog limits; no excluded Automation code changes occur in this tag-to-tag diff.",
     "apps/electron/resources/tool-icons/craft-agent.svg": "Craft file reviewed and removed because it is outside the locked MkAgent Lite product, build, and test boundary",
     "apps/electron/src/main/__tests__/page-thumbnail-host.test.ts": "Pages UI and runtime excluded from Lite",
     "apps/electron/src/main/chunked-rpc.ts": "Electron dependency serves only an excluded Craft full-product surface",
@@ -2992,7 +2993,7 @@
     "apps/electron/src/transport/routed-client.ts": "Electron dependency serves only an excluded Craft full-product surface",
     "apps/electron/src/transport/source-oauth.ts": "Excluded Lite product module (Sources/MCP, Projects/conductor, Automations, Claude SDK/Guarded or sharing); no retained implementation to restore.",
     "apps/viewer/index.html": "Viewer, public sharing, and session MCP product surfaces are excluded from MkAgent Lite",
-    "apps/viewer/package.json": "Viewer and messaging applications/packages are excluded from Lite.",
+    "apps/viewer/package.json": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages.",
     "apps/viewer/public/_redirects": "Viewer, public sharing, and session MCP product surfaces are excluded from MkAgent Lite",
     "apps/viewer/src/App.tsx": "Viewer, public sharing, and session MCP product surfaces are excluded from MkAgent Lite",
     "apps/viewer/src/components/Header.tsx": "Viewer, public sharing, and session MCP product surfaces are excluded from MkAgent Lite",
@@ -3007,7 +3008,7 @@
     "apps/webui/src/responsive.ts": "Unused compatibility helper after the shared Craft renderer integration",
     "packages/core/CLAUDE.md": "Upstream Claude SDK/tool-authoring documentation does not apply to the Pi/Lite runtime.",
     "packages/core/src/types/page.ts": "Retained MkAgent Lite implementation and branding; upstream full-product branches remain excluded",
-    "packages/messaging-gateway/package.json": "Viewer and messaging applications/packages are excluded from Lite.",
+    "packages/messaging-gateway/package.json": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages.",
     "packages/messaging-gateway/src/__tests__/access-control.test.ts": "External Messaging product package is excluded from MkAgent Lite",
     "packages/messaging-gateway/src/__tests__/binding-store-update.test.ts": "External Messaging product package is excluded from MkAgent Lite",
     "packages/messaging-gateway/src/__tests__/binding-store.test.ts": "External Messaging product package is excluded from MkAgent Lite",
@@ -3056,7 +3057,7 @@
     "packages/messaging-gateway/src/topic-registry.ts": "External Messaging product package is excluded from MkAgent Lite",
     "packages/messaging-gateway/src/types.ts": "External Messaging product package is excluded from MkAgent Lite",
     "packages/messaging-gateway/tsconfig.json": "External Messaging product package is excluded from MkAgent Lite",
-    "packages/messaging-whatsapp-worker/package.json": "Viewer and messaging applications/packages are excluded from Lite.",
+    "packages/messaging-whatsapp-worker/package.json": "Prepare MkAgent 0.2.8 workspace/lock metadata while retaining Pi 1.1.0; exclude the Claude SDK 0.3.321 upgrade and absent Viewer/messaging packages.",
     "packages/messaging-whatsapp-worker/src/__tests__/filter.test.ts": "External Messaging product package is excluded from MkAgent Lite",
     "packages/messaging-whatsapp-worker/src/__tests__/media.test.ts": "External Messaging product package is excluded from MkAgent Lite",
     "packages/messaging-whatsapp-worker/src/__tests__/upsert.test.ts": "External Messaging product package is excluded from MkAgent Lite",
@@ -3183,7 +3184,7 @@
     "packages/session-tools-core/src/source-helpers.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/session-tools-core/src/templates/loader.ts": "Session tool or template serves only an excluded Craft full-product feature",
     "packages/session-tools-core/src/templates/mustache.ts": "Session tool or template serves only an excluded Craft full-product feature",
-    "packages/shared/CLAUDE.md": "Upstream Claude SDK/tool-authoring documentation does not apply to the Pi/Lite runtime.",
+    "packages/shared/CLAUDE.md": "Upstream edit documents Claude SDK thinking/runtime behavior, which is excluded from Lite; retained metadata behavior is recorded in sync docs.",
     "packages/shared/eslint-rules/no-inline-source-auth-check.cjs": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/agent/__tests__/base-agent-source-activation.test.ts": "Sources and MCP product integration is excluded from MkAgent Lite",
     "packages/shared/src/agent/__tests__/base-agent-turn-context.test.ts": "Decision/Guarded per-turn context is deferred; no related runtime exists in Lite.",

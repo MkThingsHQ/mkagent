@@ -7,29 +7,27 @@ MkAgent derives its architecture, UI, and runtime from [Craft Agents OSS](https:
 | Item | Value |
 |---|---|
 | Repository | `craft-ai-agents/craft-agents-oss` |
-| Tag | `v0.15.8` |
-| Commit | `1627c43e93bb4f5b1532116b8eb092c0ada4b23f` |
+| Tag | `v0.15.9` |
+| Commit | `3ce9fc12837541d688a59a8f0a2e9755ceb89ac2` |
 
 ## Latest evaluated release
 
 | Item | Value |
 |---|---|
 | Evaluated on | `2026-11-14` |
-| Upstream tag | `v0.15.8` |
-| Upstream commit | `1627c43e93bb4f5b1532116b8eb092c0ada4b23f` |
+| Upstream tag | `v0.15.9` |
+| Upstream commit | `3ce9fc12837541d688a59a8f0a2e9755ceb89ac2` |
 
-MkAgent 0.2.7 synchronizes **v0.15.6 → v0.15.8**. The public upstream history has no v0.15.7 tag/commit; its MCP OAuth release notes are included in v0.15.8 and remain outside Lite. [The inventory](./sync/0.15.8-inventory.json) covers all 153 changed paths; [validation](./sync/0.15.8-validation.md) records local checks and their limits.
+MkAgent 0.2.8 synchronizes **v0.15.8 → v0.15.9**. [The inventory](./sync/0.15.9-inventory.json) covers all 22 changed upstream paths; [validation](./sync/0.15.9-validation.md) records local checks and limits.
 
-Child sessions and branches nest in collapsible families. Date/unread grouping, pagination, keyboard navigation and multi-selection keep families together; per-workspace collapse state persists. Coding gains the built-in browser behind its setting, Mermaid validation, data transformations, focused LLM calls, spawn/get/list session tools and the same preview/document instructions as standard sessions. Children inherit their folder, model and Coding mode while permissions remain clamped.
+Retain Fable 5.2 shared metadata: display names, newest-Fable short-name resolution, 1M context, adaptive-only thinking and reverse metadata lookup for US/EU/global/base Bedrock IDs. Fable 5.1/5 remain distinct; Opus 5.5 stays the default. The upstream forward Bedrock maps belong to its removed connection implementation; the retained static reverse map is updated independently.
 
-Pi branches fork only once, preserve their cutoff and reopen their own conversation after restart or tool changes. Proxy tools replace the complete previous set; rebuilds wait for compaction. macOS HEIC conversion uses ImageIO with upright pixels and sRGB colors, with a portable fallback. Session discovery uses bounded async header reads, cloud-eviction detection and timeouts, retaining MkAgent's complete first-line reader for large PR metadata. The Lite manager retains its existing single initialization gate so list consumers still wait for disk loading. Explore rejects unknown tools and isolated agents; Monitor shell commands get Bash checks.
-
-Preserve MkAgent branding/configuration, Pi 1.1.0 and all previous synchronized functionality. Sources/MCP, Claude SDK and refusal fallback, Pages, Projects, board Tasks, Automations, public sharing and messaging remain excluded; Decision/Guarded remain deferred. This baseline records reviewed scope, not complete Craft feature parity.
+**Model metadata is not model availability.** Pi stays at 1.1.0 and runnable models continue to come from its provider catalogs. The installed Anthropic/Bedrock catalogs do not contain Fable 5.2; this sync does not inject an unsupported model into those lists or claim a real-provider run. Preserve MkAgent branding/configuration and all prior Lite behavior. Claude SDK 0.3.321 / Claude Code 2.1.321, product Automations and the other documented Lite exclusions remain absent; no Decision/Guarded runtime is added.
 
 ```bash
-git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/mkagent-craft-0158
-git -C /tmp/mkagent-craft-0158 checkout --detach 1627c43e93bb4f5b1532116b8eb092c0ada4b23f
-export CRAFT_AGENT_SOURCE=/tmp/mkagent-craft-0158
+git clone --no-checkout https://github.com/craft-ai-agents/craft-agents-oss.git /tmp/mkagent-craft-0159
+git -C /tmp/mkagent-craft-0159 checkout --detach 3ce9fc12837541d688a59a8f0a2e9755ceb89ac2
+export CRAFT_AGENT_SOURCE=/tmp/mkagent-craft-0159
 ```
 
 When upstream publishes a new tag worth evaluating:
